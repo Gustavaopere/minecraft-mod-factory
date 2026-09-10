@@ -32,7 +32,7 @@ def resolve_git_base(base: str) -> str:
     elif isinstance(base, str) and FULL_SHA_RE.fullmatch(base):
         safe_base = base.lower()
     else:
-        raise ValueError("--base must be HEAD^ or a full 40-character hexadecimal commit SHA")
+        raise ValueError("git base must be HEAD^ or a full 40-character hexadecimal commit SHA")
 
     result = subprocess.run(
         ["git", "rev-parse", "--verify", "--end-of-options", f"{safe_base}^{{commit}}"],
@@ -76,13 +76,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Run git diff --check without rewriting byte-preserved SOURCE_EXACT migration payloads"
     )
-    parser.add_argument("--base", default="HEAD^", help="Git base used for the diff: HEAD^ or a full commit SHA")
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     args = parser.parse_args()
 
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
     preserved = source_exact_destinations(manifest)
-    base = resolve_git_base(args.base)
+    base = resolve_git_base("HEAD^")
     changed = git_changed_paths(base)
     checkable = checkable_paths(changed, preserved)
     skipped = [path for path in changed if path in preserved]
