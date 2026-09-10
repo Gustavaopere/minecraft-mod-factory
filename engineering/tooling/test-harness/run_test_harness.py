@@ -115,6 +115,15 @@ def _require_server_eula(project_root: Path) -> None:
         )
 
 
+def _validated_output_root(project_root: Path) -> Path:
+    output_root = project_root / OUTPUT_RELATIVE
+    project_resolved = project_root.resolve()
+    output_resolved = output_root.resolve()
+    if output_root.is_symlink() or not output_resolved.is_relative_to(project_resolved):
+        raise HarnessError("I5 output root must remain inside the project root")
+    return output_root
+
+
 def _gradle_argv(project_root: Path, task: str) -> list[str]:
     if os.name == "nt":
         wrapper = project_root / "gradlew.bat"
@@ -293,7 +302,7 @@ def run_harness(project_root):
 
     mod_id, target = _project_identity(project)
     _require_server_eula(project)
-    output_root = project / OUTPUT_RELATIVE
+    output_root = _validated_output_root(project)
     if output_root.exists():
         shutil.rmtree(output_root)
 
