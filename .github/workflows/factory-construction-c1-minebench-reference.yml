@@ -1,0 +1,106 @@
+name: Factory Construction C1 MineBench Reference
+
+on:
+  push:
+    branches:
+      - feat/construction-c1-minebench-reference
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.gitmodules'
+      - '.github/workflows/factory-construction-c1-minebench-reference.yml'
+      - 'construction/STATUS.md'
+      - 'construction/tests/test_c1_minebench_reference.py'
+      - 'construction/upstream/registry.json'
+      - 'construction/upstream/references/minebench'
+
+permissions:
+  contents: read
+
+jobs:
+  c1b-reference:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: minebench
+          POSTGRES_PASSWORD: minebench
+          POSTGRES_DB: minebench_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U minebench -d minebench_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout with upstream references
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          submodules: recursive
+
+      - name: Run C1B preservation contract tests
+        run: python3 -m unittest construction/tests/test_c1_minebench_reference.py -v
+
+      - name: Verify MineBench gitlink mode and pin
+        run: |
+          expected=$'160000 c96abbd4c4098aa9c264490c80a1c6544a64ba85 0\tconstruction/upstream/references/minebench'
+          actual="$(git ls-files --stage -- construction/upstream/references/minebench)"
+          test "$actual" = "$expected"
+
+      - name: Verify MineBench checkout pin
+        run: test "$(git -C construction/upstream/references/minebench rev-parse HEAD)" = "c96abbd4c4098aa9c264490c80a1c6544a64ba85"
+
+      - name: Set up pnpm 10.26.1
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
+        with:
+          version: '10.26.1'
+          run_install: false
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '24'
+          cache: pnpm
+          cache-dependency-path: construction/upstream/references/minebench/pnpm-lock.yaml
+
+      - name: Install MineBench dependencies from frozen lockfile
+        working-directory: construction/upstream/references/minebench
+        run: pnpm install --frozen-lockfile
+
+      - name: Run MineBench lint
+        working-directory: construction/upstream/references/minebench
+        run: pnpm lint
+
+      - name: Run MineBench regression and integration tests
+        working-directory: construction/upstream/references/minebench
+        env:
+          DATABASE_URL: postgresql://minebench:minebench@localhost:5432/minebench_ci
+          DIRECT_URL: postgresql://minebench:minebench@localhost:5432/minebench_ci
+          MINEBENCH_TEST_DATABASE_URL: postgresql://minebench:minebench@localhost:5432/minebench_ci
+        run: pnpm test && pnpm test:integration
+
+      - name: Run MineBench production build
+        working-directory: construction/upstream/references/minebench
+        env:
+          DATABASE_URL: postgresql://minebench:minebench@localhost:5432/minebench_ci
+          DIRECT_URL: postgresql://minebench:minebench@localhost:5432/minebench_ci
+        run: pnpm build
+
+      - name: Run C0 regression
+        run: |
+          python3 -m unittest construction/tests/test_c0_foundation.py -v
+          python3 construction/scripts/validate_c0.py
+
+      - name: Check C1B whitespace
+        run: >-
+          git diff --check HEAD^ --
+          .gitmodules
+          .github/workflows/factory-construction-c1-minebench-reference.yml
+          construction/STATUS.md
+          construction/tests/test_c1_minebench_reference.py
+          construction/upstream/registry.json
