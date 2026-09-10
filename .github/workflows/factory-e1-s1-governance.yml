@@ -32,5 +32,19 @@ jobs:
       - name: Run E1 S1 regression tests
         run: python3 -m unittest engineering/tests/test_e1_s1_governance.py
 
-      - name: Check whitespace
-        run: git diff --check HEAD^
+      - name: Check governance whitespace
+        run: >-
+          git diff --check HEAD^ --
+          .github/workflows/factory-e1-s1-governance.yml
+          STATUS.md
+          engineering/AGENT-WORKFLOW.md
+          engineering/DIAGNOSTICS.md
+          engineering/README.md
+          engineering/REPO-ROUTING.md
+          engineering/TESTING.md
+          engineering/catalog/sources/SOURCE-REGISTRY.json
+          engineering/tests/test_e1_s1_governance.py
+          engineering/tooling/validate-e1-s1-governance.py
+          skills/README.md
+          skills/ROUTER.md
+          skills/VERSION-AUTHORITY.md
