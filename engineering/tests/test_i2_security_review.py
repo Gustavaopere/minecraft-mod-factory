@@ -46,6 +46,24 @@ class I2SecurityAndReviewContractTest(unittest.TestCase):
                     self.module.write_persisted_snapshot(self.snapshot, outside, shard_size=2)
             self.assertFalse(outside.exists())
 
+    def test_provider_writer_is_a_dedicated_contained_boundary(self):
+        self.assertTrue(
+            hasattr(self.module, "write_provider_catalog"),
+            "I2 RED: provider catalog persistence must use a dedicated contained writer",
+        )
+        if not hasattr(self.module, "write_provider_catalog"):
+            return
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            outside = root / "providers.json"
+            provider_catalog = self.module.build_persisted_provider_catalog(self.snapshot)
+            with contextlib.chdir(workspace):
+                with self.assertRaises(ValueError):
+                    self.module.write_provider_catalog(provider_catalog, outside)
+            self.assertFalse(outside.exists())
+
     def test_snapshot_loader_rejects_shard_symlink_escape(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
