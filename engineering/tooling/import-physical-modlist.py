@@ -453,11 +453,10 @@ def write_persisted_snapshot(snapshot, output_path, *, shard_size=100, emit_prov
     manifest = {**persisted, "entry_count": len(entries), "entry_shards": shards}
     output_path.write_bytes(_json_bytes(manifest))
     if emit_providers:
-        provider_path = _workspace_path(
-            output_path.with_name(f"{output_path.stem}.providers.json"),
-            label="provider catalog output",
-            must_exist=False,
-        )
+        workspace = Path.cwd().resolve()
+        provider_path = output_path.with_name(f"{output_path.stem}.providers.json").resolve(strict=False)
+        if provider_path == workspace or not provider_path.is_relative_to(workspace):
+            raise ValueError(f"provider catalog output must stay inside workspace: {workspace}")
         provider_catalog = build_persisted_provider_catalog(snapshot)
         provider_path.write_bytes(_json_bytes(provider_catalog))
     return manifest
