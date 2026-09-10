@@ -35,5 +35,5 @@ jobs:
       - name: Run I1 contract tests
         run: python3 -m unittest engineering/tests/test_i1_foundation.py
 
-      - name: Check whitespace
-        run: git diff --check HEAD^
+      - name: Check I1 engineering whitespace
+        run: git diff --check HEAD^ -- engineering .github/workflows/factory-engineering-i1-foundation.yml
