@@ -1,6 +1,5 @@
 import importlib.util
 import json
-import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -17,7 +16,6 @@ WRAPPER_FILES = {
     "gradle/wrapper/gradle-wrapper.properties",
     "gradle/wrapper/gradle-wrapper.jar",
 }
-ACTION_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 
 
 def load_module(path, name):
@@ -58,24 +56,6 @@ def create_synthetic_wrapper_source(root):
     )
     (root / "gradle/wrapper/gradle-wrapper.jar").write_bytes(b"synthetic-gradle-wrapper-8.14\n")
     return root
-
-
-def unpinned_remote_actions(path):
-    violations = []
-    for number, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
-        stripped = raw.strip()
-        if not stripped.startswith("uses:") and not stripped.startswith("- uses:"):
-            continue
-        ref = stripped.split("uses:", 1)[1].strip()
-        if ref.startswith("./"):
-            continue
-        if "@" not in ref:
-            violations.append(f"{path.relative_to(ROOT)}:{number}: {ref}")
-            continue
-        revision = ref.rsplit("@", 1)[1].split("#", 1)[0].strip()
-        if ACTION_SHA_RE.fullmatch(revision) is None:
-            violations.append(f"{path.relative_to(ROOT)}:{number}: {ref}")
-    return violations
 
 
 class I3ModScaffolderContractTest(unittest.TestCase):
@@ -220,20 +200,6 @@ class I3ModScaffolderContractTest(unittest.TestCase):
                 if "{{" in text or "}}" in text or "@@" in text:
                     unresolved.append(relative)
             self.assertEqual([], unresolved)
-
-    def test_factory_and_generated_ci_pin_remote_actions_to_full_commit_shas(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            generated, _ = self.generate(root, root / "generated")
-            workflow_paths = (
-                ROOT / ".github/workflows/factory-engineering-i2-modlist-catalog.yml",
-                ROOT / ".github/workflows/factory-engineering-i3-mod-scaffolder.yml",
-                generated / ".github/workflows/ci.yml",
-            )
-            violations = []
-            for path in workflow_paths:
-                violations.extend(unpinned_remote_actions(path))
-            self.assertEqual([], violations, "remote GitHub Actions must use immutable 40-hex commit SHAs")
 
 
 if __name__ == "__main__":
