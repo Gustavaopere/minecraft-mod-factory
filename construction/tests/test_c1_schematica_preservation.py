@@ -13,6 +13,7 @@ UPSTREAM_URL = "https://github.com/tester2024/schematica.git"
 PINNED_COMMIT = "0c88770005e7bbd7246997c81e810ba935c8e4cf"
 WORKFLOW = ROOT / ".github/workflows/factory-construction-c1-schematica-upstream.yml"
 LOCK = ROOT / "construction/upstream/harness/schematica-test-lock.txt"
+SONAR_PROPERTIES = ROOT / ".sonarcloud.properties"
 LOCK_LINE_RE = re.compile(
     r"^(?P<name>[A-Za-z0-9_.-]+)==[^\s]+ --hash=sha256:[0-9a-f]{64}$"
 )
@@ -51,6 +52,22 @@ class ConstructionC1SchematicaPreservationTest(unittest.TestCase):
         self.assertEqual(schematica["repository"], "tester2024/schematica")
         self.assertEqual(schematica["pinned_commit"], PINNED_COMMIT)
         self.assertEqual(schematica["integration_policy"], "IMMUTABLE_SNAPSHOT")
+
+    def test_sonar_excludes_immutable_schematica_snapshot(self) -> None:
+        self.assertTrue(SONAR_PROPERTIES.is_file(), ".sonarcloud.properties must define Factory analysis scope")
+        exclusions: set[str] = set()
+        for raw in SONAR_PROPERTIES.read_text(encoding="utf-8").splitlines():
+            line = raw.strip()
+            if not line.startswith("sonar.exclusions="):
+                continue
+            exclusions.update(item.strip() for item in line.split("=", 1)[1].split(",") if item.strip())
+
+        self.assertIn(
+            SUBMODULE_PATH,
+            exclusions,
+            "the immutable third-party Schematica gitlink must not be analyzed as Factory-authored source",
+        )
+        self.assertTrue(all("*" not in item for item in exclusions), "automatic-analysis exclusions must remain exact paths")
 
     def test_workflow_has_fixed_gitlink_integrity_gate(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
