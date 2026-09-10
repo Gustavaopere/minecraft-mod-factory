@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import re
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -20,6 +21,25 @@ def load_validator():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def materializable_registry() -> dict[str, object]:
+    return {
+        "schema_version": 1,
+        "audited_at": "2026-09-10",
+        "sources": [
+            {
+                "id": "schematica",
+                "kind": "engine",
+                "repository": "tester2024/schematica",
+                "pinned_commit": "0c88770005e7bbd7246997c81e810ba935c8e4cf",
+                "license": "MIT",
+                "integration_policy": "IMMUTABLE_SNAPSHOT",
+                "c0_state": "AUDITED_NOT_VENDORED",
+            }
+        ],
+        "external_providers": [],
+    }
 
 
 class ConstructionC0FoundationTest(unittest.TestCase):
@@ -88,11 +108,36 @@ class ConstructionC0FoundationTest(unittest.TestCase):
         errors = module.validate_registry(invalid)
         self.assertTrue(any("pinned_commit" in error for error in errors))
 
-    def test_no_snapshot_payload_is_vendored_during_c0(self) -> None:
-        snapshots = CONSTRUCTION / "upstream" / "snapshots"
-        if snapshots.exists():
-            payloads = [path for path in snapshots.rglob("*") if path.is_file()]
-            self.assertEqual(payloads, [], "C0 must not vendor upstream payloads; that starts in C1")
+    def test_snapshot_boundary_accepts_initialized_materializable_submodule(self) -> None:
+        module = load_validator()
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            snapshot = root / "construction/upstream/snapshots/schematica"
+            snapshot.mkdir(parents=True)
+            (snapshot / ".git").write_text("gitdir: /tmp/factory-test-submodule\n", encoding="utf-8")
+            (snapshot / "payload.py").write_text("# upstream payload\n", encoding="utf-8")
+            errors = module.validate_snapshot_boundary(root, materializable_registry())
+            self.assertEqual(errors, [])
+
+    def test_snapshot_boundary_rejects_vendored_copy_without_git_marker(self) -> None:
+        module = load_validator()
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            snapshot = root / "construction/upstream/snapshots/schematica"
+            snapshot.mkdir(parents=True)
+            (snapshot / "payload.py").write_text("# copied payload\n", encoding="utf-8")
+            errors = module.validate_snapshot_boundary(root, materializable_registry())
+            self.assertTrue(any("schematica/payload.py" in error for error in errors), errors)
+
+    def test_c0_workflow_initializes_submodules(self) -> None:
+        workflow = (ROOT / ".github/workflows/factory-construction-c0-foundation.yml").read_text(encoding="utf-8")
+        self.assertIn("submodules: recursive", workflow)
+
+    def test_snapshot_boundary_accepts_current_repository_state(self) -> None:
+        module = load_validator()
+        registry = json.loads((CONSTRUCTION / "upstream" / "registry.json").read_text(encoding="utf-8"))
+        errors = module.validate_snapshot_boundary(ROOT, registry)
+        self.assertEqual(errors, [], "\n".join(errors))
 
 
 if __name__ == "__main__":
