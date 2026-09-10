@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gustavaopere/minecraft-mod-factory/construction/schemas/upstream-source.schema.json",
+  "title": "Construction Upstream Source Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "audited_at", "sources", "external_providers"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "audited_at": {"type": "string", "format": "date"},
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "repository", "pinned_commit", "license", "integration_policy", "c0_state"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+          "kind": {"type": "string", "minLength": 1},
+          "repository": {"type": "string", "pattern": "^[^/]+/[^/]+$"},
+          "pinned_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+          "license": {"type": "string", "minLength": 1},
+          "integration_policy": {"enum": ["IMMUTABLE_SNAPSHOT", "ENGINE_REFERENCE", "LIBRARY_SNAPSHOT", "REFERENCE_ONLY"]},
+          "c0_state": {"enum": ["AUDITED_NOT_VENDORED", "DO_NOT_VENDOR"]}
+        }
+      }
+    },
+    "external_providers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "integration_policy", "api_state"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+          "integration_policy": {"const": "EXTERNAL_PROVIDER"},
+          "api_state": {"enum": ["UNVERIFIED_API", "VERIFIED_API", "MANUAL_HANDOFF"]}
+        }
+      }
+    }
+  }
+}
