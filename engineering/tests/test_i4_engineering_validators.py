@@ -109,15 +109,18 @@ class I4EngineeringValidatorsContractTest(unittest.TestCase):
             metadata.write_text(text, encoding="utf-8")
             self.assertTrue(module.validate_dependencies(project, MOD_SPEC))
 
-    def test_dependency_block_regex_groups_lookahead_alternation_explicitly(self):
+    def test_dependency_parser_uses_section_headers_without_anchor_alternation(self):
         module = self.require_validator()
         self.assertEqual(
-            r"(?ms)^\s*\[\[dependencies\.[^\]]+\]\]\s*(.*?)(?=(?:^\s*\[\[|\Z))",
-            module.DEPENDENCY_BLOCK_RE.pattern,
+            r"(?m)^\s*\[\[([^\]]+)\]\]\s*",
+            module.SECTION_HEADER_RE.pattern,
         )
         metadata = """[[dependencies.i3_golden_mod]]
 modId="neoforge"
 type="required"
+
+[[mixins.i3_golden_mod]]
+config="ignored"
 
 [[dependencies.i3_golden_mod]]
 modId="minecraft"
