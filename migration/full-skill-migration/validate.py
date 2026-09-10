@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
+import subprocess
 from pathlib import Path, PurePosixPath
 
 SOURCE_REPOSITORY = "Gustavaopere/neoforge-rpg-skilltree"
@@ -44,7 +44,23 @@ PREEXISTING_TEMPLATES = {"ANIMATION-BRIEF.md", "ASSET-BRIEF.md", "AUDIO-CUE-SHEE
 
 
 def git_blob_sha(data: bytes) -> str:
-    return hashlib.sha1(f"blob {len(data)}\0".encode("ascii") + data, usedforsecurity=False).hexdigest()
+    result = subprocess.run(
+        ["git", "hash-object", "--stdin"],
+        input=data,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if result.returncode != 0:
+        stderr = result.stderr.decode("utf-8", errors="replace").strip()
+        raise RuntimeError(f"git hash-object failed: {stderr or f'exit {result.returncode}'}")
+    try:
+        object_id = result.stdout.decode("ascii").strip()
+    except UnicodeDecodeError as exc:
+        raise RuntimeError("git hash-object returned a non-ASCII object id") from exc
+    if len(object_id) != 40 or any(char not in "0123456789abcdef" for char in object_id):
+        raise RuntimeError(f"git hash-object returned an invalid blob id: {object_id!r}")
+    return object_id
 
 
 def neutral_toolkit_rest(rest: str) -> str:

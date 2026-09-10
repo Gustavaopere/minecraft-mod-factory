@@ -9,7 +9,6 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 MIGRATION = ROOT / "migration/full-skill-migration"
@@ -35,23 +34,18 @@ def load_module(name: str, path: Path):
 
 
 class SonarHardeningContractTest(unittest.TestCase):
-    def test_git_blob_sha_marks_sha1_as_non_security(self) -> None:
-        module = load_module("full_skill_validate", MIGRATION / "validate.py")
-        calls = []
+    def test_git_blob_sha_uses_git_plumbing_without_direct_sha1(self) -> None:
+        script = MIGRATION / "validate.py"
+        source = script.read_text(encoding="utf-8")
+        self.assertNotIn("hashlib.sha1", source)
+        self.assertNotIn("hashlib.new(\"sha1\"", source)
 
-        class FakeHash:
-            def hexdigest(self) -> str:
-                return "fake-git-blob-sha"
-
-        def fake_sha1(data: bytes, **kwargs):
-            calls.append((data, kwargs))
-            return FakeHash()
-
-        with mock.patch.object(module.hashlib, "sha1", side_effect=fake_sha1):
-            self.assertEqual(module.git_blob_sha(b"payload"), "fake-git-blob-sha")
-
-        self.assertEqual(len(calls), 1)
-        self.assertIs(calls[0][1].get("usedforsecurity"), False)
+        module = load_module("full_skill_validate", script)
+        self.assertEqual(
+            module.git_blob_sha(b"payload"),
+            "47d05ff6403c8e6c3cf635ea6eb9263738432773",
+            "Git plumbing must preserve the canonical Git blob object id",
+        )
 
     def test_check_whitespace_uses_fixed_parent_boundary(self) -> None:
         module = load_module("full_skill_whitespace", MIGRATION / "check_whitespace.py")
