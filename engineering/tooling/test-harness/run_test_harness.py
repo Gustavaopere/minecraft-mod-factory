@@ -300,11 +300,12 @@ def run_harness(project_root):
     if not project.is_dir():
         raise HarnessError(f"project root does not exist: {project}")
 
-    mod_id, target = _project_identity(project)
-    _require_server_eula(project)
     output_root = _validated_output_root(project)
     if output_root.exists():
         shutil.rmtree(output_root)
+
+    mod_id, target = _project_identity(project)
+    _require_server_eula(project)
 
     suite_results: list[dict[str, object]] = []
     for suite_id, suite_type, command in SUITES:
