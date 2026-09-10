@@ -109,6 +109,24 @@ class I4EngineeringValidatorsContractTest(unittest.TestCase):
             metadata.write_text(text, encoding="utf-8")
             self.assertTrue(module.validate_dependencies(project, MOD_SPEC))
 
+    def test_dependency_block_regex_groups_lookahead_alternation_explicitly(self):
+        module = self.require_validator()
+        self.assertEqual(
+            r"(?ms)^\s*\[\[dependencies\.[^\]]+\]\]\s*(.*?)(?=(?:^\s*\[\[|\Z))",
+            module.DEPENDENCY_BLOCK_RE.pattern,
+        )
+        metadata = """[[dependencies.i3_golden_mod]]
+modId="neoforge"
+type="required"
+
+[[dependencies.i3_golden_mod]]
+modId="minecraft"
+type="required"""
+        self.assertEqual(
+            [("neoforge", "required"), ("minecraft", "required")],
+            module._metadata_dependencies(metadata)[0],
+        )
+
     def test_resource_path_validator_rejects_noncanonical_resource_location(self):
         module = self.require_validator()
         with tempfile.TemporaryDirectory() as tmp:
