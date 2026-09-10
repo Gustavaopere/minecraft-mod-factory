@@ -21,6 +21,7 @@ TARGET_JAVA = 21
 MOD_ID_RE = re.compile(r"^[a-z][a-z0-9_]{1,63}$")
 OUTPUT_RELATIVE = Path("build/i5-test-harness")
 ARTIFACT_RELATIVE = OUTPUT_RELATIVE / "artifacts"
+SERVER_EULA_RELATIVE = Path("run/server/eula.txt")
 STANDARD_TIMEOUT_SECONDS = 900
 SERVER_STARTUP_TIMEOUT_SECONDS = 120
 SERVER_READY_MARKER = 'For help, type "help"'
@@ -82,6 +83,29 @@ def _project_identity(project_root: Path) -> tuple[str, dict[str, object]]:
     if target != expected:
         raise HarnessError(f"target drift rejected: expected {expected}, got {target}")
     return mod_id, target
+
+
+def _require_server_eula(project_root: Path) -> None:
+    eula_path = project_root / SERVER_EULA_RELATIVE
+    if eula_path.is_symlink() or not eula_path.is_file():
+        raise HarnessError(
+            "dedicated server requires explicit EULA acceptance in run/server/eula.txt (eula=true)"
+        )
+
+    accepted = False
+    for raw_line in eula_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        if key.strip().lower() == "eula" and value.strip().lower() == "true":
+            accepted = True
+            break
+
+    if not accepted:
+        raise HarnessError(
+            "dedicated server requires explicit EULA acceptance in run/server/eula.txt (eula=true)"
+        )
 
 
 def _gradle_argv(project_root: Path, task: str) -> list[str]:
@@ -195,13 +219,28 @@ def _write_log(project_root: Path, suite_id: str, content: str) -> str:
 
 def _collect_tree(project_root: Path, source_relative: Path, destination_relative: Path) -> list[str]:
     source = project_root / source_relative
+    if source.is_symlink():
+        raise HarnessError(f"report source must not be a symlink: {source_relative.as_posix()}")
     if not source.is_dir():
         return []
 
+    project_resolved = project_root.resolve()
+    source_resolved = source.resolve()
+    if not source_resolved.is_relative_to(project_resolved):
+        raise HarnessError(f"report source escapes project root: {source_relative.as_posix()}")
+
     collected: list[str] = []
     for path in sorted(source.rglob("*")):
+        if path.is_symlink():
+            raise HarnessError(
+                f"report tree contains symlink: {path.relative_to(source).as_posix()}"
+            )
         if not path.is_file():
             continue
+        if not path.resolve().is_relative_to(source_resolved):
+            raise HarnessError(
+                f"report file escapes source root: {path.relative_to(source).as_posix()}"
+            )
         relative_inside = path.relative_to(source)
         destination = project_root / destination_relative / relative_inside
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -246,6 +285,7 @@ def run_harness(project_root):
         raise HarnessError(f"project root does not exist: {project}")
 
     mod_id, target = _project_identity(project)
+    _require_server_eula(project)
     output_root = project / OUTPUT_RELATIVE
     if output_root.exists():
         shutil.rmtree(output_root)
