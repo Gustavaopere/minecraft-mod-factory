@@ -110,12 +110,12 @@ class I2SecurityAndReviewContractTest(unittest.TestCase):
                     "--shard-size",
                     "2",
                 ])
-            self.assertEqual(0, result)
-            provider_path = workspace / "snapshot.providers.json"
-            self.assertTrue(provider_path.is_file())
-            provider_catalog = json.loads(provider_path.read_text(encoding="utf-8"))
-            loaded_snapshot = self.module.load_persisted_snapshot(workspace / "snapshot.json")
-            self.assertEqual([], self.module.validate_persisted_provider_catalog(loaded_snapshot, provider_catalog))
+                self.assertEqual(0, result)
+                provider_path = workspace / "snapshot.providers.json"
+                self.assertTrue(provider_path.is_file())
+                provider_catalog = json.loads(provider_path.read_text(encoding="utf-8"))
+                loaded_snapshot = self.module.load_persisted_snapshot(Path("snapshot.json"))
+                self.assertEqual([], self.module.validate_persisted_provider_catalog(loaded_snapshot, provider_catalog))
 
 
 if __name__ == "__main__":
