@@ -1,0 +1,81 @@
+{
+  "schema_version": 2,
+  "updated": "2026-09-09",
+  "authority_order": [
+    "runtime_mod_repository",
+    "physical_runtime_artifact_or_jar",
+    "latest_physical_modlist",
+    "exact_provider_source_ref",
+    "official_target_documentation",
+    "factory_engineering_control_plane",
+    "factory_art_authority",
+    "editorial_or_community_reference"
+  ],
+  "sources": [
+    {
+      "source_id": "integration_control_plane",
+      "source_type": "git_repository",
+      "authority_scope": "Shared engineering contracts, schemas, validators, catalogs, tooling, tests and integration status.",
+      "state": "CONFIRMED",
+      "locator": {
+        "repository_full_name": "Gustavaopere/minecraft-mod-factory",
+        "default_branch": "main",
+        "authority_root": "engineering/"
+      }
+    },
+    {
+      "source_id": "repo_textura",
+      "source_type": "git_repository_domain",
+      "authority_scope": "Artistic source of truth for provider-native source assets, visual contracts, authoring pipelines and QA handoffs.",
+      "state": "CONFIRMED",
+      "locator": {
+        "repository_full_name": "Gustavaopere/minecraft-mod-factory",
+        "default_branch": "main",
+        "authority_root": "art/"
+      }
+    },
+    {
+      "source_id": "historical_rpg_repository",
+      "source_type": "git_repository",
+      "authority_scope": "RPG Skill Tree runtime authority and historical origin for reusable infrastructure being migrated/reconciled.",
+      "state": "CONFIRMED",
+      "locator": {
+        "repository_full_name": "Gustavaopere/neoforge-rpg-skilltree",
+        "default_branch": "main"
+      }
+    },
+    {
+      "source_id": "latest_physical_modlist_2026_09_09",
+      "source_type": "physical_snapshot_external",
+      "authority_scope": "Installed top-level mod presence and physical versions for the current modpack snapshot.",
+      "state": "CONFIRMED",
+      "locator": {
+        "authority_repository": "Gustavaopere/neoforge-rpg-skilltree",
+        "snapshot_date": "2026-09-09",
+        "top_level_mods": 595,
+        "neoforge": "21.1.248",
+        "sha256": "7c0a23d6013101383d196526e4b6ba6940fb54a0fed10eaed5956ab015cfcc00"
+      }
+    },
+    {
+      "source_id": "mod_engineering_plan_v1_1",
+      "source_type": "local_artifact",
+      "authority_scope": "Canonical Minecraft Mod Factory engineering plan.",
+      "state": "CONFIRMED",
+      "locator": {
+        "path": "plans/PLANO-MESTRE-MINECRAFT-MOD-FACTORY-MOD-ENGINEERING-NEOFORGE-1.21.1-V1.1.md",
+        "sha256": "29fc7f4b949b2b8dba327eb3f022f4cd84b11a352430ca821bdaec13072b8744"
+      }
+    },
+    {
+      "source_id": "repo_textura_plan_v5_1",
+      "source_type": "local_artifact",
+      "authority_scope": "Canonical Minecraft Mod Factory visual and asset-pipeline plan.",
+      "state": "CONFIRMED",
+      "locator": {
+        "path": "plans/PLANO-MESTRE-UNIFICADO-MINECRAFT-MOD-FACTORY-REPO-TEXTURA-BLOCKBENCH-ASSET-MCP-V5.1.md",
+        "sha256": "723bb083d5b646812cd44a03a1ef50e8505b366923b64aba5931ee4b7b63befb"
+      }
+    }
+  ]
+}
