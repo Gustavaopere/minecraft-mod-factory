@@ -38,5 +38,11 @@ jobs:
       - name: Run M4 regression tests
         run: python3 -m unittest art/tests/test_m4_standards_core.py
 
-      - name: Check whitespace
-        run: git diff --check HEAD^
+      - name: Check M4 standards whitespace
+        run: >-
+          git diff --check HEAD^ --
+          art/standards
+          art/tooling/validate-m4-standards-core.py
+          art/tests/test_m4_standards_core.py
+          migration/M4-STANDARDS-CORE-PROVENANCE.json
+          .github/workflows/factory-art-m4-standards-core.yml
