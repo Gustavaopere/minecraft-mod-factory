@@ -10,6 +10,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 TEMPLATE_ROOT = REPO_ROOT / "engineering" / "templates" / "neoforge-mod"
+WRAPPER_AUTHORITY = Path(__file__).resolve().parent / "wrapper-authority"
 
 EXPECTED_TARGET = {
     "minecraft": "1.21.1",
@@ -177,21 +178,21 @@ def _output_for_template(template_name: str, values: dict[str, str]) -> str:
     return output
 
 
-def _validate_wrapper_source(wrapper_source: Path) -> None:
-    if not wrapper_source.is_dir():
-        raise ValueError(f"explicit wrapper authority missing: {wrapper_source}")
+def _validate_wrapper_authority() -> None:
+    if not WRAPPER_AUTHORITY.is_dir():
+        raise ValueError(f"Factory wrapper authority missing: {WRAPPER_AUTHORITY}")
     for source_relative, _ in WRAPPER_FILES:
-        source = wrapper_source / source_relative
+        source = WRAPPER_AUTHORITY / source_relative
         if not source.is_file():
-            raise ValueError(f"wrapper authority missing required file: {source_relative}")
-    properties = (wrapper_source / "gradle/wrapper/gradle-wrapper.properties").read_text(encoding="utf-8")
+            raise ValueError(f"Factory wrapper authority missing required file: {source_relative}")
+    properties = (WRAPPER_AUTHORITY / "gradle/wrapper/gradle-wrapper.properties").read_text(encoding="utf-8")
     if "gradle-8.14-bin.zip" not in properties:
-        raise ValueError("wrapper authority must target canonical Gradle 8.14 binary distribution")
+        raise ValueError("Factory wrapper authority must target canonical Gradle 8.14 binary distribution")
 
 
-def _copy_wrapper_files(output: Path, wrapper_source: Path) -> None:
+def _copy_wrapper_files(output: Path) -> None:
     for source_relative, output_relative in WRAPPER_FILES:
-        source = wrapper_source / source_relative
+        source = WRAPPER_AUTHORITY / source_relative
         destination = output / output_relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, destination)
@@ -201,14 +202,12 @@ def generate_project(
     mod_spec_path: Path | str,
     scaffold_config_path: Path | str,
     output_dir: Path | str,
-    wrapper_source: Path | str,
 ) -> Path:
     mod_spec_path = Path(mod_spec_path)
     scaffold_config_path = Path(scaffold_config_path)
     output = Path(output_dir)
-    wrapper_source = Path(wrapper_source)
 
-    _validate_wrapper_source(wrapper_source)
+    _validate_wrapper_authority()
 
     if output.exists():
         if not output.is_dir() or any(output.iterdir()):
@@ -233,7 +232,7 @@ def generate_project(
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(rendered, encoding="utf-8", newline="\n")
 
-    _copy_wrapper_files(output, wrapper_source)
+    _copy_wrapper_files(output)
     return output
 
 
@@ -241,10 +240,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Generate a canonical NeoForge 1.21.1 mod project.")
     parser.add_argument("--mod-spec", required=True, type=Path)
     parser.add_argument("--config", required=True, type=Path)
-    parser.add_argument("--wrapper-source", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
-    generated = generate_project(args.mod_spec, args.config, args.output, args.wrapper_source)
+    generated = generate_project(args.mod_spec, args.config, args.output)
     print(generated)
     return 0
 
