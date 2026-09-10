@@ -3,12 +3,14 @@
 const core = require('../core/index.js');
 const modeling = require('./modeling_adapter.js');
 const uvTexture = require('./uv_texture_adapter.js');
+const animation = require('./animation_adapter.js');
 
 function registerBlockbenchPlugin(bb) {
   let auditAction = null;
   let profileAction = null;
   let modelingMutationAction = null;
   let uvTextureMutationAction = null;
+  let animationMutationAction = null;
   let bridgeConnectAction = null;
   let bridgeDisconnectAction = null;
   let bridgeStatusAction = null;
@@ -46,9 +48,9 @@ function registerBlockbenchPlugin(bb) {
   bb.Plugin.register('rpg_asset_toolkit', {
     title: 'Minecraft Mod Factory Asset Toolkit',
     author: 'Gustavaopere',
-    description: 'Structural/provider-aware asset QA with bounded local modeling/rig and UV/texture mutations plus an optional authenticated read-only desktop-local MCP Live Bridge.',
+    description: 'Structural/provider-aware asset QA with bounded local modeling/rig, UV/texture, and generic animation mutations plus an optional authenticated read-only desktop-local MCP Live Bridge.',
     icon: 'fact_check',
-    version: '0.5.0',
+    version: '0.6.0',
     min_version: '5.1.6',
     variant: 'both',
     tags: ['Minecraft: Java Edition'],
@@ -136,6 +138,38 @@ function registerBlockbenchPlugin(bb) {
           },
         }));
 
+        animationMutationAction = addToolAction(new bb.Action('rpg_asset_toolkit_animation_batch', {
+          name: 'Apply RPG Generic Animation Batch',
+          description: 'Apply bounded provider-neutral animation/keyframe mutations locally with expected-revision checks, preflight, Undo, and rollback. Provider-specific effect-marker serialization remains unavailable here and remote MCP stays read-only.',
+          icon: 'animation',
+          click() {
+            try {
+              const adapter = animation.createBlockbenchAnimationAdapter(bb);
+              const template = JSON.stringify({
+                expectedRevision: adapter.getRevision(),
+                dryRun: true,
+                label: 'Minecraft Mod Factory Asset Toolkit Generic Animation Batch',
+                operations: [],
+              }, null, 2);
+              bb.Blockbench.textPrompt('RPG Generic Animation Mutation Batch (JSON)', template, (text) => {
+                try {
+                  const result = core.applyAnimationBatch(adapter, JSON.parse(text));
+                  bb.Blockbench.showMessageBox({
+                    title: 'Minecraft Mod Factory Asset Toolkit — Generic Animation Batch',
+                    icon: 'check_circle',
+                    message: JSON.stringify(result, null, 2).slice(0, 4096),
+                    buttons: ['OK'],
+                  });
+                } catch (error) {
+                  showError('Minecraft Mod Factory Asset Toolkit — Generic Animation Batch Failed', error);
+                }
+              });
+            } catch (error) {
+              showError('Minecraft Mod Factory Asset Toolkit — Generic Animation Batch Unavailable', error);
+            }
+          },
+        }));
+
         bridgeConnectAction = addToolAction(new bb.Action('rpg_asset_toolkit_live_bridge_connect', {
           name: 'Connect Minecraft Mod Factory Asset MCP (Read-only)',
           description: 'Connect this desktop Blockbench session to the authenticated numeric-loopback Minecraft Mod Factory Asset MCP sidecar.',
@@ -194,13 +228,23 @@ function registerBlockbenchPlugin(bb) {
         try { void bridgeRuntime.connection.disconnect(); } catch (_) { /* best effort during plugin unload */ }
       }
       bridgeRuntime = null;
-      for (const action of [auditAction, profileAction, modelingMutationAction, uvTextureMutationAction, bridgeConnectAction, bridgeDisconnectAction, bridgeStatusAction]) {
+      for (const action of [
+        auditAction,
+        profileAction,
+        modelingMutationAction,
+        uvTextureMutationAction,
+        animationMutationAction,
+        bridgeConnectAction,
+        bridgeDisconnectAction,
+        bridgeStatusAction,
+      ]) {
         if (action) action.delete();
       }
       auditAction = null;
       profileAction = null;
       modelingMutationAction = null;
       uvTextureMutationAction = null;
+      animationMutationAction = null;
       bridgeConnectAction = null;
       bridgeDisconnectAction = null;
       bridgeStatusAction = null;
@@ -212,4 +256,5 @@ module.exports = {
   registerBlockbenchPlugin,
   createBlockbenchModelingAdapter: modeling.createBlockbenchModelingAdapter,
   createBlockbenchUvTextureAdapter: uvTexture.createBlockbenchUvTextureAdapter,
+  createBlockbenchAnimationAdapter: animation.createBlockbenchAnimationAdapter,
 };
