@@ -40,6 +40,10 @@ class M5NamingContractTest(unittest.TestCase):
         self.assertEqual(lock.get("name"), "@minecraft-mod-factory/asset-mcp-sidecar")
         self.assertEqual(lock.get("packages", {}).get("", {}).get("name"), "@minecraft-mod-factory/asset-mcp-sidecar")
 
+    def test_bundle_builder_omits_indentation_on_whitespace_only_lines(self) -> None:
+        build_script = (TOOLKIT / "build_toolkit_bundle.js").read_text(encoding="utf-8")
+        self.assertIn("line.trim().length === 0 ? '' : `${prefix}${line}`", build_script)
+
 
 if __name__ == "__main__":
     unittest.main()
