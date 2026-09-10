@@ -3,9 +3,10 @@
 const crypto = require('node:crypto');
 const {PROTOCOL_VERSION, bridgeError} = require('./protocol.js');
 
+function compareText(left, right) { return String(left).localeCompare(String(right), 'en', {sensitivity: 'variant', numeric: false}); }
 function stable(value) {
   if (Array.isArray(value)) return value.map(stable);
-  if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map((key) => [key, stable(value[key])]));
+  if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort(compareText).map((key) => [key, stable(value[key])]));
   return value;
 }
 
