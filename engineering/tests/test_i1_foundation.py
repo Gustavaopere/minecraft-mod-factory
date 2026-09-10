@@ -25,6 +25,10 @@ class I1FoundationContractTest(unittest.TestCase):
         errors = validator.validate_instance(schema, example)
         self.assertTrue(any("mod_id" in error and "pattern" in error for error in errors), errors)
 
+    def test_validate_instance_rejects_unapproved_schema_pattern(self):
+        errors = validator.validate_instance({"type": "string", "pattern": "^.*$"}, "arbitrary")
+        self.assertTrue(any("unsupported pattern" in error for error in errors), errors)
+
     def test_all_declared_patterns_are_explicitly_anchored(self):
         schemas_dir = ROOT / "engineering" / "schemas"
         failures = []

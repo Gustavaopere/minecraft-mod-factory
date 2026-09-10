@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -65,6 +64,56 @@ HISTORICAL_RPG_SCHEMA_ID_PREFIX = (
     "https://github.com/Gustavaopere/neoforge-rpg-skilltree/"
 )
 
+ASCII_LOWER = frozenset("abcdefghijklmnopqrstuvwxyz")
+ASCII_LOWER_DIGIT_UNDERSCORE = frozenset("abcdefghijklmnopqrstuvwxyz0123456789_")
+LOWER_HEX = frozenset("0123456789abcdef")
+
+MOD_ID_PATTERN = "^[a-z][a-z0-9_]{1,63}$"
+VISUAL_INPUT_NAME_PATTERN = "^[a-z][a-z0-9_]{0,63}$"
+SOURCE_REVISION_PATTERN = "^(?:[0-9a-f]{40}|UNRESOLVED)$"
+SHA256_OR_UNRESOLVED_PATTERN = "^(?:[0-9a-f]{64}|UNRESOLVED)$"
+
+
+def _matches_registry_id(value, minimum_tail_length):
+    return (
+        isinstance(value, str)
+        and minimum_tail_length + 1 <= len(value) <= 64
+        and value[0] in ASCII_LOWER
+        and all(char in ASCII_LOWER_DIGIT_UNDERSCORE for char in value[1:])
+    )
+
+
+def _matches_mod_id(value):
+    return _matches_registry_id(value, 1)
+
+
+def _matches_visual_input_name(value):
+    return _matches_registry_id(value, 0)
+
+
+def _matches_hex_or_unresolved(value, length):
+    return value == "UNRESOLVED" or (
+        isinstance(value, str)
+        and len(value) == length
+        and all(char in LOWER_HEX for char in value)
+    )
+
+
+def _matches_source_revision(value):
+    return _matches_hex_or_unresolved(value, 40)
+
+
+def _matches_sha256_or_unresolved(value):
+    return _matches_hex_or_unresolved(value, 64)
+
+
+PATTERN_VALIDATORS = {
+    MOD_ID_PATTERN: _matches_mod_id,
+    VISUAL_INPUT_NAME_PATTERN: _matches_visual_input_name,
+    SOURCE_REVISION_PATTERN: _matches_source_revision,
+    SHA256_OR_UNRESOLVED_PATTERN: _matches_sha256_or_unresolved,
+}
+
 
 def load_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
@@ -105,8 +154,13 @@ def validate_instance(schema, value, path="$"):
     if isinstance(value, str):
         if "minLength" in schema and len(value) < schema["minLength"]:
             errors.append(f"{path}: shorter than minLength")
-        if "pattern" in schema and re.search(schema["pattern"], value) is None:
-            errors.append(f"{path}: does not match pattern {schema['pattern']}")
+        if "pattern" in schema:
+            pattern = schema["pattern"]
+            validator = PATTERN_VALIDATORS.get(pattern)
+            if validator is None:
+                errors.append(f"{path}: unsupported pattern {pattern!r}")
+            elif not validator(value):
+                errors.append(f"{path}: does not match pattern {pattern}")
 
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         if "minimum" in schema and value < schema["minimum"]:
@@ -177,6 +231,8 @@ def validate_schema_document(path: Path, schema):
             errors.append(
                 f"{path}:{pattern_path}: pattern must be explicitly anchored for JSON Schema search semantics"
             )
+        if pattern not in PATTERN_VALIDATORS:
+            errors.append(f"{path}:{pattern_path}: unsupported pattern {pattern!r}")
     return errors
 
 
