@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import inspect
 import json
 import subprocess
 import sys
@@ -51,15 +52,17 @@ class SonarHardeningContractTest(unittest.TestCase):
         self.assertEqual(len(calls), 1)
         self.assertIs(calls[0][1].get("usedforsecurity"), False)
 
-    def test_check_whitespace_exposes_validated_git_base_resolver(self) -> None:
+    def test_check_whitespace_uses_fixed_parent_boundary(self) -> None:
         module = load_module("full_skill_whitespace", MIGRATION / "check_whitespace.py")
         resolver = getattr(module, "resolve_git_base", None)
-        self.assertTrue(callable(resolver), "check_whitespace.py must resolve and validate --base before git diff")
+        self.assertTrue(callable(resolver), "check_whitespace.py must verify its fixed Git base")
+        self.assertEqual(tuple(inspect.signature(resolver).parameters), ())
+        self.assertEqual(tuple(inspect.signature(module.git_changed_paths).parameters), ())
+        self.assertEqual(tuple(inspect.signature(module.run_whitespace_check).parameters), ("paths",))
 
-        for unsafe in ("-p", "--stat", "HEAD;echo-pwned", "HEAD\n--stat", "", " " * 4):
-            with self.subTest(unsafe=unsafe):
-                with self.assertRaises((ValueError, RuntimeError, subprocess.CalledProcessError)):
-                    resolver(unsafe)
+        workflow = FULL_SKILL_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("run: python migration/full-skill-migration/check_whitespace.py\n", workflow)
+        self.assertNotIn("check_whitespace.py --base", workflow)
 
     def test_m5_rejects_external_factory_root_without_mutation(self) -> None:
         script = MIGRATION / "m5_finalize.py"
