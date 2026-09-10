@@ -186,6 +186,29 @@ class I5TestHarnessContractTest(unittest.TestCase):
             self.assertIn("eula", result.stdout.lower())
             self.assertFalse((project / ".i5-invocations").exists())
 
+    def test_output_root_rejects_build_parent_symlink_escape_before_delete_or_gradle(self):
+        self.require_harness()
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_root = Path(tmp)
+            project = write_fake_project(tmp_root / "project")
+            (project / "build/unrelated/private.txt").unlink()
+            (project / "build/unrelated").rmdir()
+            (project / "build").rmdir()
+
+            outside_build = tmp_root / "outside-build"
+            outside_output = outside_build / "i5-test-harness"
+            outside_output.mkdir(parents=True)
+            sentinel = outside_output / "sentinel.txt"
+            sentinel.write_text("must survive\n", encoding="utf-8")
+            (project / "build").symlink_to(outside_build, target_is_directory=True)
+
+            result = run_harness_cli(project)
+
+            self.assertEqual(2, result.returncode, result.stdout)
+            self.assertIn("output", result.stdout.lower())
+            self.assertTrue(sentinel.is_file())
+            self.assertFalse((project / ".i5-invocations").exists())
+
     def test_failed_suite_is_reported_fail_closed_without_hiding_other_results(self):
         self.require_harness()
         with tempfile.TemporaryDirectory() as tmp:
