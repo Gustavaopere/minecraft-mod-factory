@@ -47,17 +47,44 @@ class SonarHardeningContractTest(unittest.TestCase):
             "Git plumbing must preserve the canonical Git blob object id",
         )
 
-    def test_check_whitespace_uses_fixed_parent_boundary(self) -> None:
+    def test_check_whitespace_uses_fixed_parent_boundary_and_fixed_diff_argv(self) -> None:
         module = load_module("full_skill_whitespace", MIGRATION / "check_whitespace.py")
         resolver = getattr(module, "resolve_git_base", None)
         self.assertTrue(callable(resolver), "check_whitespace.py must verify its fixed Git base")
         self.assertEqual(tuple(inspect.signature(resolver).parameters), ())
         self.assertEqual(tuple(inspect.signature(module.git_changed_paths).parameters), ())
-        self.assertEqual(tuple(inspect.signature(module.run_whitespace_check).parameters), ("paths",))
+        self.assertEqual(tuple(inspect.signature(module.run_whitespace_check).parameters), ("preserved_paths",))
+
+        run_source = inspect.getsource(module.run_whitespace_check)
+        self.assertIn('["git", "diff", "--check", FIXED_BASE_REF, "--"]', run_source)
+        self.assertNotIn("*paths", run_source)
 
         workflow = FULL_SKILL_WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("run: python migration/full-skill-migration/check_whitespace.py\n", workflow)
         self.assertNotIn("check_whitespace.py --base", workflow)
+
+    def test_source_exact_whitespace_diagnostics_are_filtered_after_fixed_diff(self) -> None:
+        module = load_module("full_skill_whitespace_filter", MIGRATION / "check_whitespace.py")
+        filter_diagnostics = getattr(module, "filter_whitespace_diagnostics", None)
+        self.assertTrue(callable(filter_diagnostics), "check_whitespace.py must filter fixed-diff diagnostics in Python")
+
+        output = (
+            "skills/library/legacy/SKILL.md:2: trailing whitespace.\n"
+            "+legacy payload   \n"
+            "engineering/tooling/example.py:7: trailing whitespace.\n"
+            "+bad   \n"
+        )
+        filtered = filter_diagnostics(output, {"skills/library/legacy/SKILL.md"})
+        self.assertNotIn("skills/library/legacy/SKILL.md", filtered)
+        self.assertNotIn("+legacy payload", filtered)
+        self.assertIn("engineering/tooling/example.py:7: trailing whitespace.", filtered)
+        self.assertIn("+bad   ", filtered)
+
+        preserved_only = (
+            "skills/library/legacy/SKILL.md:2: trailing whitespace.\n"
+            "+legacy payload   \n"
+        )
+        self.assertEqual(filter_diagnostics(preserved_only, {"skills/library/legacy/SKILL.md"}), "")
 
     def test_m5_rejects_external_factory_root_without_mutation(self) -> None:
         script = MIGRATION / "m5_finalize.py"
