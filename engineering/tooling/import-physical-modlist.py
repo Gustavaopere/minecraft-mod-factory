@@ -16,6 +16,19 @@ MOD_ID_RE = re.compile(r"^[a-z][a-z0-9_.-]*$")
 MODS_COUNT_RE = re.compile(r"^Mods count:\s*(\d+)\s*$")
 
 
+def _workspace_path(value, *, label, must_exist=False):
+    workspace = Path.cwd().resolve()
+    raw = Path(value)
+    candidate = raw.resolve(strict=must_exist) if raw.is_absolute() else (workspace / raw).resolve(strict=must_exist)
+    try:
+        candidate.relative_to(workspace)
+    except ValueError as exc:
+        raise ValueError(f"{label} must stay inside workspace: {workspace}") from exc
+    if candidate == workspace:
+        raise ValueError(f"{label} must identify a path inside workspace, not the workspace root")
+    return candidate
+
+
 def _parse_declared_count(lines):
     for line in lines:
         match = MODS_COUNT_RE.match(line.strip())
@@ -284,8 +297,11 @@ def validate_normalized_snapshot(snapshot):
         for field in ("notes", "mod_id", "mod_name", "version", "modrinth_hash", "curseforge_hash"):
             if not isinstance(entry[field], str):
                 errors.append(f"entries[{index}].{field} must be a string")
-        if isinstance(entry.get("mod_id"), str) and entry["mod_id"] and MOD_ID_RE.fullmatch(entry["mod_id"]) is None:
-            errors.append(f"entries[{index}].mod_id has invalid physical identifier syntax")
+        if isinstance(entry.get("mod_id"), str):
+            if not entry["mod_id"]:
+                errors.append(f"entries[{index}].mod_id must be a non-empty physical identifier")
+            elif MOD_ID_RE.fullmatch(entry["mod_id"]) is None:
+                errors.append(f"entries[{index}].mod_id has invalid physical identifier syntax")
         if not isinstance(entry["mixin_configs"], list) or not all(isinstance(v, str) and v for v in entry["mixin_configs"]):
             errors.append(f"entries[{index}].mixin_configs must be an array of non-empty strings")
         if isinstance(entry.get("modrinth_hash"), str) and entry["modrinth_hash"] and SHA1_RE.fullmatch(entry["modrinth_hash"]) is None:
@@ -409,7 +425,7 @@ def _json_bytes(value):
 def write_persisted_snapshot(snapshot, output_path, *, shard_size=100):
     if not isinstance(shard_size, int) or isinstance(shard_size, bool) or shard_size < 1:
         raise ValueError("shard_size must be a positive integer")
-    output_path = Path(output_path)
+    output_path = _workspace_path(output_path, label="snapshot output", must_exist=False)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     persisted = build_persisted_snapshot(snapshot)
     entries = persisted.pop("entries")
@@ -440,7 +456,7 @@ def write_persisted_snapshot(snapshot, output_path, *, shard_size=100):
 
 
 def load_persisted_snapshot(path):
-    path = Path(path)
+    path = _workspace_path(path, label="snapshot manifest", must_exist=True)
     manifest = json.loads(path.read_text(encoding="utf-8"))
     if "entries" in manifest:
         snapshot = manifest
@@ -469,7 +485,11 @@ def load_persisted_snapshot(path):
             digest = shard.get("sha256")
             if not isinstance(digest, str) or SHA256_RE.fullmatch(digest) is None:
                 raise ValueError(f"snapshot manifest shard[{index}].sha256 must be a lowercase SHA-256 digest")
-            shard_path = path.parent / shard_name
+            shard_path = _workspace_path(
+                path.parent / shard_name,
+                label=f"snapshot shard {shard_name}",
+                must_exist=True,
+            )
             shard_bytes = shard_path.read_bytes()
             if hashlib.sha256(shard_bytes).hexdigest() != digest:
                 raise ValueError(f"snapshot shard integrity mismatch: {shard_name}")
@@ -524,7 +544,8 @@ def main(argv=None):
         errors = validate_normalized_snapshot(snapshot)
         if args.providers:
             try:
-                provider_catalog = json.loads(Path(args.providers).read_text(encoding="utf-8"))
+                providers_path = _workspace_path(args.providers, label="provider catalog", must_exist=True)
+                provider_catalog = json.loads(providers_path.read_text(encoding="utf-8"))
             except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
                 errors.append(f"provider catalog could not be read: {exc}")
             else:
@@ -549,7 +570,7 @@ def main(argv=None):
 
     if not args.input or not args.captured_at or not args.output:
         parser.error("import mode requires INPUT, --captured-at and --output")
-    input_path = Path(args.input)
+    input_path = _workspace_path(args.input, label="physical modlist input", must_exist=True)
     snapshot = parse_modlist_bytes(
         input_path.read_bytes(),
         captured_at=args.captured_at,
@@ -565,9 +586,10 @@ def main(argv=None):
     write_persisted_snapshot(persisted_snapshot, args.output, shard_size=args.shard_size)
     if args.providers_output:
         provider_catalog = build_persisted_provider_catalog(persisted_snapshot)
-        Path(args.providers_output).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.providers_output).write_bytes(_json_bytes(provider_catalog))
-        print(f"Wrote {args.providers_output}")
+        providers_output = _workspace_path(args.providers_output, label="provider catalog output", must_exist=False)
+        providers_output.parent.mkdir(parents=True, exist_ok=True)
+        providers_output.write_bytes(_json_bytes(provider_catalog))
+        print(f"Wrote {providers_output}")
     print(f"Wrote {args.output}")
     return 0
 

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import re
 import shutil
@@ -11,6 +12,8 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[3]
 TEMPLATE_ROOT = REPO_ROOT / "engineering" / "templates" / "neoforge-mod"
 WRAPPER_AUTHORITY = Path(__file__).resolve().parent / "wrapper-authority"
+I1_VALIDATOR = REPO_ROOT / "engineering" / "tooling" / "validate-i1-foundation.py"
+MOD_SPEC_SCHEMA = REPO_ROOT / "engineering" / "schemas" / "mod-spec.schema.json"
 
 EXPECTED_TARGET = {
     "minecraft": "1.21.1",
@@ -53,6 +56,40 @@ WRAPPER_FILES = (
 )
 
 
+def _is_within(path: Path, root: Path) -> bool:
+    try:
+        path.relative_to(root)
+    except ValueError:
+        return False
+    return True
+
+
+def _trusted_input_path(value, *, label):
+    workspace = Path.cwd().resolve()
+    raw = Path(value)
+    candidate = raw.resolve(strict=True) if raw.is_absolute() else (workspace / raw).resolve(strict=True)
+    repo_root = REPO_ROOT.resolve()
+    if not (_is_within(candidate, workspace) or _is_within(candidate, repo_root)):
+        raise ValueError(f"{label} must stay inside the current workspace or Factory repository")
+    return candidate
+
+
+def _workspace_output_path(value, *, label):
+    workspace = Path.cwd().resolve()
+    raw = Path(value)
+    candidate = raw.resolve(strict=False) if raw.is_absolute() else (workspace / raw).resolve(strict=False)
+    if candidate == workspace or not _is_within(candidate, workspace):
+        raise ValueError(f"{label} must stay inside workspace: {workspace}")
+    return candidate
+
+
+def _contained_child(root: Path, relative: str, *, label):
+    candidate = (root / relative).resolve(strict=False)
+    if candidate == root or not _is_within(candidate, root):
+        raise ValueError(f"{label} escapes generated project root")
+    return candidate
+
+
 def _load_json(path: Path) -> dict[str, Any]:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
@@ -73,6 +110,18 @@ def _require_nonempty_string(mapping: dict[str, Any], key: str) -> str:
 def _validate_line_value(label: str, value: str) -> None:
     if "\n" in value or "\r" in value:
         raise ValueError(f"{label} must be a single line")
+
+
+def _validate_mod_spec_schema(mod_spec: dict[str, Any]) -> None:
+    spec = importlib.util.spec_from_file_location("factory_i1_validator", I1_VALIDATOR)
+    if spec is None or spec.loader is None:
+        raise ValueError("cannot load canonical I1 validator")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    schema = json.loads(MOD_SPEC_SCHEMA.read_text(encoding="utf-8"))
+    errors = module.validate_instance(schema, mod_spec)
+    if errors:
+        raise ValueError("mod spec schema validation failed: " + "; ".join(errors))
 
 
 def _validate_inputs(mod_spec: dict[str, Any], config: dict[str, Any]) -> None:
@@ -193,7 +242,7 @@ def _validate_wrapper_authority() -> None:
 def _copy_wrapper_files(output: Path) -> None:
     for source_relative, output_relative in WRAPPER_FILES:
         source = WRAPPER_AUTHORITY / source_relative
-        destination = output / output_relative
+        destination = _contained_child(output, output_relative, label=f"wrapper output {output_relative}")
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, destination)
 
@@ -203,9 +252,9 @@ def generate_project(
     scaffold_config_path: Path | str,
     output_dir: Path | str,
 ) -> Path:
-    mod_spec_path = Path(mod_spec_path)
-    scaffold_config_path = Path(scaffold_config_path)
-    output = Path(output_dir)
+    mod_spec_path = _trusted_input_path(mod_spec_path, label="mod spec")
+    scaffold_config_path = _trusted_input_path(scaffold_config_path, label="scaffold config")
+    output = _workspace_output_path(output_dir, label="scaffold output")
 
     _validate_wrapper_authority()
 
@@ -217,6 +266,7 @@ def generate_project(
 
     mod_spec = _load_json(mod_spec_path)
     config = _load_json(scaffold_config_path)
+    _validate_mod_spec_schema(mod_spec)
     _validate_inputs(mod_spec, config)
     values = _replacement_values(mod_spec, config)
 
@@ -228,7 +278,8 @@ def generate_project(
         if not template_path.is_file():
             raise ValueError(f"canonical template missing: {template_name}")
         rendered = _render(template_path.read_text(encoding="utf-8"), values, template_name)
-        destination = output / _output_for_template(template_name, values)
+        output_relative = _output_for_template(template_name, values)
+        destination = _contained_child(output, output_relative, label=f"template output {template_name}")
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(rendered, encoding="utf-8", newline="\n")
 

@@ -1,3 +1,4 @@
+import contextlib
 import importlib.util
 import inspect
 import json
@@ -52,7 +53,10 @@ class I3ModScaffolderContractTest(unittest.TestCase):
 
     def generate(self, output):
         module = self.require_scaffolder()
-        module.generate_project(MOD_SPEC, SCAFFOLD_CONFIG, output)
+        output = Path(output)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        with contextlib.chdir(output.parent):
+            module.generate_project(MOD_SPEC, SCAFFOLD_CONFIG, Path(output.name))
         return output
 
     def test_scaffolder_production_entrypoint_exists(self):
@@ -83,8 +87,9 @@ class I3ModScaffolderContractTest(unittest.TestCase):
         module = self.require_scaffolder()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            first = module.generate_project(MOD_SPEC, SCAFFOLD_CONFIG, root / "first")
-            second = module.generate_project(MOD_SPEC, SCAFFOLD_CONFIG, root / "second")
+            with contextlib.chdir(root):
+                first = module.generate_project(MOD_SPEC, SCAFFOLD_CONFIG, Path("first"))
+                second = module.generate_project(MOD_SPEC, SCAFFOLD_CONFIG, Path("second"))
             self.assertEqual(file_map(first), file_map(second))
 
     def test_non_empty_target_is_rejected_without_overwrite(self):
@@ -94,8 +99,9 @@ class I3ModScaffolderContractTest(unittest.TestCase):
             target.mkdir()
             marker = target / "keep.txt"
             marker.write_text("preserve", encoding="utf-8")
-            with self.assertRaises(FileExistsError):
-                module.generate_project(MOD_SPEC, SCAFFOLD_CONFIG, target)
+            with contextlib.chdir(Path(tmp)):
+                with self.assertRaises(FileExistsError):
+                    module.generate_project(MOD_SPEC, SCAFFOLD_CONFIG, Path("existing"))
             self.assertEqual("preserve", marker.read_text(encoding="utf-8"))
 
     def test_generated_project_uses_exact_audited_stack_and_no_optional_providers(self):
@@ -158,8 +164,9 @@ class I3ModScaffolderContractTest(unittest.TestCase):
             drifted["identity"]["target"]["neoforge"] = "21.1.247"
             drifted_path = root / "drifted-mod-spec.json"
             drifted_path.write_text(json.dumps(drifted), encoding="utf-8")
-            with self.assertRaises(ValueError):
-                module.generate_project(drifted_path, SCAFFOLD_CONFIG, root / "output")
+            with contextlib.chdir(root):
+                with self.assertRaises(ValueError):
+                    module.generate_project(Path("drifted-mod-spec.json"), SCAFFOLD_CONFIG, Path("output"))
 
     def test_missing_explicit_java_identity_is_rejected_instead_of_guessed(self):
         module = self.require_scaffolder()
@@ -169,8 +176,9 @@ class I3ModScaffolderContractTest(unittest.TestCase):
             incomplete.pop("java_package")
             incomplete_path = root / "incomplete-scaffold-config.json"
             incomplete_path.write_text(json.dumps(incomplete), encoding="utf-8")
-            with self.assertRaises(ValueError):
-                module.generate_project(MOD_SPEC, incomplete_path, root / "output")
+            with contextlib.chdir(root):
+                with self.assertRaises(ValueError):
+                    module.generate_project(MOD_SPEC, Path("incomplete-scaffold-config.json"), Path("output"))
 
     def test_no_unresolved_template_tokens_remain(self):
         with tempfile.TemporaryDirectory() as tmp:

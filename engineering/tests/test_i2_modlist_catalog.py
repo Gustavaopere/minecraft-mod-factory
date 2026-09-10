@@ -1,3 +1,4 @@
+import contextlib
 import importlib.util
 import json
 import tempfile
@@ -133,15 +134,16 @@ class I2PhysicalModlistCatalogTest(unittest.TestCase):
             root = Path(tmp)
             snapshot_path = root / "snapshot.json"
             provider_path = root / "providers.json"
-            manifest = module.write_persisted_snapshot(snapshot, snapshot_path, shard_size=2)
-            self.assertEqual(len(snapshot["entries"]), manifest["entry_count"])
-            self.assertGreater(len(manifest["entry_shards"]), 1)
-            loaded = module.load_persisted_snapshot(snapshot_path)
-            self.assertEqual(snapshot, loaded)
-            providers = module.build_persisted_provider_catalog(loaded)
-            provider_path.write_text(json.dumps(providers), encoding="utf-8")
-            self.assertEqual([], module.validate_persisted_provider_catalog(loaded, providers))
-            self.assertEqual(len(module.build_provider_catalog(loaded)), providers["provider_count"])
+            with contextlib.chdir(root):
+                manifest = module.write_persisted_snapshot(snapshot, snapshot_path, shard_size=2)
+                self.assertEqual(len(snapshot["entries"]), manifest["entry_count"])
+                self.assertGreater(len(manifest["entry_shards"]), 1)
+                loaded = module.load_persisted_snapshot(snapshot_path)
+                self.assertEqual(snapshot, loaded)
+                providers = module.build_persisted_provider_catalog(loaded)
+                provider_path.write_text(json.dumps(providers), encoding="utf-8")
+                self.assertEqual([], module.validate_persisted_provider_catalog(loaded, providers))
+                self.assertEqual(len(module.build_provider_catalog(loaded)), providers["provider_count"])
 
 
 if __name__ == "__main__":
