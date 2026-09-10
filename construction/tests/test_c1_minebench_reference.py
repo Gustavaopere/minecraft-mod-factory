@@ -59,6 +59,13 @@ class ConstructionC1MineBenchReferenceTest(unittest.TestCase):
         self.assertNotIn("POSTGRES_PASSWORD: minebench", workflow)
         self.assertNotIn("postgresql://minebench:minebench@", workflow)
 
+    def test_workflow_revalidates_c1b_on_main_push(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn(
+            "push:\n    branches:\n      - main\n      - feat/construction-c1-minebench-reference",
+            workflow,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
