@@ -18,12 +18,14 @@ ASSET_HANDOFF_SCHEMA = ENGINEERING / "schemas" / "asset-handoff.schema.json"
 JAVA_PACKAGE_RE = re.compile(r"(?m)^\s*package\s+([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)\s*;")
 JAVA_CLASS_RE = re.compile(r"\b(?:class|record|enum|interface)\s+([A-Za-z_$][\w$]*)\b")
 MOD_ID_LITERAL_RE = re.compile(r'\bMOD_ID\s*=\s*"([a-z][a-z0-9_]{1,63})"')
+MOD_ANNOTATION_LITERAL_RE = re.compile(r'@Mod\(\s*"([a-z][a-z0-9_]{1,63})"\s*\)')
 RESOURCE_NAMESPACE_RE = re.compile(r"^[a-z0-9_.-]+$")
 RESOURCE_PATH_RE = re.compile(r"^[a-z0-9/._-]+$")
 SECTION_HEADER_RE = re.compile(r"(?m)^\s*\[\[([^\]]+)\]\]\s*")
 CLIENT_ONLY_TOKENS = (
     "net.minecraft.client",
     "com.mojang.blaze3d",
+    "net.neoforged.neoforge.client",
 )
 
 
@@ -124,11 +126,22 @@ def validate_mod_id(project_root: Path, mod_spec_path: Path) -> list[str]:
         errors.append(f"gradle.properties mod_id {actual_property!r} does not match Mod Spec {expected!r}")
 
     literal_ids: set[str] = set()
+    annotation_ids: set[str] = set()
+    has_unresolved_mod_annotation = False
     for source in _java_sources(project_root):
-        literal_ids.update(MOD_ID_LITERAL_RE.findall(source.read_text(encoding="utf-8")))
+        source_text = source.read_text(encoding="utf-8")
+        literal_ids.update(MOD_ID_LITERAL_RE.findall(source_text))
+        annotation_ids.update(MOD_ANNOTATION_LITERAL_RE.findall(source_text))
+        if "@Mod(" in source_text and not MOD_ANNOTATION_LITERAL_RE.search(source_text):
+            has_unresolved_mod_annotation = True
     for literal in sorted(literal_ids):
         if literal != expected:
             errors.append(f"Java MOD_ID {literal!r} does not match Mod Spec {expected!r}")
+    for annotation_id in sorted(annotation_ids):
+        if annotation_id != expected:
+            errors.append(f"Java @Mod id {annotation_id!r} does not match Mod Spec {expected!r}")
+    if has_unresolved_mod_annotation and not literal_ids:
+        errors.append("Java @Mod identifier is not a literal and no MOD_ID literal is available for validation")
 
     metadata = _metadata_path(project_root)
     if not metadata.is_file():
@@ -207,25 +220,33 @@ def validate_dependencies(project_root: Path, mod_spec_path: Path) -> list[str]:
 
 
 def validate_resource_paths(project_root: Path) -> list[str]:
-    resources = Path(project_root) / "src" / "main" / "resources"
-    if not resources.is_dir():
-        return [f"missing resource root {resources}"]
+    project_root = Path(project_root)
+    main_resources = project_root / "src" / "main" / "resources"
+    if not main_resources.is_dir():
+        return [f"missing resource root {main_resources}"]
+    resource_roots = (
+        main_resources,
+        project_root / "src" / "generated" / "resources",
+    )
     errors: list[str] = []
-    for domain in ("assets", "data"):
-        domain_root = resources / domain
-        if not domain_root.exists():
+    for resources in resource_roots:
+        if not resources.is_dir():
             continue
-        for path in sorted(p for p in domain_root.rglob("*") if p.is_file()):
-            relative = path.relative_to(domain_root).as_posix()
-            parts = relative.split("/", 1)
-            if len(parts) != 2:
-                errors.append(f"{path}: resource must be under {domain}/<namespace>/<path>")
+        for domain in ("assets", "data"):
+            domain_root = resources / domain
+            if not domain_root.exists():
                 continue
-            namespace, resource_path = parts
-            if RESOURCE_NAMESPACE_RE.fullmatch(namespace) is None:
-                errors.append(f"{path}: invalid resource namespace {namespace!r}")
-            if RESOURCE_PATH_RE.fullmatch(resource_path) is None:
-                errors.append(f"{path}: invalid ResourceLocation path {resource_path!r}")
+            for path in sorted(p for p in domain_root.rglob("*") if p.is_file()):
+                relative = path.relative_to(domain_root).as_posix()
+                parts = relative.split("/", 1)
+                if len(parts) != 2:
+                    errors.append(f"{path}: resource must be under {domain}/<namespace>/<path>")
+                    continue
+                namespace, resource_path = parts
+                if RESOURCE_NAMESPACE_RE.fullmatch(namespace) is None:
+                    errors.append(f"{path}: invalid resource namespace {namespace!r}")
+                if RESOURCE_PATH_RE.fullmatch(resource_path) is None:
+                    errors.append(f"{path}: invalid ResourceLocation path {resource_path!r}")
     return errors
 
 
@@ -342,6 +363,19 @@ def validate_datagen_drift(project_root: Path) -> list[str]:
         if result.returncode != 0:
             output = result.stdout.strip()
             errors.append(f"datagen drift: {label} failed" + (f": {output}" if output else ""))
+
+    status = subprocess.run(
+        ["git", "status", "--porcelain", "--untracked-files=all"],
+        cwd=project_root,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    if status.returncode != 0:
+        errors.append(f"datagen drift: git status failed: {status.stdout.strip()}")
+    elif status.stdout.strip():
+        errors.append(f"datagen drift: working tree is not clean: {status.stdout.strip()}")
     return errors
 
 
