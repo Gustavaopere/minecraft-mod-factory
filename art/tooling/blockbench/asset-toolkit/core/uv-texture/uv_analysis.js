@@ -11,6 +11,8 @@ const FACE_AXES = Object.freeze({
   down: [0, 2],
 });
 
+function compareText(left, right) { return String(left).localeCompare(String(right), 'en', {sensitivity: 'variant', numeric: false}); }
+
 function issue(code, message, context) {
   return Object.freeze({severity: 'error', code, message, context: context || null});
 }
@@ -77,7 +79,7 @@ function analyzeUvLayout(project) {
     const cubeId = normalizedName(element?.uuid) || normalizedName(element?.name) || '<unnamed>';
     const cubeName = normalizedName(element?.name) || '<unnamed>';
 
-    for (const faceName of Object.keys(elementFaces).sort()) {
+    for (const faceName of Object.keys(elementFaces).sort(compareText)) {
       const face = elementFaces[faceName];
       if (!face || face.enabled === false) continue;
       const context = Object.freeze({cubeId, face: faceName});
@@ -122,7 +124,7 @@ function analyzeUvLayout(project) {
     }
   }
 
-  faces.sort((a, b) => faceKey(a).localeCompare(faceKey(b)));
+  faces.sort((a, b) => faceKey(a).localeCompare(faceKey(b), 'en', {sensitivity: 'variant', numeric: false}));
   const overlaps = [];
   for (let left = 0; left < faces.length; left += 1) {
     for (let right = left + 1; right < faces.length; right += 1) {
