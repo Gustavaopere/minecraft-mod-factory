@@ -2,6 +2,8 @@ import copy
 import hashlib
 import importlib.util
 import json
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -25,6 +27,18 @@ def _load_validator():
     assert spec.loader is not None
     spec.loader.exec_module(module)
     return module
+
+
+def _run_cli(workspace: Path, manifest: Path, *extra: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, str(SCRIPT), str(manifest), *extra],
+        cwd=workspace,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        timeout=10,
+        check=False,
+    )
 
 
 class I6AssetHandoffContractTest(unittest.TestCase):
@@ -151,6 +165,80 @@ class I6AssetHandoffContractTest(unittest.TestCase):
             )
             self.assertTrue(any("source_sha256" in error for error in errors), errors)
             self.assertTrue(any("delivery_sha256" in error for error in errors), errors)
+
+    @unittest.skipUnless(SCRIPT_EXISTS, "I6 production validator not implemented yet")
+    def test_cli_rejects_manifest_outside_current_workspace(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            outside_manifest = root / "outside-manifest.json"
+            outside_manifest.write_text(EXAMPLE_PATH.read_text(encoding="utf-8"), encoding="utf-8")
+
+            result = _run_cli(workspace, outside_manifest)
+
+            self.assertNotEqual(0, result.returncode, result.stdout)
+            self.assertIn("workspace", result.stdout.lower())
+
+    @unittest.skipUnless(SCRIPT_EXISTS, "I6 production validator not implemented yet")
+    def test_cli_rejects_source_root_outside_current_workspace(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            outside_source = root / "outside-source"
+            source_file = outside_source / "textures" / "machine.png"
+            source_file.parent.mkdir(parents=True)
+            payload = b"fixture-texture-bytes"
+            source_file.write_bytes(payload)
+            digest = hashlib.sha256(payload).hexdigest()
+            manifest_path = workspace / "manifest.json"
+            manifest_path.write_text(
+                json.dumps(self._resolved_fixture(digest), indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+
+            result = _run_cli(
+                workspace,
+                manifest_path,
+                "--source-root",
+                str(outside_source),
+                "--source-revision",
+                "a" * 40,
+            )
+
+            self.assertNotEqual(0, result.returncode, result.stdout)
+            self.assertIn("workspace", result.stdout.lower())
+
+    @unittest.skipUnless(SCRIPT_EXISTS, "I6 production validator not implemented yet")
+    def test_cli_rejects_runtime_root_outside_current_workspace(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            outside_runtime = root / "outside-runtime"
+            runtime_file = outside_runtime / "src" / "main" / "resources" / "assets" / "example_mod" / "textures" / "block" / "machine.png"
+            runtime_file.parent.mkdir(parents=True)
+            payload = b"fixture-texture-bytes"
+            runtime_file.write_bytes(payload)
+            digest = hashlib.sha256(payload).hexdigest()
+            manifest_path = workspace / "manifest.json"
+            manifest_path.write_text(
+                json.dumps(self._resolved_fixture(digest), indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+
+            result = _run_cli(
+                workspace,
+                manifest_path,
+                "--runtime-root",
+                str(outside_runtime),
+                "--source-revision",
+                "a" * 40,
+            )
+
+            self.assertNotEqual(0, result.returncode, result.stdout)
+            self.assertIn("workspace", result.stdout.lower())
 
     def _resolved_fixture(self, digest):
         manifest = copy.deepcopy(_load_json(EXAMPLE_PATH))
