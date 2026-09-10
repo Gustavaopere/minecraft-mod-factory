@@ -19,6 +19,8 @@ jobs:
   materialize:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - name: Checkout Factory branch
         uses: actions/checkout@v4
@@ -84,12 +86,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet && test -z "$(git ls-files --others --exclude-standard)"; then
+          git add art skills migration/provenance
+          if git diff --cached --quiet; then
             echo 'No materialization changes to commit.'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add art skills migration/provenance
           git commit -m 'feat(migration): materialize full historical skill tree'
           git push origin HEAD:feat/full-skill-migration
