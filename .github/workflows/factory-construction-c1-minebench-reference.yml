@@ -26,7 +26,7 @@ jobs:
         image: postgres:16
         env:
           POSTGRES_USER: minebench
-          POSTGRES_PASSWORD: minebench
+          POSTGRES_PASSWORD: ${{ github.run_id }}-${{ github.run_attempt }}
           POSTGRES_DB: minebench_ci
         ports:
           - 5432:5432
@@ -79,16 +79,16 @@ jobs:
       - name: Run MineBench regression and integration tests
         working-directory: construction/upstream/references/minebench
         env:
-          DATABASE_URL: postgresql://minebench:minebench@localhost:5432/minebench_ci
-          DIRECT_URL: postgresql://minebench:minebench@localhost:5432/minebench_ci
-          MINEBENCH_TEST_DATABASE_URL: postgresql://minebench:minebench@localhost:5432/minebench_ci
+          DATABASE_URL: postgresql://minebench:${{ github.run_id }}-${{ github.run_attempt }}@localhost:5432/minebench_ci
+          DIRECT_URL: postgresql://minebench:${{ github.run_id }}-${{ github.run_attempt }}@localhost:5432/minebench_ci
+          MINEBENCH_TEST_DATABASE_URL: postgresql://minebench:${{ github.run_id }}-${{ github.run_attempt }}@localhost:5432/minebench_ci
         run: pnpm test && pnpm test:integration
 
       - name: Run MineBench production build
         working-directory: construction/upstream/references/minebench
         env:
-          DATABASE_URL: postgresql://minebench:minebench@localhost:5432/minebench_ci
-          DIRECT_URL: postgresql://minebench:minebench@localhost:5432/minebench_ci
+          DATABASE_URL: postgresql://minebench:${{ github.run_id }}-${{ github.run_attempt }}@localhost:5432/minebench_ci
+          DIRECT_URL: postgresql://minebench:${{ github.run_id }}-${{ github.run_attempt }}@localhost:5432/minebench_ci
         run: pnpm build
 
       - name: Run C0 regression
