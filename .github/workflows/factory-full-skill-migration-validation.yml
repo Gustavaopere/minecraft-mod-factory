@@ -71,3 +71,35 @@ jobs:
 
       - name: Validate M5 neutral Toolkit naming
         run: python -m unittest migration/full-skill-migration/test_m5_naming.py -v
+
+  migrated-skill-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout Factory
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate migrated skill repository, Toolkit and Golden Samples
+        run: python skills/scripts/validate_skill_repository.py
+
+      - name: Install MCP sidecar dependencies
+        working-directory: art/tooling/blockbench/asset-toolkit/mcp-sidecar
+        run: npm ci
+
+      - name: Check MCP sidecar
+        working-directory: art/tooling/blockbench/asset-toolkit/mcp-sidecar
+        run: npm run check
+
+      - name: Test MCP sidecar
+        working-directory: art/tooling/blockbench/asset-toolkit/mcp-sidecar
+        run: npm test
