@@ -8,6 +8,7 @@ function compareText(left, right) {
   const rightText = String(right);
   const localized = leftText.localeCompare(rightText, 'en', {sensitivity: 'variant', numeric: false});
   if (localized !== 0) return localized;
+  // Distinct Unicode strings can collate equally; code-unit order keeps canonical hashing total.
   if (leftText < rightText) return -1;
   if (leftText > rightText) return 1;
   return 0;
