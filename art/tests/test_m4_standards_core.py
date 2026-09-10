@@ -50,6 +50,14 @@ class M4StandardsCoreTest(unittest.TestCase):
         self.assertEqual("2ecea4178aa7ac80f99955ab045e296da25376ec", data["source_revision"])
         self.assertEqual(sorted(validator.REQUIRED_STANDARDS), sorted(item["destination"].split("/")[-1] for item in data["files"]))
 
+    def test_git_blob_sha_uses_git_plumbing_without_direct_sha1(self):
+        source = SCRIPT.read_text(encoding="utf-8")
+        self.assertNotIn("hashlib.sha1", source)
+        self.assertEqual(
+            "47d05ff6403c8e6c3cf635ea6eb9263738432773",
+            validator._git_blob_sha(b"payload"),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
