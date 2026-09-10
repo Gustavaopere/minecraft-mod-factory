@@ -1,0 +1,42 @@
+name: Factory Art M4 Templates
+
+on:
+  push:
+    branches:
+      - main
+      - feat/m4-art-templates-migration
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'art/templates/**'
+      - 'art/tooling/validate-m4-art-templates.py'
+      - 'art/tests/test_m4_art_templates.py'
+      - 'migration/M4-ART-TEMPLATES-PROVENANCE.json'
+      - '.github/workflows/factory-art-m4-templates.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  art-templates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate M4 art templates
+        run: python3 art/tooling/validate-m4-art-templates.py
+
+      - name: Run M4 art template regressions
+        run: python3 -m unittest art/tests/test_m4_art_templates.py
+
+      - name: Check whitespace
+        run: git diff --check HEAD^
