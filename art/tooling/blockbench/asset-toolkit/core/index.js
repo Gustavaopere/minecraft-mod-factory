@@ -2,6 +2,7 @@
 
 const projectModel = require('./project-model/project_model.js');
 const mutations = require('./mutations/mutation_engine.js');
+const animation = require('./animation/animation_engine.js');
 const uvTexture = require('./uv-texture/uv_texture_engine.js');
 const uvAnalysis = require('./uv-texture/uv_analysis.js');
 const uvPack = require('./uv-texture/uv_pack.js');
@@ -16,6 +17,7 @@ module.exports = Object.assign(
   {},
   projectModel,
   mutations,
+  animation,
   uvTexture,
   uvAnalysis,
   uvPack,
