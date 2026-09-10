@@ -30,5 +30,13 @@ jobs:
           fetch-depth: 2
       - name: Run I4 engineering validator contract tests
         run: python3 -m unittest engineering/tests/test_i4_engineering_validators.py
-      - name: Check whitespace
-        run: git diff --check HEAD^
+      - name: Check I4 whitespace
+        run: >-
+          git diff --check HEAD^ --
+          .github/workflows/factory-engineering-i4-validators.yml
+          engineering/tooling/validators
+          engineering/tests/test_i4_engineering_validators.py
+          'engineering/tests/fixtures/i4-*.json'
+          engineering/tests/golden/i3-golden-mod
+          engineering/schemas
+          engineering/tooling/validate-i1-foundation.py

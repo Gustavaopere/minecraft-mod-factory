@@ -38,5 +38,11 @@ jobs:
       - name: Run M4 art template regressions
         run: python3 -m unittest art/tests/test_m4_art_templates.py
 
-      - name: Check whitespace
-        run: git diff --check HEAD^
+      - name: Check M4 template whitespace
+        run: >-
+          git diff --check HEAD^ --
+          art/templates
+          art/tooling/validate-m4-art-templates.py
+          art/tests/test_m4_art_templates.py
+          migration/M4-ART-TEMPLATES-PROVENANCE.json
+          .github/workflows/factory-art-m4-templates.yml

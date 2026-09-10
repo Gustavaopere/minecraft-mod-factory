@@ -39,5 +39,12 @@ jobs:
       - name: Run M4 visual style provenance regressions
         run: python3 -m unittest art/tests/test_m4_visual_style_provenance.py
 
-      - name: Check whitespace
-        run: git diff --check HEAD^
+      - name: Check M4 visual style whitespace
+        run: >-
+          git diff --check HEAD^ --
+          art/VISUAL-STYLE-BIBLE.md
+          art/provenance
+          art/tooling/validate-m4-visual-style-provenance.py
+          art/tests/test_m4_visual_style_provenance.py
+          migration/M4-VISUAL-STYLE-PROVENANCE.json
+          .github/workflows/factory-art-m4-visual-style-provenance.yml
