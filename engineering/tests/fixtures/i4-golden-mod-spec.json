@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "identity": {
+    "name": "I4 Golden Validator Mod",
+    "mod_id": "i3_golden_mod",
+    "repository": "UNRESOLVED",
+    "target": {
+      "minecraft": "1.21.1",
+      "loader": "neoforge",
+      "neoforge": "21.1.248",
+      "java": 21
+    }
+  },
+  "purpose": {
+    "fantasy": "Synthetic validation fixture for the canonical engineering validator suite.",
+    "player_problem": "Prove structural drift is rejected before runtime implementation.",
+    "core_loop": [
+      "Validate the generated I3 project against canonical engineering contracts"
+    ],
+    "non_goals": [
+      "Provide production gameplay or artistic assets"
+    ]
+  },
+  "dependencies": {
+    "required": [],
+    "optional": [],
+    "incompatible": [],
+    "profiles": []
+  },
+  "systems": {
+    "blocks": [],
+    "items": [],
+    "machines": [],
+    "entities": [],
+    "worldgen": [],
+    "ui": [],
+    "networking": [],
+    "progression": [],
+    "integrations": []
+  },
+  "visual": {
+    "repo_textura_package": "UNRESOLVED",
+    "provider_profiles": [],
+    "required_assets": [],
+    "handoff_manifest": "engineering/tests/fixtures/i4-golden-asset-handoff.json"
+  },
+  "data": {
+    "persistence": [],
+    "recipes": [],
+    "tags": [],
+    "data_maps": [],
+    "configs": []
+  },
+  "testing": {
+    "unit": "PENDING",
+    "gametest": "PENDING",
+    "client": "PENDING",
+    "dedicated_server": "PENDING",
+    "multiplayer": "PENDING",
+    "performance": "PENDING",
+    "manifest": "UNRESOLVED"
+  },
+  "release": {
+    "versioning": "semver",
+    "distribution": [
+      "synthetic-test-only"
+    ],
+    "license": "MIT",
+    "state": "PENDING"
+  },
+  "evidence": {
+    "state": "PENDING",
+    "sources": [
+      "synthetic I4 validator fixture"
+    ],
+    "open_questions": []
+  }
+}
