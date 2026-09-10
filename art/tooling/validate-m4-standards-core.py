@@ -48,20 +48,10 @@ FORBIDDEN_STANDARD_TOKENS = (
 
 
 def _git_blob_sha(data: bytes) -> str:
-    result = subprocess.run(
-        ["git", "hash-object", "--stdin"],
-        input=data,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-    )
-    if result.returncode != 0:
-        stderr = result.stderr.decode("utf-8", errors="replace").strip()
-        raise RuntimeError(f"git hash-object failed: {stderr or f'exit {result.returncode}'}")
     try:
-        object_id = result.stdout.decode("ascii").strip()
-    except UnicodeDecodeError as exc:
-        raise RuntimeError("git hash-object returned a non-ASCII object id") from exc
+        object_id = subprocess.check_output(["git", "hash-object", "--stdin"], input=data).decode("ascii").strip()
+    except (subprocess.CalledProcessError, UnicodeDecodeError) as exc:
+        raise RuntimeError("git hash-object failed") from exc
     if len(object_id) != 40 or any(char not in "0123456789abcdef" for char in object_id):
         raise RuntimeError(f"git hash-object returned an invalid blob id: {object_id!r}")
     return object_id
