@@ -57,12 +57,7 @@ function validateExternalRequires() {
 
 function indent(source, spaces) {
   const prefix = ' '.repeat(spaces);
-  return source
-    .replace(/\r\n/g, '\n')
-    .replace(/\s+$/, '')
-    .split('\n')
-    .map((line) => line.trim().length === 0 ? '' : `${prefix}${line}`)
-    .join('\n');
+  return source.replace(/\r\n/g, '\n').replace(/\s+$/, '').split('\n').map((line) => `${prefix}${line}`).join('\n');
 }
 
 function buildBundle() {
