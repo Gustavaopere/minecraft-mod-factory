@@ -1,47 +1,38 @@
 # STATUS — Construction
 
 UPDATED_AT=2026-09-10
-PHASE=C1_SCHEMATICA_PRESERVATION_READY_FOR_FINAL_STATUS_REVALIDATION
+PHASE=C1_MINEBENCH_REFERENCE_RED_PREPARATION
 REPOSITORY=Gustavaopere/minecraft-mod-factory
-BRANCH=feat/construction-c1-schematica-upstream
-BASE_SHA=8e65289223d4b8a5728fa735a6d72b30a5e4b52e
+BRANCH=feat/construction-c1-minebench-reference
+BASE_SHA=ef991e103f65f0d81967bb0cc1c2592f8c85ccc5
 C0_PR=19
 C0_MERGE_SHA=a850627e1a9e012221e4fbabeeb50c22880af51f
-C0_PR_GATE=PASS
-C0_GOVERNANCE=PASS
-C0_SONARCLOUD=PASS
-C1_RED_HEAD=860bfac3150586629a478d4403842b2392915565
-C1_RED_RUN=34522613247
-C1_FIRST_INTEGRATION_HEAD=658afa45b6d223a68474073f86e39e4b440c787d
-C1_FIRST_INTEGRATION_RUN=34522703336
-C1_FIRST_INTEGRATION_RESULT=492_PASS_6_FAIL_MISSING_SCIPY
-C1_FIRST_GREEN_HEAD=868f0de33607eb4cad6112b4a37f2bdcb35b1a0d
-C1_FIRST_GREEN_RUN=34522954895
-C1_FIRST_GREEN_UPSTREAM_TESTS=498_PASS_0_FAIL
-C1_VERIFIED_HEAD=d2dfda928c781edf538244464652de6285b72448
-C1_VERIFIED_RUN=34533871548
-C1_VERIFIED_UPSTREAM_TESTS=498_PASS_0_FAIL
-C1_VERIFIED_C0_RUN=34533871577
-C1_VERIFIED_C0=PASS
-C1_VERIFIED_GOVERNANCE_RUN=34533871496
-C1_VERIFIED_GOVERNANCE=PASS
-C1_VERIFIED_SONARCLOUD_CHECK=103060979745
-C1_VERIFIED_SONARCLOUD=PASS_0_NEW_ISSUES_0_HOTSPOTS
-C1_REVIEW_THREAD=PRRT_kwDOUUL3Ts6hOZca
-C1_REVIEW_THREAD_STATE=RESOLVED
+C1A_PR=20
+C1A_MERGE_SHA=ef991e103f65f0d81967bb0cc1c2592f8c85ccc5
+C1A_FINAL_PR_HEAD=3937c63b4146945bc253f0cafdea81d9fe8a3011
+C1A_FINAL_PR_RUN=34534056579
+C1A_FINAL_PR_UPSTREAM_TESTS=498_PASS_0_FAIL
+C1A_POSTMERGE_RUN=34534279311
+C1A_POSTMERGE_UPSTREAM_TESTS=498_PASS_0_FAIL
+C1A_POSTMERGE_C0_CHECK=103062132492
+C1A_POSTMERGE_C0=PASS
+C1A_POSTMERGE_GOVERNANCE_RUN=34534279229
+C1A_POSTMERGE_GOVERNANCE=PASS
+C1A_POSTMERGE_SONARCLOUD=GLOBAL_FAIL_EXTERNAL_TO_CONSTRUCTION
+GLOBAL_SONAR_SECURITY_REMEDIATION_PR=23
+GLOBAL_SONAR_RELIABILITY_REMEDIATION_PR=22
 HEAD_SHA=RESOLVE_FROM_GIT
-OPEN_PR=20
+OPEN_PR=NONE
 TARGET_MINECRAFT=1.21.1
 TARGET_LOADER=NeoForge
+TARGET_NEOFORGE=21.1.248
 CANONICAL_OUTPUT=SPONGE_SCHEMATIC_V3
 LATEST_MODLIST_SNAPSHOT=2026-09-09_595_TOP_LEVEL
 MANUAL_ACTION_REQUIRED=NO
-BLOCKERS=NONE
-NEXT_ACTION=REVALIDATE_STATUS_ONLY_HEAD_THEN_MERGE_PR_20_IF_ALL_GATES_PASS
+BLOCKERS=NONE_IN_CONSTRUCTION
+NEXT_ACTION=AUTHOR_C1B_RED_CONTRACT_AND_WORKFLOW
 
-## C1A target
-
-Preserve Schematica exactly as audited upstream source using a Git submodule/gitlink. The Factory superproject must not contain an editable copied Schematica payload.
+## C1A — Schematica preservation
 
 UPSTREAM_REPOSITORY=tester2024/schematica
 UPSTREAM_URL=https://github.com/tester2024/schematica.git
@@ -55,35 +46,62 @@ TEST_HARNESS_LOCK_PACKAGES=33
 TEST_HARNESS_PIP_REQUIRE_HASHES=YES
 TEST_HARNESS_PIP_NO_DEPS=YES
 
-## C1A hardening
+C1A is merged. The Factory superproject tracks only the exact Schematica gitlink; the upstream source remains unchanged. C0 accepts initialized materializable submodules while continuing to reject copied payloads and symlink escapes. The C1 harness uses a fully resolved SHA-256 dependency lock and executes Schematica from the immutable source through `PYTHONPATH`.
 
-The Factory-owned C1 harness installs a fully resolved 33-package test environment from exact versions with SHA-256 hashes using `pip --require-hashes --no-deps`. Schematica itself is not installed editable and is executed directly from the immutable snapshot through `PYTHONPATH`.
+The PR head passed C0, C1, Governance and SonarCloud. On merged `main`, C1, 498/498 upstream tests, standalone C0 and Governance passed again. The later branch-level Sonar failure is global repository debt outside `construction/`; current remediation is already owned by concurrent PRs #22 and #23 and is not duplicated here.
 
-The two Sonar findings were proven to belong to the Factory-owned workflow dependency installation commands, not to the upstream Schematica source. The unlocked install commands were removed rather than excluded from analysis. SonarCloud subsequently passed with zero new issues and zero security hotspots.
+### C1A acceptance
 
-C0 snapshot validation is submodule-aware: initialized materializable Git submodules are allowed, while copied/vendor payloads and symlink escapes remain rejected. C0 is executed after recursive submodule checkout both in its own workflow and inside the C1 gate.
+- [x] upstream commit resolves and declares MIT
+- [x] exact `.gitmodules` path and canonical URL
+- [x] gitlink mode `160000` and exact audited SHA
+- [x] no editable Schematica payload in the Factory superproject
+- [x] recursive C0 validation with initialized submodule
+- [x] copied/vendor payload rejection preserved
+- [x] fully pinned SHA-256 test dependency lock
+- [x] `pip --require-hashes --no-deps`
+- [x] unchanged upstream suite: 498/498
+- [x] PR-head C0, C1, Governance and Sonar PASS
+- [x] review thread resolved with regression evidence
+- [x] PR #20 merged
+- [x] post-merge C1 and 498/498 PASS
+- [x] post-merge standalone C0 PASS
+- [x] post-merge Governance PASS
+- [x] post-merge gitlink remains exact
+- [x] global post-merge Sonar debt classified as outside Construction and delegated to existing PRs #22/#23
 
-## C1A acceptance
+## C1B — MineBench engine reference
 
-- [x] upstream commit independently resolves on GitHub
-- [x] upstream package metadata declares MIT
-- [x] expected RED obtained before gitlink exists
-- [x] `.gitmodules` declares exact upstream URL and path
-- [x] gitlink mode is `160000`
-- [x] gitlink SHA equals audited upstream pin
-- [x] Factory superproject tracks no editable Schematica payload
-- [x] C0 accepts initialized materializable submodules and rejects copied payloads
-- [x] C0 workflow initializes submodules recursively
-- [x] C1 executes C0 regression after Schematica initialization
-- [x] test environment is fully version-pinned and SHA-256 hashed
-- [x] workflow uses `pip --require-hashes --no-deps`
-- [x] Schematica is executed from immutable source through `PYTHONPATH`
-- [x] upstream native tests pass unchanged: 498/498
-- [x] C0 regression passes on verified head
-- [x] C1 gate passes on verified head
-- [x] Governance passes on verified head
-- [x] SonarCloud passes on verified head with 0 new issues and 0 hotspots
-- [x] review thread about masked C0 regression is resolved with evidence
-- [ ] STATUS-only final head revalidation passes
-- [ ] PR #20 merged
-- [ ] post-merge `main` revalidation passes
+C1B preserves the audited MineBench source as an immutable engine reference. It does not yet introduce a Factory adapter, canonical Build IR, model-provider configuration, API credentials, generation behavior or runtime integration.
+
+UPSTREAM_REPOSITORY=Ammaar-Alam/minebench
+UPSTREAM_URL=https://github.com/Ammaar-Alam/minebench.git
+UPSTREAM_PIN=c96abbd4c4098aa9c264490c80a1c6544a64ba85
+UPSTREAM_PATH=construction/upstream/references/minebench
+UPSTREAM_POLICY=ENGINE_REFERENCE
+UPSTREAM_LICENSE_DECLARATION=MIT
+UPSTREAM_NODE=24
+UPSTREAM_PACKAGE_MANAGER=pnpm@10.26.1
+UPSTREAM_LOCKFILE=pnpm-lock.yaml
+UPSTREAM_INSTALL=pnpm install --frozen-lockfile
+
+The upstream repository defines native quality gates for lint, regression tests, PostgreSQL-backed integration tests and production build. C1B will reproduce only those gates with local CI dependencies and no provider credentials. All Factory-owned GitHub Actions dependencies must remain commit-pinned.
+
+### C1B acceptance
+
+- [x] pinned upstream commit independently resolves
+- [x] upstream license independently confirmed MIT
+- [x] upstream package manager and frozen lockfile identified
+- [x] upstream native CI gates audited
+- [x] path selected under `upstream/references/`, preserving the `ENGINE_REFERENCE` boundary
+- [ ] C1B preservation contract authored
+- [ ] C1B dedicated workflow authored
+- [ ] expected RED captured before MineBench gitlink exists
+- [ ] `.gitmodules` declares exact MineBench URL and path
+- [ ] MineBench gitlink mode is `160000`
+- [ ] MineBench gitlink SHA equals audited upstream pin
+- [ ] recursive checkout resolves exact upstream pin
+- [ ] upstream reproducible gates pass without external model/provider credentials
+- [ ] prior Schematica/C0 regressions remain green
+- [ ] Governance passes
+- [ ] Sonar introduces no new Construction-owned issue
