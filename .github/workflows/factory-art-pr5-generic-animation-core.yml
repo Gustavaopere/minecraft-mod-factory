@@ -11,7 +11,7 @@ on:
       - '.github/workflows/factory-art-pr5-generic-animation-core.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   generic-animation-core:
@@ -32,6 +32,20 @@ jobs:
       - name: PR5 bundle and plugin integration
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.bundle_live_bridge.test.js
+      - name: Regenerate committed standalone bundle
+        if: github.event_name == 'push' && github.ref == 'refs/heads/feat/art-pr5-generic-animation-core'
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: |
+          node build_toolkit_bundle.js --write
+          if git diff --quiet -- asset_toolkit.js; then
+            echo 'Standalone bundle already current.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add asset_toolkit.js
+          git commit -m 'chore(art): regenerate standalone animation bundle'
+          git push origin HEAD:feat/art-pr5-generic-animation-core
       - name: Existing Toolkit regression suite
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.test.js asset_toolkit.mutations.test.js asset_toolkit.uv_pack.test.js asset_toolkit.texture_create_import.test.js asset_toolkit.texture_create_import_adapter.test.js asset_toolkit.texture_paint_region.test.js asset_toolkit.uv_island_masks.test.js asset_toolkit.palette_sampling.test.js asset_toolkit.texture_acceptance.test.js
