@@ -1,0 +1,21 @@
+# Asset Brief
+
+- Asset ID:
+- Owner/repositório:
+- Função de gameplay/apresentação:
+- Contextos de visualização:
+- Referências project-owned/canônicas:
+- Referências de terceiros permitidas (somente linguagem, não cópia):
+- Silhueta em uma frase:
+- Shape language:
+- Paleta/materials:
+- Escala Minecraft:
+- Resolução/texel density escolhida + evidência:
+- Emissive/translucency/animated texture:
+- Bones/attachments necessários:
+- Animações necessárias:
+- VFX/audio associados:
+- Performance/concurrency esperada:
+- Proveniência/licença:
+- Evidência final exigida:
+- Pendências:

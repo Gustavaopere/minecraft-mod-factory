@@ -1,0 +1,24 @@
+# Spell Production Brief
+
+- Spell/ability ID:
+- Gameplay provider/owner:
+- Authoritative cast boundary:
+- Authoritative resolve/impact boundary:
+- Resource/mana/cost authority:
+- Cooldown authority:
+- Cast time/channel rules:
+- Targeting rules:
+- Damage/effect owner:
+- Cast pose/animation:
+- Model/construct/projectile requirement:
+- VFX brief:
+- Audio cue sheet:
+- Camera/hit feedback:
+- Accessibility:
+- Prediction policy:
+- Multiplayer dedup/causality:
+- Cancel/death/logout/dimension/chunk cleanup:
+- Dedicated-server separation:
+- Performance/concurrency scenario:
+- Acceptance evidence:
+- Pendências/fail-closed conditions:

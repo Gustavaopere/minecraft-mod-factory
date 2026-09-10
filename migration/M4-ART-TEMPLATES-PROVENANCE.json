@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "migration_wave": "M4_ART_TEMPLATES",
+  "classification": "MIGRATE_ADAPTED",
+  "source_repository": "Gustavaopere/neoforge-rpg-skilltree",
+  "source_revision": "2ecea4178aa7ac80f99955ab045e296da25376ec",
+  "destination_repository": "Gustavaopere/minecraft-mod-factory",
+  "destination_authority": "art/templates/",
+  "matrix_reconciliation": {
+    "matrix_named_path": "PROJECT-INSTRUCTIONS/skills/templates/VISUAL-QA-CHECKLIST.md",
+    "matrix_named_path_state": "ABSENT",
+    "physical_source_path": "PROJECT-INSTRUCTIONS/skills/templates/VISUAL-QA.md",
+    "resolution": "PHYSICAL_TREE_WINS",
+    "templates_readme_state": "ABSENT",
+    "blockbench_specialization_state": "ABSENT"
+  },
+  "files": [
+    {
+      "source": "PROJECT-INSTRUCTIONS/skills/templates/ANIMATION-BRIEF.md",
+      "source_blob_sha": "efc7357301e109639a760bbda22eaafdd8c6a267",
+      "destination": "art/templates/ANIMATION-BRIEF.md",
+      "adaptation_mode": "NEUTRALIZE_PROVIDER_EXAMPLES_KEEP_EVIDENCE_REQUIREMENT"
+    },
+    {
+      "source": "PROJECT-INSTRUCTIONS/skills/templates/ASSET-BRIEF.md",
+      "source_blob_sha": "2be877eb332c8b56f4d2a152d89426c4ea2ad875",
+      "destination": "art/templates/ASSET-BRIEF.md",
+      "adaptation_mode": "CANONICAL_RELOCATION_WITH_FACTORY_AUTHORITY_CONTEXT"
+    },
+    {
+      "source": "PROJECT-INSTRUCTIONS/skills/templates/AUDIO-CUE-SHEET.md",
+      "source_blob_sha": "1c010f6379276291484ef278426635525161b3d0",
+      "destination": "art/templates/AUDIO-CUE-SHEET.md",
+      "adaptation_mode": "NEUTRALIZE_MODPACK_MIX_TO_TARGET_RUNTIME_MIX"
+    },
+    {
+      "source": "PROJECT-INSTRUCTIONS/skills/templates/MODEL-BRIEF.md",
+      "source_blob_sha": "c02894b55948d43c53283e14b45d21784c970c01",
+      "destination": "art/templates/MODEL-BRIEF.md",
+      "adaptation_mode": "PRESERVE_NATIVE_BBMODEL_SOURCE_AND_EVIDENCE_FIELDS"
+    },
+    {
+      "source": "PROJECT-INSTRUCTIONS/skills/templates/SPELL-BRIEF.md",
+      "source_blob_sha": "35854860642e2ebd2a0d871b61422fc8b4c63b01",
+      "destination": "art/templates/SPELL-BRIEF.md",
+      "adaptation_mode": "PRESERVE_GAMEPLAY_AUTHORITY_AND_FAIL_CLOSED_FIELDS"
+    },
+    {
+      "source": "PROJECT-INSTRUCTIONS/skills/templates/VFX-BRIEF.md",
+      "source_blob_sha": "7db8337b8f567557ff3edfd2a8026a9e413facc9",
+      "destination": "art/templates/VFX-BRIEF.md",
+      "adaptation_mode": "PRESERVE_PROVIDER_EVIDENCE_AND_QA_FIELDS"
+    },
+    {
+      "source": "PROJECT-INSTRUCTIONS/skills/templates/VISUAL-QA.md",
+      "source_blob_sha": "d3f9d57c2bc2f51237693d2622f6ec3bf881a286",
+      "destination": "art/templates/VISUAL-QA.md",
+      "adaptation_mode": "PHYSICAL_TREE_PATH_WINS_PRESERVE_VISUAL_EVIDENCE_SEMANTICS"
+    }
+  ]
+}
