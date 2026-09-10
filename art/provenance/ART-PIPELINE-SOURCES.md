@@ -1,6 +1,6 @@
 # Art Pipeline — Technical Sources
 
-Historical source check: 2026-09-07.  
+Historical source check: 2026-09-07.
 Factory migration audit: 2026-09-10.
 
 This file records upstream evidence used to author the visual pipeline. It is not version authority over the physical modlist or any runtime repository. Current version-sensitive decisions follow `../../skills/VERSION-AUTHORITY.md`.
