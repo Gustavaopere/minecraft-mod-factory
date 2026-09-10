@@ -76,18 +76,7 @@ class I6AssetHandoffContractTest(unittest.TestCase):
     def test_fully_resolved_fixture_passes_schema_semantics_hashes_and_revision(self):
         validator = _load_validator()
         with tempfile.TemporaryDirectory() as td:
-            root = Path(td)
-            source_root = root / "source"
-            runtime_root = root / "runtime"
-            source_file = source_root / "textures" / "machine.png"
-            runtime_file = runtime_root / "src" / "main" / "resources" / "assets" / "example_mod" / "textures" / "block" / "machine.png"
-            source_file.parent.mkdir(parents=True)
-            runtime_file.parent.mkdir(parents=True)
-            payload = b"fixture-texture-bytes"
-            source_file.write_bytes(payload)
-            runtime_file.write_bytes(payload)
-            digest = hashlib.sha256(payload).hexdigest()
-
+            source_root, runtime_root, digest = self._materialize_artifact_pair(Path(td))
             manifest = self._resolved_fixture(digest)
             errors = validator.validate_manifest_data(
                 manifest,
@@ -147,15 +136,11 @@ class I6AssetHandoffContractTest(unittest.TestCase):
     def test_hash_mismatch_is_fail_closed_when_roots_are_available(self):
         validator = _load_validator()
         with tempfile.TemporaryDirectory() as td:
-            root = Path(td)
-            source_root = root / "source"
-            runtime_root = root / "runtime"
-            source_file = source_root / "textures" / "machine.png"
-            runtime_file = runtime_root / "src" / "main" / "resources" / "assets" / "example_mod" / "textures" / "block" / "machine.png"
-            source_file.parent.mkdir(parents=True)
-            runtime_file.parent.mkdir(parents=True)
-            source_file.write_bytes(b"source")
-            runtime_file.write_bytes(b"runtime")
+            source_root, runtime_root, _ = self._materialize_artifact_pair(
+                Path(td),
+                source_payload=b"source",
+                runtime_payload=b"runtime",
+            )
             manifest = self._resolved_fixture("0" * 64)
             errors = validator.validate_manifest_data(
                 manifest,
@@ -214,17 +199,7 @@ class I6AssetHandoffContractTest(unittest.TestCase):
     def test_asset_formats_must_match_source_and_delivery_path_suffixes(self):
         validator = _load_validator()
         with tempfile.TemporaryDirectory() as td:
-            root = Path(td)
-            source_root = root / "source"
-            runtime_root = root / "runtime"
-            source_file = source_root / "textures" / "machine.png"
-            runtime_file = runtime_root / "src" / "main" / "resources" / "assets" / "example_mod" / "textures" / "block" / "machine.png"
-            source_file.parent.mkdir(parents=True)
-            runtime_file.parent.mkdir(parents=True)
-            payload = b"fixture-texture-bytes"
-            source_file.write_bytes(payload)
-            runtime_file.write_bytes(payload)
-            digest = hashlib.sha256(payload).hexdigest()
+            source_root, runtime_root, digest = self._materialize_artifact_pair(Path(td))
             manifest = self._resolved_fixture(digest)
             artifact = manifest["artifacts"][0]
             artifact["source_format"] = ".bbmodel"
@@ -268,68 +243,70 @@ class I6AssetHandoffContractTest(unittest.TestCase):
 
             result = _run_cli(workspace, outside_manifest)
 
-            self.assertNotEqual(0, result.returncode, result.stdout)
-            self.assertIn("workspace", result.stdout.lower())
+            self._assert_workspace_rejected(result)
 
     @unittest.skipUnless(SCRIPT_EXISTS, "I6 production validator not implemented yet")
     def test_cli_rejects_source_root_outside_current_workspace(self):
-        with tempfile.TemporaryDirectory() as td:
-            root = Path(td)
-            workspace = root / "workspace"
-            workspace.mkdir()
-            outside_source = root / "outside-source"
-            source_file = outside_source / "textures" / "machine.png"
-            source_file.parent.mkdir(parents=True)
-            payload = b"fixture-texture-bytes"
-            source_file.write_bytes(payload)
-            digest = hashlib.sha256(payload).hexdigest()
-            manifest_path = workspace / "manifest.json"
-            manifest_path.write_text(
-                json.dumps(self._resolved_fixture(digest), indent=2, sort_keys=True) + "\n",
-                encoding="utf-8",
-            )
-
-            result = _run_cli(
-                workspace,
-                manifest_path,
-                "--source-root",
-                str(outside_source),
-                "--source-revision",
-                "a" * 40,
-            )
-
-            self.assertNotEqual(0, result.returncode, result.stdout)
-            self.assertIn("workspace", result.stdout.lower())
+        self._assert_outside_root_rejected(
+            option="--source-root",
+            outside_name="outside-source",
+            relative_file=Path("textures/machine.png"),
+        )
 
     @unittest.skipUnless(SCRIPT_EXISTS, "I6 production validator not implemented yet")
     def test_cli_rejects_runtime_root_outside_current_workspace(self):
+        self._assert_outside_root_rejected(
+            option="--runtime-root",
+            outside_name="outside-runtime",
+            relative_file=Path("src/main/resources/assets/example_mod/textures/block/machine.png"),
+        )
+
+    def _materialize_artifact_pair(
+        self,
+        root: Path,
+        *,
+        source_payload: bytes = b"fixture-texture-bytes",
+        runtime_payload: bytes | None = None,
+    ) -> tuple[Path, Path, str]:
+        source_root = root / "source"
+        runtime_root = root / "runtime"
+        source_file = source_root / "textures" / "machine.png"
+        runtime_file = runtime_root / "src" / "main" / "resources" / "assets" / "example_mod" / "textures" / "block" / "machine.png"
+        source_file.parent.mkdir(parents=True)
+        runtime_file.parent.mkdir(parents=True)
+        source_file.write_bytes(source_payload)
+        runtime_file.write_bytes(source_payload if runtime_payload is None else runtime_payload)
+        return source_root, runtime_root, hashlib.sha256(source_payload).hexdigest()
+
+    def _assert_outside_root_rejected(self, *, option: str, outside_name: str, relative_file: Path) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             workspace = root / "workspace"
             workspace.mkdir()
-            outside_runtime = root / "outside-runtime"
-            runtime_file = outside_runtime / "src" / "main" / "resources" / "assets" / "example_mod" / "textures" / "block" / "machine.png"
-            runtime_file.parent.mkdir(parents=True)
+            outside_root = root / outside_name
+            payload_file = outside_root / relative_file
+            payload_file.parent.mkdir(parents=True)
             payload = b"fixture-texture-bytes"
-            runtime_file.write_bytes(payload)
+            payload_file.write_bytes(payload)
             digest = hashlib.sha256(payload).hexdigest()
             manifest_path = workspace / "manifest.json"
             manifest_path.write_text(
                 json.dumps(self._resolved_fixture(digest), indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
             )
-
             result = _run_cli(
                 workspace,
                 manifest_path,
-                "--runtime-root",
-                str(outside_runtime),
+                option,
+                str(outside_root),
                 "--source-revision",
                 "a" * 40,
             )
+            self._assert_workspace_rejected(result)
 
-            self.assertNotEqual(0, result.returncode, result.stdout)
-            self.assertIn("workspace", result.stdout.lower())
+    def _assert_workspace_rejected(self, result: subprocess.CompletedProcess[str]) -> None:
+        self.assertNotEqual(0, result.returncode, result.stdout)
+        self.assertIn("workspace", result.stdout.lower())
 
     def _resolved_fixture(self, digest):
         manifest = copy.deepcopy(_load_json(EXAMPLE_PATH))
