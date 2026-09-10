@@ -1,0 +1,43 @@
+name: Factory Art M4 Visual Style Provenance
+
+on:
+  push:
+    branches:
+      - main
+      - feat/m4-visual-style-provenance-migration
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'art/VISUAL-STYLE-BIBLE.md'
+      - 'art/provenance/**'
+      - 'art/tooling/validate-m4-visual-style-provenance.py'
+      - 'art/tests/test_m4_visual_style_provenance.py'
+      - 'migration/M4-VISUAL-STYLE-PROVENANCE.json'
+      - '.github/workflows/factory-art-m4-visual-style-provenance.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  visual-style-provenance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate M4 visual style provenance
+        run: python3 art/tooling/validate-m4-visual-style-provenance.py
+
+      - name: Run M4 visual style provenance regressions
+        run: python3 -m unittest art/tests/test_m4_visual_style_provenance.py
+
+      - name: Check whitespace
+        run: git diff --check HEAD^
