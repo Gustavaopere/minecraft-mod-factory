@@ -1,0 +1,53 @@
+name: TEMP E3 I2 Symlink Green
+
+on:
+  push:
+    branches:
+      - feat/f3-e3-i2-i3-migration
+    paths:
+      - '.github/workflows/temp-e3-i2-symlink-green.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/f3-e3-i2-i3-migration
+          fetch-depth: 2
+
+      - name: Apply provider sibling containment GREEN
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('engineering/tooling/import-physical-modlist.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''    if emit_providers:\n        provider_path = output_path.with_name(f"{output_path.stem}.providers.json")\n        provider_catalog = build_persisted_provider_catalog(snapshot)\n        provider_path.write_bytes(_json_bytes(provider_catalog))\n'''
+          new = '''    if emit_providers:\n        provider_path = _workspace_path(\n            output_path.with_name(f"{output_path.stem}.providers.json"),\n            label="provider catalog output",\n            must_exist=False,\n        )\n        provider_catalog = build_persisted_provider_catalog(snapshot)\n        provider_path.write_bytes(_json_bytes(provider_catalog))\n'''
+          if old not in text:
+              raise SystemExit('expected provider sibling block not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+      - name: Run I2 tests
+        run: >-
+          python3 -m unittest
+          engineering/tests/test_i2_modlist_catalog.py
+          engineering/tests/test_i2_security_review.py
+
+      - name: Check whitespace
+        run: git diff --check
+
+      - name: Commit production GREEN only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add engineering/tooling/import-physical-modlist.py
+          git diff --cached --quiet && exit 0
+          git commit -m "fix(engineering): contain derived provider catalog path"
+          git push origin HEAD:feat/f3-e3-i2-i3-migration
