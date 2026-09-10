@@ -14,9 +14,13 @@ ROOT = Path(__file__).resolve().parents[2]
 MIGRATION = ROOT / "migration/full-skill-migration"
 FULL_SKILL_WORKFLOW = ROOT / ".github/workflows/factory-full-skill-migration-validation.yml"
 FULL_SKILL_MATERIALIZER = ROOT / ".github/workflows/factory-full-skill-materialize.yml"
+FULL_SKILL_MANIFEST = ROOT / "migration/provenance/FULL-SKILL-MIGRATION-MANIFEST.json"
 SONAR_PROPERTIES = ROOT / ".sonarcloud.properties"
 GENERATED_BUNDLE = "art/tooling/blockbench/asset-toolkit/asset_toolkit.js"
 SOURCE_EXACT_VERIFY_PROJECT = "skills/library/minecraft-neoforge-engineering/scripts/verify_project.py"
+VENDORED_JS_YAML = "skills/library/minecraft-ci-release/scripts/vendor/js-yaml.min.cjs"
+NON_AUTHORITATIVE_CLASSIFICATIONS = {"REFERENCE_ONLY", "SUPERSEDED"}
+SONAR_EXECUTABLE_SUFFIXES = {".py", ".js", ".mjs", ".cjs", ".sh"}
 PR4_ONE_SHOTS = (
     ROOT / ".github/workflows/factory-fix-pr4-green-command-once.yml",
     ROOT / ".github/workflows/factory-pr4-texture-compare-apply.yml",
@@ -135,9 +139,45 @@ class SonarHardeningContractTest(unittest.TestCase):
             key, value = line.split("=", 1)
             properties[key.strip()] = [item.strip() for item in value.split(",") if item.strip()]
 
+        manifest = json.loads(FULL_SKILL_MANIFEST.read_text(encoding="utf-8"))
+        historical_executable_exclusions = {
+            entry["destination"]
+            for entry in manifest["entries"]
+            if entry["classification"] in NON_AUTHORITATIVE_CLASSIFICATIONS
+            and entry["materialization_mode"] == "SOURCE_EXACT"
+            and entry["destination"].startswith("migration/provenance/historical-skills/")
+            and Path(entry["destination"]).suffix in SONAR_EXECUTABLE_SUFFIXES
+        }
+        self.assertTrue(historical_executable_exclusions, "manifest must expose preserved non-authoritative executable provenance")
+
+        active_vendor = next(entry for entry in manifest["entries"] if entry["destination"] == VENDORED_JS_YAML)
+        historical_vendor = next(
+            entry
+            for entry in manifest["entries"]
+            if entry["destination"] == "migration/provenance/historical-skills/library/minecraft-plugin-dev/scripts/vendor/js-yaml.min.cjs"
+        )
+        self.assertEqual(active_vendor["materialization_mode"], "SOURCE_EXACT")
+        self.assertEqual(active_vendor["source_blob_sha"], historical_vendor["source_blob_sha"], "vendored js-yaml copies must remain byte-identical provenance")
+
+        expected_exclusions = {
+            GENERATED_BUNDLE,
+            SOURCE_EXACT_VERIFY_PROJECT,
+            VENDORED_JS_YAML,
+            *historical_executable_exclusions,
+        }
         exclusions = set(properties.get("sonar.exclusions", []))
-        self.assertEqual(exclusions, {GENERATED_BUNDLE, SOURCE_EXACT_VERIFY_PROJECT})
+        self.assertEqual(exclusions, expected_exclusions)
         self.assertTrue(all("*" not in path for path in exclusions), "automatic-analysis exclusions must be exact paths")
+        for path in exclusions:
+            self.assertTrue((ROOT / path).is_file(), f"Sonar exclusion must resolve to a real file: {path}")
+
+        canonical_authorities = {
+            "migration/full-skill-migration/validate.py",
+            "migration/full-skill-migration/check_whitespace.py",
+            "skills/scripts/validate_skill_repository.py",
+            "art/tooling/blockbench/asset-toolkit/core/validator/validator.js",
+        }
+        self.assertTrue(exclusions.isdisjoint(canonical_authorities), "Factory-authored canonical authorities must remain analyzed")
 
     def test_active_mcp_install_disables_lifecycle_scripts(self) -> None:
         workflow = FULL_SKILL_WORKFLOW.read_text(encoding="utf-8")
