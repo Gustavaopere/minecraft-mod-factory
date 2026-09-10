@@ -42,6 +42,7 @@ TEXT_TEMPLATES = {
     "settings.gradle.tmpl": "settings.gradle",
     "gradle.properties.tmpl": "gradle.properties",
     "build.gradle.tmpl": "build.gradle",
+    "gradle.lockfile.tmpl": "gradle.lockfile",
     "neoforge.mods.toml.tmpl": "src/main/resources/META-INF/neoforge.mods.toml",
     "MainMod.java.tmpl": None,
     "ClientMod.java.tmpl": None,
