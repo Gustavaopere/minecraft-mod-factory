@@ -12,6 +12,7 @@ MOD_SPEC = ROOT / "engineering" / "tests" / "fixtures" / "i3-golden-mod-spec.jso
 SCAFFOLD_CONFIG = ROOT / "engineering" / "tests" / "fixtures" / "i3-golden-scaffold-config.json"
 BUILD_TEMPLATE = ROOT / "engineering" / "templates" / "neoforge-mod" / "build.gradle.tmpl"
 CI_TEMPLATE = ROOT / "engineering" / "templates" / "neoforge-mod" / "ci.yml.tmpl"
+GOLDEN = ROOT / "engineering" / "tests" / "golden" / "i3-golden-mod"
 
 
 def load_scaffolder():
@@ -81,6 +82,29 @@ class I3SecurityAndReviewContractTest(unittest.TestCase):
                 r"^[^@\s]+@[0-9a-f]{40}(?:\s+#.*)?$",
                 f"I3 RED: remote action must use immutable 40-hex SHA: {action}",
             )
+
+    def test_generated_project_enables_dependency_locking_and_carries_lock_state(self):
+        template = BUILD_TEMPLATE.read_text(encoding="utf-8")
+        self.assertIn(
+            "dependencyLocking",
+            template,
+            "I3 RED: canonical build must enable Gradle dependency locking",
+        )
+        self.assertIn(
+            "lockAllConfigurations()",
+            template,
+            "I3 RED: canonical build must lock every resolvable project configuration",
+        )
+        golden_lock = GOLDEN / "gradle.lockfile"
+        self.assertTrue(golden_lock.is_file(), "I3 RED: checked-in Golden gradle.lockfile is missing")
+        self.assertGreater(golden_lock.stat().st_size, 0, "I3 RED: Golden gradle.lockfile must not be empty")
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            with contextlib.chdir(workspace):
+                generated = self.module.generate_project(MOD_SPEC, SCAFFOLD_CONFIG, Path("generated"))
+            generated_lock = generated / "gradle.lockfile"
+            self.assertTrue(generated_lock.is_file(), "I3 RED: generated project must carry canonical gradle.lockfile")
+            self.assertEqual(golden_lock.read_bytes(), generated_lock.read_bytes())
 
 
 if __name__ == "__main__":
