@@ -1,0 +1,56 @@
+name: Factory Full Skill Migration Validation
+
+on:
+  push:
+    branches:
+      - feat/full-skill-migration
+    paths:
+      - 'migration/full-skill-migration/**'
+      - 'migration/provenance/**'
+      - 'skills/**'
+      - 'art/**'
+      - '.github/workflows/factory-full-skill-migration-validation.yml'
+  pull_request:
+    paths:
+      - 'migration/full-skill-migration/**'
+      - 'migration/provenance/**'
+      - 'skills/**'
+      - 'art/**'
+      - '.github/workflows/factory-full-skill-migration-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  full-skill-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Factory
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Checkout frozen historical skills source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/rpg-source
+          git init -q /tmp/rpg-source
+          git -C /tmp/rpg-source remote add origin https://github.com/Gustavaopere/neoforge-rpg-skilltree.git
+          git -C /tmp/rpg-source fetch --depth=1 origin 2ecea4178aa7ac80f99955ab045e296da25376ec
+          git -C /tmp/rpg-source checkout -q --detach FETCH_HEAD
+          test "$(git -C /tmp/rpg-source rev-parse HEAD)" = "2ecea4178aa7ac80f99955ab045e296da25376ec"
+
+      - name: Validate complete IMPLEMENTAR SKILL coverage
+        run: >-
+          python migration/full-skill-migration/validate.py
+          --source-root /tmp/rpg-source/PROJECT-INSTRUCTIONS/skills
+          --factory-root .
+
+      - name: Check whitespace
+        run: git diff --check HEAD^
