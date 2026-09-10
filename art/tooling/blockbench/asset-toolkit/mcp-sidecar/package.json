@@ -1,5 +1,5 @@
 {
-  "name": "@rpg-skilltree/asset-mcp-sidecar",
+  "name": "@minecraft-mod-factory/asset-mcp-sidecar",
   "version": "0.1.0",
   "private": true,
   "type": "module",
