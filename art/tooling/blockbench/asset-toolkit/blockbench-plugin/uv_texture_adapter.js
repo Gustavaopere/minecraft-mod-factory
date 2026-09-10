@@ -503,7 +503,7 @@ function prepareUvIslandPaint(operation) {
 
     for (const cube of cubes()) {
       const cubeFaces = cube?.faces && typeof cube.faces === 'object' ? cube.faces : {};
-      for (const faceName of Object.keys(cubeFaces).sort()) {
+      for (const faceName of Object.keys(cubeFaces).sort((left, right) => left.localeCompare(right, 'en', {sensitivity: 'variant', numeric: false}))) {
         const face = cubeFaces[faceName];
         if (!face || face.enabled === false || !faceUsesTexture(face, texture)) continue;
         faces.push(Object.freeze({

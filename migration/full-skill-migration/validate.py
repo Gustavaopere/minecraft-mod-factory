@@ -44,7 +44,7 @@ PREEXISTING_TEMPLATES = {"ANIMATION-BRIEF.md", "ASSET-BRIEF.md", "AUDIO-CUE-SHEE
 
 
 def git_blob_sha(data: bytes) -> str:
-    return hashlib.sha1(f"blob {len(data)}\0".encode("ascii") + data).hexdigest()
+    return hashlib.sha1(f"blob {len(data)}\0".encode("ascii") + data, usedforsecurity=False).hexdigest()
 
 
 def neutral_toolkit_rest(rest: str) -> str:

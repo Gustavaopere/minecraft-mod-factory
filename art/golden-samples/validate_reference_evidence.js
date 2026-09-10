@@ -355,9 +355,9 @@ runTabIndentationRegressionSelfTest();
 runTableBlockTerminationRegressionSelfTest();
 
 const allFiles = walk(ROOT);
-const actualFiles = allFiles.map(relativePath).sort();
+const actualFiles = allFiles.map(relativePath).sort((left, right) => left.localeCompare(right, 'en', {sensitivity: 'variant', numeric: false}));
 const unexpectedFiles = actualFiles.filter((relative) => !EXPECTED_FILES.has(relative));
-const missingFiles = [...EXPECTED_FILES].filter((relative) => !actualFiles.includes(relative)).sort();
+const missingFiles = [...EXPECTED_FILES].filter((relative) => !actualFiles.includes(relative)).sort((left, right) => left.localeCompare(right, 'en', {sensitivity: 'variant', numeric: false}));
 if (unexpectedFiles.length) fail(`reference-only corpus contains unexpected file(s): ${unexpectedFiles.join(', ')}`);
 if (missingFiles.length) fail(`reference-only corpus is missing allowlisted file(s): ${missingFiles.join(', ')}`);
 

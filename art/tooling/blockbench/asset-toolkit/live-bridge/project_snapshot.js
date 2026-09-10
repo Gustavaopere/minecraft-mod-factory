@@ -6,13 +6,14 @@ const {isLocatorLike, locatorPosition} = require('../core/project-model/project_
 function vec(value) { return Array.isArray(value) ? value.slice(0, 3).map((entry) => Number.isFinite(entry) ? entry : null) : null; }
 function vec2(value) { return Array.isArray(value) && value.length >= 2 ? value.slice(0, 2).map((entry) => Number.isFinite(entry) ? entry : null) : null; }
 function parentRef(value) { return value && typeof value === 'object' ? (value.uuid || value.name || null) : (typeof value === 'string' ? value : null); }
+function compareText(left, right) { return String(left).localeCompare(String(right), 'en', {sensitivity: 'variant', numeric: false}); }
 function sourceFile(savePath) {
   if (typeof savePath !== 'string' || !savePath) return null;
   return savePath.replace(/\\/g, '/').split('/').filter(Boolean).pop() || null;
 }
 function canonical(value) {
   if (Array.isArray(value)) return value.map(canonical);
-  if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonical(value[key])]));
+  if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort(compareText).map((key) => [key, canonical(value[key])]));
   return value;
 }
 function hashRevision(value) { return `sha256:${crypto.createHash('sha256').update(JSON.stringify(canonical(value))).digest('hex')}`; }
@@ -22,7 +23,7 @@ function groupSnapshot(group) {
 }
 function faceSnapshot(face) { return {enabled: face?.enabled !== false, texture: typeof face?.texture === 'string' ? face.texture : null, uv: Array.isArray(face?.uv) ? face.uv.slice(0, 4) : null}; }
 function elementSnapshot(element) {
-  const faces = element?.faces && typeof element.faces === 'object' ? Object.fromEntries(Object.keys(element.faces).sort().map((key) => [key, faceSnapshot(element.faces[key])])) : {};
+  const faces = element?.faces && typeof element.faces === 'object' ? Object.fromEntries(Object.keys(element.faces).sort(compareText).map((key) => [key, faceSnapshot(element.faces[key])])) : {};
   const snapshot = {name: element?.name || null, uuid: element?.uuid || null, from: vec(element?.from), to: vec(element?.to), origin: vec(element?.origin), parent: parentRef(element?.parent), faces};
   if (typeof element?.box_uv === 'boolean') snapshot.boxUv = element.box_uv;
   if (Array.isArray(element?.uv_offset)) snapshot.uvOffset = vec2(element.uv_offset);
@@ -35,7 +36,7 @@ function textureSnapshot(texture) {
   return snapshot;
 }
 function animationSnapshot(animation) {
-  return {name: animation?.name || null, uuid: animation?.uuid || null, length: Number.isFinite(animation?.length) ? animation.length : null, loop: animation?.loop || null, animatorTargets: animation?.animators && typeof animation.animators === 'object' ? Object.keys(animation.animators).sort() : []};
+  return {name: animation?.name || null, uuid: animation?.uuid || null, length: Number.isFinite(animation?.length) ? animation.length : null, loop: animation?.loop || null, animatorTargets: animation?.animators && typeof animation.animators === 'object' ? Object.keys(animation.animators).sort(compareText) : []};
 }
 
 function createProjectSnapshot(project) {
