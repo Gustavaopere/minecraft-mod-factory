@@ -60,6 +60,14 @@ function fakeAdapter(overrides = {}) {
   };
 }
 
+function confirmedBatch(adapter, overrides = {}) {
+  const preview = applyAnimationBatch(adapter, completeBatch({...overrides, dryRun: true}));
+  assert.equal(typeof preview.confirmationToken, 'string');
+  assert.match(preview.confirmationToken, /^animation:v1:[0-9a-f]{64}$/);
+  assert.ok(Array.isArray(preview.diff));
+  return completeBatch({...overrides, dryRun: false, confirmationToken: preview.confirmationToken});
+}
+
 test('PR5 contract accepts provider-agnostic animation CRUD, keyframes and abstract effect markers', () => {
   const batch = validateAnimationBatch(completeBatch());
   assert.equal(batch.operations.length, 8);
@@ -124,9 +132,40 @@ test('stale revision fails before preflight or Undo and dry-run remains mutation
   assert.equal(dry.events.some(([kind]) => ['begin', 'apply', 'finish', 'cancel'].includes(kind)), false);
 });
 
+test('Class C animation deletes require revision-bound dry-run diff and confirmation token', () => {
+  const deleteOperations = [
+    {type: 'animation_delete', animationId: 'anim-cast'},
+    {type: 'animation_delete_keyframe', animationId: 'anim-cast', keyframeId: 'kf-start'},
+    {type: 'animation_delete_effect_marker', animationId: 'anim-cast', markerId: 'marker-cast'},
+  ];
+
+  for (const operation of deleteOperations) {
+    const previewAdapter = fakeAdapter();
+    const preview = applyAnimationBatch(previewAdapter, completeBatch({operations: [operation], dryRun: true}));
+    assert.equal(preview.dryRun, true);
+    assert.deepEqual(preview.diff, [operation]);
+    assert.match(preview.confirmationToken, /^animation:v1:[0-9a-f]{64}$/);
+
+    const unconfirmed = fakeAdapter();
+    assert.throws(
+      () => applyAnimationBatch(unconfirmed, completeBatch({operations: [operation], dryRun: false})),
+      /ANIMATION_CONFIRMATION_REQUIRED/,
+    );
+    assert.equal(unconfirmed.events.some(([kind]) => ['begin', 'apply', 'finish', 'cancel'].includes(kind)), false);
+
+    const confirmed = fakeAdapter();
+    const result = applyAnimationBatch(confirmed, completeBatch({
+      operations: [operation],
+      confirmationToken: preview.confirmationToken,
+    }));
+    assert.equal(result.ok, true);
+    assert.equal(result.applied, 1);
+  }
+});
+
 test('animation mutation batch commits atomically and rolls back adapter failures', () => {
   const adapter = fakeAdapter();
-  const result = applyAnimationBatch(adapter, completeBatch());
+  const result = applyAnimationBatch(adapter, confirmedBatch(adapter));
   assert.equal(result.ok, true);
   assert.equal(result.applied, 8);
   assert.equal(result.beforeRevision, 'rev:1');
@@ -141,7 +180,7 @@ test('animation mutation batch commits atomically and rolls back adapter failure
       return operation.id || operation.animationId;
     },
   });
-  assert.throws(() => applyAnimationBatch(failing, completeBatch()), /synthetic animation failure/);
+  assert.throws(() => applyAnimationBatch(failing, confirmedBatch(failing)), /synthetic animation failure/);
   assert.deepEqual(failing.events.at(-1), ['cancel', true]);
   assert.equal(failing.events.some(([kind]) => kind === 'finish'), false);
 });
@@ -164,6 +203,24 @@ test('loop seam validation compares provider-neutral sampled poses deterministic
   assert.equal(fail.maxDelta, 2);
 });
 
+test('loop seam rotation uses shortest angular delta across full turns', () => {
+  const wrapped = validateLoopSeam({
+    startPose: {root: {rotation: [179, 0, 0]}},
+    endPose: {root: {rotation: [-179, 360, 0]}},
+    tolerance: 2,
+  });
+  assert.equal(wrapped.pass, true);
+  assert.equal(wrapped.maxDelta, 2);
+
+  const fullTurn = validateLoopSeam({
+    startPose: {root: {rotation: [0, 0, 0]}},
+    endPose: {root: {rotation: [360, -360, 720]}},
+    tolerance: 0,
+  });
+  assert.equal(fullTurn.pass, true);
+  assert.equal(fullTurn.maxDelta, 0);
+});
+
 test('foot-slide diagnostics fail closed when contact data is not measurable', () => {
   assert.deepEqual(diagnoseFootSlide({samples: []}), {
     measurable: false,
@@ -180,6 +237,18 @@ test('foot-slide diagnostics fail closed when contact data is not measurable', (
   assert.equal(result.measurable, true);
   assert.equal(result.plantedSamples, 2);
   assert.equal(result.distance, 0.03);
+});
+
+test('foot-slide diagnostics do not bridge separate planted contact intervals', () => {
+  const result = diagnoseFootSlide({samples: [
+    {time: 0, position: [0, 0, 0], planted: true},
+    {time: 0.1, position: [4, 0, 0], planted: false},
+    {time: 0.2, position: [10, 0, 0], planted: true},
+    {time: 0.3, position: [10.02, 0, 0], planted: true},
+  ]});
+  assert.equal(result.measurable, true);
+  assert.equal(result.plantedSamples, 3);
+  assert.equal(result.distance, 0.02);
 });
 
 test('preview, pose inspection and capture stay adapter-bound and read-only', () => {
