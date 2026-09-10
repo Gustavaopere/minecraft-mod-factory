@@ -1,0 +1,239 @@
+name: Factory PR4 Texture Compare Green Once
+
+on:
+  push:
+    branches:
+      - feat/full-skill-migration
+    paths:
+      - '.github/workflows/factory-pr4-texture-compare-green-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  green:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout Factory branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Apply stable read-only texture compare implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          adapter = Path('art/tooling/blockbench/asset-toolkit/blockbench-plugin/uv_texture_adapter.js')
+          text = adapter.read_text(encoding='utf-8')
+          if 'function compareTextures(input)' in text or '    compareTextures,\n' in text:
+              raise SystemExit('compareTextures already present; refusing duplicate implementation')
+
+          editable_marker = '  function requireEditableTexture(texture) {\n'
+          if text.count(editable_marker) != 1:
+              raise SystemExit(f'requireEditableTexture marker count={text.count(editable_marker)}')
+          readable = '''  function requireComparableTexture(texture) {
+            if (texture.layers_enabled === true) {
+              fail('LAYERED_TEXTURE_UNSUPPORTED', `Texture "${texture.uuid || texture.id}" uses layers; PR4 requires an explicit future layer target.`);
+            }
+            const ctx = texture.ctx;
+            if (!texture.canvas || !ctx || typeof ctx.getImageData !== 'function') {
+              fail('BLOCKBENCH_API_UNAVAILABLE', `Texture "${texture.uuid || texture.id}" does not expose a readable 2D canvas.`);
+            }
+            if (!Number.isSafeInteger(texture.width) || texture.width < 1 || !Number.isSafeInteger(texture.height) || texture.height < 1) {
+              fail('INVALID_TEXTURE_DIMENSIONS', `Texture "${texture.uuid || texture.id}" has invalid dimensions.`);
+            }
+            return texture;
+          }
+
+          '''
+          text = text.replace(editable_marker, readable + editable_marker, 1)
+
+          normalized_marker = '  function normalizedTextureRef(value) {\n'
+          if text.count(normalized_marker) != 1:
+              raise SystemExit(f'normalizedTextureRef marker count={text.count(normalized_marker)}')
+          compare = '''  function compareTextures(input) {
+            if (!input || typeof input !== 'object' || Array.isArray(input)) {
+              fail('INVALID_TEXTURE_COMPARE', 'Texture compare request must be an object.');
+            }
+            for (const key of Object.keys(input)) {
+              if (key !== 'leftTextureId' && key !== 'rightTextureId') {
+                fail('INVALID_TEXTURE_COMPARE', `Texture compare request contains unsupported field "${key}".`);
+              }
+            }
+            const leftTextureId = typeof input.leftTextureId === 'string' ? input.leftTextureId.trim() : '';
+            const rightTextureId = typeof input.rightTextureId === 'string' ? input.rightTextureId.trim() : '';
+            if (!leftTextureId || !rightTextureId) {
+              fail('INVALID_TEXTURE_ID', 'Texture compare requires non-empty leftTextureId and rightTextureId.');
+            }
+
+            const left = requireComparableTexture(requireTexture(leftTextureId));
+            const right = requireComparableTexture(requireTexture(rightTextureId));
+            const leftDimensions = Object.freeze({width: left.width, height: left.height});
+            const rightDimensions = Object.freeze({width: right.width, height: right.height});
+            const dimensionsEqual = left.width === right.width && left.height === right.height;
+            const projectRevision = getRevision();
+
+            if (!dimensionsEqual) {
+              return Object.freeze({
+                ok: true,
+                projectRevision,
+                leftTextureId,
+                rightTextureId,
+                leftDimensions,
+                rightDimensions,
+                dimensionsEqual: false,
+                equal: false,
+                comparedPixels: 0,
+                changedPixels: null,
+                changedBounds: null,
+              });
+            }
+
+            const comparedPixels = left.width * left.height;
+            if (!Number.isSafeInteger(comparedPixels) || comparedPixels > MAX_TEXTURE_PIXELS_PER_BATCH) {
+              fail('TEXTURE_PIXEL_BUDGET_EXCEEDED', `Texture compare may read ${comparedPixels} pixels; maximum is ${MAX_TEXTURE_PIXELS_PER_BATCH}.`);
+            }
+            const leftImage = left.ctx.getImageData(0, 0, left.width, left.height);
+            const rightImage = right.ctx.getImageData(0, 0, right.width, right.height);
+            const expectedBytes = comparedPixels * 4;
+            if (!leftImage?.data || leftImage.data.length !== expectedBytes || !rightImage?.data || rightImage.data.length !== expectedBytes) {
+              fail('BLOCKBENCH_API_UNAVAILABLE', 'Texture compare did not receive the expected RGBA bitmap data.');
+            }
+
+            let changedPixels = 0;
+            let minX = left.width;
+            let minY = left.height;
+            let maxX = -1;
+            let maxY = -1;
+            for (let pixelIndex = 0; pixelIndex < comparedPixels; pixelIndex += 1) {
+              const offset = pixelIndex * 4;
+              let changed = false;
+              for (let channel = 0; channel < 4; channel += 1) {
+                if (leftImage.data[offset + channel] !== rightImage.data[offset + channel]) {
+                  changed = true;
+                  break;
+                }
+              }
+              if (!changed) continue;
+              changedPixels += 1;
+              const x = pixelIndex % left.width;
+              const y = Math.floor(pixelIndex / left.width);
+              if (x < minX) minX = x;
+              if (y < minY) minY = y;
+              if (x > maxX) maxX = x;
+              if (y > maxY) maxY = y;
+            }
+            const changedBounds = changedPixels === 0 ? null : Object.freeze({
+              x: minX,
+              y: minY,
+              width: maxX - minX + 1,
+              height: maxY - minY + 1,
+            });
+
+            return Object.freeze({
+              ok: true,
+              projectRevision,
+              leftTextureId,
+              rightTextureId,
+              leftDimensions,
+              rightDimensions,
+              dimensionsEqual: true,
+              equal: changedPixels === 0,
+              comparedPixels,
+              changedPixels,
+              changedBounds,
+            });
+          }
+
+          '''
+          text = text.replace(normalized_marker, compare + normalized_marker, 1)
+
+          export_marker = '  return Object.freeze({\n    getRevision,\n    samplePalette,\n'
+          if text.count(export_marker) != 1:
+              raise SystemExit(f'adapter export marker count={text.count(export_marker)}')
+          text = text.replace(export_marker, '  return Object.freeze({\n    getRevision,\n    compareTextures,\n    samplePalette,\n', 1)
+          adapter.write_text(text, encoding='utf-8')
+
+          aggregate = Path('art/tooling/blockbench/asset-toolkit/asset_toolkit.test.js')
+          aggregate_text = aggregate.read_text(encoding='utf-8')
+          acceptance = "require('./asset_toolkit.texture_acceptance.test.js');"
+          if acceptance in aggregate_text:
+              raise SystemExit('texture acceptance already registered in aggregate')
+          marker = "require('./asset_toolkit.palette_sampling.test.js');"
+          if aggregate_text.count(marker) != 1:
+              raise SystemExit(f'aggregate palette marker count={aggregate_text.count(marker)}')
+          aggregate.write_text(aggregate_text.replace(marker, marker + '\n' + acceptance, 1) + ('' if aggregate_text.endswith('\n') else '\n'), encoding='utf-8')
+          PY
+
+      - name: Run targeted PR4 texture acceptance
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node --test asset_toolkit.texture_acceptance.test.js
+
+      - name: Regenerate standalone bundle
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node build_toolkit_bundle.js
+
+      - name: Verify deterministic standalone bundle
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node build_toolkit_bundle.js --check
+
+      - name: Run aggregate Toolkit regression
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node --test asset_toolkit.test.js
+
+      - name: Verify migrated skill repository and Golden Samples
+        run: python skills/scripts/validate_skill_repository.py
+
+      - name: Install MCP sidecar dependencies
+        working-directory: art/tooling/blockbench/asset-toolkit/mcp-sidecar
+        run: npm ci
+
+      - name: Check MCP sidecar
+        working-directory: art/tooling/blockbench/asset-toolkit/mcp-sidecar
+        run: npm run check
+
+      - name: Test MCP sidecar
+        working-directory: art/tooling/blockbench/asset-toolkit/mcp-sidecar
+        run: npm test
+
+      - name: Commit tested production and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/factory-pr4-texture-compare-green-once.yml
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            .github/workflows/factory-pr4-texture-compare-green-once.yml \
+            art/tooling/blockbench/asset-toolkit/blockbench-plugin/uv_texture_adapter.js \
+            art/tooling/blockbench/asset-toolkit/asset_toolkit.test.js \
+            art/tooling/blockbench/asset-toolkit/asset_toolkit.js
+          python - <<'PY'
+          import subprocess
+          expected = sorted([
+              '.github/workflows/factory-pr4-texture-compare-green-once.yml',
+              'art/tooling/blockbench/asset-toolkit/asset_toolkit.js',
+              'art/tooling/blockbench/asset-toolkit/asset_toolkit.test.js',
+              'art/tooling/blockbench/asset-toolkit/blockbench-plugin/uv_texture_adapter.js',
+          ])
+          actual = sorted(subprocess.check_output(['git', 'diff', '--cached', '--name-only'], text=True).splitlines())
+          if actual != expected:
+              raise SystemExit(f'unexpected staged paths: {actual!r}')
+          PY
+          git commit -m 'feat(blockbench): add deterministic texture compare'
+          git push origin HEAD:feat/full-skill-migration
