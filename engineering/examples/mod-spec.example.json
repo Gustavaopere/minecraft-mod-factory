@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "identity": {
+    "name": "Example Mod",
+    "mod_id": "example_mod",
+    "repository": "UNRESOLVED",
+    "target": {"minecraft": "1.21.1", "loader": "neoforge", "neoforge": "21.1.248", "java": 21}
+  },
+  "purpose": {
+    "fantasy": "Example-only contract fixture; not a production mod specification.",
+    "player_problem": "Demonstrate the canonical shape without asserting unverified design facts.",
+    "core_loop": ["UNRESOLVED"],
+    "non_goals": ["UNRESOLVED"]
+  },
+  "dependencies": {"required": [], "optional": [], "incompatible": [], "profiles": []},
+  "systems": {"blocks": [], "items": [], "machines": [], "entities": [], "worldgen": [], "ui": [], "networking": [], "progression": [], "integrations": []},
+  "visual": {"repo_textura_package": "UNRESOLVED", "provider_profiles": [], "required_assets": [], "handoff_manifest": "UNRESOLVED"},
+  "data": {"persistence": [], "recipes": [], "tags": [], "data_maps": [], "configs": []},
+  "testing": {
+    "unit": "PENDING",
+    "gametest": "PENDING",
+    "client": "PENDING",
+    "dedicated_server": "PENDING",
+    "multiplayer": "PENDING",
+    "performance": "PENDING",
+    "manifest": "engineering/examples/test-manifest.example.json"
+  },
+  "release": {"versioning": "UNRESOLVED", "distribution": ["UNRESOLVED"], "license": "UNRESOLVED", "state": "UNRESOLVED"},
+  "evidence": {"state": "UNRESOLVED", "sources": ["synthetic example fixture"], "open_questions": ["Replace every UNRESOLVED field with evidence before implementation."]}
+}
