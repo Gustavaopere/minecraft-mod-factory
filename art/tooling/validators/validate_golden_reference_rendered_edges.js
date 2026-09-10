@@ -3,6 +3,7 @@
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const {stripMarkdownLinks, parseFenceOpening, hasMarkdownReferenceDefinition} = require('./rendered_markdown_linear.js');
 
 const DEFAULT_ROOT = path.resolve(__dirname, '..', '..', 'golden-samples');
 const CANONICAL_STATUS = 'REFERENCE-ONLY — not a runtime registration and not evidence of shipped gameplay.';
@@ -28,10 +29,9 @@ function decodeBasicHtmlEntities(value) {
 }
 
 function normalizeRenderedText(value) {
-  return decodeBasicHtmlEntities(value)
-    .replace(/\\([!"#$%&'()*+,\-.\/:;<=>?@\[\]\\^_`{|}~])/g, '$1')
-    .replace(/!?\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/!?\[([^\]]+)\]\[[^\]]*\]/g, '$1')
+  const unescaped = decodeBasicHtmlEntities(value)
+    .replace(/\\([!"#$%&'()*+,\-.\/:;<=>?@\[\]\\^_`{|}~])/g, '$1');
+  return stripMarkdownLinks(unescaped)
     .replace(/<\/?[A-Za-z][^>]*>/g, '')
     .replace(/(^|[\s([{:;>\-])_{1,3}(?=\S)/g, '$1')
     .replace(/(\S)_{1,3}(?=$|[\s)\]}:;,.!?\-])/g, '$1')
@@ -47,14 +47,6 @@ function walk(dir) {
     else out.push(full);
   }
   return out;
-}
-
-function parseFenceOpening(line) {
-  const match = String(line || '').match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
-  if (!match) return null;
-  const character = match[1][0];
-  if (character === '`' && match[2].includes('`')) return null;
-  return {character, length: match[1].length};
 }
 
 function isFenceClosing(line, fence) {
@@ -160,14 +152,13 @@ function validateRoot(root) {
   const blockquoteContainer = /^\s*(?:(?:[-+*]|\d+[.)])\s+)*>\s?/;
   const commonmarkEscape = /\\[!"#$%&'()*+,\-.\/:;<=>?@\[\]\\^_`{|}~]/;
   const htmlEntityReference = /&(?:#x[0-9a-f]+|#\d+|[a-z][a-z0-9]+);/i;
-  const referenceDefinition = /^\s*(?:(?:[-+*]|\d+[.)])\s+)*\[[^\]]{1,999}\]:/m;
 
   for (const file of markdownFiles) {
     const relative = path.relative(root, file).split(path.sep).join('/');
     const source = fs.readFileSync(file, 'utf8');
     if (htmlEntityReference.test(source)) fail(`${relative} uses an HTML character reference; HTML entities are forbidden in the reference-only corpus because post-parse decoding can create Markdown-active HTML entity delimiters and hide guarded evidence, including entity-encoded backslashes`);
     if (commonmarkEscape.test(source)) fail(`${relative} uses a CommonMark backslash escape; punctuation escapes are forbidden in the reference-only corpus because they can change Markdown parsing before guarded-evidence validation`);
-    if (referenceDefinition.test(source)) fail(`${relative} uses a Markdown reference definition; reference definitions are forbidden in the reference-only corpus because they can activate shortcut links that alter guarded evidence or acceptance text after local normalization`);
+    if (hasMarkdownReferenceDefinition(source)) fail(`${relative} uses a Markdown reference definition; reference definitions are forbidden in the reference-only corpus because they can activate shortcut links that alter guarded evidence or acceptance text after local normalization`);
     if (rawHtmlOpener.test(source)) fail(`${relative} uses raw HTML syntax; raw HTML is forbidden in the reference-only corpus because invisible or block-producing constructs can hide guarded evidence`);
 
     const lines = source.split(/\r?\n/);

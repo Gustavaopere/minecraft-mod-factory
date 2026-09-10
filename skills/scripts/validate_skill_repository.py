@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 from pathlib import Path
-import re
 import shutil
 import subprocess
 
@@ -24,8 +23,13 @@ def require_set(label, actual, expected):
 
 def validate_names(root):
     for path in root.glob("*/SKILL.md"):
-        match = re.search(r"^name:\s*([^\n]+)$", path.read_text(encoding="utf-8"), re.MULTILINE)
-        if not match or match.group(1).strip() != path.parent.name:
+        declared_name = None
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line.startswith("name:"):
+                value = line[len("name:"):].strip()
+                declared_name = value or None
+                break
+        if declared_name != path.parent.name:
             raise SystemExit(f"invalid skill name metadata: {path}")
 
 require_set("shared active skills", skill_set(SHARED), EXPECTED_SHARED)
