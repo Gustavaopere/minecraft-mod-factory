@@ -1,0 +1,32 @@
+name: Factory Engineering I4 Validators
+
+on:
+  push:
+    branches:
+      - main
+      - feat/f4-e4-i4-validators-migration
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/factory-engineering-i4-validators.yml'
+      - 'engineering/tooling/validators/**'
+      - 'engineering/tests/test_i4_engineering_validators.py'
+      - 'engineering/tests/fixtures/i4-*.json'
+      - 'engineering/tests/golden/i3-golden-mod/**'
+      - 'engineering/schemas/**'
+      - 'engineering/tooling/validate-i1-foundation.py'
+
+permissions:
+  contents: read
+
+jobs:
+  validator-contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Run I4 engineering validator contract tests
+        run: python3 -m unittest engineering/tests/test_i4_engineering_validators.py
+      - name: Check whitespace
+        run: git diff --check HEAD^
