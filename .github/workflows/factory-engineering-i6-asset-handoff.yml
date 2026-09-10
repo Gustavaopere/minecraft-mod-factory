@@ -1,0 +1,49 @@
+name: Factory Engineering I6 Asset Handoff
+
+on:
+  push:
+    branches:
+      - main
+      - feat/f6-e6-i6-asset-handoff-migration
+    paths:
+      - '.github/workflows/factory-engineering-i6-asset-handoff.yml'
+      - 'engineering/tests/test_i6_asset_handoff.py'
+      - 'engineering/tooling/asset-handoff/**'
+      - 'engineering/schemas/asset-handoff.schema.json'
+      - 'engineering/examples/asset-handoff.example.json'
+      - 'engineering/tooling/validate-i1-foundation.py'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/factory-engineering-i6-asset-handoff.yml'
+      - 'engineering/tests/test_i6_asset_handoff.py'
+      - 'engineering/tooling/asset-handoff/**'
+      - 'engineering/schemas/asset-handoff.schema.json'
+      - 'engineering/examples/asset-handoff.example.json'
+      - 'engineering/tooling/validate-i1-foundation.py'
+
+permissions:
+  contents: read
+
+jobs:
+  asset-handoff-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 2
+
+      - name: Run I6 asset handoff contract tests
+        run: python3 -m unittest engineering/tests/test_i6_asset_handoff.py
+
+      - name: Check I6 whitespace
+        run: >-
+          git diff --check HEAD^ --
+          .github/workflows/factory-engineering-i6-asset-handoff.yml
+          engineering/tests/test_i6_asset_handoff.py
+          engineering/tooling/asset-handoff
+          engineering/schemas/asset-handoff.schema.json
+          engineering/examples/asset-handoff.example.json
+          engineering/tooling/validate-i1-foundation.py
