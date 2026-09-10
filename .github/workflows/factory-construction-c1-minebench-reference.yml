@@ -3,6 +3,7 @@ name: Factory Construction C1 MineBench Reference
 on:
   push:
     branches:
+      - main
       - feat/construction-c1-minebench-reference
   pull_request:
     branches:
