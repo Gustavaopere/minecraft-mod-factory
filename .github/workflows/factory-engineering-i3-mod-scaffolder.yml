@@ -34,30 +34,17 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Set up Gradle 8.14
-        uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4.4.3
-        with:
-          gradle-version: '8.14'
-
       - name: Run I3 scaffolder contract tests
         run: python3 -m unittest engineering/tests/test_i3_mod_scaffolder.py
-
-      - name: Materialize explicit wrapper authority
-        run: |
-          mkdir -p "$RUNNER_TEMP/i3-wrapper-authority"
-          cd "$RUNNER_TEMP/i3-wrapper-authority"
-          printf "rootProject.name = 'i3-wrapper-authority'\n" > settings.gradle
-          gradle wrapper --gradle-version 8.14 --distribution-type bin --no-daemon
 
       - name: Generate project from canonical fixtures
         run: >-
           python3 engineering/tooling/scaffolder/scaffold_mod.py
           --mod-spec engineering/tests/fixtures/i3-golden-mod-spec.json
           --config engineering/tests/fixtures/i3-golden-scaffold-config.json
-          --wrapper-source "$RUNNER_TEMP/i3-wrapper-authority"
           --output "$RUNNER_TEMP/i3-generated"
 
-      - name: Build generated NeoForge project with copied wrapper
+      - name: Build generated NeoForge project with Factory-owned wrapper
         run: |
           chmod +x "$RUNNER_TEMP/i3-generated/gradlew"
           cd "$RUNNER_TEMP/i3-generated"
