@@ -56,6 +56,9 @@ jobs:
       - name: Reconcile Factory-owned post-migration deltas
         run: python migration/full-skill-migration/reconcile.py --factory-root .
 
+      - name: Validate Factory governance after reconciliation
+        run: python3 engineering/tooling/validate-e1-s1-governance.py
+
       - name: Regenerate neutral Asset Toolkit bundle
         run: node art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js --write
 
