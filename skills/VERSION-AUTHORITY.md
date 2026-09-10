@@ -1,26 +1,26 @@
 # Autoridade de versão para skills e instruções
 
-## Alvo físico atual
+## Alvo
 
 - Minecraft: **1.21.1**
-- NeoForge: **21.1.248**
+- NeoForge: **21.1.x**
 - Java: **21**
 
-A versão exata de Gradle, NeoGradle/UserDev, mappings e dependências de um mod deve ser lida do runtime repository ou de um template Factory já validado. Não copie configuração do RPG por analogia.
+A versão exata das dependências deve vir do build, metadata, JARs e modlist física vigente do ambiente/repositório alvo.
 
 ## Ordem de autoridade
 
 Para classe, método, evento, registry, resource path, pack format, assinatura, comportamento de provider ou compatibilidade:
-
-1. código/build/metadata no runtime authority repository alvo;
-2. JAR e modlist física mais recente;
+1. código/build/metadata realmente presentes no repositório runtime alvo;
+2. JAR/modlist física mais recente;
 3. source/JAR/documentação oficial da versão exata;
-4. contratos e decisões canônicas da Factory;
-5. skill específica já migrada e validada;
-6. exemplos de outras versões apenas como referência conceitual.
+4. planos, contracts e decisões canônicas da Minecraft Mod Factory;
+5. skill project-authored aplicável;
+6. skill compartilhada em `skills/library/`;
+7. material `REFERENCE_ONLY` e exemplos de outras versões apenas como referência conceitual.
 
 ## Fail-closed
 
-Se algo version-sensitive não puder ser confirmado para Minecraft 1.21.1 / NeoForge 21.1.248, não invente API, signature, registry, path, capability ou compatibilidade. Registre a pendência e mantenha a integração indisponível/fail-closed quando necessário.
+Se algo version-sensitive não puder ser confirmado para Minecraft 1.21.1 / NeoForge 21.1.x, não invente API, signature, registry, path ou comportamento. Não transplante silenciosamente exemplos de versões posteriores, Fabric, Forge legado ou Paper. Integrações opcionais permanecem indisponíveis até existir evidência suficiente.
 
-Presença na modlist física prova presença/versão, não prova uma API, runtime health ou autorização do pipeline.
+A presença nominal de GeckoLib, Photon, AAA Particles/Effekseer ou qualquer outro provider não prova uma API específica; a versão física exata precisa ser verificada.

@@ -1,0 +1,14 @@
+interface:
+  display_name: minecraft ci release
+  short_description: Set up and review CI, artifact publishing, versioning, and release
+    governance for Minecraft 1.21.x mods and Paper plugins. Use for pipelines and
+    releases, not gameplay implementation or server operations.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

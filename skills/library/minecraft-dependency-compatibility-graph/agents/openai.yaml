@@ -1,0 +1,14 @@
+interface:
+  display_name: minecraft dependency compatibility graph
+  short_description: Use when mapping Minecraft mod dependencies, optional integrations,
+    libraries, compatibility addons, missing requirements, version ranges, or relationships
+    across a large NeoForge modpack.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

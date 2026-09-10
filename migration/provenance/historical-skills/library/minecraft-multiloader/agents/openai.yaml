@@ -1,0 +1,14 @@
+interface:
+  display_name: minecraft multiloader
+  short_description: Build and maintain Architectury-based Minecraft 1.21.x mods that
+    share one codebase across NeoForge and Fabric. Use only when both loaders are
+    required; use minecraft-modding for a single-loader project.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

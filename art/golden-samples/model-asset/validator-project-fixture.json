@@ -1,0 +1,53 @@
+{
+  "fixtureType": "REFERENCE-ONLY normalized Minecraft Mod Factory Asset Toolkit input; NOT a Blockbench .bbmodel",
+  "name": "golden_reference_focus_relic",
+  "save_path": "",
+  "groups": [
+    {"name": "root", "uuid": "bone-root", "origin": [0, 0, 0], "parent": null, "children": []},
+    {"name": "cast_hand", "uuid": "bone-hand", "origin": [0, 5, 0], "parent": {"uuid": "bone-root", "name": "root"}, "children": []},
+    {"name": "vfx_anchor", "uuid": "bone-vfx", "origin": [0, 7, -2], "parent": {"uuid": "bone-root", "name": "root"}, "children": []}
+  ],
+  "elements": [
+    {
+      "name": "focus_core",
+      "uuid": "cube-core",
+      "from": [-2, 0, -2],
+      "to": [2, 8, 2],
+      "origin": [0, 4, 0],
+      "parent": {"uuid": "bone-root", "name": "root"},
+      "faces": {
+        "north": {"enabled": true, "texture": "tex-main", "uv": [0, 0, 4, 8]},
+        "south": {"enabled": true, "texture": "tex-main", "uv": [4, 0, 8, 8]},
+        "east": {"enabled": true, "texture": "tex-main", "uv": [8, 0, 12, 8]},
+        "west": {"enabled": true, "texture": "tex-main", "uv": [12, 0, 16, 8]},
+        "up": {"enabled": true, "texture": "tex-main", "uv": [0, 8, 4, 12]},
+        "down": {"enabled": true, "texture": "tex-main", "uv": [4, 8, 8, 12]}
+      }
+    },
+    {
+      "name": "spell_muzzle",
+      "uuid": "locator-muzzle",
+      "from": [0, 7.5, -2.5],
+      "parent": {"uuid": "bone-vfx", "name": "vfx_anchor"}
+    }
+  ],
+  "textures": [
+    {"name": "golden_reference_focus_relic.png", "uuid": "tex-main", "width": 64, "height": 64}
+  ],
+  "animations": [
+    {
+      "name": "animation.golden_reference_focus_relic.idle",
+      "uuid": "anim-idle",
+      "length": 1.0,
+      "loop": "loop",
+      "animators": {"bone-root": {}}
+    },
+    {
+      "name": "animation.golden_reference_focus_relic.cast",
+      "uuid": "anim-cast",
+      "length": 0.6,
+      "loop": "once",
+      "animators": {"bone-hand": {}, "bone-vfx": {}}
+    }
+  ]
+}

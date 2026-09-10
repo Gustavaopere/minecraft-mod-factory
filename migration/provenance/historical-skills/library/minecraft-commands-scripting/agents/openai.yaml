@@ -1,0 +1,14 @@
+interface:
+  display_name: minecraft commands scripting
+  short_description: Write and debug Minecraft Java 1.21.x commands, selectors, execute
+    chains, scoreboards, NBT, and RCON scripts. Use for command-only work; use minecraft-datapack
+    for complete datapack structures.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

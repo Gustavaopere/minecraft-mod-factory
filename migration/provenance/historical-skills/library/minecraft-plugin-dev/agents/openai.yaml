@@ -1,0 +1,14 @@
+interface:
+  display_name: minecraft plugin dev
+  short_description: Create, modify, and debug Java 21 server plugins for Paper/Bukkit/Spigot
+    1.21.x. Use for server-side JavaPlugin APIs, events, commands, schedulers, configuration,
+    PDC, and Adventure, not client mods or vanilla datapacks.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

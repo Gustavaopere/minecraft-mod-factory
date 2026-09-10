@@ -1,0 +1,1904 @@
+{
+  "schema_version": 1,
+  "source_repository": "Gustavaopere/neoforge-rpg-skilltree",
+  "source_revision": "2ecea4178aa7ac80f99955ab045e296da25376ec",
+  "entries": [
+    {
+      "source_path": "ART-PIPELINE-SOURCES.md",
+      "source_blob_sha": "44a814300a413edc0ab18efb37d7f5af49ec8332",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/provenance/ART-PIPELINE-SOURCES.md",
+      "materialization_mode": "PREEXISTING_RECONCILED"
+    },
+    {
+      "source_path": "FULL-USER-SKILL-IMPORT.md",
+      "source_blob_sha": "dca3dd3a0bd667b54ccb6f0ebdb0c7c27717e1a8",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/FULL-USER-SKILL-IMPORT.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "README.md",
+      "source_blob_sha": "15c37c3b5e96d9df2d57672aaed07ecd330560d5",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/README.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "ROUTER.md",
+      "source_blob_sha": "af42f19efbaf563bbbfc010fe289564daba95275",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/ROUTER.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "SOURCE-AUDIT.md",
+      "source_blob_sha": "1760f9dd95d1d771d337c1083223127c06343c99",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/USER-SKILL-SOURCE-AUDIT.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "SOURCE-MANIFEST.md",
+      "source_blob_sha": "30937aff2d480b0c15c837a6ffc29fda54841f19",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/USER-SKILL-SOURCE-MANIFEST.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "SPELL-VFX-AUDIO-SOURCES.md",
+      "source_blob_sha": "b50bfe68d929a2455f83d882ab675c31b37a04e1",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/provenance/SPELL-VFX-AUDIO-SOURCES.md",
+      "materialization_mode": "PREEXISTING_RECONCILED"
+    },
+    {
+      "source_path": "USER-GUIDED-WORKFLOW.md",
+      "source_blob_sha": "3497c2fdfe68bc8f91a00530304ba0f378f6097f",
+      "classification": "MIGRATE_CANONICAL",
+      "destination": "skills/USER-GUIDED-WORKFLOW.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "VERSION-AUTHORITY.md",
+      "source_blob_sha": "3a04c6dfd78e6a788dfedead84b622b7e9efc4b6",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/VERSION-AUTHORITY.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "VISUAL-STYLE-SOURCES.md",
+      "source_blob_sha": "8a18d1d277dd9e40d5e87c15f0793548ac4e5e7a",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/provenance/VISUAL-STYLE-SOURCES.md",
+      "materialization_mode": "PREEXISTING_RECONCILED"
+    },
+    {
+      "source_path": "golden-samples/README.md",
+      "source_blob_sha": "c6a267e8bdffd4132607e31a389c5192ae702eaf",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/golden-samples/README.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "golden-samples/model-asset/ANIMATION-BRIEF.md",
+      "source_blob_sha": "111174888e8a76705629af108d3abe5c14d7893f",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/golden-samples/model-asset/ANIMATION-BRIEF.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "golden-samples/model-asset/ASSET-BRIEF.md",
+      "source_blob_sha": "ed172c193d35b4c3aa960a5b5c4ccfc6e269e9be",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/golden-samples/model-asset/ASSET-BRIEF.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "golden-samples/model-asset/MODEL-CONTRACT.md",
+      "source_blob_sha": "184a277d5709be1ea45d66129f5db95d9599d1fd",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/golden-samples/model-asset/MODEL-CONTRACT.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "golden-samples/model-asset/TOOLKIT-PROFILE.json",
+      "source_blob_sha": "1f6fb6580dedd3a4daa0dc1b93a87b7c29d122e5",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/golden-samples/model-asset/TOOLKIT-PROFILE.json",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "golden-samples/model-asset/validator-project-fixture.json",
+      "source_blob_sha": "fc8a3c895d0501f72f72ce13bb87020af5f20b2f",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/golden-samples/model-asset/validator-project-fixture.json",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "golden-samples/spell/AUDIO-CUE-SHEET.md",
+      "source_blob_sha": "13d98808f304c5526e33d606dfdbbb39b16efd11",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/golden-samples/spell/AUDIO-CUE-SHEET.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "golden-samples/spell/AUDIO-QA.md",
+      "source_blob_sha": "d7cef606e2fb8f8ac06d20dd8202b4814f5d1d58",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/golden-samples/spell/AUDIO-QA.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "golden-samples/spell/SPELL-BRIEF.md",
+      "source_blob_sha": "225bdfa8d84a312ccfb0a8f3f32c0eb362e87383",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/golden-samples/spell/SPELL-BRIEF.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "golden-samples/spell/SPELL-PRESENTATION.md",
+      "source_blob_sha": "2d135ada755aa3fe3e27d56d94de45ca81512805",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/golden-samples/spell/SPELL-PRESENTATION.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "golden-samples/spell/VFX-BRIEF.md",
+      "source_blob_sha": "b908bbaf43cdbcbc508061a832f77032bcc5ca28",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/golden-samples/spell/VFX-BRIEF.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "golden-samples/spell/VFX-QA.md",
+      "source_blob_sha": "aece4ee821b78127b8356beeb1b020080af77735",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/golden-samples/spell/VFX-QA.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "golden-samples/spell/VISUAL-QA.md",
+      "source_blob_sha": "32b79bb5d0aa4784aa7e071977172add1fc5b162",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/golden-samples/spell/VISUAL-QA.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "golden-samples/validate_golden_samples.js",
+      "source_blob_sha": "8ae1c25de462f7ca1869de60fc3ab43b7f602867",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/golden-samples/validate_golden_samples.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "golden-samples/validate_reference_evidence.js",
+      "source_blob_sha": "d37f4526b27a575e108f2842a78d995a22559be9",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/golden-samples/validate_reference_evidence.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "library/minecraft-asset-art-direction/SKILL.md",
+      "source_blob_sha": "20b34428bcc2a02678056b8588dcd58cc21dfb76",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/skills/minecraft-asset-art-direction/SKILL.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "library/minecraft-audio-design/SKILL.md",
+      "source_blob_sha": "5845e99f8e01dfd8e65f5d8d77fdcee1e888e548",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/skills/minecraft-audio-design/SKILL.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "library/minecraft-blockbench-geckolib/SKILL.md",
+      "source_blob_sha": "a51751fe2b0239dcbbb48cc9b50002e45b49de1d",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/skills/minecraft-blockbench-geckolib/SKILL.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "library/minecraft-ci-release/PROJECT-OVERLAY.md",
+      "source_blob_sha": "33647ee06b86af2ba127f69cbd58d48e25deface",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-ci-release/PROJECT-OVERLAY.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "library/minecraft-ci-release/SKILL.md",
+      "source_blob_sha": "c72bc32f6624479c4a9df628f8c0eead8244f32d",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-ci-release/SKILL.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-ci-release/agents/openai.yaml",
+      "source_blob_sha": "71cb78a20cf43de11ffba9d5dac66213333e293e",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-ci-release/agents/openai.yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-ci-release/assets/icon.svg",
+      "source_blob_sha": "f19f1b68e96ba7df24829e7aec93ebd17396a341",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-ci-release/assets/icon.svg",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-ci-release/scripts/validate-workflow-snippets.sh",
+      "source_blob_sha": "40a1f7aced5503a4e4a9f4f37af6c26a0ce44279",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-ci-release/scripts/validate-workflow-snippets.sh",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-ci-release/scripts/vendor/LICENSE.js-yaml",
+      "source_blob_sha": "09d3a29e93d1239edf737a58fb1cd893808abc82",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-ci-release/scripts/vendor/LICENSE.js-yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-ci-release/scripts/vendor/js-yaml.min.cjs",
+      "source_blob_sha": "48b76f6d438be208202030887493d9d699a4fffe",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-ci-release/scripts/vendor/js-yaml.min.cjs",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-commands-scripting/PROJECT-OVERLAY.md",
+      "source_blob_sha": "9d2693e386e43dc6869f012a231b6e322d6d1555",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-commands-scripting/PROJECT-OVERLAY.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-commands-scripting/SKILL.md",
+      "source_blob_sha": "bf0ee3d5fe856b9a359694a4f50778983b397107",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-commands-scripting/SKILL.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-commands-scripting/agents/openai.yaml",
+      "source_blob_sha": "a502604b35bf482961a00008af4b06e133605d56",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-commands-scripting/agents/openai.yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-commands-scripting/assets/icon.svg",
+      "source_blob_sha": "c782ded19ff8d6a930f75d1c6433f509da0df66a",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-commands-scripting/assets/icon.svg",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-commands-scripting/references/execute-cheat-sheet.md",
+      "source_blob_sha": "f1db7fd9df616ebb5d8e2b18347fc112cd58cb57",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-commands-scripting/references/execute-cheat-sheet.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-commands-scripting/references/selector-cheat-sheet.md",
+      "source_blob_sha": "07ec837aed7bea6231ce9be8248287ab773aaa13",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-commands-scripting/references/selector-cheat-sheet.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-commands-scripting/scripts/examples/arena-countdown.mcfunction",
+      "source_blob_sha": "078c5470e0a5aedf14d1da3964e762bf127e0e8b",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-commands-scripting/scripts/examples/arena-countdown.mcfunction",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-commands-scripting/scripts/examples/rcon-backup-warning.sh",
+      "source_blob_sha": "cc3240f42ef8ead1c924b675065ba407e66f0947",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-commands-scripting/scripts/examples/rcon-backup-warning.sh",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-commands-scripting/scripts/examples/stopwatch-podium.mcfunction",
+      "source_blob_sha": "834d1861dd8eea638cfcca511c76d90306c1491d",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-commands-scripting/scripts/examples/stopwatch-podium.mcfunction",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-datapack/PROJECT-OVERLAY.md",
+      "source_blob_sha": "bfb7cdb24e24b224c805805e6b38c9cae9f262ad",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-datapack/PROJECT-OVERLAY.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-datapack/SKILL.md",
+      "source_blob_sha": "a6167ec988a22f8df06d24cc195c1cb2c88f5e6d",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-datapack/SKILL.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-datapack/agents/openai.yaml",
+      "source_blob_sha": "886bdf207d8fd13c64ac4730d521dc6d20b1ff07",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-datapack/agents/openai.yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-datapack/assets/icon.svg",
+      "source_blob_sha": "c782ded19ff8d6a930f75d1c6433f509da0df66a",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-datapack/assets/icon.svg",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-datapack/scripts/jq-shim.mjs",
+      "source_blob_sha": "ef12916f9adb830684eac86ed363465b976f520e",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-datapack/scripts/jq-shim.mjs",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-datapack/scripts/validate-datapack.sh",
+      "source_blob_sha": "90fea11b02ef02a0eb9f3dccedd254977e1f0ec8",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-datapack/scripts/validate-datapack.sh",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-dependency-compatibility-graph/PROJECT-OVERLAY.md",
+      "source_blob_sha": "e3971b8fa637821f288501c4af42ebbe2d680de4",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-dependency-compatibility-graph/PROJECT-OVERLAY.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "library/minecraft-dependency-compatibility-graph/SKILL.md",
+      "source_blob_sha": "1e5625300ff5aa737791b9ec1a867b2340adc911",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-dependency-compatibility-graph/SKILL.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-dependency-compatibility-graph/agents/openai.yaml",
+      "source_blob_sha": "00ec815098e211d5ef269d84d15493a7af39553b",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-dependency-compatibility-graph/agents/openai.yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-dependency-compatibility-graph/assets/icon.svg",
+      "source_blob_sha": "2468028d1ed0fc8009b1fc45e7bb027adaf0d079",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-dependency-compatibility-graph/assets/icon.svg",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-essentials-ops/PROJECT-OVERLAY.md",
+      "source_blob_sha": "20da59963c3270419c2f092284941554317e2f9c",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-essentials-ops/PROJECT-OVERLAY.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-essentials-ops/SKILL.md",
+      "source_blob_sha": "faa0eafeb078316047c831df287bdca0b3f04832",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-essentials-ops/SKILL.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-essentials-ops/agents/openai.yaml",
+      "source_blob_sha": "45d08e28e8b3b396dd423eab248608069f75df7c",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-essentials-ops/agents/openai.yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-essentials-ops/assets/icon.svg",
+      "source_blob_sha": "f387e96b74b4a2a407760075db8859a99fdf91f1",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-essentials-ops/assets/icon.svg",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-essentials-ops/references/permissions-and-rollout-checklists.md",
+      "source_blob_sha": "125941bb232d84b26c031b3a4b03c37906e20ef2",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-essentials-ops/references/permissions-and-rollout-checklists.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-imagegen/PROJECT-OVERLAY.md",
+      "source_blob_sha": "ae828fcc1da19ee106b5cfe6e1807cfd46eec67c",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-imagegen/PROJECT-OVERLAY.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-imagegen/SKILL.md",
+      "source_blob_sha": "d66194af0a94812a0806a3d25d002a6314143d16",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-imagegen/SKILL.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-imagegen/agents/openai.yaml",
+      "source_blob_sha": "ce183ee387a6b2040b97f71aec0b2f751f647a2c",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-imagegen/agents/openai.yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-imagegen/assets/icon.svg",
+      "source_blob_sha": "4c3163aa85e15ed80114f93a9a2b140a53012c44",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-imagegen/assets/icon.svg",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-imagegen/references/asset-recipes.md",
+      "source_blob_sha": "ab5676093526756503523fc05f677868d96ab276",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-imagegen/references/asset-recipes.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-imagegen/references/prompt-patterns.md",
+      "source_blob_sha": "5b562faeb92b5036070a3f279de9794c6e580eed",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-imagegen/references/prompt-patterns.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-imagegen/scripts/scaffold-asset-brief.sh",
+      "source_blob_sha": "1dc546eb8a5286a3b7521b22863b7ae38422e02a",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-imagegen/scripts/scaffold-asset-brief.sh",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-jar-reverse-engineering/PROJECT-OVERLAY.md",
+      "source_blob_sha": "23f74de00dfdf54ad5e1ce12976fca185de2814c",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-jar-reverse-engineering/PROJECT-OVERLAY.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "library/minecraft-jar-reverse-engineering/SKILL.md",
+      "source_blob_sha": "fe327b2ef158961793ced46a6245d077dd0b3fbb",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-jar-reverse-engineering/SKILL.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-jar-reverse-engineering/agents/openai.yaml",
+      "source_blob_sha": "4ef2cdd33d56843cddd809f721d8457d31ffd86b",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-jar-reverse-engineering/agents/openai.yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-jar-reverse-engineering/assets/icon.svg",
+      "source_blob_sha": "c782ded19ff8d6a930f75d1c6433f509da0df66a",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-jar-reverse-engineering/assets/icon.svg",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-mod-dev/PROJECT-OVERLAY.md",
+      "source_blob_sha": "ddfe2ce1b21edcf323484718aac9c19dd7ddfd5c",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-mod-dev/PROJECT-OVERLAY.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-mod-dev/SKILL.md",
+      "source_blob_sha": "f3da9ee33fd66a62c1dbe5f8225d8fca5ebbd960",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-mod-dev/SKILL.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-mod-dev/agents/openai.yaml",
+      "source_blob_sha": "d7e5e00c94986a4c6284873fc3078d29b3f76922",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-mod-dev/agents/openai.yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-mod-dev/assets/icon.svg",
+      "source_blob_sha": "c782ded19ff8d6a930f75d1c6433f509da0df66a",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-mod-dev/assets/icon.svg",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-modding/PROJECT-OVERLAY.md",
+      "source_blob_sha": "c51fa49bb16a5f22628ccd5a72b1501ffd68c484",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-modding/PROJECT-OVERLAY.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-modding/SKILL.md",
+      "source_blob_sha": "5593370c436e3a3335ab3d9f00302e75acb992b1",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-modding/SKILL.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-modding/agents/openai.yaml",
+      "source_blob_sha": "d7045ab917e9ea403a76697fe68bdf17cb162f54",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-modding/agents/openai.yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-modding/assets/icon.svg",
+      "source_blob_sha": "c782ded19ff8d6a930f75d1c6433f509da0df66a",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-modding/assets/icon.svg",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-modding/references/common-patterns.md",
+      "source_blob_sha": "cfebcc959019ce8dc320f6ab9f02ef710cf5aa23",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-modding/references/common-patterns.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-modding/references/fabric-api.md",
+      "source_blob_sha": "c3053b0fdc6e5ae94b737a732a56a6bdfb0b5b52",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-modding/references/fabric-api.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-modding/references/forge-1.20.1-api.md",
+      "source_blob_sha": "085091c2b3b5b34ea0c817a21fad72c2c7c22ca0",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-modding/references/forge-1.20.1-api.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-modding/references/neoforge-api.md",
+      "source_blob_sha": "4f8145cb1e52724ed85cd1f8549062c460e76178",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-modding/references/neoforge-api.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-modding/scripts/check-build.sh",
+      "source_blob_sha": "61fc8d130f3fa69fb6c57f67fc68407264812cf4",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-modding/scripts/check-build.sh",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-modpack-bisect/PROJECT-OVERLAY.md",
+      "source_blob_sha": "67b685bf7743bae18ecf1eb96e3f6f67dc1bb150",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-modpack-bisect/PROJECT-OVERLAY.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "library/minecraft-modpack-bisect/SKILL.md",
+      "source_blob_sha": "3f72f898f8db5ce061aaf351079e83c81302bd88",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-modpack-bisect/SKILL.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-modpack-bisect/agents/openai.yaml",
+      "source_blob_sha": "755e0734edf4a26249ff0c21cd4d1d50fd96ed26",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-modpack-bisect/agents/openai.yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-modpack-bisect/assets/icon.svg",
+      "source_blob_sha": "2468028d1ed0fc8009b1fc45e7bb027adaf0d079",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-modpack-bisect/assets/icon.svg",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-multiloader/PROJECT-OVERLAY.md",
+      "source_blob_sha": "d8e4089eb60584bf2a5f835f68371f97e702fc38",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-multiloader/PROJECT-OVERLAY.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-multiloader/SKILL.md",
+      "source_blob_sha": "e648703c114e62bc06fb747e668a975e7ebeee24",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-multiloader/SKILL.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-multiloader/agents/openai.yaml",
+      "source_blob_sha": "e2e1abcf84d06e6547a4a4bfaae588390a5795da",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-multiloader/agents/openai.yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-multiloader/assets/icon.svg",
+      "source_blob_sha": "c782ded19ff8d6a930f75d1c6433f509da0df66a",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-multiloader/assets/icon.svg",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-multiloader/references/architectury-reference.md",
+      "source_blob_sha": "6765da8a70559bae30f1b665d7c498a745a419c6",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-multiloader/references/architectury-reference.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-multiloader/scripts/check-version-sanity.sh",
+      "source_blob_sha": "447893e9250ec6db6ef9cc47b39e016360f0efe1",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-multiloader/scripts/check-version-sanity.sh",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/LICENSE",
+      "source_blob_sha": "719b286bdca22cdd82ef806bed50981d2cadfe2c",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/LICENSE",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/MANIFEST.json",
+      "source_blob_sha": "563c9f3f86bb481c17ba268a96696345d93cd1dd",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/MANIFEST.json",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/PROJECT-OVERLAY.md",
+      "source_blob_sha": "0b869ba53230420b651f7395967607750b28f23d",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/PROJECT-OVERLAY.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/README.md",
+      "source_blob_sha": "e2414a78998b20801858cdef7420762db4cf6c9f",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/README.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/SKILL.md",
+      "source_blob_sha": "d0759116ab1328709b9f37f65e8d0b9730e92a7d",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/SKILL.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/SOURCES.md",
+      "source_blob_sha": "3c5bd0ff9118e62039deb01f6d6fca3e460b2f10",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/SOURCES.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/agents/openai.yaml",
+      "source_blob_sha": "0dd88fe0df54adc2d1ca7c6aa1390d1ec02234b6",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/agents/openai.yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/assets/DECISIONS_TEMPLATE.md",
+      "source_blob_sha": "30b97ecdd38f8924b398dfb9f4d3a70d96c924d6",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/assets/DECISIONS_TEMPLATE.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/assets/FEATURE_SPEC_TEMPLATE.md",
+      "source_blob_sha": "6bfb3d574c45931264ab266466131926cd745fcf",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/assets/FEATURE_SPEC_TEMPLATE.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/assets/IMPLEMENTATION_PLAN_TEMPLATE.md",
+      "source_blob_sha": "ab16ea3502911009e4b172b9b632d85d1b554b21",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/assets/IMPLEMENTATION_PLAN_TEMPLATE.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/assets/INTEGRATION_CONTRACT_TEMPLATE.md",
+      "source_blob_sha": "5f813ad1a10d575ae95c2989159ceb202b8472cb",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/assets/INTEGRATION_CONTRACT_TEMPLATE.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/assets/STATUS_TEMPLATE.md",
+      "source_blob_sha": "64ac884ace1be268d5f309aad9946fff9c951d5c",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/assets/STATUS_TEMPLATE.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/assets/VERIFICATION_REPORT_TEMPLATE.md",
+      "source_blob_sha": "260b307283447eb67f79b60e3a44bf59195e777e",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/assets/VERIFICATION_REPORT_TEMPLATE.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/assets/icon.svg",
+      "source_blob_sha": "c782ded19ff8d6a930f75d1c6433f509da0df66a",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/assets/icon.svg",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/agentic-workflow.md",
+      "source_blob_sha": "092f56bde2b1304b5cf5aed9b50f79c0927c0dc8",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/agentic-workflow.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/authority-and-evidence.md",
+      "source_blob_sha": "ab46c60f1917d72d4793c05c4263ba7062f85a83",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/authority-and-evidence.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/client-rendering-input.md",
+      "source_blob_sha": "4978804ad62e2444d44d41d1b4f448298eb08d25",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/client-rendering-input.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/codecs-data.md",
+      "source_blob_sha": "32d8753db2f48f7edd6e074bca5c937b9fbc6cfe",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/codecs-data.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/compatibility.md",
+      "source_blob_sha": "b0b7b051b8ee1dc1375ceb56042fadf4f19a3fd8",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/compatibility.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/configuration.md",
+      "source_blob_sha": "5c709648a7076ba0064046dafa0ea6e5509d83d0",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/configuration.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/debugging.md",
+      "source_blob_sha": "3d87d57bdbeb18371803ca3fd9765c42eb596c3c",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/debugging.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/events-sides.md",
+      "source_blob_sha": "987bfe5d6eafa582c697f16c278921b9da1b4af6",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/events-sides.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/exact-version-api.md",
+      "source_blob_sha": "d9334d92d38464cce98720fa82b6e461eb06ebb9",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/exact-version-api.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/feature-design.md",
+      "source_blob_sha": "d6c696424acfffb3107453c7aedc1c0cc4ac1c0e",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/feature-design.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/game-objects.md",
+      "source_blob_sha": "7610ef710ea3d2f8e3752dc0762e2c3593e65fae",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/game-objects.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/git-concurrency.md",
+      "source_blob_sha": "628ec25fec66cdcb7f5fc7b4453caf546f218d89",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/git-concurrency.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/mixins-reflection.md",
+      "source_blob_sha": "31d109dbab99e741b61d736bbc0324e275aa103e",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/mixins-reflection.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/networking.md",
+      "source_blob_sha": "7c47c915cb39cf53ce346b6df492f8731dadb19c",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/networking.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/performance.md",
+      "source_blob_sha": "7adf032722d6dbd8d83dccfdd44b551bbc612158",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/performance.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/registries-lifecycle.md",
+      "source_blob_sha": "3133490cff1e433ae5e5490bff05e1e3dcadc51e",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/registries-lifecycle.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/release-hardening.md",
+      "source_blob_sha": "8ff75541f8291190617a03a3df691af0bfd3b2c0",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/release-hardening.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/repository-bootstrap.md",
+      "source_blob_sha": "3f73a5a8ea2a5356f347ceb9ddc968d319dabc3a",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/repository-bootstrap.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/resources-datagen.md",
+      "source_blob_sha": "b33c5868fd6029e374992cd85c94de0a40d285c7",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/resources-datagen.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/security.md",
+      "source_blob_sha": "3d319872478ce26bbaaacce6e7bec226990b7ba1",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/security.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/state-persistence.md",
+      "source_blob_sha": "4b493b806f922da96a622fe0d762afd6352a685f",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/state-persistence.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/verification.md",
+      "source_blob_sha": "50d888da87828d7514aa775a3f54d2ec31367ce8",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/verification.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/references/worldgen.md",
+      "source_blob_sha": "1bad69ded50755d2804d1b2759e6d0a5e16d9a3d",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/references/worldgen.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/scripts/inspect_repo.py",
+      "source_blob_sha": "90ecceaf82fdb014e79f3bb6869c15bf6af5b48b",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/scripts/inspect_repo.py",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/scripts/preflight.py",
+      "source_blob_sha": "3779451713fb013ec7fdb4387f46e7d0279cb566",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/scripts/preflight.py",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/scripts/scan_client_leaks.py",
+      "source_blob_sha": "0161e7fb161abe2a1515b5af6554d492ef7573a7",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/scripts/scan_client_leaks.py",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/scripts/validate_skill.py",
+      "source_blob_sha": "56cbf5feef51baa3e1ec28041eef604a0c8d3f16",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/scripts/validate_skill.py",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/scripts/verify_project.py",
+      "source_blob_sha": "e03e104ad41e0f6898434f4c2ffbf86f54aa80bd",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/scripts/verify_project.py",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/tests/acceptance-checklist.md",
+      "source_blob_sha": "f3373570c5e5a3987f1dd45aabad6bdca77f7482",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/tests/acceptance-checklist.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/tests/pressure-scenarios.md",
+      "source_blob_sha": "58e81d78a318a87d19e01cf577d94d6427fbea23",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/tests/pressure-scenarios.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/workflows/add-networked-system.md",
+      "source_blob_sha": "6adc1544f634513b2c51e534147e910016864fb5",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/workflows/add-networked-system.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/workflows/add-worldgen.md",
+      "source_blob_sha": "584372743fb3ea45946aa17603629256f144afef",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/workflows/add-worldgen.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/workflows/audit-performance.md",
+      "source_blob_sha": "203ca0327f53f3656f1fce25f8535e735b7e61e1",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/workflows/audit-performance.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/workflows/continue-existing.md",
+      "source_blob_sha": "3551c1349a3e2bb3139b3b0dfaa8f7b5818af4a1",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/workflows/continue-existing.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/workflows/fix-bug.md",
+      "source_blob_sha": "3fc1fbf299e54dbe6372019775e5f0cfa039fbdc",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/workflows/fix-bug.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/workflows/implement-feature.md",
+      "source_blob_sha": "d876aea4a2cadfc3a368c8b9de7409f67eda1dbd",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/workflows/implement-feature.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/workflows/integrate-mod.md",
+      "source_blob_sha": "d244f9739df47288cc9199a0c96650617b2ba41f",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/workflows/integrate-mod.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/workflows/new-mod.md",
+      "source_blob_sha": "01d99fe002916069f4b1a92392dfabd762afa382",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/workflows/new-mod.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-engineering/workflows/release.md",
+      "source_blob_sha": "8ef7ea915ad5c3e1ae166734a4c3c8386262d5d4",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-engineering/workflows/release.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-modpack-debugging/PROJECT-OVERLAY.md",
+      "source_blob_sha": "238114648d9fa7b37bce1408da35204f9a5a5632",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-modpack-debugging/PROJECT-OVERLAY.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-modpack-debugging/SKILL.md",
+      "source_blob_sha": "b3862c34268037023d6f595fa3a94945ddc3b99e",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-modpack-debugging/SKILL.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-modpack-debugging/agents/openai.yaml",
+      "source_blob_sha": "21590b65dbcb1df99178ee19a3e1adf5dc8b01a0",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-modpack-debugging/agents/openai.yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-neoforge-modpack-debugging/assets/icon.svg",
+      "source_blob_sha": "2468028d1ed0fc8009b1fc45e7bb027adaf0d079",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-neoforge-modpack-debugging/assets/icon.svg",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-plugin-dev/PROJECT-OVERLAY.md",
+      "source_blob_sha": "5194be43b5f57d92eb68b5049093c92d4e6b6eeb",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-plugin-dev/PROJECT-OVERLAY.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-plugin-dev/SKILL.md",
+      "source_blob_sha": "e0a8b0b39bfb0ac103013ea0a484469feb297a98",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-plugin-dev/SKILL.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-plugin-dev/agents/openai.yaml",
+      "source_blob_sha": "dfed9fd4f5a6754c462bd6384bf6af8fa2fdba25",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-plugin-dev/agents/openai.yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-plugin-dev/assets/icon.svg",
+      "source_blob_sha": "c782ded19ff8d6a930f75d1c6433f509da0df66a",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-plugin-dev/assets/icon.svg",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-plugin-dev/references/runtime-patterns.md",
+      "source_blob_sha": "514a6881c09bb07e420631fa3e5b5a02f783a8c9",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-plugin-dev/references/runtime-patterns.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-plugin-dev/scripts/validate-plugin-layout.sh",
+      "source_blob_sha": "46a94436c53ee6aa20f6b42bc2ec094e1b69a683",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-plugin-dev/scripts/validate-plugin-layout.sh",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-plugin-dev/scripts/vendor/LICENSE.js-yaml",
+      "source_blob_sha": "09d3a29e93d1239edf737a58fb1cd893808abc82",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-plugin-dev/scripts/vendor/LICENSE.js-yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-plugin-dev/scripts/vendor/js-yaml.min.cjs",
+      "source_blob_sha": "48b76f6d438be208202030887493d9d699a4fffe",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-plugin-dev/scripts/vendor/js-yaml.min.cjs",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-resource-pack/PROJECT-OVERLAY.md",
+      "source_blob_sha": "6b9b3160489698f57456a9606d5567b043b714af",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-resource-pack/PROJECT-OVERLAY.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-resource-pack/SKILL.md",
+      "source_blob_sha": "73977d267124eaf6661e21b51ed87a3c5b62d00c",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-resource-pack/SKILL.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-resource-pack/agents/openai.yaml",
+      "source_blob_sha": "d828ebd1d0f98d8dab0f2022e7f9d6801b55b13a",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-resource-pack/agents/openai.yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-resource-pack/assets/icon.svg",
+      "source_blob_sha": "4c3163aa85e15ed80114f93a9a2b140a53012c44",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-resource-pack/assets/icon.svg",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-resource-pack/scripts/jq-shim.mjs",
+      "source_blob_sha": "9ba2d5f0ab9726a61bb3829b7f304e5a7899b4c9",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-resource-pack/scripts/jq-shim.mjs",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-resource-pack/scripts/validate-resource-pack.sh",
+      "source_blob_sha": "22b9ed195376324cf1220df74f8eeaa56eb4f26d",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-resource-pack/scripts/validate-resource-pack.sh",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-server-admin/PROJECT-OVERLAY.md",
+      "source_blob_sha": "2691c0b78f41ff886515b7fe35f07062a75b3b92",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-server-admin/PROJECT-OVERLAY.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-server-admin/SKILL.md",
+      "source_blob_sha": "0c4773f9434623ba2f7e00bdf15de5d8b5580c13",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-server-admin/SKILL.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-server-admin/agents/openai.yaml",
+      "source_blob_sha": "3b847b1ec9ba9751d729fdd0851d2934b8a77a95",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-server-admin/agents/openai.yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-server-admin/assets/icon.svg",
+      "source_blob_sha": "f19f1b68e96ba7df24829e7aec93ebd17396a341",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-server-admin/assets/icon.svg",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-server-admin/references/deployment-checklists.md",
+      "source_blob_sha": "a1c602b7db2b0917311cfb89e2afa5fb91262146",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-server-admin/references/deployment-checklists.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-spell-production/SKILL.md",
+      "source_blob_sha": "39a400927474e173f410ef0a6da075bacf03d78f",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/skills/minecraft-spell-production/SKILL.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "library/minecraft-spell-vfx-engineering/SKILL.md",
+      "source_blob_sha": "8952662e0522d80a734f82d93b7cf71fe9aca360",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/skills/minecraft-spell-vfx-engineering/SKILL.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "library/minecraft-testing/PROJECT-OVERLAY.md",
+      "source_blob_sha": "2209c265a5a6652d35a1e085b616a2cfe9f0ed05",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-testing/PROJECT-OVERLAY.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "library/minecraft-testing/SKILL.md",
+      "source_blob_sha": "7348eb2f10e86c439ac95e041927ce1c7898089e",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-testing/SKILL.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-testing/agents/openai.yaml",
+      "source_blob_sha": "03d98adabd084d0281a37bcd9a258a958e134c91",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-testing/agents/openai.yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-testing/assets/icon.svg",
+      "source_blob_sha": "c782ded19ff8d6a930f75d1c6433f509da0df66a",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-testing/assets/icon.svg",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-testing/references/test-layouts.md",
+      "source_blob_sha": "f836cdb46090950f8eaaf185518c9108e5ffdddf",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-testing/references/test-layouts.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-testing/scripts/validate-test-layout.sh",
+      "source_blob_sha": "17f9d20af33f99a57984a9e461bc47f06fbda17a",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/minecraft-testing/scripts/validate-test-layout.sh",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-vfx-engineering/SKILL.md",
+      "source_blob_sha": "121104226f290abaf693721e3dcc5b918368a6e1",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/skills/minecraft-vfx-engineering/SKILL.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "library/minecraft-visual-qa/SKILL.md",
+      "source_blob_sha": "28582847e8fe20df3de8facf27559854d56e59bc",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/skills/minecraft-visual-qa/SKILL.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "library/minecraft-world-generation/PROJECT-OVERLAY.md",
+      "source_blob_sha": "4745f2f664985c57e63e59b5b09359aedba5f331",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-world-generation/PROJECT-OVERLAY.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-world-generation/SKILL.md",
+      "source_blob_sha": "722d442a60a932d153db2464cf6031555aaadfa5",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-world-generation/SKILL.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-world-generation/agents/openai.yaml",
+      "source_blob_sha": "1cee95d3da0da156028b8b328b31157a733a7546",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-world-generation/agents/openai.yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-world-generation/assets/icon.svg",
+      "source_blob_sha": "c782ded19ff8d6a930f75d1c6433f509da0df66a",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-world-generation/assets/icon.svg",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-world-generation/scripts/jq-shim.mjs",
+      "source_blob_sha": "2372fcb609095c9a17908ebae7c91fd044db6ab9",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-world-generation/scripts/jq-shim.mjs",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-world-generation/scripts/validate-worldgen-json.sh",
+      "source_blob_sha": "ca4803108ab6d6420c8fe0e2bce84cdfe2f67594",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-world-generation/scripts/validate-worldgen-json.sh",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-worldedit-ops/PROJECT-OVERLAY.md",
+      "source_blob_sha": "8186914fc62c2dcbac8a7c36095b826ac9816ea2",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-worldedit-ops/PROJECT-OVERLAY.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-worldedit-ops/SKILL.md",
+      "source_blob_sha": "a2619d48eeb716ecc567784f472825ad87407ada",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-worldedit-ops/SKILL.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-worldedit-ops/agents/openai.yaml",
+      "source_blob_sha": "4185c3f3e965f24294281d8a5d4b758e74d701c6",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-worldedit-ops/agents/openai.yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-worldedit-ops/assets/icon.svg",
+      "source_blob_sha": "c782ded19ff8d6a930f75d1c6433f509da0df66a",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-worldedit-ops/assets/icon.svg",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/minecraft-worldedit-ops/references/safety-checklists.md",
+      "source_blob_sha": "7c290ab3153c806cba462fdc366177594b0fec64",
+      "classification": "REFERENCE_ONLY",
+      "destination": "migration/provenance/historical-skills/library/minecraft-worldedit-ops/references/safety-checklists.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/modpack-inventory-redundancy-audit/PROJECT-OVERLAY.md",
+      "source_blob_sha": "5912051bfbb47a5fab6ebf08185eb8d041564cfb",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/modpack-inventory-redundancy-audit/PROJECT-OVERLAY.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "library/modpack-inventory-redundancy-audit/SKILL.md",
+      "source_blob_sha": "14ec6f3c84bfe43d40b246515b70ba30c5a6c926",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/modpack-inventory-redundancy-audit/SKILL.md",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/modpack-inventory-redundancy-audit/agents/openai.yaml",
+      "source_blob_sha": "84153b1b9063e477e0e2679cc7b56ad0c34be762",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/modpack-inventory-redundancy-audit/agents/openai.yaml",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "library/modpack-inventory-redundancy-audit/assets/icon.svg",
+      "source_blob_sha": "2468028d1ed0fc8009b1fc45e7bb027adaf0d079",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/library/modpack-inventory-redundancy-audit/assets/icon.svg",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "scripts/validate_golden_reference_rendered_edges.js",
+      "source_blob_sha": "993f15462ab7aa38e89765821c2282f191dc56fc",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/validators/validate_golden_reference_rendered_edges.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "scripts/validate_skill_repository.py",
+      "source_blob_sha": "52ed3a7ed64c82a98cb30bba1b11ae37d56f94ce",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "skills/scripts/validate_skill_repository.py",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "standards/ASSET-PROVIDER-PROFILES.md",
+      "source_blob_sha": "cf9f738d09758524c8db5621027fa5e21f27b16c",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/standards/ASSET-PROVIDER-PROFILES.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "standards/AUDIO-QA.md",
+      "source_blob_sha": "c48ec6e9558f655ee17dc1fce913b93278faa42f",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/standards/AUDIO-QA.md",
+      "materialization_mode": "PREEXISTING_RECONCILED"
+    },
+    {
+      "source_path": "standards/BLOCKBENCH-EXTENSION-POLICY.md",
+      "source_blob_sha": "ba7118de2a440e15ab0d44e329826b3e34ec776d",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/standards/BLOCKBENCH-EXTENSION-POLICY.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "standards/BLOCKBENCH-LIVE-BRIDGE-PROTOCOL.md",
+      "source_blob_sha": "c0e5a1704884f3dd3c4ad077dd77a1cdaf6ee36b",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/standards/BLOCKBENCH-LIVE-BRIDGE-PROTOCOL.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "standards/BLOCKBENCH-LIVE-BRIDGE-SECURITY.md",
+      "source_blob_sha": "fd2b93a947b2e8038de3aa4d05105bcda6426291",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/standards/BLOCKBENCH-LIVE-BRIDGE-SECURITY.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "standards/MODEL-ASSET-CONTRACT.md",
+      "source_blob_sha": "3442c8c287e12ce66f8cc2fab441abcd1a90fb72",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/standards/MODEL-ASSET-CONTRACT.md",
+      "materialization_mode": "PREEXISTING_RECONCILED"
+    },
+    {
+      "source_path": "standards/SPELL-PRESENTATION-CONTRACT.md",
+      "source_blob_sha": "d5bb4c4c1e918c6537e623f81336bdda3fd15801",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/standards/SPELL-PRESENTATION-CONTRACT.md",
+      "materialization_mode": "PREEXISTING_RECONCILED"
+    },
+    {
+      "source_path": "standards/VFX-QA.md",
+      "source_blob_sha": "a1cfb2e3d870d8975e43dc919b5890f6bc6682a2",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/standards/VFX-QA.md",
+      "materialization_mode": "PREEXISTING_RECONCILED"
+    },
+    {
+      "source_path": "standards/VISUAL-QA.md",
+      "source_blob_sha": "0652b9b5dd9f19f62a454c5aff5db5d903c15dc9",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/standards/VISUAL-QA.md",
+      "materialization_mode": "PREEXISTING_RECONCILED"
+    },
+    {
+      "source_path": "templates/ANIMATION-BRIEF.md",
+      "source_blob_sha": "efc7357301e109639a760bbda22eaafdd8c6a267",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/templates/ANIMATION-BRIEF.md",
+      "materialization_mode": "PREEXISTING_RECONCILED"
+    },
+    {
+      "source_path": "templates/ASSET-BRIEF.md",
+      "source_blob_sha": "2be877eb332c8b56f4d2a152d89426c4ea2ad875",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/templates/ASSET-BRIEF.md",
+      "materialization_mode": "PREEXISTING_RECONCILED"
+    },
+    {
+      "source_path": "templates/AUDIO-CUE-SHEET.md",
+      "source_blob_sha": "1c010f6379276291484ef278426635525161b3d0",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/templates/AUDIO-CUE-SHEET.md",
+      "materialization_mode": "PREEXISTING_RECONCILED"
+    },
+    {
+      "source_path": "templates/MODEL-BRIEF.md",
+      "source_blob_sha": "c02894b55948d43c53283e14b45d21784c970c01",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/templates/MODEL-BRIEF.md",
+      "materialization_mode": "PREEXISTING_RECONCILED"
+    },
+    {
+      "source_path": "templates/SPELL-BRIEF.md",
+      "source_blob_sha": "35854860642e2ebd2a0d871b61422fc8b4c63b01",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/templates/SPELL-BRIEF.md",
+      "materialization_mode": "PREEXISTING_RECONCILED"
+    },
+    {
+      "source_path": "templates/VFX-BRIEF.md",
+      "source_blob_sha": "7db8337b8f567557ff3edfd2a8026a9e413facc9",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/templates/VFX-BRIEF.md",
+      "materialization_mode": "PREEXISTING_RECONCILED"
+    },
+    {
+      "source_path": "templates/VISUAL-QA.md",
+      "source_blob_sha": "d3f9d57c2bc2f51237693d2622f6ec3bf881a286",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/templates/VISUAL-QA.md",
+      "materialization_mode": "PREEXISTING_RECONCILED"
+    },
+    {
+      "source_path": "tools/blockbench/README.md",
+      "source_blob_sha": "1714a761afb23ea1d19b9f40a581903ceee8ec51",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/README.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/minecraft_asset_validator.js",
+      "source_blob_sha": "d902d97585b0fef5f7efdcc7a3c5742872328925",
+      "classification": "SUPERSEDED",
+      "destination": "migration/provenance/historical-skills/tools/blockbench/minecraft_asset_validator.js",
+      "materialization_mode": "SOURCE_EXACT"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/README.md",
+      "source_blob_sha": "2c6b0ae26c1b6b2db5453bd8683ac25095e4f11c",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/README.md",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/blockbench-plugin/live_bridge_adapter.js",
+      "source_blob_sha": "599c4a214111dc118d7fe894f0dbbbcfb36b0e58",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/blockbench-plugin/live_bridge_adapter.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/blockbench-plugin/modeling_adapter.js",
+      "source_blob_sha": "dc6577b4ec57b2b50933a7b85757c83fcc455969",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/blockbench-plugin/modeling_adapter.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/blockbench-plugin/plugin_adapter.js",
+      "source_blob_sha": "882da3c0d6b001a0ce6a927def296c09598763ee",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/blockbench-plugin/plugin_adapter.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/blockbench-plugin/uv_texture_adapter.js",
+      "source_blob_sha": "0517294c7dc5b76564a9612196c8a0b7b088a2ac",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/blockbench-plugin/uv_texture_adapter.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/build_toolkit_bundle.js",
+      "source_blob_sha": "413b12b2a2feeec9850ac5d6e8bcd9cb1de900c7",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/core/contract-profile/contract_profile.js",
+      "source_blob_sha": "a8b212c619c01e1b238f6f11a8ec5135aa30116a",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/core/contract-profile/contract_profile.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/core/extension-registry/extension.schema.json",
+      "source_blob_sha": "f6ba41e22e078b4b3af5312e2ad2b9e6b9a177b6",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/core/extension-registry/extension.schema.json",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/core/extension-registry/extension_registry.js",
+      "source_blob_sha": "e569ed53eca81d8016444794e5e76ad86eb975e0",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/core/extension-registry/extension_registry.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/core/index.js",
+      "source_blob_sha": "080394f9df8e3a4dc00ab4089d3133b3f7f45ba7",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/core/index.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/core/mutations/mutation_engine.js",
+      "source_blob_sha": "4d8a7344fc46328e6389e5969d186e9744e7b034",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/core/mutations/mutation_engine.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/core/project-model/project_model.js",
+      "source_blob_sha": "7b29202ddd1954c8a90d0916eaf9db1e2517f16f",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/core/project-model/project_model.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/core/provider-profile/physical_provider_snapshot.js",
+      "source_blob_sha": "91856ab94583f40fbfa84dcfe4ac6b268f3db9bb",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/core/provider-profile/physical_provider_snapshot.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/core/provider-profile/provider-profile.schema.json",
+      "source_blob_sha": "9c3e85d9f49069c25a824798f9e46bc29b97e0b1",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/core/provider-profile/provider-profile.schema.json",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/core/provider-profile/provider_profiles.js",
+      "source_blob_sha": "1bb9096697943917f8231ce932d10c7a23d4c3cf",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/core/provider-profile/provider_profiles.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/core/report/report.js",
+      "source_blob_sha": "55f0ef742f82f8685f5c480e25dfb992e7bf0ef9",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/core/report/report.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/core/uv-texture/uv_analysis.js",
+      "source_blob_sha": "d059168214eaa9ceaf6bedea79a5aa3276023d7b",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/core/uv-texture/uv_analysis.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/core/uv-texture/uv_pack.js",
+      "source_blob_sha": "89503a7ae99e76e3469d2d1ec928aed3da8cb216",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/core/uv-texture/uv_pack.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/core/uv-texture/uv_texture_engine.js",
+      "source_blob_sha": "8b4842a1fff5bb87b9ca3b17ad80383a0ef1cf7d",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/core/uv-texture/uv_texture_engine.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/core/validator/validator.js",
+      "source_blob_sha": "3364f3c9b4defd09855a5147d33a35733381eb1a",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/core/validator/validator.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/live-bridge/blockbench_bridge_client.js",
+      "source_blob_sha": "f30ca07a53de47313c01ad16dfa8903343b50650",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/live-bridge/blockbench_bridge_client.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/live-bridge/fingerprint.js",
+      "source_blob_sha": "dfdbff3c8b8cb21b4a09eeb675e5510e69a8d22e",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/live-bridge/fingerprint.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/live-bridge/gateway_protocol.js",
+      "source_blob_sha": "83f2ef7ac19aba03c38c4b1de7a24a87891a7286",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/live-bridge/gateway_protocol.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/live-bridge/project_snapshot.js",
+      "source_blob_sha": "1de9ee8c28889e5938791f54e5efb9fb69aac75e",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/live-bridge/project_snapshot.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/live-bridge/protocol.js",
+      "source_blob_sha": "79beedfbec7a10b14786b3a84617e624ce6f96d1",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/live-bridge/protocol.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/live-bridge/read_only_router.js",
+      "source_blob_sha": "6a9d61520e410cb3b85ab6f549dbef2561ce6939",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/live-bridge/read_only_router.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/live-bridge/session_manager.js",
+      "source_blob_sha": "63bdd0a6eb4682fbef69d351c7dd2b9440ae06a2",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/live-bridge/session_manager.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/mcp-sidecar/package-lock.json",
+      "source_blob_sha": "d3ad59a334df4de91e68d0c13b0a6bca0758f6a2",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/mcp-sidecar/package-lock.json",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/mcp-sidecar/package.json",
+      "source_blob_sha": "4df63814960476bbd480f4005bb18544a05d896f",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/mcp-sidecar/package.json",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/mcp-sidecar/src/bridge_gateway.mjs",
+      "source_blob_sha": "6eef4fb1f474fc4b82612b8cab877e2f59d162cd",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/mcp-sidecar/src/bridge_gateway.mjs",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/mcp-sidecar/src/server.mjs",
+      "source_blob_sha": "4daf2e8d60e2edd537e268f4a740328d3282209a",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/mcp-sidecar/src/server.mjs",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/mcp-sidecar/tests/blockbench_connection.test.mjs",
+      "source_blob_sha": "84b96895f0926b30875124d998fedf2153079b38",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/mcp-sidecar/tests/blockbench_connection.test.mjs",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/mcp-sidecar/tests/bridge_gateway.test.mjs",
+      "source_blob_sha": "1f1c8a6b4917df9a743932600d79015fd0ce8aba",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/mcp-sidecar/tests/bridge_gateway.test.mjs",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/mcp-sidecar/tests/runtime_entrypoint.test.mjs",
+      "source_blob_sha": "b5025f0dbb2ff6b23158fad837b80d8b2edb0f20",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/mcp-sidecar/tests/runtime_entrypoint.test.mjs",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/mcp-sidecar/tool_manifest.cjs",
+      "source_blob_sha": "74aed0a080ef88205d774a99c213a35109bece91",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/mcp-sidecar/tool_manifest.cjs",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.blockbench_adapter.test.js",
+      "source_blob_sha": "6134eb219d8c61aad0eff9984734a924ce9126b1",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.blockbench_adapter.test.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.bundle_live_bridge.test.js",
+      "source_blob_sha": "761145de8be714ff02c30d96f70a44258ebf6935",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.bundle_live_bridge.test.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.js",
+      "source_blob_sha": "151a0c33f68fc6d53e921ab4c8485f448378eeae",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.live_bridge.test.js",
+      "source_blob_sha": "b1f5d4d36adcafa7e4738b027e3ee9bd757cfe9a",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.live_bridge.test.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.locator_native.test.js",
+      "source_blob_sha": "56ecb23b7ce536f6ee7c866351ae8a89a2801565",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.locator_native.test.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.mcp_sidecar.test.js",
+      "source_blob_sha": "798f6646c9e2cce0f64af2e4e018a85a608a238a",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.mcp_sidecar.test.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.modular.test.js",
+      "source_blob_sha": "c2cb0321197c3bfe384f3c0c4e5efa7b4b6af96c",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.modular.test.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.mutations.test.js",
+      "source_blob_sha": "a640e035d29bef163910a212ba26e94433bbf622",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.mutations.test.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.palette_sampling.test.js",
+      "source_blob_sha": "b3877cf8c43c2396a3a95884a7e2936199cc4526",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.palette_sampling.test.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.provider_expansion.test.js",
+      "source_blob_sha": "df34b2aae5cb3c53b4481eed5cabdf7875865b48",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.provider_expansion.test.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.registry.test.js",
+      "source_blob_sha": "056f5170a3c3639c9f991f931c980e09f0c42834",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.registry.test.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.test.js",
+      "source_blob_sha": "e49ed8aa627a3c6006279cadcbfc1166c36676d2",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.test.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.texture_create_import.test.js",
+      "source_blob_sha": "b8a0b87b95f3375b0005942d99740d9f997736c4",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.texture_create_import.test.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.texture_create_import_adapter.test.js",
+      "source_blob_sha": "a4dcde522d55c1f0fd752c98fd681c512f925774",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.texture_create_import_adapter.test.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.texture_paint_region.test.js",
+      "source_blob_sha": "8ea357fa64a481a771bc7e30ac652dff1759c218",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.texture_paint_region.test.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.texture_path.test.js",
+      "source_blob_sha": "0f2404f9092195aea1744c0af8982ffd62b42114",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.texture_path.test.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.uv_analysis.test.js",
+      "source_blob_sha": "bf240018a7ffcf84c6d9f427aa935c4fb596455d",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.uv_analysis.test.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.uv_island_masks.test.js",
+      "source_blob_sha": "7b66b8e99e8b156ecb9ea83b896f9dce22830ac8",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.uv_island_masks.test.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.uv_pack.test.js",
+      "source_blob_sha": "ccd7070fe9a6b3ed39c00263f3ad5b8f498d829e",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.uv_pack.test.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.uv_texture.test.js",
+      "source_blob_sha": "8601a68fe99582226727d53116c6b78ccb472393",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.uv_texture.test.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.uv_texture_adapter.test.js",
+      "source_blob_sha": "de2646fb1056160f86b05cc29c5946f186cfc26c",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.uv_texture_adapter.test.js",
+      "materialization_mode": "ADAPTED"
+    },
+    {
+      "source_path": "tools/blockbench/rpg-asset-toolkit/rpg_asset_toolkit.uv_texture_revision.test.js",
+      "source_blob_sha": "c99a2109c64b031aba0220c32f26aa1177423824",
+      "classification": "MIGRATE_ADAPTED",
+      "destination": "art/tooling/blockbench/asset-toolkit/asset_toolkit.uv_texture_revision.test.js",
+      "materialization_mode": "ADAPTED"
+    }
+  ]
+}

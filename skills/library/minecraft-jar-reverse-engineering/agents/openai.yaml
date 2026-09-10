@@ -1,0 +1,14 @@
+interface:
+  display_name: minecraft jar reverse engineering
+  short_description: Use when a Minecraft mod JAR must be inspected, compared, patched,
+    or understood because source is unavailable, metadata is unclear, dependencies
+    or mixins are suspect, or binary compatibility must be investigated.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

@@ -1,0 +1,14 @@
+interface:
+  display_name: minecraft testing
+  short_description: Design and implement automated tests for Minecraft 1.21.x mods
+    and plugins using JUnit, MockBukkit, NeoForge GameTests, or Fabric GameTests.
+    Use for test code and test execution, not release publishing or gameplay implementation.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
