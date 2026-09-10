@@ -1,7 +1,7 @@
 # Visual Style Bible — Minecraft Mod Factory
 
-Status: **canônico para a gramática visual reutilizável de assets project-owned; contexto histórico do pack é apenas referência**  
-Alvo técnico atual: Minecraft 1.21.1 · NeoForge 21.1.248 · Java 21  
+Status: **canônico para a gramática visual reutilizável de assets project-owned; contexto histórico do pack é apenas referência**
+Alvo técnico atual: Minecraft 1.21.1 · NeoForge 21.1.248 · Java 21
 Autoridade de versão/presença: `../skills/VERSION-AUTHORITY.md`
 
 ## 1. Objetivo e autoridade
