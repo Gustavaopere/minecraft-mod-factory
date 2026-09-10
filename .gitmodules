@@ -1,3 +1,6 @@
 [submodule "construction/upstream/snapshots/schematica"]
 	path = construction/upstream/snapshots/schematica
 	url = https://github.com/tester2024/schematica.git
+[submodule "construction/upstream/references/minebench"]
+	path = construction/upstream/references/minebench
+	url = https://github.com/Ammaar-Alam/minebench.git
