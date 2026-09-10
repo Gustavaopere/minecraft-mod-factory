@@ -51,6 +51,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          find . -type d -name '__pycache__' -prune -exec rm -rf {} +
           git rm \
             .github/workflows/factory-sonar-regex-remediation-once.yml \
             .github/scripts/apply-sonar-regex-remediation-once.py
