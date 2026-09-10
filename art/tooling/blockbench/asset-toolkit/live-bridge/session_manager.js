@@ -3,7 +3,15 @@
 const crypto = require('node:crypto');
 const {PROTOCOL_VERSION, bridgeError} = require('./protocol.js');
 
-function compareText(left, right) { return String(left).localeCompare(String(right), 'en', {sensitivity: 'variant', numeric: false}); }
+function compareText(left, right) {
+  const leftText = String(left);
+  const rightText = String(right);
+  const localized = leftText.localeCompare(rightText, 'en', {sensitivity: 'variant', numeric: false});
+  if (localized !== 0) return localized;
+  if (leftText < rightText) return -1;
+  if (leftText > rightText) return 1;
+  return 0;
+}
 function stable(value) {
   if (Array.isArray(value)) return value.map(stable);
   if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort(compareText).map((key) => [key, stable(value[key])]));
