@@ -1,0 +1,42 @@
+name: Factory Engineering I5 Test Harness
+
+on:
+  push:
+    branches:
+      - main
+      - feat/f5-e5-i5-test-harness-migration
+    paths:
+      - 'engineering/tests/test_i5_test_harness.py'
+      - 'engineering/tooling/test-harness/**'
+      - 'engineering/tooling/validate-i1-foundation.py'
+      - 'engineering/schemas/test-manifest.schema.json'
+      - 'engineering/templates/neoforge-mod/build.gradle.tmpl'
+      - 'engineering/tests/golden/i3-golden-mod/build.gradle'
+      - '.github/workflows/factory-engineering-i5-test-harness.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'engineering/tests/test_i5_test_harness.py'
+      - 'engineering/tooling/test-harness/**'
+      - 'engineering/tooling/validate-i1-foundation.py'
+      - 'engineering/schemas/test-manifest.schema.json'
+      - 'engineering/templates/neoforge-mod/build.gradle.tmpl'
+      - 'engineering/tests/golden/i3-golden-mod/build.gradle'
+      - '.github/workflows/factory-engineering-i5-test-harness.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  harness-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Run I5 test harness contract tests
+        run: python3 -m unittest engineering/tests/test_i5_test_harness.py
+
+      - name: Check whitespace
+        run: git diff --check
