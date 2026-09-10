@@ -345,8 +345,13 @@
       const ANIMATION_CHANNELS = new Set(['position', 'rotation', 'scale']);
       const ANIMATION_EASINGS = new Set(['linear', 'bezier', 'catmullrom', 'step']);
       const EFFECT_MARKER_TYPES = new Set(['particle', 'sound', 'timeline', 'custom']);
+      const DESTRUCTIVE_OPERATION_TYPES = new Set([
+        'animation_delete',
+        'animation_delete_keyframe',
+        'animation_delete_effect_marker',
+      ]);
 
-      const BATCH_FIELDS = new Set(['expectedRevision', 'label', 'operations', 'dryRun']);
+      const BATCH_FIELDS = new Set(['expectedRevision', 'label', 'operations', 'dryRun', 'confirmationToken']);
       const OPERATION_FIELDS = Object.freeze({
         animation_create: new Set(['type', 'id', 'name', 'length', 'loop']),
         animation_update_settings: new Set(['type', 'animationId', 'name', 'length', 'loop']),
@@ -575,6 +580,9 @@
             : boundedString(value.label, 'label', {max: MAX_LABEL_LENGTH}),
           operations: Object.freeze(operations),
           dryRun: value.dryRun === true,
+          confirmationToken: value.confirmationToken === undefined
+            ? undefined
+            : boundedString(value.confirmationToken, 'confirmationToken', {max: 256}),
         });
       }
 
@@ -593,6 +601,16 @@
         }
       }
 
+      function destructiveDiff(operations) {
+        return Object.freeze(operations.filter((operation) => DESTRUCTIVE_OPERATION_TYPES.has(operation.type)));
+      }
+
+      function confirmationTokenFor(beforeRevision, operations, diff) {
+        const crypto = require('node:crypto');
+        const payload = {beforeRevision, operations, diff};
+        return `animation:v1:${crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex')}`;
+      }
+
       function applyAnimationBatch(adapter, input) {
         validateMutationAdapter(adapter);
         const batch = validateAnimationBatch(input);
@@ -602,6 +620,8 @@
         }
 
         adapter.preflight(batch.operations);
+        const diff = destructiveDiff(batch.operations);
+        const confirmationToken = diff.length > 0 ? confirmationTokenFor(beforeRevision, batch.operations, diff) : null;
         if (batch.dryRun) {
           return Object.freeze({
             ok: true,
@@ -610,7 +630,17 @@
             afterRevision: beforeRevision,
             applied: 0,
             changedIds: Object.freeze([]),
+            diff,
+            confirmationToken,
           });
+        }
+        if (diff.length > 0) {
+          if (!batch.confirmationToken) {
+            fail('ANIMATION_CONFIRMATION_REQUIRED', 'Destructive animation operations require a revision-bound dry-run confirmation token.');
+          }
+          if (batch.confirmationToken !== confirmationToken) {
+            fail('ANIMATION_CONFIRMATION_MISMATCH', 'Animation confirmation token does not match the current revision-bound diff.');
+          }
         }
 
         const changedIds = [];
@@ -665,6 +695,13 @@
         return output;
       }
 
+      function channelValueDelta(channelName, left, right) {
+        const absolute = Math.abs(left - right);
+        if (channelName !== 'rotation') return absolute;
+        const wrapped = absolute % 360;
+        return Math.min(wrapped, 360 - wrapped);
+      }
+
       function validateLoopSeam(input) {
         if (!isPlainObject(input)) fail('INVALID_LOOP_SEAM_REQUEST', 'Loop seam request must be an object.');
         rejectUnknownFields(input, new Set(['startPose', 'endPose', 'tolerance']), 'UNKNOWN_LOOP_SEAM_FIELD', 'Loop seam request');
@@ -693,7 +730,7 @@
             }
             let channelDelta = 0;
             for (let index = 0; index < 3; index += 1) {
-              channelDelta = Math.max(channelDelta, Math.abs(leftValue[index] - rightValue[index]));
+              channelDelta = Math.max(channelDelta, channelValueDelta(channelName, leftValue[index], rightValue[index]));
             }
             maxDelta = Math.max(maxDelta, channelDelta);
             if (channelDelta > tolerance) {
@@ -722,7 +759,9 @@
         rejectUnknownFields(input, new Set(['samples']), 'UNKNOWN_FOOT_SLIDE_FIELD', 'Foot-slide request');
         if (!Array.isArray(input.samples)) fail('INVALID_FOOT_SLIDE_SAMPLES', 'samples must be an array.');
 
-        const planted = [];
+        let plantedSamples = 0;
+        let previousPlanted = null;
+        let distance = 0;
         for (let index = 0; index < input.samples.length; index += 1) {
           const sample = input.samples[index];
           if (!isPlainObject(sample)) fail('INVALID_FOOT_SLIDE_SAMPLE', `samples[${index}] must be an object.`);
@@ -730,24 +769,28 @@
           nonNegativeTime(sample.time, `samples[${index}].time`);
           const position = vector3(sample.position, `samples[${index}].position`);
           if (typeof sample.planted !== 'boolean') fail('INVALID_FOOT_SLIDE_SAMPLE', `samples[${index}].planted must be boolean.`);
-          if (sample.planted) planted.push(position);
+          if (!sample.planted) {
+            previousPlanted = null;
+            continue;
+          }
+          plantedSamples += 1;
+          if (previousPlanted) distance += distance3(previousPlanted, position);
+          previousPlanted = position;
         }
 
-        if (planted.length < 2) {
+        if (plantedSamples < 2) {
           return Object.freeze({
             measurable: false,
             reason: 'INSUFFICIENT_CONTACT_SAMPLES',
-            plantedSamples: planted.length,
+            plantedSamples,
             distance: null,
           });
         }
 
-        let distance = 0;
-        for (let index = 1; index < planted.length; index += 1) distance += distance3(planted[index - 1], planted[index]);
         return Object.freeze({
           measurable: true,
           reason: null,
-          plantedSamples: planted.length,
+          plantedSamples,
           distance: Number(distance.toFixed(12)),
         });
       }
