@@ -46,13 +46,13 @@ jobs:
           python3 engineering/tooling/scaffolder/scaffold_mod.py
           --mod-spec engineering/tests/fixtures/i3-golden-mod-spec.json
           --config engineering/tests/fixtures/i3-golden-scaffold-config.json
-          --output "$RUNNER_TEMP/i3-generated"
+          --output ".factory-ci/i3/generated"
 
       - name: Build generated NeoForge project with Factory-owned wrapper
         run: |
-          chmod +x "$RUNNER_TEMP/i3-generated/gradlew"
-          cd "$RUNNER_TEMP/i3-generated"
-          GRADLE_USER_HOME="$RUNNER_TEMP/i3-gradle-home" ./gradlew test build --no-daemon
+          chmod +x ".factory-ci/i3/generated/gradlew"
+          cd ".factory-ci/i3/generated"
+          GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/i3/gradle-home" ./gradlew test build --no-daemon
 
       - name: Check whitespace
         run: git diff --check HEAD^
