@@ -1,0 +1,9 @@
+Mods count: 3
+
+jar name | notes | mod id | mod name | mod version | mixin configs | modrinth hash | curseforge hash
+---------+-------+--------+----------+-------------+---------------+---------------+----------------
+neoforge-21.1.248 (modloader) | | neoforge | neoforge | neoforge-21.1.248 | | |
+alpha-1.0.0.jar | | alpha | Alpha | 1.0.0 | alpha.mixins.json | aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 111
+    /META-INF/jarjar/shared-2.0.0.jar | | shared | Shared Library | 2.0.0 | | |
+        /META-INF/jars/deep-3.0.0.jar | | deep | Deep Library | 3.0.0 | deep.mixins.json | |
+beta-1.1.0.jar | MCreator mod | beta | Beta | 1.1.0 | | bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb | 222
