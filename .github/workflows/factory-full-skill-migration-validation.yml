@@ -114,7 +114,7 @@ jobs:
 
       - name: Install MCP sidecar dependencies
         working-directory: art/tooling/blockbench/asset-toolkit/mcp-sidecar
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Check MCP sidecar
         working-directory: art/tooling/blockbench/asset-toolkit/mcp-sidecar
