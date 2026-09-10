@@ -1,0 +1,76 @@
+name: Factory Sonar Regex Hardening Apply Once
+
+on:
+  push:
+    branches:
+      - fix/sonar-regex-hardening
+    paths:
+      - 'migration/full-skill-migration/apply_sonar_regex_hardening_once.py'
+      - '.github/workflows/factory-sonar-regex-hardening-apply-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout hardening branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/sonar-regex-hardening
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Apply guarded hardening
+        run: python migration/full-skill-migration/apply_sonar_regex_hardening_once.py
+
+      - name: Validate targeted Sonar contract
+        run: >-
+          python -m unittest
+          migration/full-skill-migration/test_m5_naming.py
+          migration/full-skill-migration/test_sonar_hardening.py
+          migration/full-skill-migration/test_sonar_regex_hardening.py
+          -v
+
+      - name: Validate migrated skill and art corpus
+        run: python skills/scripts/validate_skill_repository.py
+
+      - name: Check whitespace
+        run: >-
+          git diff --check --
+          skills/scripts/validate_skill_repository.py
+          art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js
+          art/golden-samples/validate_reference_evidence.js
+          art/tooling/validators/validate_golden_reference_rendered_edges.js
+
+      - name: Persist production-only GREEN and remove applicator
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm migration/full-skill-migration/apply_sonar_regex_hardening_once.py
+          git rm .github/workflows/factory-sonar-regex-hardening-apply-once.yml
+          changed="$(git status --short | awk '{print $2}' | sort)"
+          expected="$(printf '%s\n' \
+            .github/workflows/factory-sonar-regex-hardening-apply-once.yml \
+            art/golden-samples/validate_reference_evidence.js \
+            art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js \
+            art/tooling/validators/validate_golden_reference_rendered_edges.js \
+            migration/full-skill-migration/apply_sonar_regex_hardening_once.py \
+            skills/scripts/validate_skill_repository.py | sort)"
+          test "$changed" = "$expected"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix(sonar): replace inherited slow regexes with bounded parsers'
+          git push origin HEAD:fix/sonar-regex-hardening
