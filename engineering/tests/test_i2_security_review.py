@@ -117,6 +117,24 @@ class I2SecurityAndReviewContractTest(unittest.TestCase):
                 loaded_snapshot = self.module.load_persisted_snapshot(Path("snapshot.json"))
                 self.assertEqual([], self.module.validate_persisted_provider_catalog(loaded_snapshot, provider_catalog))
 
+    def test_emit_providers_rejects_preexisting_sibling_symlink_escape(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            outside = root / "outside-provider.json"
+            outside.write_text("preserve", encoding="utf-8")
+            (workspace / "snapshot.providers.json").symlink_to(outside)
+            with contextlib.chdir(workspace):
+                with self.assertRaises(ValueError):
+                    self.module.write_persisted_snapshot(
+                        self.snapshot,
+                        Path("snapshot.json"),
+                        shard_size=2,
+                        emit_providers=True,
+                    )
+            self.assertEqual("preserve", outside.read_text(encoding="utf-8"))
+
 
 if __name__ == "__main__":
     unittest.main()
