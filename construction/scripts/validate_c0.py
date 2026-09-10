@@ -17,6 +17,7 @@ SOURCE_POLICIES = {
 }
 SOURCE_STATES = {"AUDITED_NOT_VENDORED", "DO_NOT_VENDOR"}
 EXTERNAL_API_STATES = {"UNVERIFIED_API", "VERIFIED_API", "MANUAL_HANDOFF"}
+MATERIALIZABLE_SNAPSHOT_POLICIES = {"IMMUTABLE_SNAPSHOT", "LIBRARY_SNAPSHOT"}
 
 REQUIRED_PATHS = (
     "construction/README.md",
@@ -149,6 +150,60 @@ def validate_upstream_schema(schema: Any) -> list[str]:
     return errors
 
 
+def _is_initialized_git_submodule(path: Path) -> bool:
+    marker = path / ".git"
+    if not marker.is_file():
+        return False
+    try:
+        marker_text = marker.read_text(encoding="utf-8").strip()
+    except OSError:
+        return False
+    return marker_text.startswith("gitdir: ")
+
+
+def validate_snapshot_boundary(root: Path, registry: Any) -> list[str]:
+    snapshots = root / "construction/upstream/snapshots"
+    if not snapshots.exists():
+        return []
+
+    materializable_ids: set[str] = set()
+    if isinstance(registry, dict):
+        sources = registry.get("sources", [])
+        if isinstance(sources, list):
+            for source in sources:
+                if not isinstance(source, dict):
+                    continue
+                source_id = source.get("id")
+                policy = source.get("integration_policy")
+                if isinstance(source_id, str) and policy in MATERIALIZABLE_SNAPSHOT_POLICIES:
+                    materializable_ids.add(source_id)
+
+    errors: list[str] = []
+    for entry in sorted(snapshots.iterdir(), key=lambda item: item.name):
+        relative = entry.relative_to(root).as_posix()
+        if entry.is_symlink():
+            errors.append(f"snapshot boundary forbids symlinks: {relative}")
+            continue
+        if entry.is_dir() and entry.name in materializable_ids and _is_initialized_git_submodule(entry):
+            continue
+
+        payloads: list[str] = []
+        if entry.is_file():
+            payloads.append(relative)
+        elif entry.is_dir():
+            payloads.extend(
+                path.relative_to(root).as_posix()
+                for path in entry.rglob("*")
+                if path.is_file()
+            )
+        if payloads:
+            errors.append(
+                "snapshot payload must be an initialized materializable Git submodule: "
+                + ", ".join(sorted(payloads))
+            )
+    return errors
+
+
 def validate(root: Path) -> list[str]:
     root = root.resolve()
     errors: list[str] = []
@@ -161,6 +216,7 @@ def validate(root: Path) -> list[str]:
     errors.extend(registry_load_errors)
     if registry is not None:
         errors.extend(validate_registry(registry))
+    errors.extend(validate_snapshot_boundary(root, registry))
 
     build_schema, build_schema_errors = load_json(root / "construction/schemas/build-spec.schema.json")
     errors.extend(build_schema_errors)
@@ -171,12 +227,6 @@ def validate(root: Path) -> list[str]:
     errors.extend(upstream_schema_errors)
     if upstream_schema is not None:
         errors.extend(validate_upstream_schema(upstream_schema))
-
-    snapshots = root / "construction/upstream/snapshots"
-    if snapshots.exists():
-        payloads = sorted(path.relative_to(root).as_posix() for path in snapshots.rglob("*") if path.is_file())
-        if payloads:
-            errors.append("C0 must not vendor upstream snapshots before C1: " + ", ".join(payloads))
 
     readme = root / "construction/README.md"
     if readme.is_file():
@@ -203,6 +253,8 @@ def validate(root: Path) -> list[str]:
         for command in commands:
             if command not in workflow_text:
                 errors.append(f"construction C0 workflow missing gate: {command}")
+        if "submodules: recursive" not in workflow_text:
+            errors.append("construction C0 workflow must validate initialized upstream snapshots")
 
     return errors
 
@@ -219,7 +271,7 @@ def main() -> int:
     print(f"- required paths: {len(REQUIRED_PATHS)}")
     print("- upstream pins: validated")
     print("- schemas: validated")
-    print("- C0 snapshot boundary: validated")
+    print("- snapshot boundary: validated")
     return 0
 
 
