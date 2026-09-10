@@ -1,0 +1,12 @@
+package {{JAVA_PACKAGE}}.client;
+
+import {{JAVA_PACKAGE}}.{{MAIN_CLASS}};
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.common.Mod;
+
+@Mod(value = {{MAIN_CLASS}}.MOD_ID, dist = Dist.CLIENT)
+public final class {{CLIENT_CLASS}} {
+    public {{CLIENT_CLASS}}(IEventBus modBus) {
+    }
+}

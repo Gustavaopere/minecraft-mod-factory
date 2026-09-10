@@ -1,0 +1,58 @@
+name: Factory Engineering I3 Mod Scaffolder
+
+on:
+  push:
+    branches:
+      - main
+      - feat/f3-e3-i2-i3-migration
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'engineering/templates/neoforge-mod/**'
+      - 'engineering/tooling/scaffolder/**'
+      - 'engineering/tests/test_i3_mod_scaffolder.py'
+      - 'engineering/tests/test_i3_security_review.py'
+      - 'engineering/tests/fixtures/i3-*.json'
+      - 'engineering/tests/golden/i3-golden-mod/**'
+      - '.github/workflows/factory-engineering-i3-mod-scaffolder.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  scaffolder-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Run I3 scaffolder contract tests
+        run: >-
+          python3 -m unittest
+          engineering/tests/test_i3_mod_scaffolder.py
+          engineering/tests/test_i3_security_review.py
+
+      - name: Generate project from canonical fixtures
+        run: >-
+          python3 engineering/tooling/scaffolder/scaffold_mod.py
+          --mod-spec engineering/tests/fixtures/i3-golden-mod-spec.json
+          --config engineering/tests/fixtures/i3-golden-scaffold-config.json
+          --output ".factory-ci/i3/generated"
+
+      - name: Build generated NeoForge project with Factory-owned wrapper
+        run: |
+          chmod +x ".factory-ci/i3/generated/gradlew"
+          cd ".factory-ci/i3/generated"
+          GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/i3/gradle-home" ./gradlew test build --no-daemon
+
+      - name: Check whitespace
+        run: git diff --check HEAD^
