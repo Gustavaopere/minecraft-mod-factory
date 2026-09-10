@@ -1,21 +1,23 @@
 # STATUS — Construction
 
 UPDATED_AT=2026-09-10
-PHASE=C0_FOUNDATION_IMPLEMENTED_PENDING_GREEN
+PHASE=C0_FOUNDATION_PR_OPEN_PENDING_CI
 REPOSITORY=Gustavaopere/minecraft-mod-factory
 BRANCH=feat/construction-c0-foundation
 BASE_SHA=47ccda543dbc20ca52db9ed0fdd43ed9cb2b88b2
 RED_HEAD=c77c34ab82c2739b1be9051bbd2343043e94df4c
 RED_RUN=34521743874
+GREEN_IMPLEMENTATION_HEAD=5ee917fff448520051dd0411aa26376daae2c398
+GREEN_IMPLEMENTATION_RUN=34521877134
 HEAD_SHA=RESOLVE_FROM_GIT
-OPEN_PR=NONE
+OPEN_PR=19
 TARGET_MINECRAFT=1.21.1
 TARGET_LOADER=NeoForge
 CANONICAL_OUTPUT=SPONGE_SCHEMATIC_V3
 LATEST_MODLIST_SNAPSHOT=2026-09-09_595_TOP_LEVEL
 MANUAL_ACTION_REQUIRED=NO
 BLOCKERS=NONE
-NEXT_ACTION=RUN_C0_GREEN_GATES_ON_IMPLEMENTATION_HEAD
+NEXT_ACTION=REVALIDATE_C0_PR_HEAD_AND_PR_CI
 
 ## Audited upstream candidates
 
@@ -37,7 +39,7 @@ ObjToSchematic, Structmatic, Schematic Helper and BlockGPT are currently treated
 - [x] initial schemas materialized
 - [x] expected RED obtained from missing validator
 - [x] C0 validator implemented
-- [ ] contract tests pass on implementation head
-- [ ] C0 validator passes on implementation head
-- [ ] whitespace gate passes on implementation head
+- [x] contract tests pass on implementation head
+- [x] C0 validator passes on implementation head
+- [x] whitespace gate passes on implementation head
 - [ ] PR CI passes on exact head
