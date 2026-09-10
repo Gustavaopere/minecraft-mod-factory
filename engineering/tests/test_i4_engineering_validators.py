@@ -52,6 +52,10 @@ if sys.argv[1:] != ["runData", "--no-daemon"]:
     raise SystemExit(2)
 if Path(".i4-trigger-drift").exists():
     Path("src/main/resources/i4-datagen-marker.txt").write_text("after\\n", encoding="utf-8")
+if Path(".git/i4-create-untracked").exists():
+    target = Path("src/generated/resources/data/i3_golden_mod/recipes/new_recipe.json")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("{}\\n", encoding="utf-8")
 """,
         encoding="utf-8",
     )
@@ -94,6 +98,18 @@ class I4EngineeringValidatorsContractTest(unittest.TestCase):
                 "mod_id=drifted_mod",
             )
             properties.write_text(text, encoding="utf-8")
+            self.assertTrue(module.validate_mod_id(project, MOD_SPEC))
+
+    def test_mod_id_validator_rejects_wrong_mod_annotation_literal(self):
+        module = self.require_validator()
+        with tempfile.TemporaryDirectory() as tmp:
+            project = copy_golden(Path(tmp) / "project")
+            common = project / "src/main/java/dev/example/i3golden/I3GoldenMod.java"
+            text = common.read_text(encoding="utf-8").replace(
+                "@Mod(I3GoldenMod.MOD_ID)",
+                '@Mod("wrong_mod")',
+            )
+            common.write_text(text, encoding="utf-8")
             self.assertTrue(module.validate_mod_id(project, MOD_SPEC))
 
     def test_dependency_validator_rejects_metadata_drift(self):
@@ -140,6 +156,15 @@ type="required"""
             bad.write_bytes(b"synthetic")
             self.assertTrue(module.validate_resource_paths(project))
 
+    def test_resource_path_validator_scans_generated_resources(self):
+        module = self.require_validator()
+        with tempfile.TemporaryDirectory() as tmp:
+            project = copy_golden(Path(tmp) / "project")
+            bad = project / "src/generated/resources/data/i3_golden_mod/recipes/BadName.json"
+            bad.parent.mkdir(parents=True, exist_ok=True)
+            bad.write_text("{}\n", encoding="utf-8")
+            self.assertTrue(module.validate_resource_paths(project))
+
     def test_side_boundary_validator_rejects_client_import_in_common_source(self):
         module = self.require_validator()
         with tempfile.TemporaryDirectory() as tmp:
@@ -149,6 +174,18 @@ type="required"""
             text = common.read_text(encoding="utf-8").replace(
                 "package dev.example.i3golden;\n",
                 "package dev.example.i3golden;\n\nimport net.minecraft.client.Minecraft;\n",
+            )
+            common.write_text(text, encoding="utf-8")
+            self.assertTrue(module.validate_side_boundaries(project))
+
+    def test_side_boundary_validator_rejects_neoforge_client_namespace(self):
+        module = self.require_validator()
+        with tempfile.TemporaryDirectory() as tmp:
+            project = copy_golden(Path(tmp) / "project")
+            common = project / "src/main/java/dev/example/i3golden/I3GoldenMod.java"
+            text = common.read_text(encoding="utf-8").replace(
+                "package dev.example.i3golden;\n",
+                "package dev.example.i3golden;\n\nimport net.neoforged.neoforge.client.event.RenderGuiEvent;\n",
             )
             common.write_text(text, encoding="utf-8")
             self.assertTrue(module.validate_side_boundaries(project))
@@ -180,6 +217,19 @@ type="required"""
             self.assertEqual([], module.validate_datagen_drift(project))
 
             (project / ".i4-trigger-drift").write_text("trigger\n", encoding="utf-8")
+            self.assertTrue(module.validate_datagen_drift(project))
+
+    def test_datagen_drift_validator_rejects_untracked_generated_files(self):
+        module = self.require_validator()
+        with tempfile.TemporaryDirectory() as tmp:
+            project = copy_golden(Path(tmp) / "project")
+            install_synthetic_datagen_wrapper(project)
+            subprocess.run(["git", "init", "-q"], cwd=project, check=True)
+            subprocess.run(["git", "config", "user.name", "I4 Contract"], cwd=project, check=True)
+            subprocess.run(["git", "config", "user.email", "i4-contract@example.invalid"], cwd=project, check=True)
+            subprocess.run(["git", "add", "."], cwd=project, check=True)
+            subprocess.run(["git", "commit", "-qm", "baseline"], cwd=project, check=True)
+            (project / ".git/i4-create-untracked").write_text("trigger\n", encoding="utf-8")
             self.assertTrue(module.validate_datagen_drift(project))
 
     def test_jar_inspection_rejects_missing_common_entrypoint(self):
