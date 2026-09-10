@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gustavaopere/minecraft-mod-factory/engineering/schemas/asset-handoff.schema.json",
+  "title": "Asset Handoff Manifest",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "mod_id",
+    "source_authority",
+    "source_repository",
+    "source_revision",
+    "runtime_authority",
+    "provider_profiles",
+    "provider_bindings",
+    "visual_inputs",
+    "artifacts",
+    "state",
+    "evidence"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"type": "integer", "const": 2},
+    "mod_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{1,63}$"},
+    "source_authority": {"type": "string", "const": "Repo Textura"},
+    "source_repository": {"type": "string", "minLength": 1},
+    "source_revision": {"type": "string", "pattern": "^(?:[0-9a-f]{40}|UNRESOLVED)$"},
+    "runtime_authority": {"type": "string", "minLength": 1},
+    "provider_profiles": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "provider_bindings": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "required": ["provider_profile", "runtime_adapter", "evidence"],
+        "additionalProperties": false,
+        "properties": {
+          "provider_profile": {"type": "string", "minLength": 1},
+          "runtime_adapter": {"type": "string", "minLength": 1},
+          "evidence": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+        }
+      }
+    },
+    "visual_inputs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "required": ["name", "type", "runtime_binding", "evidence"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$"},
+          "type": {"type": "string", "enum": ["bool", "float01", "float", "int", "string", "resource_location"]},
+          "runtime_binding": {"type": "string", "minLength": 1},
+          "evidence": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "asset_id",
+          "provider_profile",
+          "source_path",
+          "source_format",
+          "source_sha256",
+          "delivery_path",
+          "delivery_format",
+          "delivery_sha256",
+          "required_bones",
+          "required_anchors",
+          "required_clips",
+          "textures",
+          "conversion",
+          "qa",
+          "state"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {"type": "string", "minLength": 1},
+          "provider_profile": {"type": "string", "minLength": 1},
+          "source_path": {"type": "string", "minLength": 1},
+          "source_format": {"type": "string", "minLength": 1},
+          "source_sha256": {"type": "string", "pattern": "^(?:[0-9a-f]{64}|UNRESOLVED)$"},
+          "delivery_path": {"type": "string", "minLength": 1},
+          "delivery_format": {"type": "string", "minLength": 1},
+          "delivery_sha256": {"type": "string", "pattern": "^(?:[0-9a-f]{64}|UNRESOLVED)$"},
+          "required_bones": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "required_anchors": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "required_clips": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "textures": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "conversion": {
+            "type": "object",
+            "required": ["performed", "from_format", "to_format", "state", "evidence"],
+            "additionalProperties": false,
+            "properties": {
+              "performed": {"type": "boolean"},
+              "from_format": {"type": "string", "minLength": 1},
+              "to_format": {"type": "string", "minLength": 1},
+              "state": {"type": "string", "enum": ["CONFIRMED", "IMPLEMENTED", "MERGED", "PASS", "PENDING", "UNRESOLVED", "UNAVAILABLE", "DEFERRED", "REFERENCE_ONLY", "INCOMPATIBLE", "BLOCKED", "SUPERSEDED"]},
+              "evidence": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+            }
+          },
+          "qa": {
+            "type": "object",
+            "required": ["verified_bones", "verified_anchors", "verified_clips", "verified_textures", "namespace_verified", "output_destination_verified", "state", "evidence"],
+            "additionalProperties": false,
+            "properties": {
+              "verified_bones": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+              "verified_anchors": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+              "verified_clips": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+              "verified_textures": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+              "namespace_verified": {"type": "boolean"},
+              "output_destination_verified": {"type": "boolean"},
+              "state": {"type": "string", "enum": ["CONFIRMED", "IMPLEMENTED", "MERGED", "PASS", "PENDING", "UNRESOLVED", "UNAVAILABLE", "DEFERRED", "REFERENCE_ONLY", "INCOMPATIBLE", "BLOCKED", "SUPERSEDED"]},
+              "evidence": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+            }
+          },
+          "state": {"type": "string", "enum": ["CONFIRMED", "IMPLEMENTED", "MERGED", "PASS", "PENDING", "UNRESOLVED", "UNAVAILABLE", "DEFERRED", "REFERENCE_ONLY", "INCOMPATIBLE", "BLOCKED", "SUPERSEDED"]}
+        }
+      }
+    },
+    "state": {"type": "string", "enum": ["CONFIRMED", "IMPLEMENTED", "MERGED", "PASS", "PENDING", "UNRESOLVED", "UNAVAILABLE", "DEFERRED", "REFERENCE_ONLY", "INCOMPATIBLE", "BLOCKED", "SUPERSEDED"]},
+    "evidence": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+  },
+  "$comment": "I6 cross-field invariants, bounded paths, source revision/hash checks, provider bindings, visual-input bindings and QA proof are enforced by the canonical asset handoff validator. I1 continues to enforce no-silent-conversion invariants."
+}

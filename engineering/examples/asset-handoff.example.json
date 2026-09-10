@@ -1,0 +1,50 @@
+{
+  "schema_version": 2,
+  "mod_id": "example_mod",
+  "source_authority": "Repo Textura",
+  "source_repository": "Gustavaopere/minecraft-mod-factory",
+  "source_revision": "UNRESOLVED",
+  "runtime_authority": "UNRESOLVED",
+  "provider_profiles": [],
+  "provider_bindings": [],
+  "visual_inputs": [],
+  "artifacts": [
+    {
+      "asset_id": "example_source_model",
+      "provider_profile": "UNRESOLVED",
+      "source_path": "UNRESOLVED",
+      "source_format": ".bbmodel",
+      "source_sha256": "UNRESOLVED",
+      "delivery_path": "UNRESOLVED",
+      "delivery_format": ".bbmodel",
+      "delivery_sha256": "UNRESOLVED",
+      "required_bones": [],
+      "required_anchors": [],
+      "required_clips": [],
+      "textures": [],
+      "conversion": {
+        "performed": false,
+        "from_format": ".bbmodel",
+        "to_format": ".bbmodel",
+        "state": "CONFIRMED",
+        "evidence": ["fixture demonstrates no silent conversion"]
+      },
+      "qa": {
+        "verified_bones": [],
+        "verified_anchors": [],
+        "verified_clips": [],
+        "verified_textures": [],
+        "namespace_verified": false,
+        "output_destination_verified": false,
+        "state": "UNRESOLVED",
+        "evidence": ["Factory art authority is known; concrete package revision and runtime delivery remain unresolved"]
+      },
+      "state": "UNRESOLVED"
+    }
+  ],
+  "state": "UNRESOLVED",
+  "evidence": [
+    "synthetic example fixture",
+    "canonical handoff cannot be PASS until the concrete art source revision and runtime delivery are resolved"
+  ]
+}

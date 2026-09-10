@@ -1,0 +1,39 @@
+name: Factory Engineering I1 Foundation
+
+on:
+  push:
+    branches:
+      - main
+      - feat/f2-e2-i1-foundation-migration
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'engineering/**'
+      - '.github/workflows/factory-engineering-i1-foundation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  schema-and-doc-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate I1 foundation
+        run: python3 engineering/tooling/validate-i1-foundation.py
+
+      - name: Run I1 contract tests
+        run: python3 -m unittest engineering/tests/test_i1_foundation.py
+
+      - name: Check whitespace
+        run: git diff --check HEAD^

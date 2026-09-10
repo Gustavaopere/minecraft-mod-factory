@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gustavaopere/minecraft-mod-factory/engineering/schemas/mod-spec.schema.json",
+  "title": "Canonical Mod Specification",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "identity",
+    "purpose",
+    "dependencies",
+    "systems",
+    "visual",
+    "data",
+    "testing",
+    "release",
+    "evidence"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "identity": {
+      "type": "object",
+      "required": ["name", "mod_id", "repository", "target"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "mod_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{1,63}$"},
+        "repository": {"type": "string", "minLength": 1},
+        "target": {
+          "type": "object",
+          "required": ["minecraft", "loader", "neoforge", "java"],
+          "additionalProperties": false,
+          "properties": {
+            "minecraft": {"type": "string", "const": "1.21.1"},
+            "loader": {"type": "string", "const": "neoforge"},
+            "neoforge": {"type": "string", "const": "21.1.248"},
+            "java": {"type": "integer", "const": 21}
+          }
+        }
+      }
+    },
+    "purpose": {
+      "type": "object",
+      "required": ["fantasy", "player_problem", "core_loop", "non_goals"],
+      "additionalProperties": false,
+      "properties": {
+        "fantasy": {"type": "string", "minLength": 1},
+        "player_problem": {"type": "string", "minLength": 1},
+        "core_loop": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "non_goals": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "required": ["required", "optional", "incompatible", "profiles"],
+      "additionalProperties": false,
+      "properties": {
+        "required": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]{1,63}$"}},
+        "optional": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]{1,63}$"}},
+        "incompatible": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]{1,63}$"}},
+        "profiles": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "systems": {
+      "type": "object",
+      "required": ["blocks", "items", "machines", "entities", "worldgen", "ui", "networking", "progression", "integrations"],
+      "additionalProperties": false,
+      "properties": {
+        "blocks": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "items": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "machines": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "entities": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "worldgen": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "ui": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "networking": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "progression": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "integrations": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "visual": {
+      "type": "object",
+      "required": ["repo_textura_package", "provider_profiles", "required_assets", "handoff_manifest"],
+      "additionalProperties": false,
+      "properties": {
+        "repo_textura_package": {"type": "string", "minLength": 1},
+        "provider_profiles": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "required_assets": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "handoff_manifest": {"type": "string", "minLength": 1}
+      }
+    },
+    "data": {
+      "type": "object",
+      "required": ["persistence", "recipes", "tags", "data_maps", "configs"],
+      "additionalProperties": false,
+      "properties": {
+        "persistence": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "recipes": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "tags": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "data_maps": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "configs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "testing": {
+      "type": "object",
+      "required": ["unit", "gametest", "client", "dedicated_server", "multiplayer", "performance", "manifest"],
+      "additionalProperties": false,
+      "properties": {
+        "unit": {"type": "string", "enum": ["CONFIRMED", "IMPLEMENTED", "MERGED", "PASS", "PENDING", "UNRESOLVED", "UNAVAILABLE", "DEFERRED", "REFERENCE_ONLY", "INCOMPATIBLE", "BLOCKED", "SUPERSEDED"]},
+        "gametest": {"type": "string", "enum": ["CONFIRMED", "IMPLEMENTED", "MERGED", "PASS", "PENDING", "UNRESOLVED", "UNAVAILABLE", "DEFERRED", "REFERENCE_ONLY", "INCOMPATIBLE", "BLOCKED", "SUPERSEDED"]},
+        "client": {"type": "string", "enum": ["CONFIRMED", "IMPLEMENTED", "MERGED", "PASS", "PENDING", "UNRESOLVED", "UNAVAILABLE", "DEFERRED", "REFERENCE_ONLY", "INCOMPATIBLE", "BLOCKED", "SUPERSEDED"]},
+        "dedicated_server": {"type": "string", "enum": ["CONFIRMED", "IMPLEMENTED", "MERGED", "PASS", "PENDING", "UNRESOLVED", "UNAVAILABLE", "DEFERRED", "REFERENCE_ONLY", "INCOMPATIBLE", "BLOCKED", "SUPERSEDED"]},
+        "multiplayer": {"type": "string", "enum": ["CONFIRMED", "IMPLEMENTED", "MERGED", "PASS", "PENDING", "UNRESOLVED", "UNAVAILABLE", "DEFERRED", "REFERENCE_ONLY", "INCOMPATIBLE", "BLOCKED", "SUPERSEDED"]},
+        "performance": {"type": "string", "enum": ["CONFIRMED", "IMPLEMENTED", "MERGED", "PASS", "PENDING", "UNRESOLVED", "UNAVAILABLE", "DEFERRED", "REFERENCE_ONLY", "INCOMPATIBLE", "BLOCKED", "SUPERSEDED"]},
+        "manifest": {"type": "string", "minLength": 1}
+      }
+    },
+    "release": {
+      "type": "object",
+      "required": ["versioning", "distribution", "license", "state"],
+      "additionalProperties": false,
+      "properties": {
+        "versioning": {"type": "string", "minLength": 1},
+        "distribution": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "license": {"type": "string", "minLength": 1},
+        "state": {"type": "string", "enum": ["CONFIRMED", "IMPLEMENTED", "MERGED", "PASS", "PENDING", "UNRESOLVED", "UNAVAILABLE", "DEFERRED", "REFERENCE_ONLY", "INCOMPATIBLE", "BLOCKED", "SUPERSEDED"]}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["state", "sources", "open_questions"],
+      "additionalProperties": false,
+      "properties": {
+        "state": {"type": "string", "enum": ["CONFIRMED", "IMPLEMENTED", "MERGED", "PASS", "PENDING", "UNRESOLVED", "UNAVAILABLE", "DEFERRED", "REFERENCE_ONLY", "INCOMPATIBLE", "BLOCKED", "SUPERSEDED"]},
+        "sources": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "open_questions": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  }
+}

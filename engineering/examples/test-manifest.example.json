@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "mod_id": "example_mod",
+  "target": {
+    "minecraft": "1.21.1",
+    "loader": "neoforge",
+    "neoforge": "21.1.248",
+    "java": 21
+  },
+  "suites": [
+    {
+      "suite_id": "contract_fixture",
+      "type": "unit",
+      "state": "PENDING",
+      "command": "UNRESOLVED",
+      "evidence": [
+        "synthetic example fixture"
+      ]
+    }
+  ],
+  "overall_state": "PENDING"
+}

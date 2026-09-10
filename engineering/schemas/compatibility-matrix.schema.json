@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gustavaopere/minecraft-mod-factory/engineering/schemas/compatibility-matrix.schema.json",
+  "title": "Compatibility Matrix",
+  "type": "object",
+  "required": ["schema_version", "mod_id", "target", "entries", "state"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "mod_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{1,63}$"},
+    "target": {
+      "type": "object",
+      "required": ["minecraft", "loader", "neoforge", "java"],
+      "additionalProperties": false,
+      "properties": {
+        "minecraft": {"type": "string", "const": "1.21.1"},
+        "loader": {"type": "string", "const": "neoforge"},
+        "neoforge": {"type": "string", "const": "21.1.248"},
+        "java": {"type": "integer", "const": 21}
+      }
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["integration_id", "dependency_mod_id", "physical_version", "compatibility_state", "evidence", "notes"],
+        "additionalProperties": false,
+        "properties": {
+          "integration_id": {"type": "string", "minLength": 1},
+          "dependency_mod_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{1,63}$"},
+          "physical_version": {"type": "string", "minLength": 1},
+          "compatibility_state": {"type": "string", "enum": ["CONFIRMED", "IMPLEMENTED", "MERGED", "PASS", "PENDING", "UNRESOLVED", "UNAVAILABLE", "DEFERRED", "REFERENCE_ONLY", "INCOMPATIBLE", "BLOCKED", "SUPERSEDED"]},
+          "evidence": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "notes": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+        }
+      }
+    },
+    "state": {"type": "string", "enum": ["CONFIRMED", "IMPLEMENTED", "MERGED", "PASS", "PENDING", "UNRESOLVED", "UNAVAILABLE", "DEFERRED", "REFERENCE_ONLY", "INCOMPATIBLE", "BLOCKED", "SUPERSEDED"]}
+  }
+}
