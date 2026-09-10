@@ -23,7 +23,7 @@ class I1FoundationContractTest(unittest.TestCase):
         example = self._load("engineering/examples/mod-spec.example.json")
         example["identity"]["mod_id"] = "Invalid-Mod"
         errors = validator.validate_instance(schema, example)
-        self.assertTrue(any("mod_id" in e and "pattern" in e for e in errors), errors)
+        self.assertTrue(any("mod_id" in error and "pattern" in error for error in errors), errors)
 
     def test_all_declared_patterns_are_explicitly_anchored(self):
         schemas_dir = ROOT / "engineering" / "schemas"
@@ -35,6 +35,14 @@ class I1FoundationContractTest(unittest.TestCase):
                     failures.append(f"{schema_path.name}:{pattern_path}:{pattern}")
         self.assertEqual([], failures)
 
+    def test_all_schema_ids_are_factory_authority(self):
+        schemas_dir = ROOT / "engineering" / "schemas"
+        for schema_path in sorted(schemas_dir.glob("*.schema.json")):
+            schema = json.loads(schema_path.read_text(encoding="utf-8"))
+            expected = validator.FACTORY_SCHEMA_ID_PREFIX + schema_path.name
+            self.assertEqual(expected, schema.get("$id"), schema_path.name)
+            self.assertNotIn("neoforge-rpg-skilltree", schema.get("$id", ""), schema_path.name)
+
     def test_asset_handoff_rejects_false_no_conversion_for_different_formats(self):
         handoff = copy.deepcopy(self._load("engineering/examples/asset-handoff.example.json"))
         artifact = handoff["artifacts"][0]
@@ -42,13 +50,13 @@ class I1FoundationContractTest(unittest.TestCase):
         artifact["conversion"]["to_format"] = ".json"
         artifact["conversion"]["performed"] = False
         errors = validator.validate_asset_handoff_semantics(handoff)
-        self.assertTrue(any("conversion.performed" in e for e in errors), errors)
+        self.assertTrue(any("conversion.performed" in error for error in errors), errors)
 
     def test_asset_handoff_rejects_conversion_format_drift(self):
         handoff = copy.deepcopy(self._load("engineering/examples/asset-handoff.example.json"))
         handoff["artifacts"][0]["conversion"]["from_format"] = ".json"
         errors = validator.validate_asset_handoff_semantics(handoff)
-        self.assertTrue(any("conversion.from_format" in e for e in errors), errors)
+        self.assertTrue(any("conversion.from_format" in error for error in errors), errors)
 
     def test_source_registry_rejects_authority_order_drift(self):
         registry = copy.deepcopy(self._load("engineering/catalog/sources/SOURCE-REGISTRY.json"))
@@ -57,7 +65,15 @@ class I1FoundationContractTest(unittest.TestCase):
             registry["authority_order"][0],
         )
         errors = validator.validate_source_registry_data(registry)
-        self.assertTrue(any("authority_order" in e for e in errors), errors)
+        self.assertTrue(any("authority_order" in error for error in errors), errors)
+
+    def test_source_registry_v2_contains_factory_and_historical_boundaries(self):
+        registry = self._load("engineering/catalog/sources/SOURCE-REGISTRY.json")
+        self.assertEqual(2, registry["schema_version"])
+        ids = {source["source_id"] for source in registry["sources"]}
+        self.assertTrue(validator.REQUIRED_I1_SOURCE_IDS.issubset(ids), ids)
+        historical = next(source for source in registry["sources"] if source["source_id"] == "historical_rpg_repository")
+        self.assertIn("historical", historical["authority_scope"].lower())
 
 
 if __name__ == "__main__":
