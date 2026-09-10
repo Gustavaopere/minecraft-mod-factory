@@ -209,6 +209,40 @@ class I5TestHarnessContractTest(unittest.TestCase):
             self.assertTrue(sentinel.is_file())
             self.assertFalse((project / ".i5-invocations").exists())
 
+    def test_preflight_eula_failure_clears_stale_success_evidence(self):
+        self.require_harness()
+        with tempfile.TemporaryDirectory() as tmp:
+            project = write_fake_project(Path(tmp) / "project")
+            first = run_harness_cli(project)
+            self.assertEqual(0, first.returncode, first.stdout)
+            manifest = project / "build/i5-test-harness/test-manifest.json"
+            self.assertTrue(manifest.is_file())
+
+            (project / "run/server/eula.txt").write_text("eula=false\n", encoding="utf-8")
+            second = run_harness_cli(project)
+
+            self.assertEqual(2, second.returncode, second.stdout)
+            self.assertFalse(manifest.exists(), "stale PASS manifest must not survive a blocked EULA preflight")
+
+    def test_preflight_identity_failure_clears_stale_success_evidence(self):
+        self.require_harness()
+        with tempfile.TemporaryDirectory() as tmp:
+            project = write_fake_project(Path(tmp) / "project")
+            first = run_harness_cli(project)
+            self.assertEqual(0, first.returncode, first.stdout)
+            manifest = project / "build/i5-test-harness/test-manifest.json"
+            self.assertTrue(manifest.is_file())
+
+            properties = project / "gradle.properties"
+            properties.write_text(
+                properties.read_text(encoding="utf-8").replace("java_version=21", "java_version=17"),
+                encoding="utf-8",
+            )
+            second = run_harness_cli(project)
+
+            self.assertEqual(2, second.returncode, second.stdout)
+            self.assertFalse(manifest.exists(), "stale PASS manifest must not survive a blocked identity preflight")
+
     def test_failed_suite_is_reported_fail_closed_without_hiding_other_results(self):
         self.require_harness()
         with tempfile.TemporaryDirectory() as tmp:
