@@ -11,6 +11,7 @@ I1_VALIDATOR = ROOT / "engineering" / "tooling" / "validate-i1-foundation.py"
 MOD_SPEC = ROOT / "engineering" / "tests" / "fixtures" / "i3-golden-mod-spec.json"
 SCAFFOLD_CONFIG = ROOT / "engineering" / "tests" / "fixtures" / "i3-golden-scaffold-config.json"
 GOLDEN = ROOT / "engineering" / "tests" / "golden" / "i3-golden-mod"
+WRAPPER_AUTHORITY = ROOT / "engineering" / "tooling" / "scaffolder" / "wrapper-authority"
 WRAPPER_FILES = {
     "gradlew",
     "gradlew.bat",
@@ -39,26 +40,6 @@ def file_map(root, *, include_wrapper=True):
     return result
 
 
-def create_synthetic_wrapper_source(root):
-    root.mkdir(parents=True, exist_ok=True)
-    (root / "gradle/wrapper").mkdir(parents=True, exist_ok=True)
-    (root / "gradlew").write_text("#!/bin/sh\necho synthetic wrapper\n", encoding="utf-8", newline="\n")
-    (root / "gradlew.bat").write_text("@echo off\r\necho synthetic wrapper\r\n", encoding="utf-8", newline="")
-    (root / "gradle/wrapper/gradle-wrapper.properties").write_text(
-        "distributionBase=GRADLE_USER_HOME\n"
-        "distributionPath=wrapper/dists\n"
-        "distributionUrl=https\\://services.gradle.org/distributions/gradle-8.14-bin.zip\n"
-        "networkTimeout=10000\n"
-        "validateDistributionUrl=true\n"
-        "zipStoreBase=GRADLE_USER_HOME\n"
-        "zipStorePath=wrapper/dists\n",
-        encoding="utf-8",
-        newline="\n",
-    )
-    (root / "gradle/wrapper/gradle-wrapper.jar").write_bytes(b"synthetic-gradle-wrapper-8.14\n")
-    return root
-
-
 class I3ModScaffolderContractTest(unittest.TestCase):
     def setUp(self):
         self.mod_spec = json.loads(MOD_SPEC.read_text(encoding="utf-8"))
@@ -69,11 +50,10 @@ class I3ModScaffolderContractTest(unittest.TestCase):
             self.skipTest("production scaffolder is intentionally absent during I3 RED")
         return load_module(SCAFFOLDER, "i3_scaffold_mod")
 
-    def generate(self, root, output):
+    def generate(self, output):
         module = self.require_scaffolder()
-        wrapper_source = create_synthetic_wrapper_source(root / "wrapper-authority")
-        module.generate_project(MOD_SPEC, SCAFFOLD_CONFIG, output, wrapper_source)
-        return output, wrapper_source
+        module.generate_project(MOD_SPEC, SCAFFOLD_CONFIG, output)
+        return output
 
     def test_scaffolder_production_entrypoint_exists(self):
         self.assertTrue(
@@ -96,36 +76,31 @@ class I3ModScaffolderContractTest(unittest.TestCase):
 
     def test_generated_project_matches_checked_in_golden_text_bytes(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            generated, _ = self.generate(root, root / "generated")
+            generated = self.generate(Path(tmp) / "generated")
             self.assertEqual(file_map(GOLDEN, include_wrapper=False), file_map(generated, include_wrapper=False))
 
     def test_generation_is_deterministic(self):
         module = self.require_scaffolder()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            wrapper_source = create_synthetic_wrapper_source(root / "wrapper-authority")
-            first = module.generate_project(MOD_SPEC, SCAFFOLD_CONFIG, root / "first", wrapper_source)
-            second = module.generate_project(MOD_SPEC, SCAFFOLD_CONFIG, root / "second", wrapper_source)
+            first = module.generate_project(MOD_SPEC, SCAFFOLD_CONFIG, root / "first")
+            second = module.generate_project(MOD_SPEC, SCAFFOLD_CONFIG, root / "second")
             self.assertEqual(file_map(first), file_map(second))
 
     def test_non_empty_target_is_rejected_without_overwrite(self):
         module = self.require_scaffolder()
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            target = root / "existing"
+            target = Path(tmp) / "existing"
             target.mkdir()
             marker = target / "keep.txt"
             marker.write_text("preserve", encoding="utf-8")
-            wrapper_source = create_synthetic_wrapper_source(root / "wrapper-authority")
             with self.assertRaises(FileExistsError):
-                module.generate_project(MOD_SPEC, SCAFFOLD_CONFIG, target, wrapper_source)
+                module.generate_project(MOD_SPEC, SCAFFOLD_CONFIG, target)
             self.assertEqual("preserve", marker.read_text(encoding="utf-8"))
 
     def test_generated_project_uses_exact_audited_stack_and_no_optional_providers(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            generated, _ = self.generate(root, root / "generated")
+            generated = self.generate(Path(tmp) / "generated")
             gradle_properties = (generated / "gradle.properties").read_text(encoding="utf-8")
             build_gradle = (generated / "build.gradle").read_text(encoding="utf-8")
             wrapper = (generated / "gradle/wrapper/gradle-wrapper.properties").read_text(encoding="utf-8")
@@ -147,8 +122,7 @@ class I3ModScaffolderContractTest(unittest.TestCase):
 
     def test_common_and_client_entrypoints_are_physically_separated(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            generated, _ = self.generate(root, root / "generated")
+            generated = self.generate(Path(tmp) / "generated")
             package_path = Path(*self.config["java_package"].split("."))
             common = generated / "src/main/java" / package_path / f'{self.config["main_class"]}.java'
             client = generated / "src/main/java" / package_path / "client" / f'{self.config["client_class"]}.java'
@@ -159,19 +133,22 @@ class I3ModScaffolderContractTest(unittest.TestCase):
             self.assertIn("@Mod(value = I3GoldenMod.MOD_ID, dist = Dist.CLIENT)", client_text)
             self.assertIn("package dev.example.i3golden.client;", client_text)
 
-    def test_wrapper_files_are_copied_byte_for_byte_from_explicit_authority(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            generated, wrapper_source = self.generate(root, root / "generated")
-            for relative in WRAPPER_FILES:
-                self.assertEqual((wrapper_source / relative).read_bytes(), (generated / relative).read_bytes(), relative)
+    def test_wrapper_authority_is_complete_and_gradle_8_14(self):
+        self.assertTrue(WRAPPER_AUTHORITY.is_dir())
+        for relative in WRAPPER_FILES:
+            self.assertTrue((WRAPPER_AUTHORITY / relative).is_file(), relative)
+        properties = (WRAPPER_AUTHORITY / "gradle/wrapper/gradle-wrapper.properties").read_text(encoding="utf-8")
+        self.assertIn("gradle-8.14-bin.zip", properties)
 
-    def test_missing_wrapper_authority_is_rejected(self):
-        module = self.require_scaffolder()
+    def test_wrapper_files_are_copied_byte_for_byte_from_factory_authority(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            with self.assertRaises(ValueError):
-                module.generate_project(MOD_SPEC, SCAFFOLD_CONFIG, root / "generated", root / "missing-wrapper")
+            generated = self.generate(Path(tmp) / "generated")
+            for relative in WRAPPER_FILES:
+                self.assertEqual(
+                    (WRAPPER_AUTHORITY / relative).read_bytes(),
+                    (generated / relative).read_bytes(),
+                    relative,
+                )
 
     def test_target_drift_is_rejected_instead_of_silently_retargeted(self):
         module = self.require_scaffolder()
@@ -181,9 +158,8 @@ class I3ModScaffolderContractTest(unittest.TestCase):
             drifted["identity"]["target"]["neoforge"] = "21.1.247"
             drifted_path = root / "drifted-mod-spec.json"
             drifted_path.write_text(json.dumps(drifted), encoding="utf-8")
-            wrapper_source = create_synthetic_wrapper_source(root / "wrapper-authority")
             with self.assertRaises(ValueError):
-                module.generate_project(drifted_path, SCAFFOLD_CONFIG, root / "output", wrapper_source)
+                module.generate_project(drifted_path, SCAFFOLD_CONFIG, root / "output")
 
     def test_missing_explicit_java_identity_is_rejected_instead_of_guessed(self):
         module = self.require_scaffolder()
@@ -193,14 +169,12 @@ class I3ModScaffolderContractTest(unittest.TestCase):
             incomplete.pop("java_package")
             incomplete_path = root / "incomplete-scaffold-config.json"
             incomplete_path.write_text(json.dumps(incomplete), encoding="utf-8")
-            wrapper_source = create_synthetic_wrapper_source(root / "wrapper-authority")
             with self.assertRaises(ValueError):
-                module.generate_project(MOD_SPEC, incomplete_path, root / "output", wrapper_source)
+                module.generate_project(MOD_SPEC, incomplete_path, root / "output")
 
     def test_no_unresolved_template_tokens_remain(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            generated, _ = self.generate(root, root / "generated")
+            generated = self.generate(Path(tmp) / "generated")
             unresolved = []
             for relative, data in file_map(generated).items():
                 if relative.endswith(".jar"):
