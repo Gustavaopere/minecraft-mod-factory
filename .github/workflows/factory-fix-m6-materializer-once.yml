@@ -30,20 +30,22 @@ jobs:
           path = Path('migration/full-skill-migration/migrate.py')
           text = path.read_text(encoding='utf-8')
           anchor = '    if relative.endswith("PROJECT-OVERLAY.md"):\n'
+          marker_a = '    if relative == "golden-samples/validate_golden_samples.js":\n'
+          marker_b = '    if relative == "golden-samples/validate_reference_evidence.js":\n'
           addition = (
-              '    if relative == "golden-samples/validate_golden_samples.js":\n'
-              '        text = text.replace("../art/tooling/blockbench/asset-toolkit/asset_toolkit.js", "../tooling/blockbench/asset-toolkit/asset_toolkit.js")\n'
-              '        if "../art/tooling/blockbench/asset-toolkit/asset_toolkit.js" in text:\n'
-              '            raise RuntimeError("M6 golden validator relocation remained unresolved")\n'
-              '    if relative == "golden-samples/validate_reference_evidence.js":\n'
-              '        text = text.replace("../scripts/validate_golden_reference_rendered_edges.js", "../tooling/validators/validate_golden_reference_rendered_edges.js")\n'
-              '        if "../scripts/validate_golden_reference_rendered_edges.js" in text:\n'
-              '            raise RuntimeError("M6 evidence validator relocation remained unresolved")\n'
+              marker_a
+              + '        text = text.replace("../art/tooling/blockbench/asset-toolkit/asset_toolkit.js", "../tooling/blockbench/asset-toolkit/asset_toolkit.js")\n'
+              + '        if "../art/tooling/blockbench/asset-toolkit/asset_toolkit.js" in text:\n'
+              + '            raise RuntimeError("M6 golden validator relocation remained unresolved")\n'
+              + marker_b
+              + '        text = text.replace("../scripts/validate_golden_reference_rendered_edges.js", "../tooling/validators/validate_golden_reference_rendered_edges.js")\n'
+              + '        if "../scripts/validate_golden_reference_rendered_edges.js" in text:\n'
+              + '            raise RuntimeError("M6 evidence validator relocation remained unresolved")\n'
           )
           if text.count(anchor) != 1:
               raise SystemExit(f'expected exactly one PROJECT-OVERLAY insertion anchor, found {text.count(anchor)}')
-          if 'golden-samples/validate_golden_samples.js' in text or 'golden-samples/validate_reference_evidence.js' in text:
-              raise SystemExit('M6 relocation rules already present; refusing duplicate patch')
+          if marker_a in text or marker_b in text:
+              raise SystemExit('M6 relocation rule statements already present; refusing duplicate patch')
           path.write_text(text.replace(anchor, addition + anchor, 1), encoding='utf-8')
           PY
           python -m py_compile migration/full-skill-migration/migrate.py
