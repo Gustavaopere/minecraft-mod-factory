@@ -9,6 +9,7 @@ on:
     branches:
       - main
     paths:
+      - '.gitmodules'
       - '.github/workflows/factory-construction-c0-foundation.yml'
       - 'construction/**'
 
@@ -19,10 +20,11 @@ jobs:
   c0-foundation:
     runs-on: ubuntu-24.04
     steps:
-      - name: Checkout
+      - name: Checkout with upstream snapshots
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 2
+          submodules: recursive
       - name: Run construction C0 contract tests
         run: python3 -m unittest discover -s construction/tests -p 'test_*.py' -v
       - name: Run construction C0 validator
