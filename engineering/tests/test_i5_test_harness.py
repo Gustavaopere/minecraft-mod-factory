@@ -51,6 +51,9 @@ def write_fake_project(root: Path) -> Path:
         + "\n",
         encoding="utf-8",
     )
+    server_run = root / "run" / "server"
+    server_run.mkdir(parents=True)
+    (server_run / "eula.txt").write_text("eula=true\n", encoding="utf-8")
     wrapper = root / "gradlew"
     wrapper.write_text(
         """#!/usr/bin/env bash
@@ -153,6 +156,18 @@ class I5TestHarnessContractTest(unittest.TestCase):
             invocations = (project / ".i5-invocations").read_text(encoding="utf-8").splitlines()
             self.assertEqual([command.removeprefix("./gradlew ") for command in EXPECTED_COMMANDS], invocations)
 
+    def test_dedicated_server_requires_explicit_eula_acceptance_before_any_gradle_run(self):
+        self.require_harness()
+        with tempfile.TemporaryDirectory() as tmp:
+            project = write_fake_project(Path(tmp) / "project")
+            (project / "run/server/eula.txt").unlink()
+
+            result = run_harness_cli(project)
+
+            self.assertEqual(2, result.returncode, result.stdout)
+            self.assertIn("eula", result.stdout.lower())
+            self.assertFalse((project / ".i5-invocations").exists())
+
     def test_failed_suite_is_reported_fail_closed_without_hiding_other_results(self):
         self.require_harness()
         with tempfile.TemporaryDirectory() as tmp:
@@ -193,6 +208,28 @@ class I5TestHarnessContractTest(unittest.TestCase):
             self.assertEqual(expected, collected)
             self.assertNotIn("private-source.txt", collected)
             self.assertFalse(any("unrelated" in path for path in collected))
+
+    def test_artifact_collection_rejects_report_symlinks(self):
+        module = self.require_harness()
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_root = Path(tmp)
+            project = write_fake_project(tmp_root / "project")
+            source = project / "build/test-results/test"
+            source.mkdir(parents=True, exist_ok=True)
+            outside = tmp_root / "outside.xml"
+            outside.write_text("external evidence must not be collected\n", encoding="utf-8")
+            (source / "TEST-external.xml").symlink_to(outside)
+
+            with self.assertRaises(module.HarnessError):
+                module._collect_tree(
+                    project,
+                    Path("build/test-results/test"),
+                    module.ARTIFACT_RELATIVE / "test-results/test",
+                )
+
+            self.assertFalse(
+                (project / "build/i5-test-harness/artifacts/test-results/test/TEST-external.xml").exists()
+            )
 
     def test_manifest_evidence_points_only_to_collected_files(self):
         self.require_harness()
