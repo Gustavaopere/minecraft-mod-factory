@@ -21,19 +21,10 @@ def update_json(path: Path, *, lockfile: bool = False) -> None:
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-def canonical_factory_root(candidate: Path) -> Path:
-    resolved = candidate.resolve()
-    if resolved != REPO_ROOT:
-        raise ValueError(f"--factory-root must resolve to the canonical repository root: {REPO_ROOT}")
-    return REPO_ROOT
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description="Finalize M5 neutral package identity")
-    parser.add_argument("--factory-root", type=Path, default=REPO_ROOT)
-    args = parser.parse_args()
-    factory_root = canonical_factory_root(args.factory_root)
-    sidecar = factory_root / SIDECAR_REL
+    parser.parse_args()
+    sidecar = REPO_ROOT / SIDECAR_REL
     update_json(sidecar / "package.json")
     update_json(sidecar / "package-lock.json", lockfile=True)
     print(f"M5 package identity: {CANONICAL_PACKAGE}")

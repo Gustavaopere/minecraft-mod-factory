@@ -14,6 +14,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[2]
 MIGRATION = ROOT / "migration/full-skill-migration"
 FULL_SKILL_WORKFLOW = ROOT / ".github/workflows/factory-full-skill-migration-validation.yml"
+FULL_SKILL_MATERIALIZER = ROOT / ".github/workflows/factory-full-skill-materialize.yml"
 SONAR_PROPERTIES = ROOT / ".sonarcloud.properties"
 GENERATED_BUNDLE = "art/tooling/blockbench/asset-toolkit/asset_toolkit.js"
 SOURCE_EXACT_VERIFY_PROJECT = "skills/library/minecraft-neoforge-engineering/scripts/verify_project.py"
@@ -88,6 +89,20 @@ class SonarHardeningContractTest(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0, "m5_finalize.py must reject write roots outside its canonical repository")
             self.assertEqual(package.read_bytes(), before_package)
             self.assertEqual(lock.read_bytes(), before_lock)
+
+    def test_m5_does_not_expose_factory_root_cli_override(self) -> None:
+        script = MIGRATION / "m5_finalize.py"
+        result = subprocess.run(
+            [sys.executable, str(script), "--help"],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("--factory-root", result.stdout)
+        materializer = FULL_SKILL_MATERIALIZER.read_text(encoding="utf-8")
+        self.assertNotIn("m5_finalize.py --factory-root", materializer)
 
     def test_sonar_scope_excludes_only_known_non_authoritative_code(self) -> None:
         self.assertTrue(SONAR_PROPERTIES.is_file(), ".sonarcloud.properties must document automatic-analysis scope")

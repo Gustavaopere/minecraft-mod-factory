@@ -50,7 +50,7 @@ jobs:
           --factory-root .
 
       - name: Finalize M5 neutral package identity
-        run: python migration/full-skill-migration/m5_finalize.py --factory-root .
+        run: python migration/full-skill-migration/m5_finalize.py
 
       - name: Restore proven PR4 texture compare delta
         run: python migration/full-skill-migration/apply_pr4_texture_compare.py
