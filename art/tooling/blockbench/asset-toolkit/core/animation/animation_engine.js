@@ -1,5 +1,8 @@
 'use strict';
 
+const contractUtils = require('../common/contract_utils.js');
+const {isPlainObject, applyOperationsTransaction} = contractUtils;
+
 const MAX_ANIMATION_OPERATIONS = 128;
 const MAX_IDENTIFIER_LENGTH = 128;
 const MAX_LABEL_LENGTH = 160;
@@ -41,25 +44,12 @@ function fail(code, message) {
   throw new AnimationContractError(code, message);
 }
 
-function isPlainObject(value) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
-  const prototype = Object.getPrototypeOf(value);
-  return prototype === Object.prototype || prototype === null;
-}
-
 function rejectUnknownFields(value, allowed, code, context) {
-  for (const key of Object.keys(value)) {
-    if (!allowed.has(key)) fail(code, `${context} contains unsupported field "${key}".`);
-  }
+  contractUtils.rejectUnknownFields(value, allowed, fail, code, context);
 }
 
 function boundedString(value, field, {max = MAX_IDENTIFIER_LENGTH} = {}) {
-  if (typeof value !== 'string') fail('INVALID_ANIMATION_STRING', `${field} must be a string.`);
-  const output = value.trim();
-  if (!output || output.length > max) {
-    fail('INVALID_ANIMATION_STRING', `${field} must contain 1-${max} non-whitespace characters.`);
-  }
-  return output;
+  return contractUtils.boundedString(value, field, fail, {max, code: 'INVALID_ANIMATION_STRING'});
 }
 
 function optionalBoundedString(value, field, options) {
@@ -67,8 +57,7 @@ function optionalBoundedString(value, field, options) {
 }
 
 function finiteNumber(value, field) {
-  if (!Number.isFinite(value)) fail('INVALID_ANIMATION_NUMBER', `${field} must be finite.`);
-  return value;
+  return contractUtils.finiteNumber(value, field, fail, 'INVALID_ANIMATION_NUMBER');
 }
 
 function positiveLength(value, field) {
@@ -88,10 +77,7 @@ function nonNegativeTime(value, field) {
 }
 
 function vector3(value, field) {
-  if (!Array.isArray(value) || value.length !== 3 || !value.every(Number.isFinite)) {
-    fail('INVALID_ANIMATION_VECTOR3', `${field} must be an array of exactly three finite numbers.`);
-  }
-  return Object.freeze(value.slice());
+  return contractUtils.vector3(value, field, fail, 'INVALID_ANIMATION_VECTOR3');
 }
 
 function loopMode(value, field) {
@@ -253,18 +239,13 @@ function validateAnimationBatch(value) {
 }
 
 function validateMutationAdapter(adapter) {
-  const methods = ['getRevision', 'preflight', 'beginTransaction', 'applyOperation', 'finishTransaction', 'cancelTransaction'];
-  if (!adapter || typeof adapter !== 'object') fail('INVALID_ANIMATION_ADAPTER', 'Animation adapter is required.');
-  for (const method of methods) {
-    if (typeof adapter[method] !== 'function') fail('INVALID_ANIMATION_ADAPTER', `Animation adapter is missing ${method}().`);
-  }
-}
-
-function collectChangedIds(target, changed) {
-  const values = Array.isArray(changed) ? changed : [changed];
-  for (const value of values) {
-    if (typeof value === 'string' && value && !target.includes(value)) target.push(value);
-  }
+  contractUtils.validateAdapterMethods(
+    adapter,
+    ['getRevision', 'preflight', 'beginTransaction', 'applyOperation', 'finishTransaction', 'cancelTransaction'],
+    fail,
+    'INVALID_ANIMATION_ADAPTER',
+    'Animation adapter',
+  );
 }
 
 function destructiveDiff(operations) {
@@ -309,31 +290,7 @@ function applyAnimationBatch(adapter, input) {
     }
   }
 
-  const changedIds = [];
-  let begun = false;
-  try {
-    adapter.beginTransaction(batch.label);
-    begun = true;
-    for (const operation of batch.operations) {
-      collectChangedIds(changedIds, adapter.applyOperation(operation));
-    }
-    adapter.finishTransaction(batch.label);
-    begun = false;
-    const afterRevision = adapter.getRevision();
-    return Object.freeze({
-      ok: true,
-      dryRun: false,
-      beforeRevision,
-      afterRevision,
-      applied: batch.operations.length,
-      changedIds: Object.freeze(changedIds.slice()),
-    });
-  } catch (error) {
-    if (begun) {
-      try { adapter.cancelTransaction(true); } catch (_) { /* preserve original mutation failure */ }
-    }
-    throw error;
-  }
+  return applyOperationsTransaction(adapter, batch, beforeRevision);
 }
 
 function poseChannel(value, field) {
