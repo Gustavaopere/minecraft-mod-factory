@@ -54,3 +54,18 @@ jobs:
 
       - name: Check whitespace
         run: git diff --check HEAD^
+
+  m5-neutral-naming:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout Factory
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate M5 neutral Toolkit naming
+        run: python -m unittest migration/full-skill-migration/test_m5_naming.py -v
