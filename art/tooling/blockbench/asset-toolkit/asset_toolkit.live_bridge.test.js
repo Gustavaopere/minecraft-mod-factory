@@ -90,6 +90,24 @@ test('read-only request ledger replays identical requests and rejects request-id
   );
 });
 
+test('request hashing is independent of insertion order for Unicode-normalization-equivalent keys', async () => {
+  const composed = '\u00e9';
+  const decomposed = 'e\u0301';
+  const firstParams = {[composed]: 'composed', [decomposed]: 'decomposed'};
+  const secondParams = {[decomposed]: 'decomposed', [composed]: 'composed'};
+  const first = {requestId: 'req-unicode-order', method: 'blockbench.get_status', params: firstParams};
+  const second = {requestId: 'req-unicode-order', method: 'blockbench.get_status', params: secondParams};
+
+  assert.equal(sessionManager.requestHash(first), sessionManager.requestHash(second));
+
+  const ledger = sessionManager.createRequestLedger();
+  let calls = 0;
+  const executor = async () => ({value: ++calls});
+  assert.deepEqual(await ledger.execute(first, executor), {value: 1});
+  assert.deepEqual(await ledger.execute(second, executor), {value: 1});
+  assert.equal(calls, 1);
+});
+
 test('session fingerprint is complete, bounded to supplied evidence and never contains bridge secrets', () => {
   const result = fingerprint.buildSessionFingerprint({
     minecraftVersion: '1.21.1', loader: 'neoforge-21.1.248', javaVersion: '21',
