@@ -168,6 +168,24 @@ class I5TestHarnessContractTest(unittest.TestCase):
             self.assertIn("eula", result.stdout.lower())
             self.assertFalse((project / ".i5-invocations").exists())
 
+    def test_dedicated_server_rejects_eula_parent_symlink_escape_before_any_gradle_run(self):
+        self.require_harness()
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_root = Path(tmp)
+            project = write_fake_project(tmp_root / "project")
+            (project / "run/server/eula.txt").unlink()
+            (project / "run/server").rmdir()
+            outside_server = tmp_root / "outside-server"
+            outside_server.mkdir()
+            (outside_server / "eula.txt").write_text("eula=true\n", encoding="utf-8")
+            (project / "run/server").symlink_to(outside_server, target_is_directory=True)
+
+            result = run_harness_cli(project)
+
+            self.assertEqual(2, result.returncode, result.stdout)
+            self.assertIn("eula", result.stdout.lower())
+            self.assertFalse((project / ".i5-invocations").exists())
+
     def test_failed_suite_is_reported_fail_closed_without_hiding_other_results(self):
         self.require_harness()
         with tempfile.TemporaryDirectory() as tmp:
