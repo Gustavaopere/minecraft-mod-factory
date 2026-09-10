@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "identity": {
+    "name": "I3 Golden Mod",
+    "mod_id": "i3_golden_mod",
+    "repository": "UNRESOLVED",
+    "target": {
+      "minecraft": "1.21.1",
+      "loader": "neoforge",
+      "neoforge": "21.1.248",
+      "java": 21
+    }
+  },
+  "purpose": {
+    "fantasy": "Synthetic Golden Project used only to verify the canonical I3 mod scaffolder.",
+    "player_problem": "Prove deterministic NeoForge project generation without asserting gameplay facts.",
+    "core_loop": ["Generate the project", "Build the generated project"],
+    "non_goals": ["Production gameplay", "Provider-specific integrations"]
+  },
+  "dependencies": {
+    "required": ["neoforge"],
+    "optional": [],
+    "incompatible": [],
+    "profiles": []
+  },
+  "systems": {
+    "blocks": [],
+    "items": [],
+    "machines": [],
+    "entities": [],
+    "worldgen": [],
+    "ui": [],
+    "networking": [],
+    "progression": [],
+    "integrations": []
+  },
+  "visual": {
+    "repo_textura_package": "UNRESOLVED",
+    "provider_profiles": [],
+    "required_assets": [],
+    "handoff_manifest": "UNRESOLVED"
+  },
+  "data": {
+    "persistence": [],
+    "recipes": [],
+    "tags": [],
+    "data_maps": [],
+    "configs": []
+  },
+  "testing": {
+    "unit": "PENDING",
+    "gametest": "PENDING",
+    "client": "PENDING",
+    "dedicated_server": "PENDING",
+    "multiplayer": "PENDING",
+    "performance": "PENDING",
+    "manifest": "UNRESOLVED"
+  },
+  "release": {
+    "versioning": "0.1.0",
+    "distribution": ["UNRESOLVED"],
+    "license": "MIT",
+    "state": "UNRESOLVED"
+  },
+  "evidence": {
+    "state": "UNRESOLVED",
+    "sources": ["synthetic I3 Golden fixture"],
+    "open_questions": ["Runtime repository remains unresolved because this is not a production mod."]
+  }
+}
