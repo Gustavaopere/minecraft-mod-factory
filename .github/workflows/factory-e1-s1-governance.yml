@@ -1,0 +1,34 @@
+name: Factory E1 S1 Governance
+
+on:
+  push:
+    branches:
+      - main
+      - feat/f1-e1-s1-governance-migration
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate governance contract
+        run: python3 engineering/tooling/validate-e1-s1-governance.py
+
+      - name: Run E1 S1 regression tests
+        run: python3 -m unittest engineering/tests/test_e1_s1_governance.py
+
+      - name: Check whitespace
+        run: git diff --check HEAD^
