@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "audited_at": "2026-09-10",
+  "sources": [
+    {
+      "id": "schematica",
+      "kind": "engine",
+      "repository": "tester2024/schematica",
+      "pinned_commit": "0c88770005e7bbd7246997c81e810ba935c8e4cf",
+      "license": "MIT",
+      "integration_policy": "IMMUTABLE_SNAPSHOT",
+      "c0_state": "AUDITED_NOT_VENDORED"
+    },
+    {
+      "id": "minebench",
+      "kind": "engine_reference",
+      "repository": "Ammaar-Alam/minebench",
+      "pinned_commit": "c96abbd4c4098aa9c264490c80a1c6544a64ba85",
+      "license": "MIT",
+      "integration_policy": "ENGINE_REFERENCE",
+      "c0_state": "AUDITED_NOT_VENDORED"
+    },
+    {
+      "id": "minecraft-builder-mcp",
+      "kind": "mcp_reference",
+      "repository": "joshdevous/minecraft-builder-claude-mcp-server",
+      "pinned_commit": "5c3bc03dea82395f85926a2c3d3f814f312f7452",
+      "license": "MIT",
+      "integration_policy": "ENGINE_REFERENCE",
+      "c0_state": "AUDITED_NOT_VENDORED"
+    },
+    {
+      "id": "mcschematic",
+      "kind": "library",
+      "repository": "Sloimayyy/mcschematic",
+      "pinned_commit": "912bd88877aa44eeb7426f6e42e5811e9f5be98d",
+      "license": "Apache-2.0",
+      "integration_policy": "LIBRARY_SNAPSHOT",
+      "c0_state": "AUDITED_NOT_VENDORED"
+    },
+    {
+      "id": "promptcraft",
+      "kind": "workflow_reference",
+      "repository": "cgoulart35/Promptcraft",
+      "pinned_commit": "a960575be921c072550c5a9e7206d3dfa192a6d1",
+      "license": "ALL_RIGHTS_RESERVED_AT_AUDIT",
+      "integration_policy": "REFERENCE_ONLY",
+      "c0_state": "DO_NOT_VENDOR"
+    }
+  ],
+  "external_providers": [
+    {
+      "id": "objtoschematic",
+      "integration_policy": "EXTERNAL_PROVIDER",
+      "api_state": "UNVERIFIED_API"
+    },
+    {
+      "id": "structmatic",
+      "integration_policy": "EXTERNAL_PROVIDER",
+      "api_state": "UNVERIFIED_API"
+    },
+    {
+      "id": "schematic-helper",
+      "integration_policy": "EXTERNAL_PROVIDER",
+      "api_state": "UNVERIFIED_API"
+    },
+    {
+      "id": "blockgpt",
+      "integration_policy": "EXTERNAL_PROVIDER",
+      "api_state": "UNVERIFIED_API"
+    }
+  ]
+}
