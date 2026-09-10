@@ -94,6 +94,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          rm -rf art/tooling/blockbench/asset-toolkit/mcp-sidecar/node_modules
+          find migration/full-skill-migration -type d -name __pycache__ -prune -exec rm -rf {} +
           rm .github/workflows/factory-sonar-hardening-materialize-once.yml
           git diff --check
           git add -A
