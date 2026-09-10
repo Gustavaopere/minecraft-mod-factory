@@ -2,7 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const toolkit = require('../art/tooling/blockbench/asset-toolkit/asset_toolkit.js');
+const toolkit = require('../tooling/blockbench/asset-toolkit/asset_toolkit.js');
 require('./validate_reference_evidence.js');
 
 const ROOT = __dirname;

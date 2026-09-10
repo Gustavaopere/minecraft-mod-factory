@@ -2,7 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-require('../scripts/validate_golden_reference_rendered_edges.js');
+require('../tooling/validators/validate_golden_reference_rendered_edges.js');
 
 const ROOT = __dirname;
 const UNRESOLVED = 'UNRESOLVED';
