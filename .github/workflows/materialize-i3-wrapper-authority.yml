@@ -30,11 +30,14 @@ jobs:
           set -euo pipefail
           authority='engineering/tooling/scaffolder/wrapper-authority'
           mkdir -p "$authority"
-          gradle wrapper --gradle-version 8.14 --distribution-type bin -p "$authority"
-          test -f "$authority/gradlew"
-          test -f "$authority/gradlew.bat"
-          test -f "$authority/gradle/wrapper/gradle-wrapper.properties"
-          test -f "$authority/gradle/wrapper/gradle-wrapper.jar"
+          cd "$authority"
+          printf "rootProject.name = 'i3-wrapper-authority'\n" > settings.gradle
+          gradle wrapper --gradle-version 8.14 --distribution-type bin --no-daemon
+          rm settings.gradle
+          test -f gradlew
+          test -f gradlew.bat
+          test -f gradle/wrapper/gradle-wrapper.properties
+          test -f gradle/wrapper/gradle-wrapper.jar
 
       - name: Commit generated authority
         shell: bash
