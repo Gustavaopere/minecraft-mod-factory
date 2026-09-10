@@ -3,6 +3,7 @@ name: Factory Full Skill Migration Validation
 on:
   push:
     branches:
+      - main
       - feat/full-skill-migration
     paths:
       - 'migration/full-skill-migration/**'
