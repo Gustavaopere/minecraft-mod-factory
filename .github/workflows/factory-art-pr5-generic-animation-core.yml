@@ -11,7 +11,7 @@ on:
       - '.github/workflows/factory-art-pr5-generic-animation-core.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   generic-animation-core:
@@ -23,18 +23,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Regenerate PR5 standalone bundle
-        if: github.event_name == 'push' && github.ref == 'refs/heads/feat/art-pr5-generic-animation-core' && github.actor != 'github-actions[bot]'
-        working-directory: art/tooling/blockbench/asset-toolkit
-        run: |
-          node build_toolkit_bundle.js --write
-          if ! git diff --quiet -- asset_toolkit.js; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add asset_toolkit.js
-            git commit -m "build(art): regenerate PR5 toolkit bundle"
-            git push origin HEAD:feat/art-pr5-generic-animation-core
-          fi
       - name: PR5 generic animation core contract
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.animation_core.test.js
