@@ -43,15 +43,15 @@ jobs:
           python3 engineering/tooling/import-physical-modlist.py
           engineering/tests/fixtures/modlist-i2-sample.txt
           --captured-at 2026-09-09
-          --output "$RUNNER_TEMP/i2-snapshot.json"
-          --providers-output "$RUNNER_TEMP/i2-providers.json"
+          --output ".factory-ci/i2/snapshot.json"
+          --providers-output ".factory-ci/i2/providers.json"
           --shard-size 2
 
       - name: Validate generated normalized snapshot and provider catalog
         run: >-
           python3 engineering/tooling/import-physical-modlist.py
-          --check "$RUNNER_TEMP/i2-snapshot.json"
-          --providers "$RUNNER_TEMP/i2-providers.json"
+          --check ".factory-ci/i2/snapshot.json"
+          --providers ".factory-ci/i2/providers.json"
 
       - name: Check whitespace
         run: git diff --check HEAD^
