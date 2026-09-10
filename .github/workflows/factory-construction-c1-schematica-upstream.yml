@@ -10,6 +10,7 @@ on:
       - main
     paths:
       - '.gitmodules'
+      - '.github/workflows/factory-construction-c0-foundation.yml'
       - '.github/workflows/factory-construction-c1-schematica-upstream.yml'
       - 'construction/**'
 
@@ -38,6 +39,10 @@ jobs:
           test "$actual" = "$expected"
       - name: Verify Schematica checkout pin
         run: test "$(git -C construction/upstream/snapshots/schematica rev-parse HEAD)" = "0c88770005e7bbd7246997c81e810ba935c8e4cf"
+      - name: Run C0 regression against initialized snapshot
+        run: |
+          python3 -m unittest construction/tests/test_c0_foundation.py -v
+          python3 construction/scripts/validate_c0.py
       - name: Install Schematica with upstream dev dependencies
         run: python3 -m pip install -e 'construction/upstream/snapshots/schematica/scripts[dev]'
       - name: Install Factory-owned upstream test supplement
@@ -45,4 +50,4 @@ jobs:
       - name: Run upstream Schematica test suite unchanged
         run: python3 -m pytest construction/upstream/snapshots/schematica/scripts/tests -q
       - name: Check C1 whitespace
-        run: git diff --check HEAD^ -- .gitmodules .github/workflows/factory-construction-c1-schematica-upstream.yml construction/tests/test_c1_schematica_preservation.py construction/upstream/harness/schematica-test-requirements.txt construction/STATUS.md
+        run: git diff --check HEAD^ -- .gitmodules .github/workflows/factory-construction-c0-foundation.yml .github/workflows/factory-construction-c1-schematica-upstream.yml construction/scripts/validate_c0.py construction/tests/test_c0_foundation.py construction/tests/test_c1_schematica_preservation.py construction/upstream/harness/schematica-test-requirements.txt construction/STATUS.md
