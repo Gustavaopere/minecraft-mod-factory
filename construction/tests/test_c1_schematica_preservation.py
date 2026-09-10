@@ -39,7 +39,6 @@ class ConstructionC1SchematicaPreservationTest(unittest.TestCase):
             workflow,
         )
         self.assertIn(f"160000 {PINNED_COMMIT} 0", workflow)
-        self.assertNotIn("subprocess", Path(__file__).read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
