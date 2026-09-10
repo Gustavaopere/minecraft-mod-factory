@@ -33,6 +33,21 @@ def load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _workspace_path(value: Path | str, *, label: str, require_directory: bool = False) -> Path:
+    workspace = Path.cwd().resolve()
+    candidate = Path(value).expanduser()
+    if not candidate.is_absolute():
+        candidate = workspace / candidate
+    candidate = candidate.resolve()
+    if not candidate.is_relative_to(workspace):
+        raise ValueError(f"{label}: path must remain within current workspace")
+    if require_directory and not candidate.is_dir():
+        raise ValueError(f"{label}: directory does not exist within current workspace")
+    if not require_directory and not candidate.is_file():
+        raise ValueError(f"{label}: file does not exist within current workspace")
+    return candidate
+
+
 def _is_bounded_relative_path(value: Any) -> bool:
     if not isinstance(value, str) or not value or value == UNRESOLVED:
         return value == UNRESOLVED
@@ -304,7 +319,18 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        manifest = load_json(args.manifest)
+        manifest_path = _workspace_path(args.manifest, label="manifest")
+        source_root = (
+            _workspace_path(args.source_root, label="source root", require_directory=True)
+            if args.source_root is not None
+            else None
+        )
+        runtime_root = (
+            _workspace_path(args.runtime_root, label="runtime root", require_directory=True)
+            if args.runtime_root is not None
+            else None
+        )
+        manifest = load_json(manifest_path)
         schema = load_json(DEFAULT_SCHEMA)
     except Exception as exc:
         print(f"I6 ASSET HANDOFF VALIDATION: FAIL\n- parse/load error: {exc}")
@@ -313,8 +339,8 @@ def main(argv: list[str] | None = None) -> int:
     errors = validate_manifest_data(
         manifest,
         schema=schema,
-        source_root=args.source_root,
-        runtime_root=args.runtime_root,
+        source_root=source_root,
+        runtime_root=runtime_root,
         actual_source_revision=args.source_revision,
     )
     if errors:
