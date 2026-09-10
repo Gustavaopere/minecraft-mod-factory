@@ -49,7 +49,7 @@ jobs:
         run: python migration/full-skill-migration/m5_finalize.py --factory-root .
 
       - name: Regenerate neutral Asset Toolkit bundle
-        run: node art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js
+        run: node art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js --write
 
       - name: Validate full source coverage before commit
         run: >-
