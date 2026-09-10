@@ -1,6 +1,6 @@
 # Spell / VFX / Audio Source Audit
 
-Historical source audit: 2026-09-07.  
+Historical source audit: 2026-09-07.
 Physical presence revalidated for Factory migration against modlist snapshot 2026-09-09.
 
 Este documento preserva evidência histórica e registra o estado físico atual. Documentação externa não prevalece sobre a modlist/JAR física e nenhuma API Java específica é inferida apenas por presença de provider.
