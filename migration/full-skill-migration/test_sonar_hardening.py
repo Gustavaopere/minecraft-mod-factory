@@ -13,6 +13,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[2]
 MIGRATION = ROOT / "migration/full-skill-migration"
 FULL_SKILL_WORKFLOW = ROOT / ".github/workflows/factory-full-skill-migration-validation.yml"
+FULL_SKILL_MATERIALIZER = ROOT / ".github/workflows/factory-full-skill-materialize.yml"
 SONAR_PROPERTIES = ROOT / ".sonarcloud.properties"
 GENERATED_BUNDLE = "art/tooling/blockbench/asset-toolkit/asset_toolkit.js"
 SOURCE_EXACT_VERIFY_PROJECT = "skills/library/minecraft-neoforge-engineering/scripts/verify_project.py"
@@ -54,12 +55,26 @@ class SonarHardeningContractTest(unittest.TestCase):
     def test_check_whitespace_exposes_validated_git_base_resolver(self) -> None:
         module = load_module("full_skill_whitespace", MIGRATION / "check_whitespace.py")
         resolver = getattr(module, "resolve_git_base", None)
-        self.assertTrue(callable(resolver), "check_whitespace.py must resolve and validate --base before git diff")
+        self.assertTrue(callable(resolver), "check_whitespace.py must resolve and validate its internal git base")
 
         for unsafe in ("-p", "--stat", "HEAD;echo-pwned", "HEAD\n--stat", "", " " * 4):
             with self.subTest(unsafe=unsafe):
                 with self.assertRaises((ValueError, RuntimeError, subprocess.CalledProcessError)):
                     resolver(unsafe)
+
+    def test_check_whitespace_does_not_expose_git_base_cli_override(self) -> None:
+        script = MIGRATION / "check_whitespace.py"
+        result = subprocess.run(
+            [sys.executable, str(script), "--help"],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("--base", result.stdout)
+        workflow = FULL_SKILL_WORKFLOW.read_text(encoding="utf-8")
+        self.assertNotIn("check_whitespace.py --base", workflow)
 
     def test_m5_rejects_external_factory_root_without_mutation(self) -> None:
         script = MIGRATION / "m5_finalize.py"
@@ -85,6 +100,20 @@ class SonarHardeningContractTest(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0, "m5_finalize.py must reject write roots outside its canonical repository")
             self.assertEqual(package.read_bytes(), before_package)
             self.assertEqual(lock.read_bytes(), before_lock)
+
+    def test_m5_does_not_expose_factory_root_cli_override(self) -> None:
+        script = MIGRATION / "m5_finalize.py"
+        result = subprocess.run(
+            [sys.executable, str(script), "--help"],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("--factory-root", result.stdout)
+        materializer = FULL_SKILL_MATERIALIZER.read_text(encoding="utf-8")
+        self.assertNotIn("m5_finalize.py --factory-root", materializer)
 
     def test_sonar_scope_excludes_only_known_non_authoritative_code(self) -> None:
         self.assertTrue(SONAR_PROPERTIES.is_file(), ".sonarcloud.properties must document automatic-analysis scope")
