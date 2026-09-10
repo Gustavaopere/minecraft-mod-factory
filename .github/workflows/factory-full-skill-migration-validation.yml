@@ -58,7 +58,7 @@ jobs:
           --factory-root .
 
       - name: Check non-preserved whitespace
-        run: python migration/full-skill-migration/check_whitespace.py --base HEAD^
+        run: python migration/full-skill-migration/check_whitespace.py
 
   m5-neutral-naming:
     runs-on: ubuntu-latest
