@@ -1,0 +1,251 @@
+{
+  "skill": "minecraft-neoforge-engineering",
+  "version": "1.0.0",
+  "files": [
+    {
+      "path": "LICENSE",
+      "bytes": 1106,
+      "sha256": "e113c0b25eedffccb68b3e55dcad8ced85257ac63e42db555a5095b4d10b230d"
+    },
+    {
+      "path": "README.md",
+      "bytes": 2614,
+      "sha256": "a95afa45a6b8b8e98325dbea5ef6a4df35b4d080b882b50c3fa2d805e6e2de53"
+    },
+    {
+      "path": "SKILL.md",
+      "bytes": 9091,
+      "sha256": "307042b9224f7df503be0af9a23d7c04ca4a879c774b7e1ed50ff48201f62c99"
+    },
+    {
+      "path": "SOURCES.md",
+      "bytes": 1949,
+      "sha256": "fd34c3673ec1c8099cb73a0b73a54fdcdde684e937760cf14b03c8b140806f86"
+    },
+    {
+      "path": "assets/DECISIONS_TEMPLATE.md",
+      "bytes": 258,
+      "sha256": "4c95567d6173bcc5ea96f9811161a91d9f1ad3dd86b0b3be2302c6d59dfd2b86"
+    },
+    {
+      "path": "assets/FEATURE_SPEC_TEMPLATE.md",
+      "bytes": 808,
+      "sha256": "93e4fc905ee280c11e8fd4853cef543742ed2e0b0bc81f39b5f417fe1527c0f8"
+    },
+    {
+      "path": "assets/IMPLEMENTATION_PLAN_TEMPLATE.md",
+      "bytes": 720,
+      "sha256": "90637ca3d5175bb16de9266fac04e14147fb4437bc703236a884195e800e0341"
+    },
+    {
+      "path": "assets/INTEGRATION_CONTRACT_TEMPLATE.md",
+      "bytes": 516,
+      "sha256": "49b30a2270ea85b43096621f7a247a8f99836992dff2d6e5e1c0d7b2d8d6f90a"
+    },
+    {
+      "path": "assets/STATUS_TEMPLATE.md",
+      "bytes": 246,
+      "sha256": "6eb25d401ea9a02641fe51c7797e507e1bc122462e41f76a3860368c3d86b79e"
+    },
+    {
+      "path": "assets/VERIFICATION_REPORT_TEMPLATE.md",
+      "bytes": 511,
+      "sha256": "714369ff096e9d777a1c2166b3f8ec6ffb038f7734ac95e46082bcf74604ba2e"
+    },
+    {
+      "path": "references/agentic-workflow.md",
+      "bytes": 1754,
+      "sha256": "a8ebb1a83351445c1382d2b916b8e5f16596a666ddf6a5afe3431bc04c25119b"
+    },
+    {
+      "path": "references/authority-and-evidence.md",
+      "bytes": 987,
+      "sha256": "72689dcfe44542f993687c8724212d9dccfd13c2aa2fbf2a6a9f171770c15c2c"
+    },
+    {
+      "path": "references/client-rendering-input.md",
+      "bytes": 755,
+      "sha256": "2a513b744be7f61ef360bf3cf00f6ae9c09d17772875dbf6b0ec637e80a75381"
+    },
+    {
+      "path": "references/codecs-data.md",
+      "bytes": 639,
+      "sha256": "31a5f1919dc3ba8db0fb3a1093e286f5e51f0352d1584a07d7b01292027184e2"
+    },
+    {
+      "path": "references/compatibility.md",
+      "bytes": 1002,
+      "sha256": "c8e7f8837f39e8b3de9d1ed52669b9a43fcd1e359d34940095000d790711cae4"
+    },
+    {
+      "path": "references/configuration.md",
+      "bytes": 578,
+      "sha256": "b0f13ba6c74288deda458aa97a258ce97af4c25e228c3f9f0ac7caabbd72fac5"
+    },
+    {
+      "path": "references/debugging.md",
+      "bytes": 926,
+      "sha256": "dc09e6556f8d29583b7b1f9084cc9db40c0158a4b5621bfa2e9ca4ab8717ddef"
+    },
+    {
+      "path": "references/events-sides.md",
+      "bytes": 878,
+      "sha256": "b5deb0d2f450d36567c3cdcbc31cd42cafcba53e1b917f82ba5d5253964ec8cb"
+    },
+    {
+      "path": "references/exact-version-api.md",
+      "bytes": 1216,
+      "sha256": "58e9683dc41adcce9b0b92326c9963357a26a80583170ee25fb56e53454d111b"
+    },
+    {
+      "path": "references/feature-design.md",
+      "bytes": 1608,
+      "sha256": "0a8f6b5dffd4f4bc472f26dda38e5765ff05a1d4677d5374ca083540569d6a56"
+    },
+    {
+      "path": "references/game-objects.md",
+      "bytes": 851,
+      "sha256": "a15744565439bc43797835fe3b36f8127ef999cfa6fde7cd7adabc0d2f58c5a6"
+    },
+    {
+      "path": "references/git-concurrency.md",
+      "bytes": 784,
+      "sha256": "5ffe47bbe41706bdfc7cbc71e989f76d0a32f51e590d0b131c42c579e16414af"
+    },
+    {
+      "path": "references/mixins-reflection.md",
+      "bytes": 709,
+      "sha256": "41c4b6dc62c7d27abda5d4144ce13eaa2099ce1baffcbe5dcebb4f92e40d0ba7"
+    },
+    {
+      "path": "references/networking.md",
+      "bytes": 1061,
+      "sha256": "98f417c8a714ab9c64524f9f3bc66af51450e4052280acb91a0d6b072ac7e1c8"
+    },
+    {
+      "path": "references/performance.md",
+      "bytes": 1077,
+      "sha256": "229c3a78d6db7d4bca43ce91dad541dd1fa5efd11819c6b75a61d04b8552492e"
+    },
+    {
+      "path": "references/registries-lifecycle.md",
+      "bytes": 849,
+      "sha256": "e603fb1aa7424cf34793997e1028e46749266dcadfa16669a665376867aeb54b"
+    },
+    {
+      "path": "references/release-hardening.md",
+      "bytes": 1068,
+      "sha256": "9732ededda12f6a1b7dbd76f188763090efddfd22b458979c02baa5c0daad1bf"
+    },
+    {
+      "path": "references/repository-bootstrap.md",
+      "bytes": 1284,
+      "sha256": "df8740c8a915f76e2ea2e8820cd2c5595ee4c71efb19e135f6fca9fa31b7b326"
+    },
+    {
+      "path": "references/resources-datagen.md",
+      "bytes": 807,
+      "sha256": "5af00c11d138632ee6bca46fc0b61d2f7af2eb34cc0b5bdb85056919725f100c"
+    },
+    {
+      "path": "references/security.md",
+      "bytes": 916,
+      "sha256": "04ee9e2cb65233a721df0faadac3a0cd1a27489df2b052e0cf685b5d93c43b43"
+    },
+    {
+      "path": "references/state-persistence.md",
+      "bytes": 897,
+      "sha256": "c860808c401a871d09c378fdff46f2a9710efe9b09e6db139252b9be8b0cca07"
+    },
+    {
+      "path": "references/verification.md",
+      "bytes": 990,
+      "sha256": "ded8a66c58e9885b2758dcb0bca6ed3a6279e6e1263758140684639624866fe5"
+    },
+    {
+      "path": "references/worldgen.md",
+      "bytes": 846,
+      "sha256": "6b32554598046497e8dfae49b6ee4ba0407966d5977d76997519ef4172fb229b"
+    },
+    {
+      "path": "scripts/inspect_repo.py",
+      "bytes": 1471,
+      "sha256": "6601d555de7b87821427b12d925bab07971ff624b54f36379c7cad4cfa5ad42a"
+    },
+    {
+      "path": "scripts/preflight.py",
+      "bytes": 1441,
+      "sha256": "e594b66cb2337ceec41aaf93c8cec113025bac0a87fa8609b66d0479e5f5ee19"
+    },
+    {
+      "path": "scripts/scan_client_leaks.py",
+      "bytes": 1033,
+      "sha256": "3922afbdff68826772432eb1d948bba77b93b09fc7b3b52b59cca4f63185fd7d"
+    },
+    {
+      "path": "scripts/validate_skill.py",
+      "bytes": 1818,
+      "sha256": "5468534d8561925ebb893e493a9b4754d3582133518faa63c92fa2dd99def3c8"
+    },
+    {
+      "path": "scripts/verify_project.py",
+      "bytes": 1661,
+      "sha256": "5900d94d6ddd2af94306116e9fe59442da33b6551f486618452571a4e22b8a05"
+    },
+    {
+      "path": "tests/acceptance-checklist.md",
+      "bytes": 1264,
+      "sha256": "9219256f9e5b15a8e921001c5d0a6cc8cf6515b7fb4c52227560713ab2062017"
+    },
+    {
+      "path": "tests/pressure-scenarios.md",
+      "bytes": 4285,
+      "sha256": "fb44fa3ab2368dc2ba94eac3d3951b55b755c2af719ea99345cc22f9ca36c54a"
+    },
+    {
+      "path": "workflows/add-networked-system.md",
+      "bytes": 734,
+      "sha256": "9a86abf30c80a13723693d5281f4b8b49d6a6308270b3a09f7ea11754b89cb25"
+    },
+    {
+      "path": "workflows/add-worldgen.md",
+      "bytes": 660,
+      "sha256": "74b7d056775f19e46771b2198aeb7b8d3fb9e980d95b1a2db87cc052fe24fa4e"
+    },
+    {
+      "path": "workflows/audit-performance.md",
+      "bytes": 683,
+      "sha256": "179f459ae5b5c3f6e6edba757925d9ea6d23c83bf88cc1f09d40b34ef42ff141"
+    },
+    {
+      "path": "workflows/continue-existing.md",
+      "bytes": 729,
+      "sha256": "c696634d6ffe268c7195f8b47b7a78de9782e2827df6337dc668eadd93da6cf6"
+    },
+    {
+      "path": "workflows/fix-bug.md",
+      "bytes": 608,
+      "sha256": "60643a0c1b5b15f806589ce7eacc7594cfa0ad91511e15b50e1983e845b30a16"
+    },
+    {
+      "path": "workflows/implement-feature.md",
+      "bytes": 898,
+      "sha256": "7cd5e593aeb73da23dd964143324b82726371882674a90fc1b26042dca51cabf"
+    },
+    {
+      "path": "workflows/integrate-mod.md",
+      "bytes": 701,
+      "sha256": "4b4d812349358a482f9bc731d9236ce5f94efe8a90d70937f7661e352df4d622"
+    },
+    {
+      "path": "workflows/new-mod.md",
+      "bytes": 826,
+      "sha256": "f63ef4166a290cd5ba48ec9fac139f0bdaa92ffd343d075c6ae0fc3aec869d7c"
+    },
+    {
+      "path": "workflows/release.md",
+      "bytes": 649,
+      "sha256": "91dd0c57a2320ff1afc991fdabd61a19b8007114fc3bff851d7a917f2e10a2fc"
+    }
+  ]
+}

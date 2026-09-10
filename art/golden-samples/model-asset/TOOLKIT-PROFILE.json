@@ -1,0 +1,10 @@
+{
+  "referenceOnly": true,
+  "assetId": "golden_reference_focus_relic",
+  "requiredBones": ["root", "cast_hand", "vfx_anchor"],
+  "requiredAnimations": [
+    "animation.golden_reference_focus_relic.idle",
+    "animation.golden_reference_focus_relic.cast"
+  ],
+  "maxSpan": [8, 16, 8]
+}

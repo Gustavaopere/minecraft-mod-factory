@@ -1,0 +1,121 @@
+name: Factory Full Skill Migration Validation
+
+on:
+  push:
+    branches:
+      - main
+      - feat/full-skill-migration
+    paths:
+      - 'migration/full-skill-migration/**'
+      - 'migration/provenance/**'
+      - 'skills/**'
+      - 'art/**'
+      - '.github/workflows/factory-full-skill-migration-validation.yml'
+  pull_request:
+    paths:
+      - 'migration/full-skill-migration/**'
+      - 'migration/provenance/**'
+      - 'skills/**'
+      - 'art/**'
+      - '.github/workflows/factory-full-skill-migration-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  full-skill-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Factory
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Checkout frozen historical skills source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/rpg-source
+          git init -q /tmp/rpg-source
+          git -C /tmp/rpg-source remote add origin https://github.com/Gustavaopere/neoforge-rpg-skilltree.git
+          git -C /tmp/rpg-source fetch --depth=1 origin 2ecea4178aa7ac80f99955ab045e296da25376ec
+          git -C /tmp/rpg-source checkout -q --detach FETCH_HEAD
+          test "$(git -C /tmp/rpg-source rev-parse HEAD)" = "2ecea4178aa7ac80f99955ab045e296da25376ec"
+
+      - name: Validate complete IMPLEMENTAR SKILL coverage
+        run: >-
+          python migration/full-skill-migration/validate.py
+          --source-root /tmp/rpg-source/PROJECT-INSTRUCTIONS/skills
+          --factory-root .
+
+      - name: Check non-preserved whitespace
+        run: python migration/full-skill-migration/check_whitespace.py --base HEAD^
+
+  m5-neutral-naming:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout Factory
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate M5 neutral Toolkit naming
+        run: python -m unittest migration/full-skill-migration/test_m5_naming.py -v
+
+  m6-golden-relocation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout Factory
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate M6 Golden Sample relocation boundaries
+        run: python -m unittest migration/full-skill-migration/test_m6_golden_relocation.py -v
+
+  migrated-skill-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout Factory
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate migrated skill repository, Toolkit and Golden Samples
+        run: python skills/scripts/validate_skill_repository.py
+
+      - name: Install MCP sidecar dependencies
+        working-directory: art/tooling/blockbench/asset-toolkit/mcp-sidecar
+        run: npm ci
+
+      - name: Check MCP sidecar
+        working-directory: art/tooling/blockbench/asset-toolkit/mcp-sidecar
+        run: npm run check
+
+      - name: Test MCP sidecar
+        working-directory: art/tooling/blockbench/asset-toolkit/mcp-sidecar
+        run: npm test

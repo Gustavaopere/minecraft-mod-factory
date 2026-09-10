@@ -1,0 +1,14 @@
+interface:
+  display_name: minecraft modpack bisect
+  short_description: Use when a Minecraft crash or incompatibility is reproducible
+    but logs and research cannot isolate the exact interacting mod or minimal failing
+    combination in a large modpack.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

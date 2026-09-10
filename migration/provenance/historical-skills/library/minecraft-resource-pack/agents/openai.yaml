@@ -1,0 +1,14 @@
+interface:
+  display_name: minecraft resource pack
+  short_description: Create and debug Minecraft 1.21.x resource packs, including pack
+    metadata, textures, models, blockstates, item definitions, sounds, fonts, animations,
+    and shaders. Use for client-side visual or audio assets without gameplay code.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

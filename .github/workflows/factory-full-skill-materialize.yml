@@ -1,0 +1,97 @@
+name: Factory Full Skill Materializer
+
+on:
+  push:
+    branches:
+      - feat/full-skill-migration
+    paths:
+      - 'migration/full-skill-migration/migrate.py'
+      - 'migration/full-skill-migration/m5_finalize.py'
+      - 'migration/full-skill-migration/reconcile.py'
+      - 'migration/full-skill-migration/apply_pr4_texture_compare.py'
+      - '.github/workflows/factory-full-skill-materialize.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Checkout Factory branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Checkout frozen historical skills source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/rpg-source
+          git init -q /tmp/rpg-source
+          git -C /tmp/rpg-source remote add origin https://github.com/Gustavaopere/neoforge-rpg-skilltree.git
+          git -C /tmp/rpg-source fetch --depth=1 origin 2ecea4178aa7ac80f99955ab045e296da25376ec
+          git -C /tmp/rpg-source checkout -q --detach FETCH_HEAD
+          test "$(git -C /tmp/rpg-source rev-parse HEAD)" = "2ecea4178aa7ac80f99955ab045e296da25376ec"
+
+      - name: Materialize frozen skill tree
+        run: >-
+          python migration/full-skill-migration/migrate.py
+          --source-root /tmp/rpg-source/PROJECT-INSTRUCTIONS/skills
+          --factory-root .
+
+      - name: Finalize M5 neutral package identity
+        run: python migration/full-skill-migration/m5_finalize.py --factory-root .
+
+      - name: Restore proven PR4 texture compare delta
+        run: python migration/full-skill-migration/apply_pr4_texture_compare.py
+
+      - name: Reconcile Factory-owned post-migration deltas
+        run: python migration/full-skill-migration/reconcile.py --factory-root .
+
+      - name: Validate Factory governance after reconciliation
+        run: python3 engineering/tooling/validate-e1-s1-governance.py
+
+      - name: Regenerate neutral Asset Toolkit bundle
+        run: node art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js --write
+
+      - name: Validate PR4 texture acceptance before commit
+        run: node --test art/tooling/blockbench/asset-toolkit/asset_toolkit.texture_acceptance.test.js
+
+      - name: Validate full source coverage before commit
+        run: >-
+          python migration/full-skill-migration/validate.py
+          --source-root /tmp/rpg-source/PROJECT-INSTRUCTIONS/skills
+          --factory-root .
+
+      - name: Validate M5 naming before commit
+        run: python -m unittest migration/full-skill-migration/test_m5_naming.py -v
+
+      - name: Validate M6 Golden Sample relocation before commit
+        run: python -m unittest migration/full-skill-migration/test_m6_golden_relocation.py -v
+
+      - name: Check generated diff whitespace
+        run: git diff --check
+
+      - name: Commit materialized migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add art skills migration/provenance
+          if git diff --cached --quiet; then
+            echo 'No materialization changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'feat(migration): materialize full historical skill tree'
+          git push origin HEAD:feat/full-skill-migration

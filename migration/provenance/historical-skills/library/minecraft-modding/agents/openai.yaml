@@ -1,0 +1,14 @@
+interface:
+  display_name: minecraft modding
+  short_description: Create, modify, debug, or migrate Minecraft mods for NeoForge
+    or Fabric 1.21.x and legacy Forge 1.20.1. Use for loader-based gameplay code and
+    assets; use minecraft-multiloader when one codebase must target both modern loaders.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

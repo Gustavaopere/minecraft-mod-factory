@@ -1,0 +1,13 @@
+interface:
+  display_name: minecraft mod dev
+  short_description: Use when creating Minecraft mods, integrating with mod APIs (JEI/AE2/Create),
+    setting up modding environments, or migrating to newer versions
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

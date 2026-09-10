@@ -1,0 +1,14 @@
+interface:
+  display_name: minecraft worldedit ops
+  short_description: Operate WorldEdit safely for Minecraft 1.21.x selections, region
+    edits, masks, schematics, brushes, terrain shaping, and rollback. Use for command-driven
+    world editing, not plugin development or general server administration.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
