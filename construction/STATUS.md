@@ -1,7 +1,7 @@
 # STATUS — Construction
 
 UPDATED_AT=2026-09-10
-PHASE=C1_MINEBENCH_REFERENCE_RED_PREPARATION
+PHASE=C1_MINEBENCH_REFERENCE_RED_CAPTURED
 REPOSITORY=Gustavaopere/minecraft-mod-factory
 BRANCH=feat/construction-c1-minebench-reference
 BASE_SHA=ef991e103f65f0d81967bb0cc1c2592f8c85ccc5
@@ -21,6 +21,9 @@ C1A_POSTMERGE_GOVERNANCE=PASS
 C1A_POSTMERGE_SONARCLOUD=GLOBAL_FAIL_EXTERNAL_TO_CONSTRUCTION
 GLOBAL_SONAR_SECURITY_REMEDIATION_PR=23
 GLOBAL_SONAR_RELIABILITY_REMEDIATION_PR=22
+C1B_RED_HEAD=d0da47fe28b8b3748bc9aa290a67632ce332d49e
+C1B_RED_RUN=34535088204
+C1B_RED_RESULT=2_PASS_1_FAIL_EXPECTED_MISSING_GITMODULE
 HEAD_SHA=RESOLVE_FROM_GIT
 OPEN_PR=NONE
 TARGET_MINECRAFT=1.21.1
@@ -30,7 +33,7 @@ CANONICAL_OUTPUT=SPONGE_SCHEMATIC_V3
 LATEST_MODLIST_SNAPSHOT=2026-09-09_595_TOP_LEVEL
 MANUAL_ACTION_REQUIRED=NO
 BLOCKERS=NONE_IN_CONSTRUCTION
-NEXT_ACTION=AUTHOR_C1B_RED_CONTRACT_AND_WORKFLOW
+NEXT_ACTION=MATERIALIZE_MINEBENCH_GITLINK_AND_OBTAIN_GREEN
 
 ## C1A — Schematica preservation
 
@@ -85,7 +88,7 @@ UPSTREAM_PACKAGE_MANAGER=pnpm@10.26.1
 UPSTREAM_LOCKFILE=pnpm-lock.yaml
 UPSTREAM_INSTALL=pnpm install --frozen-lockfile
 
-The upstream repository defines native quality gates for lint, regression tests, PostgreSQL-backed integration tests and production build. C1B will reproduce only those gates with local CI dependencies and no provider credentials. All Factory-owned GitHub Actions dependencies must remain commit-pinned.
+The upstream repository defines native quality gates for lint, regression tests, PostgreSQL-backed integration tests and production build. C1B reproduces only those gates with local CI dependencies and no provider credentials. All Factory-owned GitHub Actions dependencies are commit-pinned.
 
 ### C1B acceptance
 
@@ -94,9 +97,9 @@ The upstream repository defines native quality gates for lint, regression tests,
 - [x] upstream package manager and frozen lockfile identified
 - [x] upstream native CI gates audited
 - [x] path selected under `upstream/references/`, preserving the `ENGINE_REFERENCE` boundary
-- [ ] C1B preservation contract authored
-- [ ] C1B dedicated workflow authored
-- [ ] expected RED captured before MineBench gitlink exists
+- [x] C1B preservation contract authored
+- [x] C1B dedicated workflow authored
+- [x] expected RED captured before MineBench gitlink exists
 - [ ] `.gitmodules` declares exact MineBench URL and path
 - [ ] MineBench gitlink mode is `160000`
 - [ ] MineBench gitlink SHA equals audited upstream pin
