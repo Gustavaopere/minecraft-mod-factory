@@ -62,6 +62,7 @@ class SonarHardeningContractTest(unittest.TestCase):
                 with self.assertRaises((ValueError, RuntimeError, subprocess.CalledProcessError)):
                     resolver(unsafe)
 
+    # Internal control-plane authority values must not be user-overridable CLI inputs.
     def test_check_whitespace_does_not_expose_git_base_cli_override(self) -> None:
         script = MIGRATION / "check_whitespace.py"
         result = subprocess.run(
