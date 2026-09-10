@@ -1,0 +1,54 @@
+{
+  "schema_version": 2,
+  "mod_id": "i3_golden_mod",
+  "source_authority": "Repo Textura",
+  "source_repository": "UNRESOLVED",
+  "source_revision": "UNRESOLVED",
+  "runtime_authority": "UNRESOLVED",
+  "provider_profiles": [],
+  "provider_bindings": [],
+  "visual_inputs": [],
+  "artifacts": [
+    {
+      "asset_id": "synthetic_pending_texture",
+      "provider_profile": "UNRESOLVED",
+      "source_path": "UNRESOLVED",
+      "source_format": ".png",
+      "source_sha256": "UNRESOLVED",
+      "delivery_path": "src/main/resources/assets/i3_golden_mod/textures/synthetic_pending.png",
+      "delivery_format": ".png",
+      "delivery_sha256": "UNRESOLVED",
+      "required_bones": [],
+      "required_anchors": [],
+      "required_clips": [],
+      "textures": [],
+      "conversion": {
+        "performed": false,
+        "from_format": ".png",
+        "to_format": ".png",
+        "state": "PENDING",
+        "evidence": [
+          "synthetic I4 fixture; no conversion performed"
+        ]
+      },
+      "qa": {
+        "verified_bones": [],
+        "verified_anchors": [],
+        "verified_clips": [],
+        "verified_textures": [],
+        "namespace_verified": true,
+        "output_destination_verified": true,
+        "state": "PENDING",
+        "evidence": [
+          "synthetic I4 fixture confirms only the bounded runtime namespace and destination; source evidence remains unresolved"
+        ]
+      },
+      "state": "PENDING"
+    }
+  ],
+  "state": "PENDING",
+  "evidence": [
+    "synthetic I4 validator fixture",
+    "Repo Textura source repository, revision and hashes remain unresolved"
+  ]
+}
