@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gustavaopere/minecraft-mod-factory/engineering/schemas/test-manifest.schema.json",
+  "title": "Test Manifest",
+  "type": "object",
+  "required": ["schema_version", "mod_id", "target", "suites", "overall_state"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "mod_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{1,63}$"},
+    "target": {
+      "type": "object",
+      "required": ["minecraft", "loader", "neoforge", "java"],
+      "additionalProperties": false,
+      "properties": {
+        "minecraft": {"type": "string", "const": "1.21.1"},
+        "loader": {"type": "string", "const": "neoforge"},
+        "neoforge": {"type": "string", "const": "21.1.248"},
+        "java": {"type": "integer", "const": 21}
+      }
+    },
+    "suites": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["suite_id", "type", "state", "command", "evidence"],
+        "additionalProperties": false,
+        "properties": {
+          "suite_id": {"type": "string", "minLength": 1},
+          "type": {"type": "string", "enum": ["build", "unit", "gametest", "client", "dedicated_server", "multiplayer", "performance", "compatibility"]},
+          "state": {"type": "string", "enum": ["CONFIRMED", "IMPLEMENTED", "MERGED", "PASS", "PENDING", "UNRESOLVED", "UNAVAILABLE", "DEFERRED", "REFERENCE_ONLY", "INCOMPATIBLE", "BLOCKED", "SUPERSEDED"]},
+          "command": {"type": "string", "minLength": 1},
+          "evidence": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+        }
+      }
+    },
+    "overall_state": {"type": "string", "enum": ["CONFIRMED", "IMPLEMENTED", "MERGED", "PASS", "PENDING", "UNRESOLVED", "UNAVAILABLE", "DEFERRED", "REFERENCE_ONLY", "INCOMPATIBLE", "BLOCKED", "SUPERSEDED"]}
+  }
+}
