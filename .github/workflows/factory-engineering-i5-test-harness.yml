@@ -30,13 +30,23 @@ permissions:
 
 jobs:
   harness-contract:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 2
 
       - name: Run I5 test harness contract tests
         run: python3 -m unittest engineering/tests/test_i5_test_harness.py
 
-      - name: Check whitespace
-        run: git diff --check
+      - name: Check I5 whitespace
+        run: >-
+          git diff --check HEAD^ --
+          .github/workflows/factory-engineering-i5-test-harness.yml
+          engineering/tests/test_i5_test_harness.py
+          engineering/tooling/test-harness
+          engineering/tooling/validate-i1-foundation.py
+          engineering/schemas/test-manifest.schema.json
+          engineering/templates/neoforge-mod/build.gradle.tmpl
+          engineering/tests/golden/i3-golden-mod/build.gradle
