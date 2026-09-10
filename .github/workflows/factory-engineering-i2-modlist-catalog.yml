@@ -11,6 +11,7 @@ on:
     paths:
       - 'engineering/tooling/import-physical-modlist.py'
       - 'engineering/tests/test_i2_modlist_catalog.py'
+      - 'engineering/tests/test_i2_security_review.py'
       - 'engineering/tests/fixtures/modlist-i2-sample.txt'
       - '.github/workflows/factory-engineering-i2-modlist-catalog.yml'
 
@@ -32,7 +33,10 @@ jobs:
           python-version: '3.12'
 
       - name: Run I2 contract tests
-        run: python3 -m unittest engineering/tests/test_i2_modlist_catalog.py
+        run: >-
+          python3 -m unittest
+          engineering/tests/test_i2_modlist_catalog.py
+          engineering/tests/test_i2_security_review.py
 
       - name: Import synthetic physical fixture
         run: >-
