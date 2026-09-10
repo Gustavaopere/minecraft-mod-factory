@@ -1,4 +1,5 @@
 import importlib.util
+import inspect
 import json
 import tempfile
 import unittest
@@ -78,6 +79,14 @@ class I3ModScaffolderContractTest(unittest.TestCase):
         self.assertTrue(
             SCAFFOLDER.is_file(),
             "I3 RED: production scaffolder engineering/tooling/scaffolder/scaffold_mod.py is missing",
+        )
+
+    def test_scaffolder_wrapper_authority_is_internal_not_caller_supplied(self):
+        module = self.require_scaffolder()
+        self.assertEqual(
+            ["mod_spec_path", "scaffold_config_path", "output_dir"],
+            list(inspect.signature(module.generate_project).parameters),
+            "I3 security RED: wrapper authority must be Factory-owned, not supplied by callers",
         )
 
     def test_golden_mod_spec_is_valid_i1_contract(self):
