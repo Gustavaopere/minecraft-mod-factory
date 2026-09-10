@@ -239,6 +239,14 @@ def generic_adapt(relative: str, text: str) -> str:
         text = text.replace(old, new)
     if relative == "scripts/validate_golden_reference_rendered_edges.js":
         text = text.replace("path.resolve(__dirname, '..', 'golden-samples')", "path.resolve(__dirname, '..', '..', 'golden-samples')")
+    if relative == "golden-samples/validate_golden_samples.js":
+        text = text.replace("../art/tooling/blockbench/asset-toolkit/asset_toolkit.js", "../tooling/blockbench/asset-toolkit/asset_toolkit.js")
+        if "../art/tooling/blockbench/asset-toolkit/asset_toolkit.js" in text:
+            raise RuntimeError("M6 golden validator relocation remained unresolved")
+    if relative == "golden-samples/validate_reference_evidence.js":
+        text = text.replace("../scripts/validate_golden_reference_rendered_edges.js", "../tooling/validators/validate_golden_reference_rendered_edges.js")
+        if "../scripts/validate_golden_reference_rendered_edges.js" in text:
+            raise RuntimeError("M6 evidence validator relocation remained unresolved")
     if relative.endswith("PROJECT-OVERLAY.md"):
         text = text.replace(
             "is the shared integration/instruction/tooling hub",
