@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import json
 import unittest
 from pathlib import Path
 
@@ -32,6 +33,12 @@ class M5NamingContractTest(unittest.TestCase):
         build_script = (TOOLKIT / "build_toolkit_bundle.js").read_text(encoding="utf-8")
         self.assertIn("asset_toolkit.js", build_script)
         self.assertNotIn("rpg_asset_toolkit.js", build_script)
+
+        package = json.loads((TOOLKIT / "mcp-sidecar/package.json").read_text(encoding="utf-8"))
+        self.assertEqual(package.get("name"), "@minecraft-mod-factory/asset-mcp-sidecar")
+        lock = json.loads((TOOLKIT / "mcp-sidecar/package-lock.json").read_text(encoding="utf-8"))
+        self.assertEqual(lock.get("name"), "@minecraft-mod-factory/asset-mcp-sidecar")
+        self.assertEqual(lock.get("packages", {}).get("", {}).get("name"), "@minecraft-mod-factory/asset-mcp-sidecar")
 
 
 if __name__ == "__main__":
