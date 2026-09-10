@@ -54,6 +54,11 @@ class ConstructionC1MineBenchReferenceTest(unittest.TestCase):
         self.assertNotIn("ANTHROPIC_API_KEY", workflow)
         self.assertNotIn("OPENROUTER_API_KEY", workflow)
 
+    def test_workflow_has_no_literal_postgres_password(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        self.assertNotIn("POSTGRES_PASSWORD: minebench", workflow)
+        self.assertNotIn("postgresql://minebench:minebench@", workflow)
+
 
 if __name__ == "__main__":
     unittest.main()
