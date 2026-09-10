@@ -1,0 +1,41 @@
+name: Factory Construction C1 Schematica Upstream
+
+on:
+  push:
+    branches:
+      - main
+      - feat/construction-c1-schematica-upstream
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.gitmodules'
+      - '.github/workflows/factory-construction-c1-schematica-upstream.yml'
+      - 'construction/**'
+
+permissions:
+  contents: read
+
+jobs:
+  c1-preservation:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout with upstream snapshots
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          submodules: recursive
+      - name: Set up Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Run C1 preservation contract tests
+        run: python3 -m unittest construction/tests/test_c1_schematica_preservation.py -v
+      - name: Verify Schematica checkout pin
+        run: test "$(git -C construction/upstream/snapshots/schematica rev-parse HEAD)" = "0c88770005e7bbd7246997c81e810ba935c8e4cf"
+      - name: Install Schematica with upstream dev dependencies
+        run: python3 -m pip install -e 'construction/upstream/snapshots/schematica/scripts[dev]'
+      - name: Run upstream Schematica test suite unchanged
+        run: python3 -m pytest construction/upstream/snapshots/schematica/scripts/tests -q
+      - name: Check C1 whitespace
+        run: git diff --check HEAD^ -- .gitmodules .github/workflows/factory-construction-c1-schematica-upstream.yml construction/tests/test_c1_schematica_preservation.py construction/STATUS.md

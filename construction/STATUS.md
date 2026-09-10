@@ -1,45 +1,47 @@
 # STATUS — Construction
 
 UPDATED_AT=2026-09-10
-PHASE=C0_FOUNDATION_PR_OPEN_PENDING_CI
+PHASE=C1_SCHEMATICA_PRESERVATION_RED
 REPOSITORY=Gustavaopere/minecraft-mod-factory
-BRANCH=feat/construction-c0-foundation
-BASE_SHA=47ccda543dbc20ca52db9ed0fdd43ed9cb2b88b2
-RED_HEAD=c77c34ab82c2739b1be9051bbd2343043e94df4c
-RED_RUN=34521743874
-GREEN_IMPLEMENTATION_HEAD=5ee917fff448520051dd0411aa26376daae2c398
-GREEN_IMPLEMENTATION_RUN=34521877134
-HEAD_SHA=RESOLVE_FROM_GIT
-OPEN_PR=19
+BRANCH=feat/construction-c1-schematica-upstream
+BASE_SHA=8e65289223d4b8a5728fa735a6d72b30a5e4b52e
+C0_PR=19
+C0_MERGE_SHA=a850627e1a9e012221e4fbabeeb50c22880af51f
+C0_PR_HEAD=7626ca96bc9d5a6422308cd6f79c4c46d59efb22
+C0_PR_GATE=PASS
+C0_GOVERNANCE=PASS
+C0_SONARCLOUD=PASS
+HEAD_SHA=PENDING_C1_RED_COMMIT
+OPEN_PR=NONE
 TARGET_MINECRAFT=1.21.1
 TARGET_LOADER=NeoForge
 CANONICAL_OUTPUT=SPONGE_SCHEMATIC_V3
 LATEST_MODLIST_SNAPSHOT=2026-09-09_595_TOP_LEVEL
 MANUAL_ACTION_REQUIRED=NO
 BLOCKERS=NONE
-NEXT_ACTION=REVALIDATE_C0_PR_HEAD_AND_PR_CI
+NEXT_ACTION=OBTAIN_C1_RED_THEN_MATERIALIZE_SCHEMATICA_GITLINK
 
-## Audited upstream candidates
+## C1A target
 
-- Schematica: `tester2024/schematica@0c88770005e7bbd7246997c81e810ba935c8e4cf` — MIT — planned immutable snapshot in C1.
-- MineBench: `Ammaar-Alam/minebench@c96abbd4c4098aa9c264490c80a1c6544a64ba85` — MIT — planned immutable snapshot/reference in C1.
-- Minecraft Builder MCP: `joshdevous/minecraft-builder-claude-mcp-server@5c3bc03dea82395f85926a2c3d3f814f312f7452` — MIT — planned immutable snapshot/reference in C1.
-- mcschematic: `Sloimayyy/mcschematic@912bd88877aa44eeb7426f6e42e5811e9f5be98d` — Apache-2.0 — planned immutable snapshot/reference in C1.
-- Promptcraft: `cgoulart35/Promptcraft@a960575be921c072550c5a9e7206d3dfa192a6d1` — all rights reserved at audit — `REFERENCE_ONLY`, never vendored without changed permission.
+Preserve Schematica exactly as audited upstream source using a Git submodule/gitlink. The Factory superproject must not contain an editable copied Schematica payload.
 
-## External providers
+UPSTREAM_REPOSITORY=tester2024/schematica
+UPSTREAM_URL=https://github.com/tester2024/schematica.git
+UPSTREAM_PIN=0c88770005e7bbd7246997c81e810ba935c8e4cf
+UPSTREAM_PATH=construction/upstream/snapshots/schematica
+UPSTREAM_POLICY=IMMUTABLE_SNAPSHOT
+UPSTREAM_LICENSE_DECLARATION=MIT
 
-ObjToSchematic, Structmatic, Schematic Helper and BlockGPT are currently treated as `EXTERNAL_PROVIDER`. Their local integration state is `UNVERIFIED_API`; no claim of programmatic API support is made by C0.
+## C1A acceptance
 
-## C0 acceptance
-
-- [x] authority documentation exists
-- [x] architecture document exists
-- [x] upstream registry materialized
-- [x] initial schemas materialized
-- [x] expected RED obtained from missing validator
-- [x] C0 validator implemented
-- [x] contract tests pass on implementation head
-- [x] C0 validator passes on implementation head
-- [x] whitespace gate passes on implementation head
-- [ ] PR CI passes on exact head
+- [x] upstream commit independently resolves on GitHub
+- [x] upstream package metadata declares MIT
+- [x] preservation contract test authored
+- [x] dedicated C1 workflow authored
+- [ ] expected RED obtained before gitlink exists
+- [ ] `.gitmodules` declares the exact upstream URL and path
+- [ ] gitlink mode is `160000`
+- [ ] gitlink SHA equals audited upstream pin
+- [ ] upstream native tests pass from submodule checkout
+- [ ] Factory C0 regression remains green
+- [ ] C1 PR CI passes on exact head
