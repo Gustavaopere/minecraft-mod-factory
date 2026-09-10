@@ -179,6 +179,20 @@ function createAnimation(adapter) {
   });
 }
 
+function applyConfirmedDestructiveBatch(adapter, input) {
+  const expectedRevision = input.expectedRevision || adapter.getRevision();
+  const previewInput = {...input, expectedRevision, dryRun: true};
+  delete previewInput.confirmationToken;
+  const preview = applyAnimationBatch(adapter, previewInput);
+  assert.match(preview.confirmationToken, /^animation:v1:[0-9a-f]{64}$/);
+  return applyAnimationBatch(adapter, {
+    ...input,
+    expectedRevision,
+    dryRun: false,
+    confirmationToken: preview.confirmationToken,
+  });
+}
+
 test('Blockbench animation adapter is desktop-only and fails closed when required animation APIs are absent', () => {
   const web = mockBlockbench();
   web.Blockbench.isWeb = true;
@@ -265,13 +279,13 @@ test('adapter updates and deletes keyframes/settings and deletes animations with
   assert.equal(keyframe.interpolation, 'bezier');
   assert.deepEqual(keyframe.data_points[0], {x: 1, y: 2, z: 3});
 
-  applyAnimationBatch(adapter, {
+  applyConfirmedDestructiveBatch(adapter, {
     expectedRevision: adapter.getRevision(),
     operations: [{type: 'animation_delete_keyframe', animationId: 'anim-idle', keyframeId: 'kf-root-0'}],
   });
   assert.equal(animation.animators['bone-root'].keyframes.length, 0);
 
-  applyAnimationBatch(adapter, {
+  applyConfirmedDestructiveBatch(adapter, {
     expectedRevision: adapter.getRevision(),
     operations: [{type: 'animation_delete', animationId: 'anim-idle'}],
   });
