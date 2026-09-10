@@ -404,6 +404,13 @@ def build_persisted_provider_catalog(snapshot):
     }
 
 
+def write_provider_catalog(catalog, output_path):
+    output_path = _workspace_path(output_path, label="provider catalog output", must_exist=False)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_bytes(_json_bytes(catalog))
+    return output_path
+
+
 def validate_persisted_provider_catalog(snapshot, catalog):
     errors = []
     if catalog.get("schema_version") != SCHEMA_VERSION:
@@ -586,9 +593,7 @@ def main(argv=None):
     write_persisted_snapshot(persisted_snapshot, args.output, shard_size=args.shard_size)
     if args.providers_output:
         provider_catalog = build_persisted_provider_catalog(persisted_snapshot)
-        providers_output = _workspace_path(args.providers_output, label="provider catalog output", must_exist=False)
-        providers_output.parent.mkdir(parents=True, exist_ok=True)
-        providers_output.write_bytes(_json_bytes(provider_catalog))
+        providers_output = write_provider_catalog(provider_catalog, args.providers_output)
         print(f"Wrote {providers_output}")
     print(f"Wrote {args.output}")
     return 0
