@@ -404,13 +404,6 @@ def build_persisted_provider_catalog(snapshot):
     }
 
 
-def write_provider_catalog(catalog, output_path):
-    output_path = _workspace_path(output_path, label="provider catalog output", must_exist=False)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_bytes(_json_bytes(catalog))
-    return output_path
-
-
 def validate_persisted_provider_catalog(snapshot, catalog):
     errors = []
     if catalog.get("schema_version") != SCHEMA_VERSION:
@@ -429,7 +422,7 @@ def _json_bytes(value):
     return (json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
 
 
-def write_persisted_snapshot(snapshot, output_path, *, shard_size=100):
+def write_persisted_snapshot(snapshot, output_path, *, shard_size=100, emit_providers=False):
     if not isinstance(shard_size, int) or isinstance(shard_size, bool) or shard_size < 1:
         raise ValueError("shard_size must be a positive integer")
     output_path = _workspace_path(output_path, label="snapshot output", must_exist=False)
@@ -459,6 +452,10 @@ def write_persisted_snapshot(snapshot, output_path, *, shard_size=100):
         })
     manifest = {**persisted, "entry_count": len(entries), "entry_shards": shards}
     output_path.write_bytes(_json_bytes(manifest))
+    if emit_providers:
+        provider_path = output_path.with_name(f"{output_path.stem}.providers.json")
+        provider_catalog = build_persisted_provider_catalog(snapshot)
+        provider_path.write_bytes(_json_bytes(provider_catalog))
     return manifest
 
 
@@ -534,7 +531,7 @@ def main(argv=None):
     parser.add_argument("input", nargs="?", help="physical modlist.txt input")
     parser.add_argument("--captured-at")
     parser.add_argument("--output")
-    parser.add_argument("--providers-output")
+    parser.add_argument("--emit-providers", action="store_true")
     parser.add_argument("--check")
     parser.add_argument("--providers")
     parser.add_argument("--compare", nargs=2, metavar=("BEFORE", "AFTER"))
@@ -590,11 +587,15 @@ def main(argv=None):
             print(f"- {error}")
         return 1
     persisted_snapshot = build_persisted_snapshot(snapshot)
-    write_persisted_snapshot(persisted_snapshot, args.output, shard_size=args.shard_size)
-    if args.providers_output:
-        provider_catalog = build_persisted_provider_catalog(persisted_snapshot)
-        providers_output = write_provider_catalog(provider_catalog, args.providers_output)
-        print(f"Wrote {providers_output}")
+    write_persisted_snapshot(
+        persisted_snapshot,
+        args.output,
+        shard_size=args.shard_size,
+        emit_providers=args.emit_providers,
+    )
+    if args.emit_providers:
+        output_path = _workspace_path(args.output, label="snapshot output", must_exist=True)
+        print(f"Wrote {output_path.with_name(f'{output_path.stem}.providers.json')}")
     print(f"Wrote {args.output}")
     return 0
 
