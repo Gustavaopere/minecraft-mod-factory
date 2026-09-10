@@ -54,8 +54,8 @@ jobs:
           --source-root /tmp/rpg-source/PROJECT-INSTRUCTIONS/skills
           --factory-root .
 
-      - name: Check whitespace
-        run: git diff --check HEAD^
+      - name: Check non-preserved whitespace
+        run: python migration/full-skill-migration/check_whitespace.py --base HEAD^
 
   m5-neutral-naming:
     runs-on: ubuntu-latest
