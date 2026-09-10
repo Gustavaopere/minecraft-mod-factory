@@ -20,6 +20,9 @@ JAVA_CLASS_RE = re.compile(r"\b(?:class|record|enum|interface)\s+([A-Za-z_$][\w$
 MOD_ID_LITERAL_RE = re.compile(r'\bMOD_ID\s*=\s*"([a-z][a-z0-9_]{1,63})"')
 RESOURCE_NAMESPACE_RE = re.compile(r"^[a-z0-9_.-]+$")
 RESOURCE_PATH_RE = re.compile(r"^[a-z0-9/._-]+$")
+DEPENDENCY_BLOCK_RE = re.compile(
+    r"(?ms)^\s*\[\[dependencies\.[^\]]+\]\]\s*(.*?)(?=(?:^\s*\[\[|\Z))"
+)
 CLIENT_ONLY_TOKENS = (
     "net.minecraft.client",
     "com.mojang.blaze3d",
@@ -148,8 +151,7 @@ def validate_mod_id(project_root: Path, mod_spec_path: Path) -> list[str]:
 def _metadata_dependencies(metadata_text: str) -> tuple[list[tuple[str, str]], list[str]]:
     entries: list[tuple[str, str]] = []
     errors: list[str] = []
-    block_re = re.compile(r"(?ms)^\s*\[\[dependencies\.[^\]]+\]\]\s*(.*?)(?=^\s*\[\[|\Z)")
-    for index, match in enumerate(block_re.finditer(metadata_text)):
+    for index, match in enumerate(DEPENDENCY_BLOCK_RE.finditer(metadata_text)):
         body = match.group(1)
         mod_match = re.search(r'(?m)^\s*modId\s*=\s*"([^"]+)"\s*$', body)
         type_match = re.search(r'(?m)^\s*type\s*=\s*"([^"]+)"\s*$', body)
