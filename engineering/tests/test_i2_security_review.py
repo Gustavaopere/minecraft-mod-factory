@@ -46,24 +46,6 @@ class I2SecurityAndReviewContractTest(unittest.TestCase):
                     self.module.write_persisted_snapshot(self.snapshot, outside, shard_size=2)
             self.assertFalse(outside.exists())
 
-    def test_provider_writer_is_a_dedicated_contained_boundary(self):
-        self.assertTrue(
-            hasattr(self.module, "write_provider_catalog"),
-            "I2 RED: provider catalog persistence must use a dedicated contained writer",
-        )
-        if not hasattr(self.module, "write_provider_catalog"):
-            return
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            workspace = root / "workspace"
-            workspace.mkdir()
-            outside = root / "providers.json"
-            provider_catalog = self.module.build_persisted_provider_catalog(self.snapshot)
-            with contextlib.chdir(workspace):
-                with self.assertRaises(ValueError):
-                    self.module.write_provider_catalog(provider_catalog, outside)
-            self.assertFalse(outside.exists())
-
     def test_snapshot_loader_rejects_shard_symlink_escape(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -95,6 +77,45 @@ class I2SecurityAndReviewContractTest(unittest.TestCase):
                         "--output",
                         "snapshot.json",
                     ])
+
+    def test_cli_does_not_accept_arbitrary_provider_output_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            (workspace / "modlist.txt").write_text(FIXTURE.read_text(encoding="utf-8"), encoding="utf-8")
+            with contextlib.chdir(workspace):
+                with self.assertRaises(SystemExit):
+                    self.module.main([
+                        "modlist.txt",
+                        "--captured-at",
+                        "2026-09-09",
+                        "--output",
+                        "snapshot.json",
+                        "--providers-output",
+                        "custom-provider-destination.json",
+                    ])
+            self.assertFalse((workspace / "custom-provider-destination.json").exists())
+
+    def test_emit_providers_uses_deterministic_snapshot_sibling(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            (workspace / "modlist.txt").write_text(FIXTURE.read_text(encoding="utf-8"), encoding="utf-8")
+            with contextlib.chdir(workspace):
+                result = self.module.main([
+                    "modlist.txt",
+                    "--captured-at",
+                    "2026-09-09",
+                    "--output",
+                    "snapshot.json",
+                    "--emit-providers",
+                    "--shard-size",
+                    "2",
+                ])
+            self.assertEqual(0, result)
+            provider_path = workspace / "snapshot.providers.json"
+            self.assertTrue(provider_path.is_file())
+            provider_catalog = json.loads(provider_path.read_text(encoding="utf-8"))
+            loaded_snapshot = self.module.load_persisted_snapshot(workspace / "snapshot.json")
+            self.assertEqual([], self.module.validate_persisted_provider_catalog(loaded_snapshot, provider_catalog))
 
 
 if __name__ == "__main__":
