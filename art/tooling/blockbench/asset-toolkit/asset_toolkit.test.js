@@ -57,3 +57,4 @@ require('./asset_toolkit.texture_create_import_adapter.test.js');
 require('./asset_toolkit.texture_paint_region.test.js');
 require('./asset_toolkit.uv_island_masks.test.js');
 require('./asset_toolkit.palette_sampling.test.js');
+require('./asset_toolkit.texture_acceptance.test.js');
