@@ -51,17 +51,52 @@ def git_changed_paths() -> list[str]:
     return [line for line in result.stdout.splitlines() if line]
 
 
-def run_whitespace_check(paths: list[str]) -> int:
-    if not paths:
-        print("FULL SKILL WHITESPACE: PASS (only SOURCE_EXACT paths changed)")
-        return 0
+def whitespace_diagnostic_path(line: str) -> str | None:
+    before_message, separator, _message = line.rpartition(":")
+    if not separator:
+        return None
+    path, separator, line_number = before_message.rpartition(":")
+    if not separator or not path or not line_number.isdigit():
+        return None
+    return path
+
+
+def filter_whitespace_diagnostics(output: str, preserved_paths: set[str]) -> str:
+    kept: list[str] = []
+    keep_block = True
+    for line in output.splitlines(keepends=True):
+        diagnostic_path = whitespace_diagnostic_path(line.rstrip("\r\n"))
+        if diagnostic_path is not None:
+            keep_block = diagnostic_path not in preserved_paths
+        if keep_block:
+            kept.append(line)
+    return "".join(kept)
+
+
+def run_whitespace_check(preserved_paths: set[str]) -> int:
     result = subprocess.run(
-        ["git", "diff", "--check", FIXED_BASE_REF, "--", *paths],
+        ["git", "diff", "--check", FIXED_BASE_REF, "--"],
         cwd=REPO_ROOT,
         check=False,
+        text=True,
+        capture_output=True,
     )
+    filtered_stdout = filter_whitespace_diagnostics(result.stdout, preserved_paths)
+    filtered_stderr = filter_whitespace_diagnostics(result.stderr, preserved_paths)
+
+    if filtered_stdout:
+        print(filtered_stdout, end="")
+    if filtered_stderr:
+        print(filtered_stderr, end="")
+
     if result.returncode == 0:
-        print(f"FULL SKILL WHITESPACE: PASS ({len(paths)} non-preserved changed paths checked)")
+        print("FULL SKILL WHITESPACE: PASS (fixed diff argv)")
+        return 0
+    if filtered_stdout or filtered_stderr:
+        return result.returncode
+    if result.stdout or result.stderr:
+        print("FULL SKILL WHITESPACE: PASS (only SOURCE_EXACT whitespace diagnostics)")
+        return 0
     return result.returncode
 
 
@@ -82,7 +117,7 @@ def main() -> int:
         "FULL SKILL WHITESPACE POLICY: "
         f"changed={len(changed)} checkable={len(checkable)} source_exact_skipped={len(skipped)}"
     )
-    return run_whitespace_check(checkable)
+    return run_whitespace_check(preserved)
 
 
 if __name__ == "__main__":
