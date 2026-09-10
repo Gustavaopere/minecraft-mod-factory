@@ -43,11 +43,11 @@ jobs:
         run: |
           python3 -m unittest construction/tests/test_c0_foundation.py -v
           python3 construction/scripts/validate_c0.py
-      - name: Install Schematica with upstream dev dependencies
-        run: python3 -m pip install -e 'construction/upstream/snapshots/schematica/scripts[dev]'
-      - name: Install Factory-owned upstream test supplement
-        run: python3 -m pip install -r construction/upstream/harness/schematica-test-requirements.txt
+      - name: Install hashed Schematica test environment
+        run: python3 -m pip install --require-hashes --no-deps -r construction/upstream/harness/schematica-test-lock.txt
       - name: Run upstream Schematica test suite unchanged
+        env:
+          PYTHONPATH: construction/upstream/snapshots/schematica/scripts
         run: python3 -m pytest construction/upstream/snapshots/schematica/scripts/tests -q
       - name: Check C1 whitespace
-        run: git diff --check HEAD^ -- .gitmodules .github/workflows/factory-construction-c0-foundation.yml .github/workflows/factory-construction-c1-schematica-upstream.yml construction/scripts/validate_c0.py construction/tests/test_c0_foundation.py construction/tests/test_c1_schematica_preservation.py construction/upstream/harness/schematica-test-requirements.txt construction/STATUS.md
+        run: git diff --check HEAD^ -- .gitmodules .github/workflows/factory-construction-c0-foundation.yml .github/workflows/factory-construction-c1-schematica-upstream.yml construction/scripts/validate_c0.py construction/tests/test_c0_foundation.py construction/tests/test_c1_schematica_preservation.py construction/upstream/harness/schematica-test-lock.txt construction/STATUS.md
