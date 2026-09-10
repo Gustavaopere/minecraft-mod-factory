@@ -27,11 +27,50 @@ function decodeBasicHtmlEntities(value) {
   });
 }
 
+function stripSimpleMarkdownLinks(value) {
+  const source = String(value || '');
+  let output = '';
+  let index = 0;
+  while (index < source.length) {
+    const image = source[index] === '!' && source[index + 1] === '[';
+    const open = image ? index + 1 : index;
+    if (source[open] !== '[') {
+      output += source[index];
+      index += 1;
+      continue;
+    }
+    const textEnd = source.indexOf(']', open + 1);
+    if (textEnd <= open + 1) {
+      output += source[index];
+      index += 1;
+      continue;
+    }
+    const suffix = source[textEnd + 1];
+    if (suffix === '(') {
+      const targetEnd = source.indexOf(')', textEnd + 2);
+      if (targetEnd > textEnd + 2) {
+        output += source.slice(open + 1, textEnd);
+        index = targetEnd + 1;
+        continue;
+      }
+    } else if (suffix === '[') {
+      const labelEnd = source.indexOf(']', textEnd + 2);
+      if (labelEnd >= textEnd + 2) {
+        output += source.slice(open + 1, textEnd);
+        index = labelEnd + 1;
+        continue;
+      }
+    }
+    output += source[index];
+    index += 1;
+  }
+  return output;
+}
+
 function normalizeRenderedText(value) {
-  return decodeBasicHtmlEntities(value)
-    .replace(/\\([!"#$%&'()*+,\-.\/:;<=>?@\[\]\\^_`{|}~])/g, '$1')
-    .replace(/!?\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/!?\[([^\]]+)\]\[[^\]]*\]/g, '$1')
+  const unescaped = decodeBasicHtmlEntities(value)
+    .replace(/\\([!"#$%&'()*+,\-.\/:;<=>?@\[\]\\^_`{|}~])/g, '$1');
+  return stripSimpleMarkdownLinks(unescaped)
     .replace(/<\/?[A-Za-z][^>]*>/g, '')
     .replace(/(^|[\s([{:;>\-])_{1,3}(?=\S)/g, '$1')
     .replace(/(\S)_{1,3}(?=$|[\s)\]}:;,.!?\-])/g, '$1')
@@ -50,11 +89,18 @@ function walk(dir) {
 }
 
 function parseFenceOpening(line) {
-  const match = String(line || '').match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
-  if (!match) return null;
-  const character = match[1][0];
-  if (character === '`' && match[2].includes('`')) return null;
-  return {character, length: match[1].length};
+  const source = String(line || '');
+  let offset = 0;
+  while (offset < source.length && offset < 3 && source[offset] === ' ') offset += 1;
+  const character = source[offset];
+  if (character !== '`' && character !== '~') return null;
+  let end = offset;
+  while (end < source.length && source[end] === character) end += 1;
+  const length = end - offset;
+  if (length < 3) return null;
+  const info = source.slice(end);
+  if (character === '`' && info.includes('`')) return null;
+  return {character, length};
 }
 
 function isFenceClosing(line, fence) {
@@ -143,6 +189,48 @@ function collectRenderedStatusDeclarations(source) {
   return declarations;
 }
 
+function isSourceWhitespace(character) {
+  return character === ' ' || character === '\t' || character === '\r' || character === '\n' || character === '\f' || character === '\v';
+}
+
+function skipSourceWhitespace(source, start) {
+  let index = start;
+  while (index < source.length && isSourceWhitespace(source[index])) index += 1;
+  return index;
+}
+
+function consumeListMarker(source, start) {
+  let markerEnd = start;
+  if (source[start] === '-' || source[start] === '+' || source[start] === '*') {
+    markerEnd = start + 1;
+  } else {
+    let digitEnd = start;
+    while (digitEnd < source.length && source[digitEnd] >= '0' && source[digitEnd] <= '9') digitEnd += 1;
+    if (digitEnd > start && (source[digitEnd] === '.' || source[digitEnd] === ')')) markerEnd = digitEnd + 1;
+  }
+  if (markerEnd === start || !isSourceWhitespace(source[markerEnd])) return null;
+  return skipSourceWhitespace(source, markerEnd);
+}
+
+function hasReferenceDefinition(value) {
+  const source = String(value || '');
+  for (let start = 0; start < source.length; start += 1) {
+    if (start !== 0 && source[start - 1] !== '\n') continue;
+    let index = skipSourceWhitespace(source, start);
+    while (index < source.length) {
+      const next = consumeListMarker(source, index);
+      if (next === null) break;
+      index = next;
+    }
+    if (source[index] !== '[') continue;
+    let close = index + 1;
+    while (close < source.length && source[close] !== ']' && close - index - 1 <= 999) close += 1;
+    const labelLength = close - index - 1;
+    if (labelLength >= 1 && labelLength <= 999 && source[close] === ']' && source[close + 1] === ':') return true;
+  }
+  return false;
+}
+
 function validateRoot(root) {
   if (!fs.existsSync(root)) fail(`missing Golden Samples root ${root}`);
   const markdownFiles = walk(root).filter((file) => file.toLowerCase().endsWith('.md'));
@@ -160,14 +248,13 @@ function validateRoot(root) {
   const blockquoteContainer = /^\s*(?:(?:[-+*]|\d+[.)])\s+)*>\s?/;
   const commonmarkEscape = /\\[!"#$%&'()*+,\-.\/:;<=>?@\[\]\\^_`{|}~]/;
   const htmlEntityReference = /&(?:#x[0-9a-f]+|#\d+|[a-z][a-z0-9]+);/i;
-  const referenceDefinition = /^\s*(?:(?:[-+*]|\d+[.)])\s+)*\[[^\]]{1,999}\]:/m;
 
   for (const file of markdownFiles) {
     const relative = path.relative(root, file).split(path.sep).join('/');
     const source = fs.readFileSync(file, 'utf8');
     if (htmlEntityReference.test(source)) fail(`${relative} uses an HTML character reference; HTML entities are forbidden in the reference-only corpus because post-parse decoding can create Markdown-active HTML entity delimiters and hide guarded evidence, including entity-encoded backslashes`);
     if (commonmarkEscape.test(source)) fail(`${relative} uses a CommonMark backslash escape; punctuation escapes are forbidden in the reference-only corpus because they can change Markdown parsing before guarded-evidence validation`);
-    if (referenceDefinition.test(source)) fail(`${relative} uses a Markdown reference definition; reference definitions are forbidden in the reference-only corpus because they can activate shortcut links that alter guarded evidence or acceptance text after local normalization`);
+    if (hasReferenceDefinition(source)) fail(`${relative} uses a Markdown reference definition; reference definitions are forbidden in the reference-only corpus because they can activate shortcut links that alter guarded evidence or acceptance text after local normalization`);
     if (rawHtmlOpener.test(source)) fail(`${relative} uses raw HTML syntax; raw HTML is forbidden in the reference-only corpus because invisible or block-producing constructs can hide guarded evidence`);
 
     const lines = source.split(/\r?\n/);
@@ -281,6 +368,8 @@ function runSelfTest() {
   }
   console.log('OK: rendered-edge self-tests passed');
 }
+
+module.exports = {stripSimpleMarkdownLinks};
 
 if (process.argv.includes('--self-test')) runSelfTest();
 else {

@@ -2,7 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-require('../tooling/validators/validate_golden_reference_rendered_edges.js');
+const {stripSimpleMarkdownLinks} = require('../tooling/validators/validate_golden_reference_rendered_edges.js');
 
 const ROOT = __dirname;
 const UNRESOLVED = 'UNRESOLVED';
@@ -57,10 +57,9 @@ function decodeHtmlEntities(value) {
 }
 
 function normalizeRenderedText(value) {
-  return decodeHtmlEntities(value)
-    .replace(/\\([!"#$%&'()*+,\-.\/:;<=>?@\[\]\\^_`{|}~])/g, '$1')
-    .replace(/!?\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/!?\[([^\]]+)\]\[[^\]]*\]/g, '$1')
+  const unescaped = decodeHtmlEntities(value)
+    .replace(/\\([!"#$%&'()*+,\-.\/:;<=>?@\[\]\\^_`{|}~])/g, '$1');
+  return stripSimpleMarkdownLinks(unescaped)
     .replace(/<\/?[A-Za-z][^>]*>/g, '')
     .replace(/(^|[\s([{:;>\-])_{1,3}(?=\S)/g, '$1')
     .replace(/(\S)_{1,3}(?=$|[\s)\]}:;,.!?\-])/g, '$1')
@@ -125,7 +124,19 @@ function parseTableRow(line, allowSingleCell = false) {
   return cells.length >= (allowSingleCell ? 1 : 2) ? cells : null;
 }
 
-function isSeparatorRow(cells) { return cells.every((cell) => /^:?-{3,}:?$/.test(cell)); }
+function isSeparatorCell(cell) {
+  let start = 0;
+  let end = cell.length;
+  if (cell[start] === ':') start += 1;
+  if (end > start && cell[end - 1] === ':') end -= 1;
+  if (end - start < 3) return false;
+  for (let index = start; index < end; index += 1) {
+    if (cell[index] !== '-') return false;
+  }
+  return true;
+}
+
+function isSeparatorRow(cells) { return cells.every(isSeparatorCell); }
 
 function parseFenceOpening(line) {
   const match = String(line || '').match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
