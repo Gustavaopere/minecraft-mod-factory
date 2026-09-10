@@ -10,6 +10,7 @@ on:
       - 'migration/provenance/**'
       - 'skills/**'
       - 'art/**'
+      - '.sonarcloud.properties'
       - '.github/workflows/factory-full-skill-migration-validation.yml'
   pull_request:
     paths:
@@ -17,6 +18,7 @@ on:
       - 'migration/provenance/**'
       - 'skills/**'
       - 'art/**'
+      - '.sonarcloud.properties'
       - '.github/workflows/factory-full-skill-migration-validation.yml'
   workflow_dispatch:
 
