@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "migration_wave": "M4_STANDARDS_CORE",
+  "classification": "MIGRATE_ADAPTED",
+  "source_repository": "Gustavaopere/neoforge-rpg-skilltree",
+  "source_revision": "2ecea4178aa7ac80f99955ab045e296da25376ec",
+  "destination_repository": "Gustavaopere/minecraft-mod-factory",
+  "destination_authority": "art/standards/",
+  "adaptation": "Relocation-only after audit: these five source standards contain no historical repository paths or RPG-specific authority coupling, so no semantic edits are required in this migration block.",
+  "files": [
+    {
+      "source": "PROJECT-INSTRUCTIONS/skills/standards/MODEL-ASSET-CONTRACT.md",
+      "source_blob_sha": "3442c8c287e12ce66f8cc2fab441abcd1a90fb72",
+      "destination": "art/standards/MODEL-ASSET-CONTRACT.md",
+      "migration_mode": "BYTE_IDENTICAL_RELOCATION"
+    },
+    {
+      "source": "PROJECT-INSTRUCTIONS/skills/standards/VISUAL-QA.md",
+      "source_blob_sha": "0652b9b5dd9f19f62a454c5aff5db5d903c15dc9",
+      "destination": "art/standards/VISUAL-QA.md",
+      "migration_mode": "BYTE_IDENTICAL_RELOCATION"
+    },
+    {
+      "source": "PROJECT-INSTRUCTIONS/skills/standards/VFX-QA.md",
+      "source_blob_sha": "a1cfb2e3d870d8975e43dc919b5890f6bc6682a2",
+      "destination": "art/standards/VFX-QA.md",
+      "migration_mode": "BYTE_IDENTICAL_RELOCATION"
+    },
+    {
+      "source": "PROJECT-INSTRUCTIONS/skills/standards/AUDIO-QA.md",
+      "source_blob_sha": "c48ec6e9558f655ee17dc1fce913b93278faa42f",
+      "destination": "art/standards/AUDIO-QA.md",
+      "migration_mode": "BYTE_IDENTICAL_RELOCATION"
+    },
+    {
+      "source": "PROJECT-INSTRUCTIONS/skills/standards/SPELL-PRESENTATION-CONTRACT.md",
+      "source_blob_sha": "d5bb4c4c1e918c6537e623f81336bdda3fd15801",
+      "destination": "art/standards/SPELL-PRESENTATION-CONTRACT.md",
+      "migration_mode": "BYTE_IDENTICAL_RELOCATION"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+name: Factory Art M4 Standards Core
+
+on:
+  push:
+    branches:
+      - main
+      - feat/m4-standards-core-migration
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'art/standards/**'
+      - 'art/tooling/validate-m4-standards-core.py'
+      - 'art/tests/test_m4_standards_core.py'
+      - 'migration/M4-STANDARDS-CORE-PROVENANCE.json'
+      - '.github/workflows/factory-art-m4-standards-core.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  standards-core:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate M4 standards core
+        run: python3 art/tooling/validate-m4-standards-core.py
+
+      - name: Run M4 regression tests
+        run: python3 -m unittest art/tests/test_m4_standards_core.py
+
+      - name: Check whitespace
+        run: git diff --check HEAD^
