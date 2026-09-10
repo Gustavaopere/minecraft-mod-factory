@@ -1,0 +1,54 @@
+name: Apply E3 Provider Writer Green
+
+on:
+  push:
+    branches:
+      - feat/f3-e3-i2-i3-migration
+
+permissions:
+  contents: write
+
+jobs:
+  apply-green:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: feat/f3-e3-i2-i3-migration
+          fetch-depth: 0
+
+      - name: Add dedicated contained provider writer
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('engineering/tooling/import-physical-modlist.py')
+          text = path.read_text(encoding='utf-8')
+          marker = '''def validate_persisted_provider_catalog(snapshot, catalog):\n    errors = []\n'''
+          helper = '''def write_provider_catalog(catalog, output_path):\n    output_path = _workspace_path(output_path, label="provider catalog output", must_exist=False)\n    output_path.parent.mkdir(parents=True, exist_ok=True)\n    output_path.write_bytes(_json_bytes(catalog))\n    return output_path\n\n\ndef validate_persisted_provider_catalog(snapshot, catalog):\n    errors = []\n'''
+          if text.count(marker) != 1:
+              raise SystemExit('provider writer insertion marker mismatch')
+          text = text.replace(marker, helper, 1)
+          old = '''        providers_output = _workspace_path(args.providers_output, label="provider catalog output", must_exist=False)\n        providers_output.parent.mkdir(parents=True, exist_ok=True)\n        providers_output.write_bytes(_json_bytes(provider_catalog))\n        print(f"Wrote {providers_output}")\n'''
+          new = '''        providers_output = write_provider_catalog(provider_catalog, args.providers_output)\n        print(f"Wrote {providers_output}")\n'''
+          if text.count(old) != 1:
+              raise SystemExit('provider CLI sink replacement marker mismatch')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8', newline='\n')
+          PY
+
+      - name: Run focused GREEN
+        run: |
+          python3 -m unittest engineering/tests/test_i2_modlist_catalog.py engineering/tests/test_i2_security_review.py
+          git diff --check
+
+      - name: Commit importer only
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add engineering/tooling/import-physical-modlist.py
+          git commit -m 'fix(engineering): contain provider catalog persistence'
+          git push origin HEAD:feat/f3-e3-i2-i3-migration
