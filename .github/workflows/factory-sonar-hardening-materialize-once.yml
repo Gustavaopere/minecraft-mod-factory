@@ -1,0 +1,115 @@
+name: Factory Sonar Hardening Materialize Once
+
+on:
+  push:
+    branches:
+      - fix/full-skill-sonar-hardening
+    paths:
+      - '.github/workflows/factory-sonar-hardening-materialize-once.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-regenerate-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact hardening branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/full-skill-sonar-hardening
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Apply guarded Reliability substitutions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          uv = Path('art/tooling/blockbench/asset-toolkit/blockbench-plugin/uv_texture_adapter.js')
+          uv_text = uv.read_text(encoding='utf-8')
+          uv_old = "for (const faceName of Object.keys(cubeFaces).sort()) {"
+          uv_new = "for (const faceName of Object.keys(cubeFaces).sort((left, right) => left.localeCompare(right, 'en', {sensitivity: 'variant', numeric: false}))) {"
+          if uv_text.count(uv_old) != 1:
+              raise SystemExit(f'uv_texture_adapter sort marker count={uv_text.count(uv_old)}')
+          uv.write_text(uv_text.replace(uv_old, uv_new, 1), encoding='utf-8')
+
+          golden = Path('art/golden-samples/validate_reference_evidence.js')
+          golden_text = golden.read_text(encoding='utf-8')
+          replacements = {
+              'const actualFiles = allFiles.map(relativePath).sort();': "const actualFiles = allFiles.map(relativePath).sort((left, right) => left.localeCompare(right, 'en', {sensitivity: 'variant', numeric: false}));",
+              'const missingFiles = [...EXPECTED_FILES].filter((relative) => !actualFiles.includes(relative)).sort();': "const missingFiles = [...EXPECTED_FILES].filter((relative) => !actualFiles.includes(relative)).sort((left, right) => left.localeCompare(right, 'en', {sensitivity: 'variant', numeric: false}));",
+          }
+          for old, new in replacements.items():
+              if golden_text.count(old) != 1:
+                  raise SystemExit(f'Golden sort marker count for {old!r}={golden_text.count(old)}')
+              golden_text = golden_text.replace(old, new, 1)
+          golden.write_text(golden_text, encoding='utf-8')
+          PY
+
+      - name: Regenerate standalone Toolkit bundle canonically
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node build_toolkit_bundle.js --write
+
+      - name: Verify deterministic bundle
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node build_toolkit_bundle.js --check
+
+      - name: Validate Toolkit Golden and skill repository
+        run: python skills/scripts/validate_skill_repository.py
+
+      - name: Validate Sonar hardening regression contract
+        run: >-
+          python -m unittest
+          migration/full-skill-migration/test_m5_naming.py
+          migration/full-skill-migration/test_sonar_hardening.py
+          -v
+
+      - name: Install MCP sidecar without lifecycle scripts
+        working-directory: art/tooling/blockbench/asset-toolkit/mcp-sidecar
+        run: npm ci --ignore-scripts
+
+      - name: Check MCP sidecar
+        working-directory: art/tooling/blockbench/asset-toolkit/mcp-sidecar
+        run: npm run check
+
+      - name: Test MCP sidecar
+        working-directory: art/tooling/blockbench/asset-toolkit/mcp-sidecar
+        run: npm test
+
+      - name: Persist verified generated delta and consume materializer
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/factory-sonar-hardening-materialize-once.yml
+          git diff --check
+          git add -A
+          python - <<'PY'
+          import subprocess
+          expected = sorted([
+              '.github/workflows/factory-sonar-hardening-materialize-once.yml',
+              'art/golden-samples/validate_reference_evidence.js',
+              'art/tooling/blockbench/asset-toolkit/asset_toolkit.js',
+              'art/tooling/blockbench/asset-toolkit/blockbench-plugin/uv_texture_adapter.js',
+          ])
+          actual = sorted(subprocess.check_output(['git', 'diff', '--cached', '--name-only'], text=True).splitlines())
+          if actual != expected:
+              raise SystemExit(f'unexpected staged paths: {actual!r}')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(reliability): complete deterministic string ordering'
+          git push origin HEAD:fix/full-skill-sonar-hardening
