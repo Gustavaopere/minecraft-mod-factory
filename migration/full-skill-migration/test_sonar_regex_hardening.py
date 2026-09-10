@@ -6,6 +6,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
+# Historical evidence: PR #8 Sonar check 102867451898 annotated these live patterns.
+# Formal RED: Full Skill run 34533379697 failed only this contract, with 9/9 subtests failing.
 FLAGGED_PATTERNS = {
     "art/golden-samples/validate_reference_evidence.js": (
         ".replace(/!?\\[([^\\]]+)\\]\\([^)]+\\)/g, '$1')",
