@@ -1,0 +1,3 @@
+[submodule "construction/upstream/snapshots/schematica"]
+	path = construction/upstream/snapshots/schematica
+	url = https://github.com/tester2024/schematica.git

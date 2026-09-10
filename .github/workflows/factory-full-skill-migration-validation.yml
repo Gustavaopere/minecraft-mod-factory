@@ -72,11 +72,12 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Validate M5 neutral Toolkit naming
+      - name: Validate M5 neutral Toolkit naming and Sonar hardening
         run: >-
           python -m unittest
           migration/full-skill-migration/test_m5_naming.py
           migration/full-skill-migration/test_sonar_hardening.py
+          migration/full-skill-migration/test_sonar_regex_hardening.py
           -v
 
   m6-golden-relocation:
