@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import configparser
 import json
+import re
 import unittest
 from pathlib import Path
 
@@ -11,6 +12,26 @@ SUBMODULE_SECTION = f'submodule "{SUBMODULE_PATH}"'
 UPSTREAM_URL = "https://github.com/tester2024/schematica.git"
 PINNED_COMMIT = "0c88770005e7bbd7246997c81e810ba935c8e4cf"
 WORKFLOW = ROOT / ".github/workflows/factory-construction-c1-schematica-upstream.yml"
+LOCK = ROOT / "construction/upstream/harness/schematica-test-lock.txt"
+LOCK_LINE_RE = re.compile(
+    r"^(?P<name>[A-Za-z0-9_.-]+)==[^\s]+ --hash=sha256:[0-9a-f]{64}$"
+)
+REQUIRED_UPSTREAM_TEST_PACKAGES = {
+    "numpy",
+    "nbtlib",
+    "shapely",
+    "trimesh",
+    "matplotlib",
+    "prompt-toolkit",
+    "noise",
+    "pillow",
+    "pytest",
+    "pytest-cov",
+    "hypothesis",
+    "ruff",
+    "mypy",
+    "scipy",
+}
 
 
 class ConstructionC1SchematicaPreservationTest(unittest.TestCase):
@@ -39,6 +60,35 @@ class ConstructionC1SchematicaPreservationTest(unittest.TestCase):
             workflow,
         )
         self.assertIn(f"160000 {PINNED_COMMIT} 0", workflow)
+
+    def test_test_environment_is_fully_pinned_and_hashed(self) -> None:
+        self.assertTrue(LOCK.is_file(), "C1 requires a Factory-owned hashed dependency lock")
+        package_names: set[str] = set()
+        for line_number, raw_line in enumerate(LOCK.read_text(encoding="utf-8").splitlines(), start=1):
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            match = LOCK_LINE_RE.fullmatch(line)
+            self.assertIsNotNone(match, f"unlocked or unhashed requirement at line {line_number}: {line}")
+            assert match is not None
+            normalized_name = match.group("name").lower().replace("_", "-")
+            self.assertNotIn(normalized_name, package_names, f"duplicate locked package: {normalized_name}")
+            package_names.add(normalized_name)
+
+        self.assertTrue(
+            REQUIRED_UPSTREAM_TEST_PACKAGES.issubset(package_names),
+            f"lock missing required upstream/test packages: {sorted(REQUIRED_UPSTREAM_TEST_PACKAGES - package_names)}",
+        )
+
+    def test_workflow_uses_lock_without_editable_dependency_resolution(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn(
+            "python3 -m pip install --require-hashes --no-deps -r construction/upstream/harness/schematica-test-lock.txt",
+            workflow,
+        )
+        self.assertIn("PYTHONPATH: construction/upstream/snapshots/schematica/scripts", workflow)
+        self.assertNotIn("pip install -e", workflow)
+        self.assertNotIn("schematica-test-requirements.txt", workflow)
 
 
 if __name__ == "__main__":
