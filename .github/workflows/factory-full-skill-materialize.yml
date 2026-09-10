@@ -7,6 +7,7 @@ on:
     paths:
       - 'migration/full-skill-migration/migrate.py'
       - 'migration/full-skill-migration/m5_finalize.py'
+      - 'migration/full-skill-migration/reconcile.py'
       - '.github/workflows/factory-full-skill-materialize.yml'
   workflow_dispatch:
 
@@ -47,6 +48,9 @@ jobs:
 
       - name: Finalize M5 neutral package identity
         run: python migration/full-skill-migration/m5_finalize.py --factory-root .
+
+      - name: Reconcile Factory-owned post-migration deltas
+        run: python migration/full-skill-migration/reconcile.py --factory-root .
 
       - name: Regenerate neutral Asset Toolkit bundle
         run: node art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js --write
