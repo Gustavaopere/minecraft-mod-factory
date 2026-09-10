@@ -1,6 +1,0 @@
-# Factory-owned CI supplement for the immutable Schematica snapshot.
-# Schematica documents SciPy as optional, while trimesh mesh voxelization
-# requires it for the upstream test_mesh.py paths exercised by the native suite.
-# 1.17.1 is pinned because the C1 harness uses Python 3.11; SciPy 1.18.x
-# requires Python 3.12 or newer.
-scipy==1.17.1
