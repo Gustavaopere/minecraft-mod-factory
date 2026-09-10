@@ -120,6 +120,20 @@ def _validate_delivery_namespace(value: Any, mod_id: Any, label: str) -> list[st
     return []
 
 
+def _validate_path_format(path_value: Any, format_value: Any, *, path_label: str, format_label: str) -> list[str]:
+    if path_value == UNRESOLVED or format_value == UNRESOLVED:
+        return []
+    if not isinstance(path_value, str) or not isinstance(format_value, str):
+        return []
+    normalized = path_value.replace("\\", "/")
+    suffix = "".join(PurePosixPath(normalized).suffixes)
+    if suffix.lower() != format_value.lower():
+        return [
+            f"{format_label}: declared {format_value!r} must match {path_label} suffix {suffix!r}"
+        ]
+    return []
+
+
 def _missing_proofs(required: Any, verified: Any) -> list[str]:
     if not isinstance(required, list) or not isinstance(verified, list):
         return []
@@ -157,6 +171,7 @@ def validate_manifest_data(
     provider_bindings = manifest.get("provider_bindings")
     visual_inputs = manifest.get("visual_inputs")
     artifacts = manifest.get("artifacts")
+    provider_profile_values = provider_profiles if isinstance(provider_profiles, list) else []
 
     if state == PASS:
         for field_name, value in (
@@ -168,8 +183,10 @@ def validate_manifest_data(
                 errors.append(f"$.{field_name}: PASS cannot use UNRESOLVED")
         if not isinstance(source_revision, str) or HEX40.fullmatch(source_revision) is None:
             errors.append("$.source_revision: PASS requires an exact 40-character lowercase Git revision")
-        if not isinstance(provider_profiles, list) or not provider_profiles:
+        if not provider_profile_values:
             errors.append("$.provider_profiles: PASS requires at least one declared provider profile")
+        elif any(value == UNRESOLVED for value in provider_profile_values):
+            errors.append("$.provider_profiles: PASS cannot contain UNRESOLVED")
 
     if actual_source_revision is not None and state == PASS and source_revision != actual_source_revision:
         errors.append(
@@ -177,7 +194,7 @@ def validate_manifest_data(
         )
 
     declared_profiles = {
-        value for value in provider_profiles or [] if isinstance(value, str) and value != UNRESOLVED
+        value for value in provider_profile_values if isinstance(value, str) and value != UNRESOLVED
     }
     binding_profiles: set[str] = set()
     if isinstance(provider_bindings, list):
@@ -193,6 +210,8 @@ def validate_manifest_data(
                 binding_profiles.add(profile)
                 if profile != UNRESOLVED and profile not in declared_profiles:
                     errors.append(f"{label}.provider_profile: {profile!r} is not declared in provider_profiles")
+            if state == PASS and profile == UNRESOLVED:
+                errors.append(f"{label}.provider_profile: PASS cannot use UNRESOLVED")
             if state == PASS and adapter == UNRESOLVED:
                 errors.append(f"{label}.runtime_adapter: PASS cannot use UNRESOLVED")
     if state == PASS:
@@ -229,13 +248,31 @@ def validate_manifest_data(
                 asset_ids.add(asset_id)
 
             source_path = artifact.get("source_path")
+            source_format = artifact.get("source_format")
             delivery_path = artifact.get("delivery_path")
+            delivery_format = artifact.get("delivery_format")
             provider_profile = artifact.get("provider_profile")
             qa = artifact.get("qa")
 
             if source_path != UNRESOLVED and not _is_bounded_relative_path(source_path):
                 errors.append(f"{label}.source_path: must be bounded beneath the source repository root")
             errors.extend(_validate_delivery_namespace(delivery_path, mod_id, f"{label}.delivery_path"))
+            errors.extend(
+                _validate_path_format(
+                    source_path,
+                    source_format,
+                    path_label=f"{label}.source_path",
+                    format_label=f"{label}.source_format",
+                )
+            )
+            errors.extend(
+                _validate_path_format(
+                    delivery_path,
+                    delivery_format,
+                    path_label=f"{label}.delivery_path",
+                    format_label=f"{label}.delivery_format",
+                )
+            )
 
             if provider_profile != UNRESOLVED:
                 if provider_profile not in declared_profiles:
@@ -284,9 +321,17 @@ def validate_manifest_data(
                 conversion = artifact.get("conversion")
                 if isinstance(conversion, dict) and conversion.get("state") != PASS:
                     errors.append(f"{label}.conversion.state: top-level PASS requires conversion PASS")
-                for hash_key in ("source_sha256", "delivery_sha256"):
-                    if artifact.get(hash_key) == UNRESOLVED:
-                        errors.append(f"{label}.{hash_key}: PASS cannot use UNRESOLVED")
+                for field_name in (
+                    "provider_profile",
+                    "source_path",
+                    "source_format",
+                    "source_sha256",
+                    "delivery_path",
+                    "delivery_format",
+                    "delivery_sha256",
+                ):
+                    if artifact.get(field_name) == UNRESOLVED:
+                        errors.append(f"{label}.{field_name}: PASS cannot use UNRESOLVED")
 
             errors.extend(
                 _verify_file_hash(
