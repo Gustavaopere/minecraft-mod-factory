@@ -3,6 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 require('../tooling/validators/validate_golden_reference_rendered_edges.js');
+const {stripMarkdownLinks, parseFenceOpening} = require('../tooling/validators/rendered_markdown_linear.js');
 
 const ROOT = __dirname;
 const UNRESOLVED = 'UNRESOLVED';
@@ -57,10 +58,9 @@ function decodeHtmlEntities(value) {
 }
 
 function normalizeRenderedText(value) {
-  return decodeHtmlEntities(value)
-    .replace(/\\([!"#$%&'()*+,\-.\/:;<=>?@\[\]\\^_`{|}~])/g, '$1')
-    .replace(/!?\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/!?\[([^\]]+)\]\[[^\]]*\]/g, '$1')
+  const unescaped = decodeHtmlEntities(value)
+    .replace(/\\([!"#$%&'()*+,\-.\/:;<=>?@\[\]\\^_`{|}~])/g, '$1');
+  return stripMarkdownLinks(unescaped)
     .replace(/<\/?[A-Za-z][^>]*>/g, '')
     .replace(/(^|[\s([{:;>\-])_{1,3}(?=\S)/g, '$1')
     .replace(/(\S)_{1,3}(?=$|[\s)\]}:;,.!?\-])/g, '$1')
@@ -126,14 +126,6 @@ function parseTableRow(line, allowSingleCell = false) {
 }
 
 function isSeparatorRow(cells) { return cells.every((cell) => /^:?-{3,}:?$/.test(cell)); }
-
-function parseFenceOpening(line) {
-  const match = String(line || '').match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
-  if (!match) return null;
-  const character = match[1][0];
-  if (character === '`' && match[2].includes('`')) return null;
-  return {character, length: match[1].length};
-}
 
 function isFenceClosing(line, fence) {
   if (!fence) return false;
