@@ -1,10 +1,10 @@
 # STATUS — Construction
 
 UPDATED_AT=2026-09-10
-PHASE=C1_MINEBENCH_REFERENCE_GREEN_PENDING_PR_GATES
+PHASE=C1_MINEBENCH_REFERENCE_RECONCILED_PENDING_FINAL_GREEN
 REPOSITORY=Gustavaopere/minecraft-mod-factory
 BRANCH=feat/construction-c1-minebench-reference
-BASE_SHA=ef991e103f65f0d81967bb0cc1c2592f8c85ccc5
+BASE_SHA=8d6c821a32a4dd2688b6db058095093b89400c4d
 C0_PR=19
 C0_MERGE_SHA=a850627e1a9e012221e4fbabeeb50c22880af51f
 C1A_PR=20
@@ -19,8 +19,12 @@ C1A_POSTMERGE_C0=PASS
 C1A_POSTMERGE_GOVERNANCE_RUN=34534279229
 C1A_POSTMERGE_GOVERNANCE=PASS
 C1A_POSTMERGE_SONARCLOUD=GLOBAL_FAIL_EXTERNAL_TO_CONSTRUCTION
-GLOBAL_SONAR_SECURITY_REMEDIATION_PR=23
-GLOBAL_SONAR_RELIABILITY_REMEDIATION_PR=22
+GLOBAL_SONAR_RELIABILITY_REMEDIATION=PR_21_MERGED
+GLOBAL_SONAR_SUPERSEDED_PR=22
+GLOBAL_SONAR_SECURITY_REMEDIATION=PR_23_MERGED
+GLOBAL_MAIN_SHA=8d6c821a32a4dd2688b6db058095093b89400c4d
+GLOBAL_MAIN_SONARCLOUD_CHECK=103065478682
+GLOBAL_MAIN_SONARCLOUD=FAIL_SECURITY_C_RELIABILITY_C
 C1B_RED_HEAD=d0da47fe28b8b3748bc9aa290a67632ce332d49e
 C1B_RED_RUN=34535088204
 C1B_RED_RESULT=2_PASS_1_FAIL_EXPECTED_MISSING_GITMODULE
@@ -33,6 +37,11 @@ C1B_GREEN_LINT=PASS
 C1B_GREEN_BUILD=PASS
 C1B_GREEN_C0=PASS
 C1B_GREEN_WHITESPACE=PASS
+C1B_STATUS_REVALIDATION_HEAD=491d793ec69250381b9bfbb652bac46e12ce6807
+C1B_STATUS_REVALIDATION_RUN=34535646398
+C1B_STATUS_REVALIDATION=PASS
+C1B_RECONCILIATION_HEAD=4a1ee6003a88c81edcc1686ac3f6d70c76e42dd4
+C1B_RECONCILED_MAIN_SHA=8d6c821a32a4dd2688b6db058095093b89400c4d
 HEAD_SHA=RESOLVE_FROM_GIT
 OPEN_PR=NONE
 TARGET_MINECRAFT=1.21.1
@@ -42,7 +51,7 @@ CANONICAL_OUTPUT=SPONGE_SCHEMATIC_V3
 LATEST_MODLIST_SNAPSHOT=2026-09-09_595_TOP_LEVEL
 MANUAL_ACTION_REQUIRED=NO
 BLOCKERS=NONE_IN_CONSTRUCTION
-NEXT_ACTION=REVALIDATE_STATUS_ONLY_HEAD_THEN_OPEN_C1B_PR
+NEXT_ACTION=REVALIDATE_RECONCILED_HEAD_THEN_OPEN_C1B_PR
 
 ## C1A — Schematica preservation
 
@@ -60,7 +69,7 @@ TEST_HARNESS_PIP_NO_DEPS=YES
 
 C1A is merged. The Factory superproject tracks only the exact Schematica gitlink; the upstream source remains unchanged. C0 accepts initialized materializable submodules while continuing to reject copied payloads and symlink escapes. The C1 harness uses a fully resolved SHA-256 dependency lock and executes Schematica from the immutable source through `PYTHONPATH`.
 
-The PR head passed C0, C1, Governance and SonarCloud. On merged `main`, C1, 498/498 upstream tests, standalone C0 and Governance passed again. The later branch-level Sonar failure is global repository debt outside `construction/`; current remediation is already owned by concurrent PRs #22 and #23 and is not duplicated here.
+The PR head passed C0, C1, Governance and SonarCloud. On merged `main`, C1, 498/498 upstream tests, standalone C0 and Governance passed again. Later global Sonar debt remained outside `construction/`: the regex reliability remediation was merged through PR #21, PR #22 was closed as superseded, and the authenticated security remediation was merged through PR #23. The current global `main@8d6c821a32a4dd2688b6db058095093b89400c4d` Sonar check still reports Security C and Reliability C, so no repository-wide green claim is made here.
 
 ### C1A acceptance
 
@@ -80,7 +89,7 @@ The PR head passed C0, C1, Governance and SonarCloud. On merged `main`, C1, 498/
 - [x] post-merge standalone C0 PASS
 - [x] post-merge Governance PASS
 - [x] post-merge gitlink remains exact
-- [x] global post-merge Sonar debt classified as outside Construction and delegated to existing PRs #22/#23
+- [x] later global Sonar debt classified outside Construction; PR #21 and PR #23 remediations merged, PR #22 superseded
 
 ## C1B — MineBench engine reference
 
@@ -99,7 +108,7 @@ UPSTREAM_INSTALL=pnpm install --frozen-lockfile
 
 The upstream repository defines native quality gates for lint, regression tests, PostgreSQL-backed integration tests and production build. C1B reproduces only those gates with local CI dependencies and no provider credentials. All Factory-owned GitHub Actions dependencies are commit-pinned.
 
-The first GREEN run reproduced the pinned source with a recursive checkout, installed 487 resolved packages from the frozen lockfile, passed lint, passed 149 regression/config/UI/unit test files, passed 18 PostgreSQL integration test files, and passed the Next.js production build. Upstream voxel export tests exercised Sponge `.schem` export on both a 424-block fixture and a 100,000-block case. C0 and whitespace gates also passed on the same head.
+The first GREEN run reproduced the pinned source with a recursive checkout, installed 487 resolved packages from the frozen lockfile, passed lint, passed 149 regression/config/UI/unit test files, passed 18 PostgreSQL integration test files, and passed the Next.js production build. Upstream voxel export tests exercised Sponge `.schem` export on both a 424-block fixture and a 100,000-block case. C0 and whitespace gates also passed on the same head. A subsequent STATUS-only head repeated all C1B gates successfully before the branch was explicitly reconciled with the then-current canonical `main`.
 
 ### C1B acceptance
 
@@ -123,7 +132,9 @@ The first GREEN run reproduced the pinned source with a recursive checkout, inst
 - [x] upstream `.schem` export smoke passes, including 100,000-block case
 - [x] C0 regression passes on GREEN head
 - [x] C1B whitespace passes on GREEN head
-- [ ] STATUS-only head revalidation passes
+- [x] STATUS-only head revalidation passes
+- [x] branch reconciled with `main@8d6c821a32a4dd2688b6db058095093b89400c4d`
+- [ ] reconciled final branch head revalidation passes
 - [ ] Schematica C1 regression passes on PR head
 - [ ] Governance passes on PR head
 - [ ] Sonar introduces no new Construction-owned issue
