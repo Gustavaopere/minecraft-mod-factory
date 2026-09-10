@@ -59,7 +59,7 @@ jobs:
         working-directory: art/tooling/blockbench/asset-toolkit/mcp-sidecar
         run: npm test
 
-      - name: Persist verified generated delta and consume materializer
+      - name: Consume verified materializer
         shell: bash
         run: |
           set -euo pipefail
@@ -70,15 +70,12 @@ jobs:
           git add -A
           python - <<'PY'
           import subprocess
-          expected = sorted([
-              '.github/workflows/factory-sonar-unicode-order-materialize-once.yml',
-              'art/tooling/blockbench/asset-toolkit/asset_toolkit.js',
-          ])
+          expected = ['.github/workflows/factory-sonar-unicode-order-materialize-once.yml']
           actual = sorted(subprocess.check_output(['git', 'diff', '--cached', '--name-only'], text=True).splitlines())
           if actual != expected:
               raise SystemExit(f'unexpected staged paths: {actual!r}')
           PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'build(toolkit): regenerate Unicode-order hardened bundle'
+          git commit -m 'chore(ci): consume Unicode ordering materializer'
           git push origin HEAD:fix/full-skill-sonar-hardening
