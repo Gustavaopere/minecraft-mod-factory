@@ -60,6 +60,8 @@ jobs:
           set -euo pipefail
           git rm migration/full-skill-migration/apply_sonar_regex_hardening_once.py
           git rm .github/workflows/factory-sonar-regex-hardening-apply-once.yml
+          find . -type d -name __pycache__ -prune -exec rm -rf {} +
+          find . -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete
           changed="$(git status --short | awk '{print $2}' | sort)"
           expected="$(printf '%s\n' \
             .github/workflows/factory-sonar-regex-hardening-apply-once.yml \
@@ -68,7 +70,10 @@ jobs:
             art/tooling/validators/validate_golden_reference_rendered_edges.js \
             migration/full-skill-migration/apply_sonar_regex_hardening_once.py \
             skills/scripts/validate_skill_repository.py | sort)"
-          test "$changed" = "$expected"
+          if [ "$changed" != "$expected" ]; then
+            printf 'UNEXPECTED_CHANGED_PATHS\n%s\nEXPECTED_PATHS\n%s\n' "$changed" "$expected"
+            exit 1
+          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
