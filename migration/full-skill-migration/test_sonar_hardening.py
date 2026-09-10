@@ -15,10 +15,13 @@ MIGRATION = ROOT / "migration/full-skill-migration"
 FULL_SKILL_WORKFLOW = ROOT / ".github/workflows/factory-full-skill-migration-validation.yml"
 FULL_SKILL_MATERIALIZER = ROOT / ".github/workflows/factory-full-skill-materialize.yml"
 FULL_SKILL_MANIFEST = ROOT / "migration/provenance/FULL-SKILL-MIGRATION-MANIFEST.json"
+CONSTRUCTION_REGISTRY = ROOT / "construction/upstream/registry.json"
+GITMODULES = ROOT / ".gitmodules"
 SONAR_PROPERTIES = ROOT / ".sonarcloud.properties"
 GENERATED_BUNDLE = "art/tooling/blockbench/asset-toolkit/asset_toolkit.js"
 SOURCE_EXACT_VERIFY_PROJECT = "skills/library/minecraft-neoforge-engineering/scripts/verify_project.py"
 VENDORED_JS_YAML = "skills/library/minecraft-ci-release/scripts/vendor/js-yaml.min.cjs"
+IMMUTABLE_SNAPSHOT_ROOT = "construction/upstream/snapshots"
 NON_AUTHORITATIVE_CLASSIFICATIONS = {"REFERENCE_ONLY", "SUPERSEDED"}
 SONAR_EXECUTABLE_SUFFIXES = {".py", ".js", ".mjs", ".cjs", ".sh"}
 PR4_ONE_SHOTS = (
@@ -150,6 +153,17 @@ class SonarHardeningContractTest(unittest.TestCase):
         }
         self.assertTrue(historical_executable_exclusions, "manifest must expose preserved non-authoritative executable provenance")
 
+        construction_registry = json.loads(CONSTRUCTION_REGISTRY.read_text(encoding="utf-8"))
+        immutable_snapshot_exclusions = {
+            f"{IMMUTABLE_SNAPSHOT_ROOT}/{source['id']}"
+            for source in construction_registry["sources"]
+            if source.get("integration_policy") == "IMMUTABLE_SNAPSHOT"
+        }
+        self.assertTrue(immutable_snapshot_exclusions, "construction registry must expose immutable upstream snapshots")
+        gitmodules_text = GITMODULES.read_text(encoding="utf-8")
+        for snapshot_path in immutable_snapshot_exclusions:
+            self.assertIn(f"\tpath = {snapshot_path}", gitmodules_text, f"immutable snapshot must be a registered gitlink: {snapshot_path}")
+
         active_vendor = next(entry for entry in manifest["entries"] if entry["destination"] == VENDORED_JS_YAML)
         historical_vendor = next(
             entry
@@ -164,11 +178,12 @@ class SonarHardeningContractTest(unittest.TestCase):
             SOURCE_EXACT_VERIFY_PROJECT,
             VENDORED_JS_YAML,
             *historical_executable_exclusions,
+            *immutable_snapshot_exclusions,
         }
         exclusions = set(properties.get("sonar.exclusions", []))
         self.assertEqual(exclusions, expected_exclusions)
         self.assertTrue(all("*" not in path for path in exclusions), "automatic-analysis exclusions must be exact paths")
-        for path in exclusions:
+        for path in exclusions - immutable_snapshot_exclusions:
             self.assertTrue((ROOT / path).is_file(), f"Sonar exclusion must resolve to a real file: {path}")
 
         canonical_authorities = {
