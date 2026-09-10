@@ -6,6 +6,7 @@ on:
       - feat/full-skill-migration
     paths:
       - 'migration/full-skill-migration/migrate.py'
+      - 'migration/full-skill-migration/m5_finalize.py'
       - '.github/workflows/factory-full-skill-materialize.yml'
   workflow_dispatch:
 
@@ -43,6 +44,9 @@ jobs:
           python migration/full-skill-migration/migrate.py
           --source-root /tmp/rpg-source/PROJECT-INSTRUCTIONS/skills
           --factory-root .
+
+      - name: Finalize M5 neutral package identity
+        run: python migration/full-skill-migration/m5_finalize.py --factory-root .
 
       - name: Regenerate neutral Asset Toolkit bundle
         run: node art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js
