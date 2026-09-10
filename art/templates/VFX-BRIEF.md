@@ -1,0 +1,22 @@
+# VFX Brief
+
+- Effect ID:
+- Gameplay owner/event:
+- Backend candidate + evidence:
+- Palette/material language:
+- Anticipation:
+- Charge:
+- Release:
+- Travel/Active:
+- Impact:
+- Linger:
+- Decay:
+- Attachment/source/target points:
+- Camera/screenshake/post effect:
+- Accessibility/reduced-effects path:
+- Sync/dedup strategy:
+- Owner/cleanup lifecycle:
+- Expected concurrency:
+- Performance evidence required:
+- Provenance/licence:
+- QA scenes:
