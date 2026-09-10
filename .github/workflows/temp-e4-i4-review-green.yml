@@ -1,0 +1,66 @@
+name: TEMP E4 I4 Review Green
+
+on:
+  push:
+    branches:
+      - feat/f4-e4-i4-validators-migration
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: feat/f4-e4-i4-validators-migration
+          fetch-depth: 2
+      - name: Apply I4 review fixes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('engineering/tooling/validators/validate_mod_project.py')
+          text = path.read_text(encoding='utf-8')
+
+          old = '''MOD_ID_LITERAL_RE = re.compile(r'\\bMOD_ID\\s*=\\s*"([a-z][a-z0-9_]{1,63})"')\nRESOURCE_NAMESPACE_RE'''
+          new = '''MOD_ID_LITERAL_RE = re.compile(r'\\bMOD_ID\\s*=\\s*"([a-z][a-z0-9_]{1,63})"')\nMOD_ANNOTATION_LITERAL_RE = re.compile(r'@Mod\\(\\s*"([a-z][a-z0-9_]{1,63})"\\s*\\)')\nRESOURCE_NAMESPACE_RE'''
+          assert old in text
+          text = text.replace(old, new, 1)
+
+          old = '''CLIENT_ONLY_TOKENS = (\n    "net.minecraft.client",\n    "com.mojang.blaze3d",\n)'''
+          new = '''CLIENT_ONLY_TOKENS = (\n    "net.minecraft.client",\n    "com.mojang.blaze3d",\n    "net.neoforged.neoforge.client",\n)'''
+          assert old in text
+          text = text.replace(old, new, 1)
+
+          old = '''    literal_ids: set[str] = set()\n    for source in _java_sources(project_root):\n        literal_ids.update(MOD_ID_LITERAL_RE.findall(source.read_text(encoding="utf-8")))\n    for literal in sorted(literal_ids):\n        if literal != expected:\n            errors.append(f"Java MOD_ID {literal!r} does not match Mod Spec {expected!r}")\n'''
+          new = '''    literal_ids: set[str] = set()\n    annotation_ids: set[str] = set()\n    has_unresolved_mod_annotation = False\n    for source in _java_sources(project_root):\n        source_text = source.read_text(encoding="utf-8")\n        literal_ids.update(MOD_ID_LITERAL_RE.findall(source_text))\n        annotation_ids.update(MOD_ANNOTATION_LITERAL_RE.findall(source_text))\n        if "@Mod(" in source_text and not MOD_ANNOTATION_LITERAL_RE.search(source_text):\n            has_unresolved_mod_annotation = True\n    for literal in sorted(literal_ids):\n        if literal != expected:\n            errors.append(f"Java MOD_ID {literal!r} does not match Mod Spec {expected!r}")\n    for annotation_id in sorted(annotation_ids):\n        if annotation_id != expected:\n            errors.append(f"Java @Mod id {annotation_id!r} does not match Mod Spec {expected!r}")\n    if has_unresolved_mod_annotation and not literal_ids:\n        errors.append("Java @Mod identifier is not a literal and no MOD_ID literal is available for validation")\n'''
+          assert old in text
+          text = text.replace(old, new, 1)
+
+          old = '''def validate_resource_paths(project_root: Path) -> list[str]:\n    resources = Path(project_root) / "src" / "main" / "resources"\n    if not resources.is_dir():\n        return [f"missing resource root {resources}"]\n    errors: list[str] = []\n    for domain in ("assets", "data"):\n        domain_root = resources / domain\n        if not domain_root.exists():\n            continue\n        for path in sorted(p for p in domain_root.rglob("*") if p.is_file()):\n            relative = path.relative_to(domain_root).as_posix()\n            parts = relative.split("/", 1)\n            if len(parts) != 2:\n                errors.append(f"{path}: resource must be under {domain}/<namespace>/<path>")\n                continue\n            namespace, resource_path = parts\n            if RESOURCE_NAMESPACE_RE.fullmatch(namespace) is None:\n                errors.append(f"{path}: invalid resource namespace {namespace!r}")\n            if RESOURCE_PATH_RE.fullmatch(resource_path) is None:\n                errors.append(f"{path}: invalid ResourceLocation path {resource_path!r}")\n    return errors\n'''
+          new = '''def validate_resource_paths(project_root: Path) -> list[str]:\n    project_root = Path(project_root)\n    main_resources = project_root / "src" / "main" / "resources"\n    if not main_resources.is_dir():\n        return [f"missing resource root {main_resources}"]\n    resource_roots = (\n        main_resources,\n        project_root / "src" / "generated" / "resources",\n    )\n    errors: list[str] = []\n    for resources in resource_roots:\n        if not resources.is_dir():\n            continue\n        for domain in ("assets", "data"):\n            domain_root = resources / domain\n            if not domain_root.exists():\n                continue\n            for path in sorted(p for p in domain_root.rglob("*") if p.is_file()):\n                relative = path.relative_to(domain_root).as_posix()\n                parts = relative.split("/", 1)\n                if len(parts) != 2:\n                    errors.append(f"{path}: resource must be under {domain}/<namespace>/<path>")\n                    continue\n                namespace, resource_path = parts\n                if RESOURCE_NAMESPACE_RE.fullmatch(namespace) is None:\n                    errors.append(f"{path}: invalid resource namespace {namespace!r}")\n                if RESOURCE_PATH_RE.fullmatch(resource_path) is None:\n                    errors.append(f"{path}: invalid ResourceLocation path {resource_path!r}")\n    return errors\n'''
+          assert old in text
+          text = text.replace(old, new, 1)
+
+          old = '''    for diff_command, label in (\n        (["git", "diff", "--check"], "git diff --check"),\n        (["git", "diff", "--exit-code"], "git diff --exit-code"),\n    ):\n        result = subprocess.run(\n            diff_command,\n            cwd=project_root,\n            text=True,\n            stdout=subprocess.PIPE,\n            stderr=subprocess.STDOUT,\n            check=False,\n        )\n        if result.returncode != 0:\n            output = result.stdout.strip()\n            errors.append(f"datagen drift: {label} failed" + (f": {output}" if output else ""))\n    return errors\n'''
+          new = '''    for diff_command, label in (\n        (["git", "diff", "--check"], "git diff --check"),\n        (["git", "diff", "--exit-code"], "git diff --exit-code"),\n    ):\n        result = subprocess.run(\n            diff_command,\n            cwd=project_root,\n            text=True,\n            stdout=subprocess.PIPE,\n            stderr=subprocess.STDOUT,\n            check=False,\n        )\n        if result.returncode != 0:\n            output = result.stdout.strip()\n            errors.append(f"datagen drift: {label} failed" + (f": {output}" if output else ""))\n\n    status = subprocess.run(\n        ["git", "status", "--porcelain", "--untracked-files=all"],\n        cwd=project_root,\n        text=True,\n        stdout=subprocess.PIPE,\n        stderr=subprocess.STDOUT,\n        check=False,\n    )\n    if status.returncode != 0:\n        errors.append(f"datagen drift: git status failed: {status.stdout.strip()}")\n    elif status.stdout.strip():\n        errors.append(f"datagen drift: working tree is not clean: {status.stdout.strip()}")\n    return errors\n'''
+          assert old in text
+          text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+      - name: Run I4 tests
+        run: python3 -m unittest engineering/tests/test_i4_engineering_validators.py
+      - name: Check whitespace
+        run: git diff --check
+      - name: Commit production GREEN only
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add engineering/tooling/validators/validate_mod_project.py
+          git commit -m "fix(engineering): close I4 validator review gaps"
+          git push origin HEAD:feat/f4-e4-i4-validators-migration
