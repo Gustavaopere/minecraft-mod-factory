@@ -72,6 +72,21 @@ jobs:
       - name: Validate M5 neutral Toolkit naming
         run: python -m unittest migration/full-skill-migration/test_m5_naming.py -v
 
+  m6-golden-relocation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout Factory
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate M6 Golden Sample relocation boundaries
+        run: python -m unittest migration/full-skill-migration/test_m6_golden_relocation.py -v
+
   migrated-skill-regressions:
     runs-on: ubuntu-latest
     timeout-minutes: 25
