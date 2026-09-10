@@ -167,6 +167,97 @@ class I6AssetHandoffContractTest(unittest.TestCase):
             self.assertTrue(any("delivery_sha256" in error for error in errors), errors)
 
     @unittest.skipUnless(SCRIPT_EXISTS, "I6 production validator not implemented yet")
+    def test_pass_rejects_unresolved_artifact_resolution_fields(self):
+        validator = _load_validator()
+        manifest = self._resolved_fixture("0" * 64)
+        manifest["provider_profiles"] = ["UNRESOLVED"]
+        manifest["provider_bindings"] = [
+            {
+                "provider_profile": "UNRESOLVED",
+                "runtime_adapter": "fixture_native_adapter",
+                "evidence": ["synthetic unresolved provider fixture"],
+            }
+        ]
+        artifact = manifest["artifacts"][0]
+        for field in (
+            "provider_profile",
+            "source_path",
+            "source_format",
+            "delivery_path",
+            "delivery_format",
+        ):
+            artifact[field] = "UNRESOLVED"
+        artifact["conversion"].update(
+            {
+                "performed": False,
+                "from_format": "UNRESOLVED",
+                "to_format": "UNRESOLVED",
+            }
+        )
+
+        errors = validator.validate_manifest_data(manifest, schema=_load_json(SCHEMA_PATH))
+
+        for field in (
+            "provider_profiles",
+            "provider_profile",
+            "source_path",
+            "source_format",
+            "delivery_path",
+            "delivery_format",
+        ):
+            self.assertTrue(
+                any(field in error and "UNRESOLVED" in error for error in errors),
+                (field, errors),
+            )
+
+    @unittest.skipUnless(SCRIPT_EXISTS, "I6 production validator not implemented yet")
+    def test_asset_formats_must_match_source_and_delivery_path_suffixes(self):
+        validator = _load_validator()
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            source_root = root / "source"
+            runtime_root = root / "runtime"
+            source_file = source_root / "textures" / "machine.png"
+            runtime_file = runtime_root / "src" / "main" / "resources" / "assets" / "example_mod" / "textures" / "block" / "machine.png"
+            source_file.parent.mkdir(parents=True)
+            runtime_file.parent.mkdir(parents=True)
+            payload = b"fixture-texture-bytes"
+            source_file.write_bytes(payload)
+            runtime_file.write_bytes(payload)
+            digest = hashlib.sha256(payload).hexdigest()
+            manifest = self._resolved_fixture(digest)
+            artifact = manifest["artifacts"][0]
+            artifact["source_format"] = ".bbmodel"
+            artifact["delivery_format"] = ".bbmodel"
+            artifact["conversion"].update(
+                {
+                    "performed": False,
+                    "from_format": ".bbmodel",
+                    "to_format": ".bbmodel",
+                }
+            )
+
+            errors = validator.validate_manifest_data(
+                manifest,
+                schema=_load_json(SCHEMA_PATH),
+                source_root=source_root,
+                runtime_root=runtime_root,
+            )
+
+            self.assertTrue(any("source_format" in error and "suffix" in error for error in errors), errors)
+            self.assertTrue(any("delivery_format" in error and "suffix" in error for error in errors), errors)
+
+    @unittest.skipUnless(SCRIPT_EXISTS, "I6 production validator not implemented yet")
+    def test_schema_invalid_provider_profiles_returns_errors_without_exception(self):
+        validator = _load_validator()
+        manifest = self._resolved_fixture("0" * 64)
+        manifest["provider_profiles"] = 42
+
+        errors = validator.validate_manifest_data(manifest, schema=_load_json(SCHEMA_PATH))
+
+        self.assertTrue(any("provider_profiles" in error for error in errors), errors)
+
+    @unittest.skipUnless(SCRIPT_EXISTS, "I6 production validator not implemented yet")
     def test_cli_rejects_manifest_outside_current_workspace(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
