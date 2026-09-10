@@ -1,12 +1,24 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import importlib.util
+import inspect
 import json
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 TOOLKIT = ROOT / "art/tooling/blockbench/asset-toolkit"
+M5_FINALIZE = ROOT / "migration/full-skill-migration/m5_finalize.py"
+
+
+def load_m5_finalize():
+    spec = importlib.util.spec_from_file_location("m5_finalize_security_contract", M5_FINALIZE)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load {M5_FINALIZE}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 class M5NamingContractTest(unittest.TestCase):
@@ -43,6 +55,18 @@ class M5NamingContractTest(unittest.TestCase):
     def test_bundle_builder_omits_indentation_on_whitespace_only_lines(self) -> None:
         build_script = (TOOLKIT / "build_toolkit_bundle.js").read_text(encoding="utf-8")
         self.assertIn("line.trim().length === 0 ? '' : `${prefix}${line}`", build_script)
+
+    def test_m5_finalize_writer_selects_canonical_paths_internally(self) -> None:
+        module = load_m5_finalize()
+        writer = getattr(module, "update_json", None)
+        self.assertTrue(callable(writer), "m5_finalize.py must expose its package rewrite helper")
+        parameters = inspect.signature(writer).parameters
+        self.assertEqual(
+            tuple(parameters),
+            ("lockfile",),
+            "M5 writer must not accept a caller-controlled filesystem path",
+        )
+        self.assertEqual(parameters["lockfile"].kind, inspect.Parameter.KEYWORD_ONLY)
 
 
 if __name__ == "__main__":

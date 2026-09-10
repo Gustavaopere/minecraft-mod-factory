@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import hashlib
 import json
+import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -48,8 +48,13 @@ FORBIDDEN_STANDARD_TOKENS = (
 
 
 def _git_blob_sha(data: bytes) -> str:
-    header = f"blob {len(data)}\0".encode("ascii")
-    return hashlib.sha1(header + data).hexdigest()
+    try:
+        object_id = subprocess.check_output(["git", "hash-object", "--stdin"], input=data).decode("ascii").strip()
+    except (subprocess.CalledProcessError, UnicodeDecodeError) as exc:
+        raise RuntimeError("git hash-object failed") from exc
+    if len(object_id) != 40 or any(char not in "0123456789abcdef" for char in object_id):
+        raise RuntimeError(f"git hash-object returned an invalid blob id: {object_id!r}")
+    return object_id
 
 
 def _expected_source_path(name: str) -> str:
