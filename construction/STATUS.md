@@ -1,7 +1,7 @@
 # STATUS — Construction
 
 UPDATED_AT=2026-09-10
-PHASE=C1_MINEBENCH_REFERENCE_RED_CAPTURED
+PHASE=C1_MINEBENCH_REFERENCE_GREEN_PENDING_PR_GATES
 REPOSITORY=Gustavaopere/minecraft-mod-factory
 BRANCH=feat/construction-c1-minebench-reference
 BASE_SHA=ef991e103f65f0d81967bb0cc1c2592f8c85ccc5
@@ -24,6 +24,15 @@ GLOBAL_SONAR_RELIABILITY_REMEDIATION_PR=22
 C1B_RED_HEAD=d0da47fe28b8b3748bc9aa290a67632ce332d49e
 C1B_RED_RUN=34535088204
 C1B_RED_RESULT=2_PASS_1_FAIL_EXPECTED_MISSING_GITMODULE
+C1B_GREEN_HEAD=870950966b89d8010d9611cdb68c4b6dd213f32b
+C1B_GREEN_RUN=34535272307
+C1B_GREEN_CONTRACT=3_PASS_0_FAIL
+C1B_GREEN_REGRESSION_TEST_FILES=149_PASS
+C1B_GREEN_INTEGRATION_TEST_FILES=18_PASS
+C1B_GREEN_LINT=PASS
+C1B_GREEN_BUILD=PASS
+C1B_GREEN_C0=PASS
+C1B_GREEN_WHITESPACE=PASS
 HEAD_SHA=RESOLVE_FROM_GIT
 OPEN_PR=NONE
 TARGET_MINECRAFT=1.21.1
@@ -33,7 +42,7 @@ CANONICAL_OUTPUT=SPONGE_SCHEMATIC_V3
 LATEST_MODLIST_SNAPSHOT=2026-09-09_595_TOP_LEVEL
 MANUAL_ACTION_REQUIRED=NO
 BLOCKERS=NONE_IN_CONSTRUCTION
-NEXT_ACTION=MATERIALIZE_MINEBENCH_GITLINK_AND_OBTAIN_GREEN
+NEXT_ACTION=REVALIDATE_STATUS_ONLY_HEAD_THEN_OPEN_C1B_PR
 
 ## C1A — Schematica preservation
 
@@ -90,6 +99,8 @@ UPSTREAM_INSTALL=pnpm install --frozen-lockfile
 
 The upstream repository defines native quality gates for lint, regression tests, PostgreSQL-backed integration tests and production build. C1B reproduces only those gates with local CI dependencies and no provider credentials. All Factory-owned GitHub Actions dependencies are commit-pinned.
 
+The first GREEN run reproduced the pinned source with a recursive checkout, installed 487 resolved packages from the frozen lockfile, passed lint, passed 149 regression/config/UI/unit test files, passed 18 PostgreSQL integration test files, and passed the Next.js production build. Upstream voxel export tests exercised Sponge `.schem` export on both a 424-block fixture and a 100,000-block case. C0 and whitespace gates also passed on the same head.
+
 ### C1B acceptance
 
 - [x] pinned upstream commit independently resolves
@@ -100,11 +111,21 @@ The upstream repository defines native quality gates for lint, regression tests,
 - [x] C1B preservation contract authored
 - [x] C1B dedicated workflow authored
 - [x] expected RED captured before MineBench gitlink exists
-- [ ] `.gitmodules` declares exact MineBench URL and path
-- [ ] MineBench gitlink mode is `160000`
-- [ ] MineBench gitlink SHA equals audited upstream pin
-- [ ] recursive checkout resolves exact upstream pin
-- [ ] upstream reproducible gates pass without external model/provider credentials
-- [ ] prior Schematica/C0 regressions remain green
-- [ ] Governance passes
+- [x] `.gitmodules` declares exact MineBench URL and path
+- [x] MineBench gitlink mode is `160000`
+- [x] MineBench gitlink SHA equals audited upstream pin
+- [x] recursive checkout resolves exact upstream pin
+- [x] frozen dependency installation passes
+- [x] upstream lint passes
+- [x] upstream regression/config/UI/unit suite passes: 149 test files
+- [x] upstream PostgreSQL integration suite passes: 18 test files
+- [x] upstream production build passes
+- [x] upstream `.schem` export smoke passes, including 100,000-block case
+- [x] C0 regression passes on GREEN head
+- [x] C1B whitespace passes on GREEN head
+- [ ] STATUS-only head revalidation passes
+- [ ] Schematica C1 regression passes on PR head
+- [ ] Governance passes on PR head
 - [ ] Sonar introduces no new Construction-owned issue
+- [ ] C1B PR merged
+- [ ] post-merge `main` revalidation passes
