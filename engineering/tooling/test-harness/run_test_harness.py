@@ -92,8 +92,15 @@ def _require_server_eula(project_root: Path) -> None:
             "dedicated server requires explicit EULA acceptance in run/server/eula.txt (eula=true)"
         )
 
+    project_resolved = project_root.resolve()
+    eula_resolved = eula_path.resolve()
+    if not eula_resolved.is_relative_to(project_resolved):
+        raise HarnessError(
+            "dedicated server EULA path must remain inside the project root"
+        )
+
     accepted = False
-    for raw_line in eula_path.read_text(encoding="utf-8").splitlines():
+    for raw_line in eula_resolved.read_text(encoding="utf-8").splitlines():
         line = raw_line.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
