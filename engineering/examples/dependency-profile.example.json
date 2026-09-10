@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "provider": {
+    "mod_id": "example_dependency",
+    "physical_version": "UNRESOLVED",
+    "source_repository": "UNRESOLVED",
+    "source_ref": "UNRESOLVED",
+    "audited_at": "UNRESOLVED",
+    "loader": "neoforge",
+    "minecraft_version": "1.21.1",
+    "license": "UNRESOLVED",
+    "confidence": "UNRESOLVED",
+    "state": "UNRESOLVED"
+  },
+  "capabilities": [],
+  "evidence": {
+    "sources": ["synthetic example fixture"],
+    "notes": ["Do not promote this fixture to a real provider profile without physical and source evidence."]
+  }
+}

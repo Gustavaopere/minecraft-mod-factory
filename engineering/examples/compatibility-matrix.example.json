@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "mod_id": "example_mod",
+  "target": {
+    "minecraft": "1.21.1",
+    "loader": "neoforge",
+    "neoforge": "21.1.248",
+    "java": 21
+  },
+  "entries": [],
+  "state": "UNRESOLVED"
+}
