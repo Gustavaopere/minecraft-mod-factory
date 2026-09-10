@@ -8,6 +8,7 @@ on:
       - 'migration/full-skill-migration/migrate.py'
       - 'migration/full-skill-migration/m5_finalize.py'
       - 'migration/full-skill-migration/reconcile.py'
+      - 'migration/full-skill-migration/apply_pr4_texture_compare.py'
       - '.github/workflows/factory-full-skill-materialize.yml'
   workflow_dispatch:
 
@@ -49,11 +50,17 @@ jobs:
       - name: Finalize M5 neutral package identity
         run: python migration/full-skill-migration/m5_finalize.py --factory-root .
 
+      - name: Restore proven PR4 texture compare delta
+        run: python migration/full-skill-migration/apply_pr4_texture_compare.py
+
       - name: Reconcile Factory-owned post-migration deltas
         run: python migration/full-skill-migration/reconcile.py --factory-root .
 
       - name: Regenerate neutral Asset Toolkit bundle
         run: node art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js --write
+
+      - name: Validate PR4 texture acceptance before commit
+        run: node --test art/tooling/blockbench/asset-toolkit/asset_toolkit.texture_acceptance.test.js
 
       - name: Validate full source coverage before commit
         run: >-
