@@ -331,6 +331,488 @@
         applyMutationBatch,
       };
     },
+    "core/animation/animation_engine.js": function(module, exports, require) {
+      'use strict';
+
+      const MAX_ANIMATION_OPERATIONS = 128;
+      const MAX_IDENTIFIER_LENGTH = 128;
+      const MAX_LABEL_LENGTH = 160;
+      const MAX_ANIMATION_LENGTH = 3600;
+      const MAX_KEYFRAME_TIME = 3600;
+      const MAX_CAPTURE_DIMENSION = 8192;
+
+      const LOOP_MODES = new Set(['once', 'loop', 'hold']);
+      const ANIMATION_CHANNELS = new Set(['position', 'rotation', 'scale']);
+      const ANIMATION_EASINGS = new Set(['linear', 'bezier', 'catmullrom', 'step']);
+      const EFFECT_MARKER_TYPES = new Set(['particle', 'sound', 'timeline', 'custom']);
+
+      const BATCH_FIELDS = new Set(['expectedRevision', 'label', 'operations', 'dryRun']);
+      const OPERATION_FIELDS = Object.freeze({
+        animation_create: new Set(['type', 'id', 'name', 'length', 'loop']),
+        animation_update_settings: new Set(['type', 'animationId', 'name', 'length', 'loop']),
+        animation_delete: new Set(['type', 'animationId']),
+        animation_add_keyframe: new Set(['type', 'animationId', 'keyframeId', 'targetId', 'channel', 'time', 'value', 'easing']),
+        animation_update_keyframe: new Set(['type', 'animationId', 'keyframeId', 'targetId', 'channel', 'time', 'value', 'easing']),
+        animation_delete_keyframe: new Set(['type', 'animationId', 'keyframeId']),
+        animation_add_effect_marker: new Set(['type', 'animationId', 'markerId', 'time', 'markerType', 'label']),
+        animation_delete_effect_marker: new Set(['type', 'animationId', 'markerId']),
+      });
+
+      class AnimationContractError extends Error {
+        constructor(code, message) {
+          super(`${code}: ${message}`);
+          this.name = 'AnimationContractError';
+          this.code = code;
+        }
+      }
+
+      function fail(code, message) {
+        throw new AnimationContractError(code, message);
+      }
+
+      function isPlainObject(value) {
+        if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+        const prototype = Object.getPrototypeOf(value);
+        return prototype === Object.prototype || prototype === null;
+      }
+
+      function rejectUnknownFields(value, allowed, code, context) {
+        for (const key of Object.keys(value)) {
+          if (!allowed.has(key)) fail(code, `${context} contains unsupported field "${key}".`);
+        }
+      }
+
+      function boundedString(value, field, {max = MAX_IDENTIFIER_LENGTH} = {}) {
+        if (typeof value !== 'string') fail('INVALID_ANIMATION_STRING', `${field} must be a string.`);
+        const output = value.trim();
+        if (!output || output.length > max) {
+          fail('INVALID_ANIMATION_STRING', `${field} must contain 1-${max} non-whitespace characters.`);
+        }
+        return output;
+      }
+
+      function optionalBoundedString(value, field, options) {
+        return value === undefined ? undefined : boundedString(value, field, options);
+      }
+
+      function finiteNumber(value, field) {
+        if (!Number.isFinite(value)) fail('INVALID_ANIMATION_NUMBER', `${field} must be finite.`);
+        return value;
+      }
+
+      function positiveLength(value, field) {
+        const output = finiteNumber(value, field);
+        if (output <= 0 || output > MAX_ANIMATION_LENGTH) {
+          fail('INVALID_ANIMATION_LENGTH', `${field} must be greater than 0 and at most ${MAX_ANIMATION_LENGTH}.`);
+        }
+        return output;
+      }
+
+      function nonNegativeTime(value, field) {
+        const output = finiteNumber(value, field);
+        if (output < 0 || output > MAX_KEYFRAME_TIME) {
+          fail('INVALID_ANIMATION_TIME', `${field} must be between 0 and ${MAX_KEYFRAME_TIME}.`);
+        }
+        return output;
+      }
+
+      function vector3(value, field) {
+        if (!Array.isArray(value) || value.length !== 3 || !value.every(Number.isFinite)) {
+          fail('INVALID_ANIMATION_VECTOR3', `${field} must be an array of exactly three finite numbers.`);
+        }
+        return Object.freeze(value.slice());
+      }
+
+      function loopMode(value, field) {
+        const output = boundedString(value, field, {max: 16}).toLowerCase();
+        if (!LOOP_MODES.has(output)) fail('INVALID_ANIMATION_LOOP_MODE', `${field} is not provider-neutral.`);
+        return output;
+      }
+
+      function channel(value, field) {
+        const output = boundedString(value, field, {max: 32}).toLowerCase();
+        if (!ANIMATION_CHANNELS.has(output)) fail('INVALID_ANIMATION_CHANNEL', `${field} is not allowlisted.`);
+        return output;
+      }
+
+      function easing(value, field) {
+        const output = boundedString(value, field, {max: 32}).toLowerCase();
+        if (!ANIMATION_EASINGS.has(output)) fail('INVALID_ANIMATION_EASING', `${field} is not provider-neutral.`);
+        return output;
+      }
+
+      function markerType(value, field) {
+        const output = boundedString(value, field, {max: 32}).toLowerCase();
+        if (!EFFECT_MARKER_TYPES.has(output)) fail('INVALID_EFFECT_MARKER_TYPE', `${field} is not allowlisted.`);
+        return output;
+      }
+
+      function validateOperation(value, index) {
+        if (!isPlainObject(value)) fail('INVALID_ANIMATION_OPERATION', `operations[${index}] must be an object.`);
+        const type = typeof value.type === 'string' ? value.type : '';
+        const fields = OPERATION_FIELDS[type];
+        if (!fields) {
+          fail('UNSUPPORTED_ANIMATION_OPERATION', `operations[${index}] type "${type || '<missing>'}" is not allowlisted.`);
+        }
+        rejectUnknownFields(value, fields, 'UNKNOWN_ANIMATION_OPERATION_FIELD', `operations[${index}]`);
+
+        let output;
+        switch (type) {
+          case 'animation_create':
+            output = {
+              type,
+              id: boundedString(value.id, `operations[${index}].id`),
+              name: boundedString(value.name, `operations[${index}].name`),
+              length: positiveLength(value.length, `operations[${index}].length`),
+              loop: loopMode(value.loop, `operations[${index}].loop`),
+            };
+            break;
+          case 'animation_update_settings': {
+            const name = optionalBoundedString(value.name, `operations[${index}].name`);
+            const length = value.length === undefined ? undefined : positiveLength(value.length, `operations[${index}].length`);
+            const loop = value.loop === undefined ? undefined : loopMode(value.loop, `operations[${index}].loop`);
+            if (name === undefined && length === undefined && loop === undefined) {
+              fail('EMPTY_ANIMATION_UPDATE', `operations[${index}] must update name, length, or loop.`);
+            }
+            output = {
+              type,
+              animationId: boundedString(value.animationId, `operations[${index}].animationId`),
+              ...(name === undefined ? {} : {name}),
+              ...(length === undefined ? {} : {length}),
+              ...(loop === undefined ? {} : {loop}),
+            };
+            break;
+          }
+          case 'animation_delete':
+            output = {
+              type,
+              animationId: boundedString(value.animationId, `operations[${index}].animationId`),
+            };
+            break;
+          case 'animation_add_keyframe':
+          case 'animation_update_keyframe':
+            output = {
+              type,
+              animationId: boundedString(value.animationId, `operations[${index}].animationId`),
+              keyframeId: boundedString(value.keyframeId, `operations[${index}].keyframeId`),
+              targetId: boundedString(value.targetId, `operations[${index}].targetId`),
+              channel: channel(value.channel, `operations[${index}].channel`),
+              time: nonNegativeTime(value.time, `operations[${index}].time`),
+              value: vector3(value.value, `operations[${index}].value`),
+              easing: easing(value.easing, `operations[${index}].easing`),
+            };
+            break;
+          case 'animation_delete_keyframe':
+            output = {
+              type,
+              animationId: boundedString(value.animationId, `operations[${index}].animationId`),
+              keyframeId: boundedString(value.keyframeId, `operations[${index}].keyframeId`),
+            };
+            break;
+          case 'animation_add_effect_marker':
+            output = {
+              type,
+              animationId: boundedString(value.animationId, `operations[${index}].animationId`),
+              markerId: boundedString(value.markerId, `operations[${index}].markerId`),
+              time: nonNegativeTime(value.time, `operations[${index}].time`),
+              markerType: markerType(value.markerType, `operations[${index}].markerType`),
+              label: boundedString(value.label, `operations[${index}].label`, {max: MAX_LABEL_LENGTH}),
+            };
+            break;
+          case 'animation_delete_effect_marker':
+            output = {
+              type,
+              animationId: boundedString(value.animationId, `operations[${index}].animationId`),
+              markerId: boundedString(value.markerId, `operations[${index}].markerId`),
+            };
+            break;
+          default:
+            fail('UNSUPPORTED_ANIMATION_OPERATION', `operations[${index}] is not allowlisted.`);
+        }
+        return Object.freeze(output);
+      }
+
+      function validateAnimationBatch(value) {
+        if (!isPlainObject(value)) fail('INVALID_ANIMATION_BATCH', 'Animation batch must be an object.');
+        rejectUnknownFields(value, BATCH_FIELDS, 'UNKNOWN_ANIMATION_BATCH_FIELD', 'Animation batch');
+
+        const expectedRevision = boundedString(value.expectedRevision, 'expectedRevision');
+        if (!Array.isArray(value.operations) || value.operations.length < 1) {
+          fail('EMPTY_ANIMATION_BATCH', 'operations must contain at least one animation operation.');
+        }
+        if (value.operations.length > MAX_ANIMATION_OPERATIONS) {
+          fail('ANIMATION_BATCH_TOO_LARGE', `operations exceeds the maximum of ${MAX_ANIMATION_OPERATIONS}.`);
+        }
+        if (value.dryRun !== undefined && typeof value.dryRun !== 'boolean') {
+          fail('INVALID_ANIMATION_DRY_RUN', 'dryRun must be boolean when provided.');
+        }
+
+        const operations = value.operations.map(validateOperation);
+        const declaredAnimations = new Set();
+        const declaredKeyframes = new Set();
+        const declaredMarkers = new Set();
+        for (const operation of operations) {
+          if (operation.type === 'animation_create') {
+            if (declaredAnimations.has(operation.id)) {
+              fail('DUPLICATE_ANIMATION_ID', `Animation id "${operation.id}" is declared more than once.`);
+            }
+            declaredAnimations.add(operation.id);
+          } else if (operation.type === 'animation_add_keyframe') {
+            const key = `${operation.animationId}\u0000${operation.keyframeId}`;
+            if (declaredKeyframes.has(key)) fail('DUPLICATE_KEYFRAME_ID', `Keyframe "${operation.keyframeId}" is declared more than once.`);
+            declaredKeyframes.add(key);
+          } else if (operation.type === 'animation_add_effect_marker') {
+            const key = `${operation.animationId}\u0000${operation.markerId}`;
+            if (declaredMarkers.has(key)) fail('DUPLICATE_EFFECT_MARKER_ID', `Effect marker "${operation.markerId}" is declared more than once.`);
+            declaredMarkers.add(key);
+          }
+        }
+
+        return Object.freeze({
+          expectedRevision,
+          label: value.label === undefined
+            ? 'Minecraft Mod Factory Asset Toolkit Generic Animation Batch'
+            : boundedString(value.label, 'label', {max: MAX_LABEL_LENGTH}),
+          operations: Object.freeze(operations),
+          dryRun: value.dryRun === true,
+        });
+      }
+
+      function validateMutationAdapter(adapter) {
+        const methods = ['getRevision', 'preflight', 'beginTransaction', 'applyOperation', 'finishTransaction', 'cancelTransaction'];
+        if (!adapter || typeof adapter !== 'object') fail('INVALID_ANIMATION_ADAPTER', 'Animation adapter is required.');
+        for (const method of methods) {
+          if (typeof adapter[method] !== 'function') fail('INVALID_ANIMATION_ADAPTER', `Animation adapter is missing ${method}().`);
+        }
+      }
+
+      function collectChangedIds(target, changed) {
+        const values = Array.isArray(changed) ? changed : [changed];
+        for (const value of values) {
+          if (typeof value === 'string' && value && !target.includes(value)) target.push(value);
+        }
+      }
+
+      function applyAnimationBatch(adapter, input) {
+        validateMutationAdapter(adapter);
+        const batch = validateAnimationBatch(input);
+        const beforeRevision = adapter.getRevision();
+        if (beforeRevision !== batch.expectedRevision) {
+          fail('STALE_PROJECT_REVISION', `Expected ${batch.expectedRevision} but active project is ${beforeRevision}.`);
+        }
+
+        adapter.preflight(batch.operations);
+        if (batch.dryRun) {
+          return Object.freeze({
+            ok: true,
+            dryRun: true,
+            beforeRevision,
+            afterRevision: beforeRevision,
+            applied: 0,
+            changedIds: Object.freeze([]),
+          });
+        }
+
+        const changedIds = [];
+        let begun = false;
+        try {
+          adapter.beginTransaction(batch.label);
+          begun = true;
+          for (const operation of batch.operations) {
+            collectChangedIds(changedIds, adapter.applyOperation(operation));
+          }
+          adapter.finishTransaction(batch.label);
+          begun = false;
+          const afterRevision = adapter.getRevision();
+          return Object.freeze({
+            ok: true,
+            dryRun: false,
+            beforeRevision,
+            afterRevision,
+            applied: batch.operations.length,
+            changedIds: Object.freeze(changedIds.slice()),
+          });
+        } catch (error) {
+          if (begun) {
+            try { adapter.cancelTransaction(true); } catch (_) { /* preserve original mutation failure */ }
+          }
+          throw error;
+        }
+      }
+
+      function poseChannel(value, field) {
+        if (!Array.isArray(value) || value.length !== 3 || !value.every(Number.isFinite)) {
+          fail('INVALID_LOOP_SEAM_POSE', `${field} must contain exactly three finite numbers.`);
+        }
+        return value;
+      }
+
+      function normalizePose(value, field) {
+        if (!isPlainObject(value)) fail('INVALID_LOOP_SEAM_POSE', `${field} must be an object keyed by target id.`);
+        const output = new Map();
+        for (const targetId of Object.keys(value).sort()) {
+          const target = value[targetId];
+          if (!isPlainObject(target)) fail('INVALID_LOOP_SEAM_POSE', `${field}.${targetId} must be an object.`);
+          const channels = new Map();
+          for (const channelName of Object.keys(target).sort()) {
+            if (!ANIMATION_CHANNELS.has(channelName)) {
+              fail('INVALID_LOOP_SEAM_POSE', `${field}.${targetId}.${channelName} is not a provider-neutral transform channel.`);
+            }
+            channels.set(channelName, poseChannel(target[channelName], `${field}.${targetId}.${channelName}`));
+          }
+          output.set(targetId, channels);
+        }
+        return output;
+      }
+
+      function validateLoopSeam(input) {
+        if (!isPlainObject(input)) fail('INVALID_LOOP_SEAM_REQUEST', 'Loop seam request must be an object.');
+        rejectUnknownFields(input, new Set(['startPose', 'endPose', 'tolerance']), 'UNKNOWN_LOOP_SEAM_FIELD', 'Loop seam request');
+        const tolerance = finiteNumber(input.tolerance, 'tolerance');
+        if (tolerance < 0) fail('INVALID_LOOP_SEAM_TOLERANCE', 'tolerance must be non-negative.');
+        const start = normalizePose(input.startPose, 'startPose');
+        const end = normalizePose(input.endPose, 'endPose');
+
+        const targetIds = [...new Set([...start.keys(), ...end.keys()])].sort();
+        let maxDelta = 0;
+        const mismatches = [];
+        for (const targetId of targetIds) {
+          const left = start.get(targetId);
+          const right = end.get(targetId);
+          if (!left || !right) {
+            mismatches.push(Object.freeze({targetId, channel: null, delta: null, reason: 'MISSING_TARGET'}));
+            continue;
+          }
+          const channels = [...new Set([...left.keys(), ...right.keys()])].sort();
+          for (const channelName of channels) {
+            const leftValue = left.get(channelName);
+            const rightValue = right.get(channelName);
+            if (!leftValue || !rightValue) {
+              mismatches.push(Object.freeze({targetId, channel: channelName, delta: null, reason: 'MISSING_CHANNEL'}));
+              continue;
+            }
+            let channelDelta = 0;
+            for (let index = 0; index < 3; index += 1) {
+              channelDelta = Math.max(channelDelta, Math.abs(leftValue[index] - rightValue[index]));
+            }
+            maxDelta = Math.max(maxDelta, channelDelta);
+            if (channelDelta > tolerance) {
+              mismatches.push(Object.freeze({targetId, channel: channelName, delta: channelDelta, reason: 'TOLERANCE_EXCEEDED'}));
+            }
+          }
+        }
+        const roundedMaxDelta = Number(maxDelta.toFixed(12));
+        return Object.freeze({
+          pass: mismatches.length === 0,
+          tolerance,
+          maxDelta: roundedMaxDelta,
+          mismatches: Object.freeze(mismatches),
+        });
+      }
+
+      function distance3(left, right) {
+        const dx = left[0] - right[0];
+        const dy = left[1] - right[1];
+        const dz = left[2] - right[2];
+        return Math.sqrt((dx * dx) + (dy * dy) + (dz * dz));
+      }
+
+      function diagnoseFootSlide(input) {
+        if (!isPlainObject(input)) fail('INVALID_FOOT_SLIDE_REQUEST', 'Foot-slide request must be an object.');
+        rejectUnknownFields(input, new Set(['samples']), 'UNKNOWN_FOOT_SLIDE_FIELD', 'Foot-slide request');
+        if (!Array.isArray(input.samples)) fail('INVALID_FOOT_SLIDE_SAMPLES', 'samples must be an array.');
+
+        const planted = [];
+        for (let index = 0; index < input.samples.length; index += 1) {
+          const sample = input.samples[index];
+          if (!isPlainObject(sample)) fail('INVALID_FOOT_SLIDE_SAMPLE', `samples[${index}] must be an object.`);
+          rejectUnknownFields(sample, new Set(['time', 'position', 'planted']), 'UNKNOWN_FOOT_SLIDE_SAMPLE_FIELD', `samples[${index}]`);
+          nonNegativeTime(sample.time, `samples[${index}].time`);
+          const position = vector3(sample.position, `samples[${index}].position`);
+          if (typeof sample.planted !== 'boolean') fail('INVALID_FOOT_SLIDE_SAMPLE', `samples[${index}].planted must be boolean.`);
+          if (sample.planted) planted.push(position);
+        }
+
+        if (planted.length < 2) {
+          return Object.freeze({
+            measurable: false,
+            reason: 'INSUFFICIENT_CONTACT_SAMPLES',
+            plantedSamples: planted.length,
+            distance: null,
+          });
+        }
+
+        let distance = 0;
+        for (let index = 1; index < planted.length; index += 1) distance += distance3(planted[index - 1], planted[index]);
+        return Object.freeze({
+          measurable: true,
+          reason: null,
+          plantedSamples: planted.length,
+          distance: Number(distance.toFixed(12)),
+        });
+      }
+
+      function validateReadOnlyAdapter(adapter, method) {
+        if (!adapter || typeof adapter !== 'object' || typeof adapter[method] !== 'function') {
+          fail('INVALID_ANIMATION_ADAPTER', `Animation adapter is missing ${method}().`);
+        }
+      }
+
+      function previewRequest(input) {
+        if (!isPlainObject(input)) fail('INVALID_ANIMATION_PREVIEW_REQUEST', 'Preview request must be an object.');
+        rejectUnknownFields(input, new Set(['animationId', 'time']), 'UNKNOWN_ANIMATION_PREVIEW_FIELD', 'Preview request');
+        return Object.freeze({
+          animationId: boundedString(input.animationId, 'animationId'),
+          time: nonNegativeTime(input.time, 'time'),
+        });
+      }
+
+      function playPreview(adapter, input) {
+        validateReadOnlyAdapter(adapter, 'playPreview');
+        return adapter.playPreview(previewRequest(input));
+      }
+
+      function stopPreview(adapter) {
+        validateReadOnlyAdapter(adapter, 'stopPreview');
+        return adapter.stopPreview();
+      }
+
+      function inspectPose(adapter, input) {
+        validateReadOnlyAdapter(adapter, 'inspectPose');
+        return adapter.inspectPose(previewRequest(input));
+      }
+
+      function capturePose(adapter, input) {
+        validateReadOnlyAdapter(adapter, 'capturePose');
+        if (!isPlainObject(input)) fail('INVALID_POSE_CAPTURE_REQUEST', 'Pose capture request must be an object.');
+        rejectUnknownFields(input, new Set(['animationId', 'time', 'cameraPreset', 'resolution']), 'UNKNOWN_POSE_CAPTURE_FIELD', 'Pose capture request');
+        const resolution = input.resolution;
+        if (!Array.isArray(resolution) || resolution.length !== 2 || !resolution.every(Number.isInteger)
+            || resolution.some((entry) => entry < 1 || entry > MAX_CAPTURE_DIMENSION)) {
+          fail('INVALID_CAPTURE_RESOLUTION', `resolution must contain two integers in 1-${MAX_CAPTURE_DIMENSION}.`);
+        }
+        const request = Object.freeze({
+          animationId: boundedString(input.animationId, 'animationId'),
+          time: nonNegativeTime(input.time, 'time'),
+          cameraPreset: boundedString(input.cameraPreset, 'cameraPreset', {max: 64}),
+          resolution: Object.freeze(resolution.slice()),
+        });
+        return adapter.capturePose(request);
+      }
+
+      module.exports = {
+        MAX_ANIMATION_OPERATIONS,
+        AnimationContractError,
+        validateAnimationBatch,
+        applyAnimationBatch,
+        validateLoopSeam,
+        diagnoseFootSlide,
+        playPreview,
+        stopPreview,
+        inspectPose,
+        capturePose,
+      };
+    },
     "core/uv-texture/uv_texture_engine.js": function(module, exports, require) {
       'use strict';
 
@@ -1627,6 +2109,7 @@
 
       const projectModel = require('./project-model/project_model.js');
       const mutations = require('./mutations/mutation_engine.js');
+      const animation = require('./animation/animation_engine.js');
       const uvTexture = require('./uv-texture/uv_texture_engine.js');
       const uvAnalysis = require('./uv-texture/uv_analysis.js');
       const uvPack = require('./uv-texture/uv_pack.js');
@@ -1641,6 +2124,7 @@
         {},
         projectModel,
         mutations,
+        animation,
         uvTexture,
         uvAnalysis,
         uvPack,
@@ -3514,18 +3998,443 @@
 
       module.exports = {createBlockbenchUvTextureAdapter};
     },
+    "blockbench-plugin/animation_adapter.js": function(module, exports, require) {
+      'use strict';
+
+      function fail(code, message) {
+        const error = new Error(`${code}: ${message}`);
+        error.code = code;
+        throw error;
+      }
+
+      function array(value) {
+        return Array.isArray(value) ? value : [];
+      }
+
+      function idOf(value) {
+        return value && typeof value === 'object' && typeof value.uuid === 'string' && value.uuid ? value.uuid : null;
+      }
+
+      function vector3FromObject(value, fallback) {
+        const source = value && typeof value === 'object' ? value : {};
+        const output = ['x', 'y', 'z'].map((axis, index) => Number.isFinite(source[axis]) ? source[axis] : fallback[index]);
+        return output;
+      }
+
+      function createBlockbenchAnimationAdapter(bb) {
+        const project = bb?.Blockbench?.Project;
+        if (!project || typeof project !== 'object') fail('NO_PROJECT', 'No Blockbench project is open.');
+        if (bb.Blockbench.isWeb !== false) fail('DESKTOP_REQUIRED', 'Animation mutations require desktop Blockbench.');
+        if (typeof bb.Animation !== 'function') fail('BLOCKBENCH_API_UNAVAILABLE', 'Animation constructor is unavailable.');
+        if (!bb.Undo || ['initEdit', 'finishEdit', 'cancelEdit'].some((name) => typeof bb.Undo[name] !== 'function')) {
+          fail('BLOCKBENCH_API_UNAVAILABLE', 'Blockbench Undo API is incomplete.');
+        }
+        if (!bb.Animator || typeof bb.Animator.preview !== 'function') {
+          fail('BLOCKBENCH_API_UNAVAILABLE', 'Animator.preview() is unavailable.');
+        }
+
+        let transactionOpen = false;
+
+        function animations() {
+          return Array.isArray(bb.Animation.all) ? bb.Animation.all : array(project.animations);
+        }
+
+        function groups() {
+          return bb.Group && Array.isArray(bb.Group.all) ? bb.Group.all : array(project.groups);
+        }
+
+        function findAnimation(animationId) {
+          return animations().find((animation) => idOf(animation) === animationId) || null;
+        }
+
+        function requireAnimation(animationId) {
+          const animation = findAnimation(animationId);
+          if (!animation) fail('ANIMATION_NOT_FOUND', `Animation "${animationId}" does not exist.`);
+          return animation;
+        }
+
+        function findTarget(targetId) {
+          return groups().find((group) => idOf(group) === targetId) || null;
+        }
+
+        function requireTarget(targetId) {
+          const target = findTarget(targetId);
+          if (!target) fail('ANIMATION_TARGET_NOT_FOUND', `Animation target "${targetId}" does not exist.`);
+          return target;
+        }
+
+        function animatorsOf(animation) {
+          return animation?.animators && typeof animation.animators === 'object'
+            ? Object.values(animation.animators).filter(Boolean)
+            : [];
+        }
+
+        function keyframesOf(animation) {
+          const output = [];
+          for (const animator of animatorsOf(animation)) {
+            for (const keyframe of array(animator.keyframes)) {
+              if (keyframe && !output.includes(keyframe)) output.push(keyframe);
+            }
+          }
+          return output;
+        }
+
+        function allKeyframes() {
+          const output = [];
+          for (const animation of animations()) {
+            for (const keyframe of keyframesOf(animation)) {
+              if (!output.includes(keyframe)) output.push(keyframe);
+            }
+          }
+          return output;
+        }
+
+        function findKeyframe(animation, keyframeId) {
+          for (const animator of animatorsOf(animation)) {
+            const keyframe = array(animator.keyframes).find((entry) => idOf(entry) === keyframeId);
+            if (keyframe) return {animator, keyframe};
+          }
+          return null;
+        }
+
+        function keyframeRevisionSnapshot() {
+          return animations().map((animation) => ({
+            animationId: idOf(animation),
+            animators: Object.keys(animation?.animators || {}).sort().map((targetId) => ({
+              targetId,
+              keyframes: array(animation.animators[targetId]?.keyframes).map((keyframe) => ({
+                keyframeId: idOf(keyframe),
+                channel: typeof keyframe?.channel === 'string' ? keyframe.channel : null,
+                time: Number.isFinite(keyframe?.time) ? keyframe.time : null,
+                interpolation: typeof keyframe?.interpolation === 'string' ? keyframe.interpolation : null,
+                dataPoints: array(keyframe?.data_points).map((point) => ({
+                  x: point?.x ?? null,
+                  y: point?.y ?? null,
+                  z: point?.z ?? null,
+                })),
+              })),
+            })),
+          }));
+        }
+
+        function getRevision() {
+          const {createProjectSnapshot, hashRevision} = require('../live-bridge/project_snapshot.js');
+          const baseRevision = createProjectSnapshot(project).projectRevision;
+          return hashRevision({baseRevision, animationKeyframes: keyframeRevisionSnapshot()});
+        }
+
+        function preflight(operations) {
+          const simulated = new Map();
+          for (const animation of animations()) {
+            const id = idOf(animation);
+            if (!id) continue;
+            const keyframes = new Map();
+            for (const animator of animatorsOf(animation)) {
+              for (const keyframe of array(animator.keyframes)) {
+                const keyframeId = idOf(keyframe);
+                if (keyframeId) keyframes.set(keyframeId, {targetId: idOf(animator), channel: keyframe.channel});
+              }
+            }
+            simulated.set(id, {
+              id,
+              name: typeof animation.name === 'string' ? animation.name : '',
+              length: Number.isFinite(animation.length) ? animation.length : 0,
+              keyframes,
+            });
+          }
+
+          function animationNameExists(name, excludeId = null) {
+            const wanted = String(name).toLowerCase();
+            return [...simulated.values()].some((entry) => entry.id !== excludeId && entry.name.toLowerCase() === wanted);
+          }
+
+          for (const operation of operations) {
+            switch (operation.type) {
+              case 'animation_create':
+                if (simulated.has(operation.id)) fail('DUPLICATE_ANIMATION_ID', `Animation id "${operation.id}" already exists.`);
+                if (animationNameExists(operation.name)) fail('DUPLICATE_ANIMATION_NAME', `Animation name "${operation.name}" already exists.`);
+                simulated.set(operation.id, {
+                  id: operation.id,
+                  name: operation.name,
+                  length: operation.length,
+                  keyframes: new Map(),
+                });
+                break;
+              case 'animation_update_settings': {
+                const animation = simulated.get(operation.animationId);
+                if (!animation) fail('ANIMATION_NOT_FOUND', `Animation "${operation.animationId}" does not exist.`);
+                if (operation.name !== undefined && animationNameExists(operation.name, operation.animationId)) {
+                  fail('DUPLICATE_ANIMATION_NAME', `Animation name "${operation.name}" already exists.`);
+                }
+                if (operation.name !== undefined) animation.name = operation.name;
+                if (operation.length !== undefined) animation.length = operation.length;
+                break;
+              }
+              case 'animation_delete':
+                if (!simulated.has(operation.animationId)) fail('ANIMATION_NOT_FOUND', `Animation "${operation.animationId}" does not exist.`);
+                simulated.delete(operation.animationId);
+                break;
+              case 'animation_add_keyframe': {
+                const animation = simulated.get(operation.animationId);
+                if (!animation) fail('ANIMATION_NOT_FOUND', `Animation "${operation.animationId}" does not exist.`);
+                requireTarget(operation.targetId);
+                if (animation.keyframes.has(operation.keyframeId)) {
+                  fail('DUPLICATE_KEYFRAME_ID', `Keyframe "${operation.keyframeId}" already exists in animation "${operation.animationId}".`);
+                }
+                if (operation.time > animation.length) {
+                  fail('KEYFRAME_OUTSIDE_ANIMATION', `Keyframe time ${operation.time} exceeds animation length ${animation.length}.`);
+                }
+                animation.keyframes.set(operation.keyframeId, {targetId: operation.targetId, channel: operation.channel});
+                break;
+              }
+              case 'animation_update_keyframe': {
+                const animation = simulated.get(operation.animationId);
+                if (!animation) fail('ANIMATION_NOT_FOUND', `Animation "${operation.animationId}" does not exist.`);
+                requireTarget(operation.targetId);
+                if (!animation.keyframes.has(operation.keyframeId)) {
+                  fail('KEYFRAME_NOT_FOUND', `Keyframe "${operation.keyframeId}" does not exist in animation "${operation.animationId}".`);
+                }
+                if (operation.time > animation.length) {
+                  fail('KEYFRAME_OUTSIDE_ANIMATION', `Keyframe time ${operation.time} exceeds animation length ${animation.length}.`);
+                }
+                animation.keyframes.set(operation.keyframeId, {targetId: operation.targetId, channel: operation.channel});
+                break;
+              }
+              case 'animation_delete_keyframe': {
+                const animation = simulated.get(operation.animationId);
+                if (!animation) fail('ANIMATION_NOT_FOUND', `Animation "${operation.animationId}" does not exist.`);
+                if (!animation.keyframes.has(operation.keyframeId)) {
+                  fail('KEYFRAME_NOT_FOUND', `Keyframe "${operation.keyframeId}" does not exist in animation "${operation.animationId}".`);
+                }
+                animation.keyframes.delete(operation.keyframeId);
+                break;
+              }
+              case 'animation_add_effect_marker':
+              case 'animation_delete_effect_marker':
+                fail('PROVIDER_ADAPTER_REQUIRED', 'Abstract PR5 effect markers require a provider adapter before Blockbench serialization.');
+                break;
+              default:
+                fail('UNSUPPORTED_ANIMATION_OPERATION', `Animation operation "${operation.type}" is not supported by the Blockbench adapter.`);
+            }
+          }
+          return true;
+        }
+
+        function undoAspects() {
+          return {
+            animations: animations().slice(),
+            keyframes: allKeyframes().slice(),
+          };
+        }
+
+        function beginTransaction() {
+          if (transactionOpen) fail('TRANSACTION_ALREADY_OPEN', 'A Blockbench Undo transaction is already open.');
+          bb.Undo.initEdit(undoAspects());
+          transactionOpen = true;
+        }
+
+        function finishTransaction(label) {
+          if (!transactionOpen) fail('NO_ACTIVE_TRANSACTION', 'No Blockbench Undo transaction is open.');
+          bb.Undo.finishEdit(label, undoAspects());
+          transactionOpen = false;
+        }
+
+        function cancelTransaction(revert) {
+          if (!transactionOpen) return;
+          try {
+            bb.Undo.cancelEdit(revert === true);
+          } finally {
+            transactionOpen = false;
+          }
+        }
+
+        function addKeyframe(animation, operation) {
+          const target = requireTarget(operation.targetId);
+          if (typeof animation.getBoneAnimator !== 'function') {
+            fail('BLOCKBENCH_API_UNAVAILABLE', 'Animation.getBoneAnimator() is unavailable.');
+          }
+          const animator = animation.getBoneAnimator(target);
+          if (!animator || typeof animator.addKeyframe !== 'function') {
+            fail('ANIMATION_TARGET_UNSUPPORTED', `Target "${operation.targetId}" does not expose a mutable animation channel.`);
+          }
+          const keyframe = animator.addKeyframe({
+            channel: operation.channel,
+            time: operation.time,
+            interpolation: operation.easing,
+            data_points: [{x: operation.value[0], y: operation.value[1], z: operation.value[2]}],
+          }, operation.keyframeId);
+          if (!keyframe) fail('KEYFRAME_CREATE_FAILED', `Blockbench did not create keyframe "${operation.keyframeId}".`);
+          return idOf(keyframe) || operation.keyframeId;
+        }
+
+        function applyOperation(operation) {
+          switch (operation.type) {
+            case 'animation_create': {
+              const animation = new bb.Animation({
+                uuid: operation.id,
+                name: operation.name,
+                length: operation.length,
+                loop: operation.loop,
+              });
+              if (typeof animation.add !== 'function') fail('BLOCKBENCH_API_UNAVAILABLE', 'Animation.add() is unavailable.');
+              animation.add(false);
+              return idOf(animation) || operation.id;
+            }
+            case 'animation_update_settings': {
+              const animation = requireAnimation(operation.animationId);
+              if (operation.name !== undefined) animation.name = operation.name;
+              if (operation.length !== undefined) {
+                if (typeof animation.setLength !== 'function') fail('BLOCKBENCH_API_UNAVAILABLE', 'Animation.setLength() is unavailable.');
+                animation.setLength(operation.length);
+              }
+              if (operation.loop !== undefined) {
+                if (typeof animation.setLoop !== 'function') fail('BLOCKBENCH_API_UNAVAILABLE', 'Animation.setLoop() is unavailable.');
+                animation.setLoop(operation.loop, false);
+              }
+              return idOf(animation) || operation.animationId;
+            }
+            case 'animation_delete': {
+              const animation = requireAnimation(operation.animationId);
+              if (typeof animation.remove !== 'function') fail('BLOCKBENCH_API_UNAVAILABLE', 'Animation.remove() is unavailable.');
+              animation.remove(false);
+              return operation.animationId;
+            }
+            case 'animation_add_keyframe':
+              return addKeyframe(requireAnimation(operation.animationId), operation);
+            case 'animation_update_keyframe': {
+              const animation = requireAnimation(operation.animationId);
+              const found = findKeyframe(animation, operation.keyframeId);
+              if (!found) fail('KEYFRAME_NOT_FOUND', `Keyframe "${operation.keyframeId}" does not exist.`);
+              if (typeof found.keyframe.remove !== 'function') fail('BLOCKBENCH_API_UNAVAILABLE', 'Keyframe.remove() is unavailable.');
+              found.keyframe.remove();
+              return addKeyframe(animation, operation);
+            }
+            case 'animation_delete_keyframe': {
+              const animation = requireAnimation(operation.animationId);
+              const found = findKeyframe(animation, operation.keyframeId);
+              if (!found) fail('KEYFRAME_NOT_FOUND', `Keyframe "${operation.keyframeId}" does not exist.`);
+              if (typeof found.keyframe.remove !== 'function') fail('BLOCKBENCH_API_UNAVAILABLE', 'Keyframe.remove() is unavailable.');
+              found.keyframe.remove();
+              return operation.keyframeId;
+            }
+            case 'animation_add_effect_marker':
+            case 'animation_delete_effect_marker':
+              fail('PROVIDER_ADAPTER_REQUIRED', 'Abstract PR5 effect markers require a provider adapter before Blockbench serialization.');
+              break;
+            default:
+              fail('UNSUPPORTED_ANIMATION_OPERATION', `Animation operation "${operation.type}" is not supported by the Blockbench adapter.`);
+          }
+          return null;
+        }
+
+        function selectPreviewAnimation(request) {
+          const animation = requireAnimation(request.animationId);
+          if (request.time > animation.length) {
+            fail('PREVIEW_TIME_OUT_OF_RANGE', `Preview time ${request.time} exceeds animation length ${animation.length}.`);
+          }
+          if (typeof animation.select !== 'function') fail('BLOCKBENCH_API_UNAVAILABLE', 'Animation.select() is unavailable.');
+          animation.select();
+          animation.time = request.time;
+          bb.Animator.preview(false);
+          return animation;
+        }
+
+        function playPreview(request) {
+          const animation = selectPreviewAnimation(request);
+          if (typeof animation.togglePlayingState === 'function') animation.togglePlayingState(true);
+          return Object.freeze({ok: true, animationId: request.animationId, time: request.time});
+        }
+
+        function stopPreview() {
+          const animation = bb.Animation.selected || null;
+          if (animation && typeof animation.togglePlayingState === 'function') animation.togglePlayingState(false);
+          if (typeof bb.Animator.showDefaultPose === 'function') bb.Animator.showDefaultPose(false);
+          return Object.freeze({ok: true, animationId: animation ? idOf(animation) : null});
+        }
+
+        function inspectPose(request) {
+          selectPreviewAnimation(request);
+          const targets = {};
+          for (const group of groups()) {
+            const targetId = idOf(group);
+            if (!targetId || !group.mesh) continue;
+            targets[targetId] = Object.freeze({
+              position: Object.freeze(vector3FromObject(group.mesh.position, [0, 0, 0])),
+              rotation: Object.freeze(vector3FromObject(group.mesh.rotation, [0, 0, 0])),
+              scale: Object.freeze(vector3FromObject(group.mesh.scale, [1, 1, 1])),
+            });
+          }
+          return Object.freeze({
+            animationId: request.animationId,
+            time: request.time,
+            targets: Object.freeze(targets),
+          });
+        }
+
+        function capturePose(request) {
+          selectPreviewAnimation(request);
+          const presets = array(bb.DefaultCameraPresets);
+          const preset = presets.find((entry) => entry && entry.id === request.cameraPreset);
+          if (!preset) fail('CAMERA_PRESET_NOT_FOUND', `Camera preset "${request.cameraPreset}" is not available.`);
+          const preview = bb?.Preview?.selected;
+          if (!preview || typeof preview.loadAnglePreset !== 'function') {
+            fail('BLOCKBENCH_API_UNAVAILABLE', 'Preview.selected.loadAnglePreset() is unavailable.');
+          }
+          if (!bb.Screencam || typeof bb.Screencam.screenshotPreview !== 'function') {
+            fail('BLOCKBENCH_API_UNAVAILABLE', 'Screencam.screenshotPreview() is unavailable.');
+          }
+          preview.loadAnglePreset(preset);
+          return new Promise((resolve, reject) => {
+            try {
+              bb.Screencam.screenshotPreview(preview, {
+                width: request.resolution[0],
+                height: request.resolution[1],
+              }, (dataUrl) => {
+                resolve(Object.freeze({
+                  ok: true,
+                  animationId: request.animationId,
+                  time: request.time,
+                  cameraPreset: request.cameraPreset,
+                  resolution: Object.freeze(request.resolution.slice()),
+                  dataUrl,
+                }));
+              });
+            } catch (error) {
+              reject(error);
+            }
+          });
+        }
+
+        return Object.freeze({
+          getRevision,
+          preflight,
+          beginTransaction,
+          applyOperation,
+          finishTransaction,
+          cancelTransaction,
+          playPreview,
+          stopPreview,
+          inspectPose,
+          capturePose,
+        });
+      }
+
+      module.exports = {createBlockbenchAnimationAdapter};
+    },
     "blockbench-plugin/plugin_adapter.js": function(module, exports, require) {
       'use strict';
 
       const core = require('../core/index.js');
       const modeling = require('./modeling_adapter.js');
       const uvTexture = require('./uv_texture_adapter.js');
+      const animation = require('./animation_adapter.js');
 
       function registerBlockbenchPlugin(bb) {
         let auditAction = null;
         let profileAction = null;
         let modelingMutationAction = null;
         let uvTextureMutationAction = null;
+        let animationMutationAction = null;
         let bridgeConnectAction = null;
         let bridgeDisconnectAction = null;
         let bridgeStatusAction = null;
@@ -3563,9 +4472,9 @@
         bb.Plugin.register('rpg_asset_toolkit', {
           title: 'Minecraft Mod Factory Asset Toolkit',
           author: 'Gustavaopere',
-          description: 'Structural/provider-aware asset QA with bounded local modeling/rig and UV/texture mutations plus an optional authenticated read-only desktop-local MCP Live Bridge.',
+          description: 'Structural/provider-aware asset QA with bounded local modeling/rig, UV/texture, and generic animation mutations plus an optional authenticated read-only desktop-local MCP Live Bridge.',
           icon: 'fact_check',
-          version: '0.5.0',
+          version: '0.6.0',
           min_version: '5.1.6',
           variant: 'both',
           tags: ['Minecraft: Java Edition'],
@@ -3653,6 +4562,38 @@
                 },
               }));
 
+              animationMutationAction = addToolAction(new bb.Action('rpg_asset_toolkit_animation_batch', {
+                name: 'Apply RPG Generic Animation Batch',
+                description: 'Apply bounded provider-neutral animation/keyframe mutations locally with expected-revision checks, preflight, Undo, and rollback. Provider-specific effect-marker serialization remains unavailable here and remote MCP stays read-only.',
+                icon: 'animation',
+                click() {
+                  try {
+                    const adapter = animation.createBlockbenchAnimationAdapter(bb);
+                    const template = JSON.stringify({
+                      expectedRevision: adapter.getRevision(),
+                      dryRun: true,
+                      label: 'Minecraft Mod Factory Asset Toolkit Generic Animation Batch',
+                      operations: [],
+                    }, null, 2);
+                    bb.Blockbench.textPrompt('RPG Generic Animation Mutation Batch (JSON)', template, (text) => {
+                      try {
+                        const result = core.applyAnimationBatch(adapter, JSON.parse(text));
+                        bb.Blockbench.showMessageBox({
+                          title: 'Minecraft Mod Factory Asset Toolkit — Generic Animation Batch',
+                          icon: 'check_circle',
+                          message: JSON.stringify(result, null, 2).slice(0, 4096),
+                          buttons: ['OK'],
+                        });
+                      } catch (error) {
+                        showError('Minecraft Mod Factory Asset Toolkit — Generic Animation Batch Failed', error);
+                      }
+                    });
+                  } catch (error) {
+                    showError('Minecraft Mod Factory Asset Toolkit — Generic Animation Batch Unavailable', error);
+                  }
+                },
+              }));
+
               bridgeConnectAction = addToolAction(new bb.Action('rpg_asset_toolkit_live_bridge_connect', {
                 name: 'Connect Minecraft Mod Factory Asset MCP (Read-only)',
                 description: 'Connect this desktop Blockbench session to the authenticated numeric-loopback Minecraft Mod Factory Asset MCP sidecar.',
@@ -3711,13 +4652,23 @@
               try { void bridgeRuntime.connection.disconnect(); } catch (_) { /* best effort during plugin unload */ }
             }
             bridgeRuntime = null;
-            for (const action of [auditAction, profileAction, modelingMutationAction, uvTextureMutationAction, bridgeConnectAction, bridgeDisconnectAction, bridgeStatusAction]) {
+            for (const action of [
+              auditAction,
+              profileAction,
+              modelingMutationAction,
+              uvTextureMutationAction,
+              animationMutationAction,
+              bridgeConnectAction,
+              bridgeDisconnectAction,
+              bridgeStatusAction,
+            ]) {
               if (action) action.delete();
             }
             auditAction = null;
             profileAction = null;
             modelingMutationAction = null;
             uvTextureMutationAction = null;
+            animationMutationAction = null;
             bridgeConnectAction = null;
             bridgeDisconnectAction = null;
             bridgeStatusAction = null;
@@ -3729,6 +4680,7 @@
         registerBlockbenchPlugin,
         createBlockbenchModelingAdapter: modeling.createBlockbenchModelingAdapter,
         createBlockbenchUvTextureAdapter: uvTexture.createBlockbenchUvTextureAdapter,
+        createBlockbenchAnimationAdapter: animation.createBlockbenchAnimationAdapter,
       };
     }
   };
