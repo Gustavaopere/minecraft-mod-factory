@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "migration_wave": "M4_VISUAL_STYLE_PROVENANCE",
+  "classification": "MIGRATE_ADAPTED",
+  "source_repository": "Gustavaopere/neoforge-rpg-skilltree",
+  "source_revision": "2ecea4178aa7ac80f99955ab045e296da25376ec",
+  "destination_repository": "Gustavaopere/minecraft-mod-factory",
+  "destination_authority": "art/",
+  "physical_snapshot": {
+    "date": "2026-09-09",
+    "sha256": "7c0a23d6013101383d196526e4b6ba6940fb54a0fed10eaed5956ab015cfcc00",
+    "authority": "external physical modlist snapshot",
+    "providers": {
+      "photon": {"presence": "PRESENT", "version": "2.2.6.a", "state": "CONFIRMED"},
+      "geckolib": {"presence": "PRESENT", "version": "4.9.2", "state": "CONFIRMED"},
+      "irons_spellbooks": {"presence": "PRESENT", "version": "1.21.1-3.16.3", "state": "CONFIRMED"},
+      "playeranimator": {"presence": "PRESENT", "version": "2.0.4+1.21.1", "state": "CONFIRMED"},
+      "aaa_particles": {"presence": "ABSENT", "version": "UNRESOLVED", "state": "UNAVAILABLE"},
+      "aaa_particles_world": {"presence": "ABSENT", "version": "UNRESOLVED", "state": "UNAVAILABLE"}
+    }
+  },
+  "context_snapshots": [
+    {
+      "source": "Auditoria Mestre da Modlist — NeoForge 1.21.1",
+      "date": "2026-09-08",
+      "state": "REFERENCE_ONLY",
+      "scope": "historical editorial resource-pack/shader and visual composition context; not current physical presence authority"
+    }
+  ],
+  "files": [
+    {
+      "source": "docs/art/VISUAL-STYLE-BIBLE.md",
+      "source_blob_sha": "85d437d2e16f77f2024bb5333dd742dcd8e44f14",
+      "destination": "art/VISUAL-STYLE-BIBLE.md",
+      "adaptation_mode": "SEPARATE_REUSABLE_GRAMMAR_FROM_HISTORICAL_PACK_CONTEXT"
+    },
+    {
+      "source": "PROJECT-INSTRUCTIONS/skills/ART-PIPELINE-SOURCES.md",
+      "source_blob_sha": "44a814300a413edc0ab18efb37d7f5af49ec8332",
+      "destination": "art/provenance/ART-PIPELINE-SOURCES.md",
+      "adaptation_mode": "REBASE_AUTHORITY_AND_PATHS_PRESERVE_HISTORICAL_UPSTREAM_EVIDENCE"
+    },
+    {
+      "source": "PROJECT-INSTRUCTIONS/skills/VISUAL-STYLE-SOURCES.md",
+      "source_blob_sha": "8a18d1d277dd9e40d5e87c15f0793548ac4e5e7a",
+      "destination": "art/provenance/VISUAL-STYLE-SOURCES.md",
+      "adaptation_mode": "MARK_EDITORIAL_PACK_FACTS_REFERENCE_ONLY_AND_REBASE_PHYSICAL_AUTHORITY"
+    },
+    {
+      "source": "PROJECT-INSTRUCTIONS/skills/SPELL-VFX-AUDIO-SOURCES.md",
+      "source_blob_sha": "b50bfe68d929a2455f83d882ab675c31b37a04e1",
+      "destination": "art/provenance/SPELL-VFX-AUDIO-SOURCES.md",
+      "adaptation_mode": "REVALIDATE_PROVIDER_PRESENCE_AGAINST_2026_09_09_PHYSICAL_SNAPSHOT"
+    }
+  ]
+}
