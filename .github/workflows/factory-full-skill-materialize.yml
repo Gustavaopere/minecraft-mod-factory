@@ -60,6 +60,9 @@ jobs:
       - name: Validate M5 naming before commit
         run: python -m unittest migration/full-skill-migration/test_m5_naming.py -v
 
+      - name: Validate M6 Golden Sample relocation before commit
+        run: python -m unittest migration/full-skill-migration/test_m6_golden_relocation.py -v
+
       - name: Check generated diff whitespace
         run: git diff --check
 
