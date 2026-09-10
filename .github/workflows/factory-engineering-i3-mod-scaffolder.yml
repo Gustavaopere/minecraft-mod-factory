@@ -12,6 +12,7 @@ on:
       - 'engineering/templates/neoforge-mod/**'
       - 'engineering/tooling/scaffolder/**'
       - 'engineering/tests/test_i3_mod_scaffolder.py'
+      - 'engineering/tests/test_i3_security_review.py'
       - 'engineering/tests/fixtures/i3-*.json'
       - 'engineering/tests/golden/i3-golden-mod/**'
       - '.github/workflows/factory-engineering-i3-mod-scaffolder.yml'
@@ -35,7 +36,10 @@ jobs:
           java-version: '21'
 
       - name: Run I3 scaffolder contract tests
-        run: python3 -m unittest engineering/tests/test_i3_mod_scaffolder.py
+        run: >-
+          python3 -m unittest
+          engineering/tests/test_i3_mod_scaffolder.py
+          engineering/tests/test_i3_security_review.py
 
       - name: Generate project from canonical fixtures
         run: >-
