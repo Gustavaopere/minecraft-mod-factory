@@ -31,6 +31,11 @@ jobs:
           python-version: '3.11'
       - name: Run C1 preservation contract tests
         run: python3 -m unittest construction/tests/test_c1_schematica_preservation.py -v
+      - name: Verify Schematica gitlink mode and pin
+        run: |
+          expected=$'160000 0c88770005e7bbd7246997c81e810ba935c8e4cf 0\tconstruction/upstream/snapshots/schematica'
+          actual="$(git ls-files --stage -- construction/upstream/snapshots/schematica)"
+          test "$actual" = "$expected"
       - name: Verify Schematica checkout pin
         run: test "$(git -C construction/upstream/snapshots/schematica rev-parse HEAD)" = "0c88770005e7bbd7246997c81e810ba935c8e4cf"
       - name: Install Schematica with upstream dev dependencies

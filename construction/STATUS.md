@@ -1,7 +1,7 @@
 # STATUS — Construction
 
 UPDATED_AT=2026-09-10
-PHASE=C1_SCHEMATICA_PRESERVATION_PR_OPEN_PENDING_FINAL_CI
+PHASE=C1_SCHEMATICA_PRESERVATION_SONAR_FIX_PENDING_GREEN
 REPOSITORY=Gustavaopere/minecraft-mod-factory
 BRANCH=feat/construction-c1-schematica-upstream
 BASE_SHA=8e65289223d4b8a5728fa735a6d72b30a5e4b52e
@@ -18,6 +18,11 @@ C1_FIRST_INTEGRATION_RESULT=492_PASS_6_FAIL_MISSING_SCIPY
 C1_GREEN_HEAD=868f0de33607eb4cad6112b4a37f2bdcb35b1a0d
 C1_GREEN_RUN=34522954895
 C1_GREEN_UPSTREAM_TESTS=498_PASS_0_FAIL
+C1_PR_HEAD_BEFORE_SONAR_FIX=ae342148de25a45fa14e94450f1d0102bc53a339
+C1_PR_C0_REGRESSION=PASS
+C1_PR_GOVERNANCE=PASS
+C1_PR_C1_GATE=PASS
+C1_PR_SONARCLOUD=FAIL_SECURITY_RATING_C
 HEAD_SHA=RESOLVE_FROM_GIT
 OPEN_PR=20
 TARGET_MINECRAFT=1.21.1
@@ -25,8 +30,8 @@ TARGET_LOADER=NeoForge
 CANONICAL_OUTPUT=SPONGE_SCHEMATIC_V3
 LATEST_MODLIST_SNAPSHOT=2026-09-09_595_TOP_LEVEL
 MANUAL_ACTION_REQUIRED=NO
-BLOCKERS=NONE
-NEXT_ACTION=REVALIDATE_FINAL_PR_HEAD_THEN_MERGE_IF_ALL_GATES_PASS
+BLOCKERS=SONARCLOUD_SECURITY_RATING_PENDING_REVALIDATION
+NEXT_ACTION=REVALIDATE_FIXED_LITERAL_GITLINK_GATE_ON_FINAL_PR_HEAD
 
 ## C1A target
 
@@ -41,6 +46,10 @@ UPSTREAM_LICENSE_DECLARATION=MIT
 TEST_HARNESS_PYTHON=3.11
 TEST_HARNESS_SCIPY=1.17.1
 
+## Sonar remediation
+
+The Python preservation contract no longer constructs or executes Git subprocess arguments. Gitlink mode/SHA verification remains a required CI gate using a fixed literal Git command and exact expected index row. No Sonar exclusion is added and no upstream Schematica source is modified.
+
 ## C1A acceptance
 
 - [x] upstream commit independently resolves on GitHub
@@ -53,7 +62,10 @@ TEST_HARNESS_SCIPY=1.17.1
 - [x] gitlink SHA equals audited upstream pin
 - [x] Factory-owned missing-SciPy test supplement is outside the submodule
 - [x] upstream native tests pass unchanged: 498/498
-- [ ] Factory C0 regression remains green on final PR head
-- [ ] C1 PR CI passes on final PR head
-- [ ] Governance passes on final PR head
-- [ ] SonarCloud passes on final PR head
+- [x] prior final-head C0 regression passed
+- [x] prior final-head C1 gate passed
+- [x] prior final-head Governance passed
+- [ ] fixed-head C0 regression passes
+- [ ] fixed-head C1 gate passes
+- [ ] fixed-head Governance passes
+- [ ] fixed-head SonarCloud passes
