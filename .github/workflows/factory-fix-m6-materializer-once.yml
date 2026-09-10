@@ -1,0 +1,62 @@
+name: Factory Fix M6 Materializer Once
+
+on:
+  push:
+    branches:
+      - feat/full-skill-migration
+    paths:
+      - '.github/workflows/factory-fix-m6-materializer-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-materializer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout Factory branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch only frozen M6 relocation rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('migration/full-skill-migration/migrate.py')
+          text = path.read_text(encoding='utf-8')
+          anchor = '''    if relative == "scripts/validate_golden_reference_rendered_edges.js":
+              text = text.replace("path.resolve(__dirname, '..', 'golden-samples')", "path.resolve(__dirname, '..', '..', 'golden-samples')")
+          '''
+          addition = '''    if relative == "golden-samples/validate_golden_samples.js":
+              text = text.replace("../art/tooling/blockbench/asset-toolkit/asset_toolkit.js", "../tooling/blockbench/asset-toolkit/asset_toolkit.js")
+              if "../art/tooling/blockbench/asset-toolkit/asset_toolkit.js" in text:
+                  raise RuntimeError("M6 golden validator relocation remained unresolved")
+          if relative == "golden-samples/validate_reference_evidence.js":
+              text = text.replace("../scripts/validate_golden_reference_rendered_edges.js", "../tooling/validators/validate_golden_reference_rendered_edges.js")
+              if "../scripts/validate_golden_reference_rendered_edges.js" in text:
+                  raise RuntimeError("M6 evidence validator relocation remained unresolved")
+          '''
+          if text.count(anchor) != 1:
+              raise SystemExit(f'expected exactly one M6 insertion anchor, found {text.count(anchor)}')
+          if 'golden-samples/validate_golden_samples.js' in text or 'golden-samples/validate_reference_evidence.js' in text:
+              raise SystemExit('M6 relocation rules already present; refusing duplicate patch')
+          path.write_text(text.replace(anchor, anchor + addition, 1), encoding='utf-8')
+          PY
+          python -m py_compile migration/full-skill-migration/migrate.py
+          git diff --check
+
+      - name: Commit source fix and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/factory-fix-m6-materializer-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add migration/full-skill-migration/migrate.py .github/workflows/factory-fix-m6-materializer-once.yml
+          git commit -m 'fix(migration): relocate M6 Golden Sample imports'
+          git push origin HEAD:feat/full-skill-migration
