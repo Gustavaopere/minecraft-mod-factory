@@ -1,0 +1,35 @@
+name: Factory Art PR6 GeckoLib 4 Adapter
+
+on:
+  push:
+    branches:
+      - feat/art-pr6-geckolib4-adapter
+  pull_request:
+    paths:
+      - 'art/tooling/blockbench/asset-toolkit/**'
+      - '.github/workflows/factory-art-pr6-geckolib4-adapter.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  geckolib4-adapter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: PR6 GeckoLib 4 provider contract
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node --test asset_toolkit.geckolib4_adapter.test.js
+      - name: Existing generic animation regressions
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node --test asset_toolkit.animation_core.test.js asset_toolkit.animation_adapter.test.js
+      - name: Standalone bundle reproducibility
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node build_toolkit_bundle.js --check
+      - name: Whitespace
+        run: git diff --check HEAD^ -- art/tooling/blockbench/asset-toolkit .github/workflows/factory-art-pr6-geckolib4-adapter.yml
