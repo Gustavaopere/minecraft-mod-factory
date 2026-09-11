@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "identity": {
+    "name": "Factory Construction Registry Probe",
+    "mod_id": "factory_construction_registry_probe",
+    "repository": "Gustavaopere/minecraft-mod-factory",
+    "target": {
+      "minecraft": "1.21.1",
+      "loader": "neoforge",
+      "neoforge": "21.1.248",
+      "java": 21
+    }
+  },
+  "purpose": {
+    "fantasy": "Factory-owned runtime probe used only to export the exact NeoForge block registry for Construction C4.",
+    "player_problem": "Provide authoritative runtime block and block-state existence data for the exact physical modpack environment.",
+    "core_loop": [
+      "Start the exact NeoForge environment",
+      "Observe the post-registry block registry",
+      "Write the normalized runtime snapshot"
+    ],
+    "non_goals": [
+      "Gameplay content",
+      "Palette selection",
+      "Schematic export",
+      "Provider-specific behavior"
+    ]
+  },
+  "dependencies": {
+    "required": ["neoforge"],
+    "optional": [],
+    "incompatible": [],
+    "profiles": []
+  },
+  "systems": {
+    "blocks": [],
+    "items": [],
+    "machines": [],
+    "entities": [],
+    "worldgen": [],
+    "ui": [],
+    "networking": [],
+    "progression": [],
+    "integrations": []
+  },
+  "visual": {
+    "repo_textura_package": "UNRESOLVED",
+    "provider_profiles": [],
+    "required_assets": [],
+    "handoff_manifest": "UNRESOLVED"
+  },
+  "data": {
+    "persistence": [],
+    "recipes": [],
+    "tags": [],
+    "data_maps": [],
+    "configs": []
+  },
+  "testing": {
+    "unit": "IMPLEMENTED",
+    "gametest": "DEFERRED",
+    "client": "DEFERRED",
+    "dedicated_server": "PENDING",
+    "multiplayer": "DEFERRED",
+    "performance": "PENDING",
+    "manifest": "construction/schemas/modpack-registry.schema.json"
+  },
+  "release": {
+    "versioning": "0.1.0",
+    "distribution": ["FACTORY_INTERNAL_ONLY"],
+    "license": "MIT",
+    "state": "REFERENCE_ONLY"
+  },
+  "evidence": {
+    "state": "IMPLEMENTED",
+    "sources": [
+      "engineering/tooling/scaffolder/scaffold_mod.py",
+      "construction/tests/test_c4_runtime_registry_probe.py"
+    ],
+    "open_questions": []
+  }
+}

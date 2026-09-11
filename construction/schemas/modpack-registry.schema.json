@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://minecraft-mod-factory.local/schemas/modpack-registry.schema.json",
+  "title": "Minecraft Mod Factory Construction Modpack Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "physical",
+    "runtime",
+    "static_index",
+    "blocks",
+    "content_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "physical": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "captured_at",
+        "source_name",
+        "source_sha256",
+        "loader_version",
+        "top_level_mods",
+        "nested_mods",
+        "total_entries",
+        "provider_count",
+        "unidentified_entries"
+      ],
+      "properties": {
+        "captured_at": {"type": "string", "minLength": 1},
+        "source_name": {"type": "string", "minLength": 1},
+        "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "loader_version": {"type": "string", "minLength": 1},
+        "top_level_mods": {"type": "integer", "minimum": 0},
+        "nested_mods": {"type": "integer", "minimum": 0},
+        "total_entries": {"type": "integer", "minimum": 0},
+        "provider_count": {"type": "integer", "minimum": 0},
+        "unidentified_entries": {"type": "integer", "minimum": 0}
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["captured_at", "physical_snapshot_sha256", "target"],
+      "properties": {
+        "captured_at": {"type": "string", "minLength": 1},
+        "physical_snapshot_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["minecraft", "loader", "loader_version"],
+          "properties": {
+            "minecraft": {"const": "1.21.1"},
+            "loader": {"const": "neoforge"},
+            "loader_version": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "static_index": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["jar_count", "nested_jar_count", "discovered_block_count"],
+      "properties": {
+        "jar_count": {"type": "integer", "minimum": 0},
+        "nested_jar_count": {"type": "integer", "minimum": 0},
+        "discovered_block_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "blocks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "available", "authority", "static_discovered", "states", "safety"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9_.-]+:[a-z0-9_./-]+$"
+          },
+          "available": {"type": "boolean"},
+          "authority": {
+            "enum": ["runtime_confirmed", "static_only_unconfirmed"]
+          },
+          "static_discovered": {"type": "boolean"},
+          "states": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {"type": "string"}
+            }
+          },
+          "safety": {
+            "enum": [
+              "ordinary",
+              "stateful",
+              "connected_or_multipart",
+              "material_bearing",
+              "block_entity",
+              "dynamic_renderer",
+              "functional_machine",
+              "unknown"
+            ]
+          }
+        }
+      }
+    },
+    "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}
