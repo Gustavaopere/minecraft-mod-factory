@@ -1,0 +1,23 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.factory_azurelib_test",
+        "texture_width": 16,
+        "texture_height": 16
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [0, 0, 0]
+        },
+        {
+          "name": "child",
+          "parent": "root",
+          "pivot": [0, 4, 0]
+        }
+      ]
+    }
+  ]
+}
