@@ -27,6 +27,7 @@ TOP_LEVEL_KEYS = {
     "blocks",
     "metadata",
 }
+IDENTITY_KEYS = {"name", "seed", "description"}
 
 
 class BuildIRError(ValueError):
@@ -246,10 +247,14 @@ def validate_build_ir(build_ir: Any) -> list[str]:
     if not isinstance(identity, dict):
         errors.append("identity must be an object")
     else:
+        if set(identity) - IDENTITY_KEYS:
+            errors.append("identity fields do not match the C2 contract")
         if not isinstance(identity.get("name"), str) or not identity.get("name"):
             errors.append("identity.name must be a non-empty string")
         if not _is_int(identity.get("seed")):
             errors.append("identity.seed must be an integer")
+        if "description" in identity and not isinstance(identity["description"], str):
+            errors.append("identity.description must be a string")
 
     target = build_ir.get("target")
     if not isinstance(target, dict):
