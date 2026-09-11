@@ -50,7 +50,7 @@ jobs:
               raise SystemExit('source path call anchor not found')
           path.write_text(text, encoding='utf-8')
           PY
-          node art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js
+          node art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js --write
           git diff --check -- art/tooling/blockbench/asset-toolkit
           if git diff --quiet -- art/tooling/blockbench/asset-toolkit/core/provider-adapter/geckolib4_adapter.js art/tooling/blockbench/asset-toolkit/asset_toolkit.js; then
             exit 0
