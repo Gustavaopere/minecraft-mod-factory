@@ -1,0 +1,100 @@
+name: Factory Art PR11 Finalize
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - feat/art-pr11-animated-java
+    paths:
+      - '.github/workflows/factory-art-pr11-finalize.yml'
+
+jobs:
+  finalize:
+    if: ${{ !contains(github.event.head_commit.message, '[skip pr11-finalizer]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR11 branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/art-pr11-animated-java
+          fetch-depth: 2
+      - name: Provision Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Integrate Animated Java modules
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              if text.count(old) != 1:
+                  raise SystemExit(f'{path}: expected one occurrence of {old!r}, found {text.count(old)}')
+              p.write_text(text.replace(old, new, 1))
+
+          replace_once(
+              'art/tooling/blockbench/asset-toolkit/core/index.js',
+              "const emfCem = require('./provider-adapter/emf_cem_adapter.js');\n",
+              "const emfCem = require('./provider-adapter/emf_cem_adapter.js');\nconst animatedJava = require('./provider-adapter/animated_java_adapter.js');\n",
+          )
+          replace_once(
+              'art/tooling/blockbench/asset-toolkit/core/index.js',
+              '  emfCem,\n);',
+              '  emfCem,\n  animatedJava,\n);',
+          )
+
+          replace_once(
+              'art/tooling/blockbench/asset-toolkit/blockbench-plugin/plugin_adapter.js',
+              "const emfCem = require('./emf_cem_adapter.js');\n",
+              "const emfCem = require('./emf_cem_adapter.js');\nconst animatedJava = require('./animated_java_adapter.js');\n",
+          )
+          replace_once(
+              'art/tooling/blockbench/asset-toolkit/blockbench-plugin/plugin_adapter.js',
+              '  createBlockbenchEmfCemAdapter: emfCem.createBlockbenchEmfCemAdapter,\n};',
+              '  createBlockbenchEmfCemAdapter: emfCem.createBlockbenchEmfCemAdapter,\n  createBlockbenchAnimatedJavaAdapter: animatedJava.createBlockbenchAnimatedJavaAdapter,\n};',
+          )
+
+          replace_once(
+              'art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js',
+              "  'core/provider-adapter/emf_cem_adapter.js',\n",
+              "  'core/provider-adapter/emf_cem_adapter.js',\n  'core/provider-adapter/animated_java_adapter.js',\n",
+          )
+          replace_once(
+              'art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js',
+              "  'blockbench-plugin/emf_cem_adapter.js',\n",
+              "  'blockbench-plugin/emf_cem_adapter.js',\n  'blockbench-plugin/animated_java_adapter.js',\n",
+          )
+          PY
+      - name: Regenerate deterministic standalone bundle
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node build_toolkit_bundle.js --write
+      - name: Verify PR11 GREEN before commit
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: |
+          node --test asset_toolkit.animated_java_pr11.test.js
+          node --test \
+            asset_toolkit.provider_expansion.test.js \
+            asset_toolkit.geckolib4_adapter.test.js \
+            asset_toolkit.azurelib3_adapter.test.js \
+            asset_toolkit.neoforge_native_animation_adapter.test.js \
+            asset_toolkit.easy_model_entities_pr9.test.js \
+            asset_toolkit.emf_cem_pr10.test.js
+          node build_toolkit_bundle.js --check
+          git diff --check
+      - name: Commit generated integration
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            art/tooling/blockbench/asset-toolkit/core/index.js \
+            art/tooling/blockbench/asset-toolkit/blockbench-plugin/plugin_adapter.js \
+            art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js \
+            art/tooling/blockbench/asset-toolkit/asset_toolkit.js
+          git commit -m 'feat(art): integrate Animated Java adapter [skip pr11-finalizer]'
+          git push origin HEAD:feat/art-pr11-animated-java
