@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://minecraft-mod-factory.local/schemas/structural-qa-report.schema.json",
+  "title": "Minecraft Mod Factory Construction C7 Structural QA Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "build_spec_sha256",
+    "build_ir_sha256",
+    "registry_fingerprint",
+    "overall_status",
+    "checks",
+    "metrics"
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "position": {
+      "type": "array",
+      "prefixItems": [
+        {"type": "integer"},
+        {"type": "integer"},
+        {"type": "integer"}
+      ],
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_.-]*$"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subject": {
+          "type": "string",
+          "minLength": 1
+        },
+        "position": {
+          "$ref": "#/$defs/position"
+        }
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "required",
+        "status",
+        "severity",
+        "summary",
+        "findings"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "bounds",
+            "runtime_state_validity",
+            "head_clearance",
+            "walkable_surface_graph",
+            "circulation_components",
+            "vertical_step_connectivity",
+            "enclosure",
+            "floor_continuity_semantic",
+            "unsupported_placement"
+          ]
+        },
+        "required": {"type": "boolean"},
+        "status": {
+          "enum": ["PASS", "FAIL", "DEFERRED", "NOT_APPLICABLE"]
+        },
+        "severity": {
+          "enum": ["error", "warning", "info"]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "findings": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/finding"}
+        }
+      }
+    }
+  },
+  "properties": {
+    "schema_version": {"const": 1},
+    "build_spec_sha256": {"$ref": "#/$defs/sha256"},
+    "build_ir_sha256": {"$ref": "#/$defs/sha256"},
+    "registry_fingerprint": {
+      "oneOf": [
+        {"$ref": "#/$defs/sha256"},
+        {"type": "null"}
+      ]
+    },
+    "overall_status": {
+      "enum": ["PASS", "FAIL", "DEFERRED"]
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": {"$ref": "#/$defs/check"}
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "occupied_block_count",
+        "supported_foot_cell_count",
+        "clear_foot_cell_count",
+        "blocked_supported_cell_count",
+        "walkable_node_count",
+        "horizontal_edge_count",
+        "vertical_step_edge_count",
+        "walkable_component_count",
+        "component_sizes",
+        "walkable_y_levels"
+      ],
+      "properties": {
+        "occupied_block_count": {"type": "integer", "minimum": 0},
+        "supported_foot_cell_count": {"type": "integer", "minimum": 0},
+        "clear_foot_cell_count": {"type": "integer", "minimum": 0},
+        "blocked_supported_cell_count": {"type": "integer", "minimum": 0},
+        "walkable_node_count": {"type": "integer", "minimum": 0},
+        "horizontal_edge_count": {"type": "integer", "minimum": 0},
+        "vertical_step_edge_count": {"type": "integer", "minimum": 0},
+        "walkable_component_count": {"type": "integer", "minimum": 0},
+        "component_sizes": {
+          "type": "array",
+          "items": {"type": "integer", "minimum": 1}
+        },
+        "walkable_y_levels": {
+          "type": "array",
+          "items": {"type": "integer"},
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}
