@@ -57,22 +57,22 @@
     "configs": []
   },
   "testing": {
-    "unit": "C4_CONTRACT",
-    "gametest": "NOT_REQUIRED_FOR_PROBE_BUILD",
-    "client": "NOT_REQUIRED_FOR_PROBE_BUILD",
-    "dedicated_server": "REQUIRED_FOR_RUNTIME_CAPTURE",
-    "multiplayer": "NOT_REQUIRED_FOR_PROBE_BUILD",
-    "performance": "PENDING_RUNTIME_CAPTURE",
+    "unit": "IMPLEMENTED",
+    "gametest": "DEFERRED",
+    "client": "DEFERRED",
+    "dedicated_server": "PENDING",
+    "multiplayer": "DEFERRED",
+    "performance": "PENDING",
     "manifest": "construction/schemas/modpack-registry.schema.json"
   },
   "release": {
     "versioning": "0.1.0",
     "distribution": ["FACTORY_INTERNAL_ONLY"],
     "license": "MIT",
-    "state": "INTERNAL_TOOLING"
+    "state": "REFERENCE_ONLY"
   },
   "evidence": {
-    "state": "C4_RUNTIME_PROBE",
+    "state": "IMPLEMENTED",
     "sources": [
       "engineering/tooling/scaffolder/scaffold_mod.py",
       "construction/tests/test_c4_runtime_registry_probe.py"
