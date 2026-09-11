@@ -4,8 +4,9 @@ const {isPlainObject} = require('../common/contract_utils.js');
 
 const LOCATOR_OBJECT_FIELDS = new Set(['ignore_inherited_scale', 'offset', 'rotation']);
 
-function nonEmptyString(value, field, fail, code) {
-  if (typeof value !== 'string' || value.length === 0) fail(code, `${field} must be a non-empty string.`);
+function nonEmptyString(value, field, fail, code, trimStrings = false) {
+  const valid = typeof value === 'string' && (trimStrings ? value.trim().length > 0 : value.length > 0);
+  if (!valid) fail(code, `${field} must be a non-empty string.`);
   return value;
 }
 
@@ -29,7 +30,9 @@ function validateLocatorValue(value, field, options) {
   }
   if (!isPlainObject(value)) fail(invalidLocatorCode, `${field} must be a vector or locator object.`);
   for (const key of Object.keys(value)) {
-    if (!LOCATOR_OBJECT_FIELDS.has(key)) fail(invalidLocatorCode, `${field}.${key} is not supported by ${providerLabel}.`);
+    if (!LOCATOR_OBJECT_FIELDS.has(key)) {
+      fail(invalidLocatorCode, `${field}.${key} is not supported by ${providerLabel}.`);
+    }
   }
   if (value.ignore_inherited_scale !== undefined && typeof value.ignore_inherited_scale !== 'boolean') {
     fail(invalidLocatorCode, `${field}.ignore_inherited_scale must be boolean.`);
@@ -48,9 +51,11 @@ function validateGeoDocument(value, options) {
     unsupportedFormatCode,
     invalidLocatorCode,
     invalidStringCode,
+    locatorNameCode = invalidStringCode,
     providerLabel,
     formatVersions,
     rejectRootMetadata,
+    trimStrings = false,
   } = options;
   if (!isPlainObject(value)) fail(invalidDocumentCode, 'Geo document must be an object.');
   if (rejectRootMetadata) rejectRootMetadata(value, 'geometry');
@@ -73,7 +78,7 @@ function validateGeoDocument(value, options) {
       if (bone.locators === undefined) return;
       if (!isPlainObject(bone.locators)) fail(invalidLocatorCode, `bone ${boneIndex}.locators must be an object.`);
       for (const [locatorName, locatorValue] of Object.entries(bone.locators)) {
-        nonEmptyString(locatorName, `bone ${boneIndex} locator name`, fail, invalidStringCode);
+        nonEmptyString(locatorName, `bone ${boneIndex} locator name`, fail, locatorNameCode, trimStrings);
         validateLocatorValue(locatorValue, `bone ${boneIndex}.locators.${locatorName}`, {
           fail,
           invalidLocatorCode,
@@ -87,17 +92,23 @@ function validateGeoDocument(value, options) {
   return Object.freeze({ok: true, formatVersion, geometryCount: geometries.length, locatorCount});
 }
 
-function validateMathScalar(value, field, fail, invalidKeyframeCode) {
+function validateMathScalar(value, field, fail, invalidKeyframeCode, trimStrings = false) {
   if (Number.isFinite(value)) return;
-  if (typeof value === 'string' && value.length > 0) return;
+  if (typeof value === 'string' && (trimStrings ? value.trim().length > 0 : value.length > 0)) return;
   fail(invalidKeyframeCode, `${field} must be a finite number or Molang string.`);
 }
 
-function validateVectorExpression(value, field, fail, invalidKeyframeCode) {
+function validateVectorExpression(value, field, fail, invalidKeyframeCode, trimStrings = false) {
   if (!Array.isArray(value) || value.length !== 3) {
     fail(invalidKeyframeCode, `${field} must contain exactly three values.`);
   }
-  value.forEach((entry, index) => validateMathScalar(entry, `${field}[${index}]`, fail, invalidKeyframeCode));
+  value.forEach((entry, index) => validateMathScalar(
+    entry,
+    `${field}[${index}]`,
+    fail,
+    invalidKeyframeCode,
+    trimStrings,
+  ));
 }
 
 function validateTimestamp(timestamp, field, fail, invalidTimestampCode) {
@@ -108,17 +119,25 @@ function validateTimestamp(timestamp, field, fail, invalidTimestampCode) {
 }
 
 function validateChannel(value, field, options) {
-  const {fail, invalidKeyframeCode, invalidTimestampCode, validateKeyframeLeaf} = options;
+  const {
+    fail,
+    invalidKeyframeCode,
+    invalidTimestampCode,
+    validateKeyframeLeaf,
+    leafIndicatorFields,
+    trimStrings = false,
+  } = options;
   if (value === undefined) return;
-  if (Number.isFinite(value) || (typeof value === 'string' && value.length > 0) || Array.isArray(value)) {
+  if (
+    Number.isFinite(value)
+    || (typeof value === 'string' && (trimStrings ? value.trim().length > 0 : value.length > 0))
+    || Array.isArray(value)
+  ) {
     validateKeyframeLeaf(value, field);
     return;
   }
   if (!isPlainObject(value)) fail(invalidKeyframeCode, `${field} must be a keyframe value or timestamp map.`);
-  if (
-    value.vector !== undefined || value.easing !== undefined || value.easingArgs !== undefined
-    || value.pre !== undefined || value.post !== undefined || value.lerp_mode !== undefined
-  ) {
+  if (leafIndicatorFields.some((key) => value[key] !== undefined)) {
     validateKeyframeLeaf(value, field);
     return;
   }
@@ -133,9 +152,10 @@ function validateEffectChannels(animationName, animation, options) {
     fail,
     invalidEffectsCode,
     invalidTimestampCode,
-    invalidStringCode,
+    effectStringCode = invalidEffectsCode,
     requireParticleEffect = false,
     requireNonEmptyTimeline = false,
+    trimStrings = false,
   } = options;
   const counts = {sound: 0, particle: 0, timeline: 0};
 
@@ -144,7 +164,13 @@ function validateEffectChannels(animationName, animation, options) {
   for (const [timestamp, sound] of Object.entries(sounds)) {
     validateTimestamp(timestamp, `${animationName}.sound_effects`, fail, invalidTimestampCode);
     if (!isPlainObject(sound)) fail(invalidEffectsCode, `${animationName}.sound_effects.${timestamp} must be an object.`);
-    nonEmptyString(sound.effect, `${animationName}.sound_effects.${timestamp}.effect`, fail, invalidStringCode || invalidEffectsCode);
+    nonEmptyString(
+      sound.effect,
+      `${animationName}.sound_effects.${timestamp}.effect`,
+      fail,
+      effectStringCode,
+      trimStrings,
+    );
     counts.sound++;
   }
 
@@ -154,11 +180,25 @@ function validateEffectChannels(animationName, animation, options) {
     validateTimestamp(timestamp, `${animationName}.particle_effects`, fail, invalidTimestampCode);
     if (!isPlainObject(particle)) fail(invalidEffectsCode, `${animationName}.particle_effects.${timestamp} must be an object.`);
     if (requireParticleEffect) {
-      nonEmptyString(particle.effect, `${animationName}.particle_effects.${timestamp}.effect`, fail, invalidEffectsCode);
+      nonEmptyString(
+        particle.effect,
+        `${animationName}.particle_effects.${timestamp}.effect`,
+        fail,
+        effectStringCode,
+        trimStrings,
+      );
     }
     for (const field of ['effect', 'locator', 'pre_effect_script']) {
       if (particle[field] !== undefined && typeof particle[field] !== 'string') {
         fail(invalidEffectsCode, `${animationName}.particle_effects.${timestamp}.${field} must be a string.`);
+      }
+      if (
+        trimStrings
+        && particle[field] !== undefined
+        && typeof particle[field] === 'string'
+        && particle[field].trim().length === 0
+      ) {
+        fail(invalidEffectsCode, `${animationName}.particle_effects.${timestamp}.${field} must be a non-empty string.`);
       }
     }
     counts.particle++;
@@ -168,10 +208,12 @@ function validateEffectChannels(animationName, animation, options) {
   if (!isPlainObject(timeline)) fail(invalidEffectsCode, `${animationName}.timeline must be an object.`);
   for (const [timestamp, instruction] of Object.entries(timeline)) {
     validateTimestamp(timestamp, `${animationName}.timeline`, fail, invalidTimestampCode);
-    const validString = typeof instruction === 'string' && (!requireNonEmptyTimeline || instruction.length > 0);
+    const validString = typeof instruction === 'string'
+      && (!requireNonEmptyTimeline || instruction.length > 0);
     const validArray = Array.isArray(instruction)
       && (!requireNonEmptyTimeline || instruction.length > 0)
-      && instruction.every((entry) => typeof entry === 'string' && (!requireNonEmptyTimeline || entry.length > 0));
+      && instruction.every((entry) => typeof entry === 'string'
+        && (!requireNonEmptyTimeline || entry.length > 0));
     if (!validString && !validArray) {
       fail(invalidEffectsCode, `${animationName}.timeline.${timestamp} must be a string or string array.`);
     }
@@ -191,19 +233,25 @@ function validateAnimationDocument(value, options) {
     invalidKeyframeCode,
     invalidTimestampCode,
     invalidEffectsCode,
+    effectStringCode,
     loopValues,
     validateKeyframeLeaf,
+    leafIndicatorFields,
     expectedFormatVersion,
     unsupportedFormatCode,
     rejectRootMetadata,
     validateIncludes,
     requireParticleEffect,
     requireNonEmptyTimeline,
+    trimStrings = false,
   } = options;
   if (!isPlainObject(value)) fail(invalidDocumentCode, 'Animation document must be an object.');
   if (rejectRootMetadata) rejectRootMetadata(value, 'animation');
   if (expectedFormatVersion !== undefined && value.format_version !== expectedFormatVersion) {
-    fail(unsupportedFormatCode, `format_version ${JSON.stringify(value.format_version)} does not match audited output ${expectedFormatVersion}.`);
+    fail(
+      unsupportedFormatCode,
+      `format_version ${JSON.stringify(value.format_version)} does not match audited output ${expectedFormatVersion}.`,
+    );
   }
   const includeCount = validateIncludes ? validateIncludes(value.includes) : 0;
   if (!isPlainObject(value.animations) || Object.keys(value.animations).length === 0) {
@@ -212,7 +260,7 @@ function validateAnimationDocument(value, options) {
 
   const effectCounts = {sound: 0, particle: 0, timeline: 0};
   for (const [animationName, animation] of Object.entries(value.animations)) {
-    nonEmptyString(animationName, 'animation name', fail, invalidStringCode);
+    nonEmptyString(animationName, 'animation name', fail, invalidStringCode, trimStrings);
     if (!isPlainObject(animation)) fail(invalidDocumentCode, `Animation ${animationName} must be an object.`);
     if (animation.animation_length !== undefined) {
       finiteNonNegative(animation.animation_length, `${animationName}.animation_length`, fail, invalidNumberCode);
@@ -226,9 +274,16 @@ function validateAnimationDocument(value, options) {
     const bones = animation.bones === undefined ? {} : animation.bones;
     if (!isPlainObject(bones)) fail(invalidDocumentCode, `${animationName}.bones must be an object.`);
     for (const [boneName, channels] of Object.entries(bones)) {
-      nonEmptyString(boneName, `${animationName} bone name`, fail, invalidStringCode);
+      nonEmptyString(boneName, `${animationName} bone name`, fail, invalidStringCode, trimStrings);
       if (!isPlainObject(channels)) fail(invalidDocumentCode, `${animationName}.bones.${boneName} must be an object.`);
-      const channelOptions = {fail, invalidKeyframeCode, invalidTimestampCode, validateKeyframeLeaf};
+      const channelOptions = {
+        fail,
+        invalidKeyframeCode,
+        invalidTimestampCode,
+        validateKeyframeLeaf,
+        leafIndicatorFields,
+        trimStrings,
+      };
       validateChannel(channels.position, `${animationName}.bones.${boneName}.position`, channelOptions);
       validateChannel(channels.rotation, `${animationName}.bones.${boneName}.rotation`, channelOptions);
       validateChannel(channels.scale, `${animationName}.bones.${boneName}.scale`, channelOptions);
@@ -237,9 +292,10 @@ function validateAnimationDocument(value, options) {
       fail,
       invalidEffectsCode,
       invalidTimestampCode,
-      invalidStringCode,
+      effectStringCode,
       requireParticleEffect,
       requireNonEmptyTimeline,
+      trimStrings,
     });
     effectCounts.sound += counts.sound;
     effectCounts.particle += counts.particle;
@@ -262,10 +318,11 @@ function serializeEffectMarker(marker, providerData, options) {
     invalidMarkerCode,
     unsupportedMarkerCode,
     invalidNumberCode,
-    invalidStringCode,
+    stringCode,
     providerLabel,
     requireParticleEffect = false,
     requireNonEmptyTimeline = false,
+    trimStrings = false,
   } = options;
   if (!isPlainObject(marker) || !isPlainObject(providerData)) {
     fail(invalidMarkerCode, 'Effect marker and provider data must be objects.');
@@ -276,27 +333,43 @@ function serializeEffectMarker(marker, providerData, options) {
       return Object.freeze({
         channel: 'sound_effects',
         time,
-        value: Object.freeze({effect: nonEmptyString(providerData.effect, 'sound effect', fail, invalidStringCode)}),
+        value: Object.freeze({
+          effect: nonEmptyString(providerData.effect, 'sound effect', fail, stringCode, trimStrings),
+        }),
       });
     case 'particle': {
       const value = {};
       if (requireParticleEffect) {
-        value.effect = nonEmptyString(providerData.effect, 'particle effect', fail, invalidStringCode);
+        value.effect = nonEmptyString(providerData.effect, 'particle effect', fail, stringCode, trimStrings);
       }
-      for (const [sourceField, targetField] of [['effect', 'effect'], ['locator', 'locator'], ['preEffectScript', 'pre_effect_script']]) {
+      for (const [sourceField, targetField] of [
+        ['effect', 'effect'],
+        ['locator', 'locator'],
+        ['preEffectScript', 'pre_effect_script'],
+      ]) {
         if (providerData[sourceField] !== undefined && value[targetField] === undefined) {
-          value[targetField] = nonEmptyString(providerData[sourceField], `particle ${sourceField}`, fail, invalidStringCode);
+          value[targetField] = nonEmptyString(
+            providerData[sourceField],
+            `particle ${sourceField}`,
+            fail,
+            stringCode,
+            trimStrings,
+          );
         }
       }
       return Object.freeze({channel: 'particle_effects', time, value: Object.freeze(value)});
     }
     case 'timeline': {
       const instruction = providerData.instruction;
-      const validString = typeof instruction === 'string' && (!requireNonEmptyTimeline || instruction.length > 0);
+      const validString = typeof instruction === 'string'
+        && (!requireNonEmptyTimeline || instruction.length > 0);
       const validArray = Array.isArray(instruction)
         && (!requireNonEmptyTimeline || instruction.length > 0)
-        && instruction.every((entry) => typeof entry === 'string' && (!requireNonEmptyTimeline || entry.length > 0));
-      if (!validString && !validArray) fail(invalidMarkerCode, 'timeline instruction must be a string or string array.');
+        && instruction.every((entry) => typeof entry === 'string'
+          && (!requireNonEmptyTimeline || entry.length > 0));
+      if (!validString && !validArray) {
+        fail(invalidMarkerCode, 'timeline instruction must be a string or string array.');
+      }
       return Object.freeze({
         channel: 'timeline',
         time,
@@ -304,20 +377,33 @@ function serializeEffectMarker(marker, providerData, options) {
       });
     }
     default:
-      fail(unsupportedMarkerCode, `Marker type ${JSON.stringify(marker.markerType)} has no audited ${providerLabel} mapping.`);
+      fail(
+        unsupportedMarkerCode,
+        `Marker type ${JSON.stringify(marker.markerType)} has no audited ${providerLabel} mapping.`,
+      );
   }
 }
 
 function normalizeSourcePath(value, options) {
-  const {fail, invalidSourcePathCode, invalidStringCode} = options;
-  const output = nonEmptyString(value, 'sourcePath', fail, invalidStringCode).replace(/\\/g, '/').replace(/\/$/, '');
-  if (output.split('/').includes('..')) fail(invalidSourcePathCode, 'sourcePath must not contain traversal segments.');
+  const {fail, invalidSourcePathCode, invalidStringCode, trimStrings = false} = options;
+  const output = nonEmptyString(
+    value,
+    'sourcePath',
+    fail,
+    invalidStringCode,
+    trimStrings,
+  ).replace(/\\/g, '/').replace(/\/$/, '');
+  if (output.split('/').includes('..')) {
+    fail(invalidSourcePathCode, 'sourcePath must not contain traversal segments.');
+  }
   return output;
 }
 
 function normalizeRelativePath(value, field, options) {
-  const {fail, invalidPathCode, invalidStringCode} = options;
-  const output = nonEmptyString(value, field, fail, invalidStringCode).replace(/\\/g, '/').replace(/\/$/, '');
+  const {fail, invalidPathCode, invalidStringCode, trimStrings = false} = options;
+  const output = nonEmptyString(value, field, fail, invalidStringCode, trimStrings)
+    .replace(/\\/g, '/')
+    .replace(/\/$/, '');
   if (output.startsWith('/') || /^[A-Za-z]:/.test(output) || output.split('/').includes('..')) {
     fail(invalidPathCode, `${field} must be a safe relative path.`);
   }
@@ -337,19 +423,45 @@ function createExportPlan(input, options) {
     invalidPathCode,
     invalidResourceNameCode,
     invalidStringCode,
+    trimStrings = false,
   } = options;
   if (!isPlainObject(input)) fail(invalidPlanCode, 'Export plan request must be an object.');
-  if (!profileIds.has(input.profileId)) fail(invalidProfileCode, `Profile ${JSON.stringify(input.profileId)} is not a ${providerLabel} profile.`);
-  const sourcePath = normalizeSourcePath(input.sourcePath, {fail, invalidSourcePathCode, invalidStringCode});
-  if (!sourcePath.toLowerCase().endsWith('.bbmodel')) fail(sourceMustBeBbmodelCode, 'Source authority must remain a .bbmodel file.');
-  const outputDirectory = normalizeRelativePath(input.outputDirectory, 'outputDirectory', {fail, invalidPathCode, invalidStringCode});
-  const resourceName = nonEmptyString(input.resourceName, 'resourceName', fail, invalidResourceNameCode);
-  if (!/^[a-z0-9_.-]+$/.test(resourceName)) fail(invalidResourceNameCode, 'resourceName must be filesystem/resource-safe lowercase text.');
+  if (!profileIds.has(input.profileId)) {
+    fail(invalidProfileCode, `Profile ${JSON.stringify(input.profileId)} is not a ${providerLabel} profile.`);
+  }
+  const sourcePath = normalizeSourcePath(input.sourcePath, {
+    fail,
+    invalidSourcePathCode,
+    invalidStringCode,
+    trimStrings,
+  });
+  if (!sourcePath.toLowerCase().endsWith('.bbmodel')) {
+    fail(sourceMustBeBbmodelCode, 'Source authority must remain a .bbmodel file.');
+  }
+  const outputDirectory = normalizeRelativePath(input.outputDirectory, 'outputDirectory', {
+    fail,
+    invalidPathCode,
+    invalidStringCode,
+    trimStrings,
+  });
+  const resourceName = nonEmptyString(
+    input.resourceName,
+    'resourceName',
+    fail,
+    invalidResourceNameCode,
+    trimStrings,
+  );
+  if (!/^[a-z0-9_.-]+$/.test(resourceName)) {
+    fail(invalidResourceNameCode, 'resourceName must be filesystem/resource-safe lowercase text.');
+  }
   if (input.includeAnimations !== undefined && typeof input.includeAnimations !== 'boolean') {
     fail(invalidPlanCode, 'includeAnimations must be boolean.');
   }
+
   const artifacts = [{kind: 'model', path: `${outputDirectory}/${resourceName}.geo.json`}];
-  if (input.includeAnimations === true) artifacts.push({kind: 'animation', path: `${outputDirectory}/${resourceName}.animation.json`});
+  if (input.includeAnimations === true) {
+    artifacts.push({kind: 'animation', path: `${outputDirectory}/${resourceName}.animation.json`});
+  }
   return Object.freeze({
     providerFamily,
     profileId: input.profileId,
