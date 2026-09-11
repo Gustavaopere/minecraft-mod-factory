@@ -23,6 +23,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: PR7 AzureLib 3 adapter presence contract
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node --test asset_toolkit.azurelib3_presence.test.js
       - name: PR7 AzureLib 3 core provider contract
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.azurelib3_adapter.test.js
