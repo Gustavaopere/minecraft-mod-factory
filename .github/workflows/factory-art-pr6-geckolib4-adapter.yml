@@ -11,7 +11,7 @@ on:
       - '.github/workflows/factory-art-pr6-geckolib4-adapter.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   geckolib4-adapter:
@@ -23,6 +23,43 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Fix absolute Blockbench source authority and regenerate standalone
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('art/tooling/blockbench/asset-toolkit/core/provider-adapter/geckolib4_adapter.js')
+          text = path.read_text(encoding='utf-8')
+          anchor = "function normalizedRelativePath(value, field) {\n"
+          helper = """function normalizedSourceAuthorityPath(value) {
+            const output = nonEmptyString(value, 'sourcePath').replace(/\\\\/g, '/').replace(/\\/$/, '');
+            if (output.split('/').includes('..')) fail('INVALID_GECKOLIB4_SOURCE_PATH', 'sourcePath must not contain traversal segments.');
+            return output;
+          }
+
+          """
+          old_call = "  const sourcePath = normalizedRelativePath(input.sourcePath, 'sourcePath');\n"
+          new_call = "  const sourcePath = normalizedSourceAuthorityPath(input.sourcePath);\n"
+          if 'function normalizedSourceAuthorityPath(value)' not in text:
+              if anchor not in text:
+                  raise SystemExit('source path helper anchor not found')
+              text = text.replace(anchor, helper + anchor, 1)
+          if old_call in text:
+              text = text.replace(old_call, new_call, 1)
+          elif new_call not in text:
+              raise SystemExit('source path call anchor not found')
+          path.write_text(text, encoding='utf-8')
+          PY
+          node art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js
+          git diff --check -- art/tooling/blockbench/asset-toolkit
+          if git diff --quiet -- art/tooling/blockbench/asset-toolkit/core/provider-adapter/geckolib4_adapter.js art/tooling/blockbench/asset-toolkit/asset_toolkit.js; then
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add art/tooling/blockbench/asset-toolkit/core/provider-adapter/geckolib4_adapter.js art/tooling/blockbench/asset-toolkit/asset_toolkit.js
+          git commit -m "fix(art): preserve absolute Blockbench bbmodel authority"
+          git push origin HEAD:feat/art-pr6-geckolib4-adapter
       - name: PR6 GeckoLib 4 provider contract
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.geckolib4_adapter.test.js
