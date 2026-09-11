@@ -466,8 +466,9 @@ class C8RendererTests(unittest.TestCase):
         spec = make_build_spec(size=(1, 1, 1))
         ir = make_ir(spec, [placement(0, 0, 0)])
         views = render(ir)
-        forbidden = (b"<script", b"foreignObject", b"onload=", b"href=", b"http://", b"https://")
+        forbidden = (b"<script", b"foreignObject", b"onload=", b"href=")
         for data in views.values():
+            self.assertIn(b'xmlns="http://www.w3.org/2000/svg"', data)
             for token in forbidden:
                 self.assertNotIn(token, data)
 
