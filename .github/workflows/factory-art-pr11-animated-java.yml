@@ -36,6 +36,8 @@ jobs:
           node -e "const api=require('./asset_toolkit.js');
           if(typeof api.createBlockbenchAnimatedJavaAdapter!=='function')
           throw new Error('standalone Animated Java Blockbench adapter missing');"
+      - name: Bind PR11 runtime smoke to audited handoff
+        run: node --test asset_toolkit.animated_java_runtime_smoke.test.js
       - name: Existing provider profile regressions
         if: always()
         run: >-
@@ -49,6 +51,92 @@ jobs:
       - name: Verify deterministic standalone bundle
         if: always()
         run: node build_toolkit_bundle.js --check
+      - name: Provision Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Generate canonical NeoForge 21.1.248 smoke project
+        working-directory: .
+        run: >-
+          python3 engineering/tooling/scaffolder/scaffold_mod.py
+          --mod-spec engineering/tests/fixtures/i3-golden-mod-spec.json
+          --config engineering/tests/fixtures/i3-golden-scaffold-config.json
+          --output '.factory-ci/pr11/generated'
+      - name: Materialize PR11 GameTest, datapack function, and deterministic empty structure
+        working-directory: .
+        run: |
+          mkdir -p '.factory-ci/pr11/generated/src/main/java/dev/example/i3golden'
+          mkdir -p '.factory-ci/pr11/generated/src/main/resources/data/factorypr11/function/smoke'
+          mkdir -p '.factory-ci/pr11/generated/src/main/resources/data/i3_golden_mod/structure'
+          cp art/tooling/blockbench/asset-toolkit/runtime-smoke/AnimatedJavaDatapackRuntimeSmokeTest.java \
+            '.factory-ci/pr11/generated/src/main/java/dev/example/i3golden/AnimatedJavaDatapackRuntimeSmokeTest.java'
+          cp art/tooling/blockbench/asset-toolkit/runtime-smoke/pr11-summon.mcfunction \
+            '.factory-ci/pr11/generated/src/main/resources/data/factorypr11/function/smoke/summon.mcfunction'
+          python3 - <<'PY'
+          from pathlib import Path
+          import gzip
+          import struct
+
+          out = Path('.factory-ci/pr11/generated/src/main/resources/data/i3_golden_mod/structure/pr11.empty.nbt')
+
+          def u16(value):
+              return struct.pack('>H', value)
+
+          def i32(value):
+              return struct.pack('>i', value)
+
+          def string_payload(value):
+              raw = value.encode('utf-8')
+              return u16(len(raw)) + raw
+
+          def named_header(tag_type, name):
+              return bytes([tag_type]) + string_payload(name)
+
+          nbt = bytearray()
+          nbt += bytes([10]) + u16(0)  # root TAG_Compound with empty name
+          nbt += named_header(3, 'DataVersion') + i32(3955)
+
+          nbt += named_header(9, 'size') + bytes([3]) + i32(3)
+          nbt += i32(3) + i32(3) + i32(3)
+
+          nbt += named_header(9, 'palette') + bytes([10]) + i32(1)
+          nbt += named_header(8, 'Name') + string_payload('minecraft:air')
+          nbt += bytes([0])
+
+          nbt += named_header(9, 'blocks') + bytes([10]) + i32(1)
+          nbt += named_header(9, 'pos') + bytes([3]) + i32(3)
+          nbt += i32(0) + i32(0) + i32(0)
+          nbt += named_header(3, 'state') + i32(0)
+          nbt += bytes([0])
+
+          nbt += named_header(9, 'entities') + bytes([10]) + i32(0)
+          nbt += bytes([0])
+
+          with out.open('wb') as raw:
+              with gzip.GzipFile(fileobj=raw, mode='wb', filename='', mtime=0) as compressed:
+                  compressed.write(nbt)
+          PY
+      - name: Configure NeoGradle GameTest server harness
+        working-directory: .
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('.factory-ci/pr11/generated/build.gradle')
+          text = path.read_text()
+          old = """    gameTestServer {\n        systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id\n    }"""
+          new = """    gameTestServer {\n        systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id\n        setForceExit false\n    }"""
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected one canonical gameTestServer block, found {text.count(old)}')
+          path.write_text(text.replace(old, new, 1))
+          PY
+          grep -F 'setForceExit false' '.factory-ci/pr11/generated/build.gradle'
+      - name: Execute target-exact NeoForge 21.1.248 Animated Java datapack runtime smoke
+        working-directory: .factory-ci/pr11/generated
+        run: |
+          chmod +x gradlew
+          GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/pr11/gradle-home" \
+            ./gradlew runGameTestServer --no-daemon
       - name: Reject whitespace errors in PR11 scope
         if: always()
         working-directory: .
