@@ -43,12 +43,12 @@ function assertCoreApi(api, surface) {
   assert.equal(typeof api.validateEasyModelEntitiesRenderProfile, 'function', `${surface} render profile validator`);
 }
 
-test('PR9 registers the official Easy Model Entities 1.0.0 exporter for audited Blockbench 5.1.6', () => {
+test('PR9 registers the official Easy Model Entities 1.0.0 exporter with its declared Blockbench minimum', () => {
   const definition = core.getExtensionDefinition('easy_model_entities');
   assert.ok(definition);
   assert.equal(definition.pluginVersion, '1.0.0');
   assert.equal(definition.classification, 'REQUIRED_PROFILE');
-  assert.deepEqual(definition.blockbenchCompatibility?.auditedExact, ['5.1.6']);
+  assert.equal(definition.blockbenchCompatibility?.minInclusive, '4.9.0');
   assert.equal(definition.mcpPolicy, 'ALLOWLIST');
   assert.equal(definition.providerFamily, 'easy_model_entities');
 });
@@ -96,9 +96,13 @@ test('PR9 provider resolution fails closed on provider/editor/exporter/authoriza
   unauthorized.mcpAuthorizedExtensionIds = [];
   assert.equal(core.resolveProviderProfile(ENTITY_PROFILE_ID, unauthorized).status, 'UNAVAILABLE');
 
-  const wrongEditor = availableContext();
-  wrongEditor.blockbenchVersion = '5.1.5';
-  assert.equal(core.resolveProviderProfile(ENTITY_PROFILE_ID, wrongEditor).status, 'UNAVAILABLE');
+  const supportedEarlierEditor = availableContext();
+  supportedEarlierEditor.blockbenchVersion = '5.1.5';
+  assert.equal(core.resolveProviderProfile(ENTITY_PROFILE_ID, supportedEarlierEditor).status, 'AVAILABLE');
+
+  const unsupportedEditor = availableContext();
+  unsupportedEditor.blockbenchVersion = '4.8.9';
+  assert.equal(core.resolveProviderProfile(ENTITY_PROFILE_ID, unsupportedEditor).status, 'UNAVAILABLE');
 
   assert.equal(core.canConvertProfile(ENTITY_PROFILE_ID, BLOCK_ENTITY_PROFILE_ID), false);
   assert.equal(core.canConvertProfile(ENTITY_PROFILE_ID, 'geckolib4_entity'), false);

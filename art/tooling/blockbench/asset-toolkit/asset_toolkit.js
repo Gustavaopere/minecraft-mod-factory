@@ -1942,7 +1942,7 @@
           title: 'Easy Model Entities',
           pluginVersion: '1.0.0',
           classification: 'REQUIRED_PROFILE',
-          blockbenchCompatibility: Object.freeze({auditedExact: Object.freeze(['5.1.6'])}),
+          blockbenchCompatibility: Object.freeze({minInclusive: '4.9.0'}),
           mcpPolicy: 'ALLOWLIST',
           providerFamily: 'easy_model_entities',
         }),
