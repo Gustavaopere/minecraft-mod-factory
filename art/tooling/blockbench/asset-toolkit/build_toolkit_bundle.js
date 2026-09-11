@@ -34,6 +34,7 @@ const SOURCE_MODULES = Object.freeze([
   'blockbench-plugin/animation_adapter.js',
   'blockbench-plugin/geckolib4_adapter.js',
   'blockbench-plugin/azurelib3_adapter.js',
+  'blockbench-plugin/neoforge_native_animation_adapter.js',
   'blockbench-plugin/plugin_adapter.js',
 ]);
 
