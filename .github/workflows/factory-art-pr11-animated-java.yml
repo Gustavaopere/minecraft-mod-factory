@@ -94,22 +94,18 @@ jobs:
               return bytes([tag_type]) + string_payload(name)
 
           nbt = bytearray()
-          nbt += bytes([10]) + u16(0)  # root TAG_Compound with empty name
+          nbt += bytes([10]) + u16(0)
           nbt += named_header(3, 'DataVersion') + i32(3955)
-
           nbt += named_header(9, 'size') + bytes([3]) + i32(3)
           nbt += i32(3) + i32(3) + i32(3)
-
           nbt += named_header(9, 'palette') + bytes([10]) + i32(1)
           nbt += named_header(8, 'Name') + string_payload('minecraft:air')
           nbt += bytes([0])
-
           nbt += named_header(9, 'blocks') + bytes([10]) + i32(1)
           nbt += named_header(9, 'pos') + bytes([3]) + i32(3)
           nbt += i32(0) + i32(0) + i32(0)
           nbt += named_header(3, 'state') + i32(0)
           nbt += bytes([0])
-
           nbt += named_header(9, 'entities') + bytes([10]) + i32(0)
           nbt += bytes([0])
 
@@ -117,20 +113,6 @@ jobs:
               with gzip.GzipFile(fileobj=raw, mode='wb', filename='', mtime=0) as compressed:
                   compressed.write(nbt)
           PY
-      - name: Configure NeoGradle GameTest server harness
-        working-directory: .
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path('.factory-ci/pr11/generated/build.gradle')
-          text = path.read_text()
-          old = """    gameTestServer {\n        systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id\n    }"""
-          new = """    gameTestServer {\n        systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id\n        setForceExit false\n    }"""
-          if text.count(old) != 1:
-              raise SystemExit(f'Expected one canonical gameTestServer block, found {text.count(old)}')
-          path.write_text(text.replace(old, new, 1))
-          PY
-          grep -F 'setForceExit false' '.factory-ci/pr11/generated/build.gradle'
       - name: Execute target-exact NeoForge 21.1.248 Animated Java datapack runtime smoke
         working-directory: .factory-ci/pr11/generated
         run: |
