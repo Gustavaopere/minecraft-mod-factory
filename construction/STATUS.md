@@ -1,10 +1,9 @@
 # STATUS — Construction
 
 UPDATED_AT=2026-09-10
-PHASE=C1_MINEBENCH_REFERENCE_PR_GREEN_PENDING_STATUS_REVALIDATION
+PHASE=C1_COMPLETE_POSTMERGE_VALIDATED
 REPOSITORY=Gustavaopere/minecraft-mod-factory
-BRANCH=feat/construction-c1-minebench-reference
-BASE_SHA=c3d66068474f18622e864ff28de63c393544e787
+BRANCH=main
 C0_PR=19
 C0_MERGE_SHA=a850627e1a9e012221e4fbabeeb50c22880af51f
 C1A_PR=20
@@ -64,8 +63,33 @@ C1B_FINAL_PR_SONARCLOUD_CHECK=103076225918
 C1B_FINAL_PR_SONARCLOUD=PASS_0_NEW_ISSUES_0_ACCEPTED_0_HOTSPOTS
 C1B_REVIEW_THREAD=PRRT_kwDOUUL3Ts6hRAPG
 C1B_REVIEW_THREAD_STATUS=RESOLVED
+C1B_STATUS_FINAL_HEAD=f40b927d0ba37b29273e084edb2b4717686feb90
+C1B_STATUS_FINAL_RUN=34539066478
+C1B_STATUS_FINAL_C1A_RUN=34539066479
+C1B_STATUS_FINAL_C0_RUN=34539066528
+C1B_STATUS_FINAL_GOVERNANCE_RUN=34539066477
+C1B_STATUS_FINAL_SONARCLOUD_CHECK=103077638234
+C1B_STATUS_FINAL=PASS
+C1B_MERGE_SHA=bdb6eee2c6829ce8de0cc7e0cf283dfb6c01144c
+C1B_POSTMERGE_RUN=34539399639
+C1B_POSTMERGE_CONTRACT=5_PASS_0_FAIL
+C1B_POSTMERGE_REGRESSION_TEST_FILES=149_PASS
+C1B_POSTMERGE_INTEGRATION_TEST_FILES=18_PASS
+C1B_POSTMERGE_LINT=PASS
+C1B_POSTMERGE_BUILD=PASS
+C1B_POSTMERGE_C0=PASS
+C1B_POSTMERGE_WHITESPACE=PASS
+C1B_POSTMERGE_SCHEM_FIXTURE_BLOCKS=424
+C1B_POSTMERGE_SCHEM_LARGE_BLOCKS=100000
+C1B_POSTMERGE_C1A_RUN=34539399702
+C1B_POSTMERGE_C1A_CONTRACT=6_PASS_0_FAIL
+C1B_POSTMERGE_SCHEMATICA_TESTS=498_PASS_0_FAIL
+C1B_POSTMERGE_STANDALONE_C0_RUN=34539399627
+C1B_POSTMERGE_STANDALONE_C0=PASS
+C1B_POSTMERGE_GOVERNANCE_RUN=34539399648
+C1B_POSTMERGE_GOVERNANCE=PASS
 HEAD_SHA=RESOLVE_FROM_GIT
-OPEN_PR=25
+OPEN_CONSTRUCTION_IMPLEMENTATION_PR=NONE
 TARGET_MINECRAFT=1.21.1
 TARGET_LOADER=NeoForge
 TARGET_NEOFORGE=21.1.248
@@ -73,7 +97,7 @@ CANONICAL_OUTPUT=SPONGE_SCHEMATIC_V3
 LATEST_MODLIST_SNAPSHOT=2026-09-09_595_TOP_LEVEL
 MANUAL_ACTION_REQUIRED=NO
 BLOCKERS=NONE_IN_CONSTRUCTION
-NEXT_ACTION=REVALIDATE_STATUS_ONLY_HEAD_THEN_MERGE_PR_25
+NEXT_ACTION=BEGIN_C2_CANONICAL_BUILD_IR
 
 ## C1A — Schematica preservation
 
@@ -91,7 +115,7 @@ TEST_HARNESS_PIP_NO_DEPS=YES
 
 C1A is merged. The Factory superproject tracks only the exact Schematica gitlink; the upstream source remains unchanged. C0 accepts initialized materializable submodules while continuing to reject copied payloads and symlink escapes. The C1 harness uses a fully resolved SHA-256 dependency lock and executes Schematica from the immutable source through `PYTHONPATH`.
 
-The original C1A PR head passed C0, C1, Governance and SonarCloud, and merged `main` revalidated C1, 498/498 upstream tests, standalone C0 and Governance. Later Factory-wide Sonar debt and its remediations are historical context only here and are not used as a current global-Sonar claim. For C1B PR #25, the current reconciled merge ref independently re-ran the C1A contract as 6/6 and the unchanged Schematica upstream suite as 498/498 PASS.
+The original C1A PR head passed C0, C1, Governance and SonarCloud, and merged `main` revalidated C1, 498/498 upstream tests, standalone C0 and Governance. C1B later revalidated the same immutable Schematica pin both before and after its own merge. On canonical `main@bdb6eee2c6829ce8de0cc7e0cf283dfb6c01144c`, post-merge run `34539399702` passed the C1A contract 6/6, exact gitlink checks, C0 regression, hashed environment installation, unchanged Schematica 498/498, and whitespace.
 
 ### C1A acceptance
 
@@ -112,10 +136,11 @@ The original C1A PR head passed C0, C1, Governance and SonarCloud, and merged `m
 - [x] post-merge Governance PASS
 - [x] post-merge gitlink remains exact
 - [x] C1B PR merge ref revalidates C1A contract 6/6 and Schematica 498/498
+- [x] C1B merged `main` revalidates C1A contract 6/6 and Schematica 498/498
 
 ## C1B — MineBench engine reference
 
-C1B preserves the audited MineBench source as an immutable engine reference. It does not yet introduce a Factory adapter, canonical Build IR, model-provider configuration, API credentials, generation behavior or runtime integration.
+C1B preserves the audited MineBench source as an immutable engine reference. It does not introduce a Factory adapter, canonical Build IR, model-provider configuration, API credentials, generation behavior or runtime integration.
 
 UPSTREAM_REPOSITORY=Ammaar-Alam/minebench
 UPSTREAM_URL=https://github.com/Ammaar-Alam/minebench.git
@@ -134,7 +159,9 @@ The first GREEN run reproduced the pinned source with a recursive checkout, inst
 
 PR #25 then exposed two Factory-owned acceptance defects and both were fixed through explicit RED/GREEN cycles. Sonar first rejected a literal PostgreSQL CI password; the C1B contract now forbids that literal and the workflow derives an ephemeral database password from the GitHub run id and attempt. Review then identified that C1B would not revalidate on the resulting `main` push; a second regression test captured that RED, and the workflow now runs on pushes to both `main` and the feature branch.
 
-After repeated reconciliation with concurrent Factory work, the gated PR head `187f97c0a4a6be910aa2d7736527ee47c931f7aa` is based on canonical `main@c3d66068474f18622e864ff28de63c393544e787` with `behind_by=0`. Its PR merge ref `c20c4c776357aa9310b84aa87ebde53723c3eba1` passed the C1B contract 5/5, exact MineBench gitlink checks, frozen installation, lint, 149 regression/config/UI/unit test files, 18 PostgreSQL integration test files, production build, C0 and whitespace. The same PR head passed the C1A contract 6/6 plus Schematica 498/498, Governance, and SonarCloud with 0 new issues, 0 accepted issues and 0 security hotspots. The only review thread was answered with regression evidence and resolved.
+The final STATUS-only PR head `f40b927d0ba37b29273e084edb2b4717686feb90` was based on canonical `main@c3d66068474f18622e864ff28de63c393544e787` with `behind_by=0`. It revalidated C1B, C1A, C0, Governance and SonarCloud before promotion. C1B passed contract 5/5, exact MineBench gitlink checks, frozen installation, lint, 149 regression/config/UI/unit test files, 18 PostgreSQL integration test files, production build, C0 and whitespace. C1A passed contract 6/6 plus Schematica 498/498. SonarCloud reported 0 new issues, 0 accepted issues and 0 security hotspots.
+
+PR #25 merged as `bdb6eee2c6829ce8de0cc7e0cf283dfb6c01144c`. The resulting `main` push triggered the C1B workflow as required. Post-merge run `34539399639` passed contract 5/5, exact gitlink verification, pnpm frozen install, lint, 149 regression/config/UI/unit test files, 18 PostgreSQL integration test files, production build, C0 and whitespace. The same run again exercised `.schem` export on a 424-block fixture and a 100,000-block case. Post-merge C1A run `34539399702` passed 6/6 plus Schematica 498/498; standalone C0 run `34539399627` and Governance run `34539399648` also passed.
 
 ### C1B acceptance
 
@@ -163,11 +190,13 @@ After repeated reconciliation with concurrent Factory work, the gated PR head `1
 - [x] C1B workflow revalidates on push to `main`
 - [x] main-push regression RED captured before trigger fix
 - [x] branch reconciled with `main@c3d66068474f18622e864ff28de63c393544e787`, `behind_by=0`
-- [x] reconciled final PR head C1B gate passes: 5/5 + 149 + 18 + build + C0 + whitespace
-- [x] Schematica C1 regression passes on PR merge ref: 6/6 + 498/498
-- [x] Governance passes on PR head
-- [x] Sonar introduces no new Construction-owned issue: 0 new issues / 0 accepted / 0 hotspots
+- [x] final STATUS-only PR head passes C1B: 5/5 + 149 + 18 + build + C0 + whitespace
+- [x] final STATUS-only PR head passes C1A: 6/6 + 498/498
+- [x] final STATUS-only PR head passes Governance and SonarCloud with 0 new issues / 0 accepted / 0 hotspots
 - [x] PR review thread resolved with regression evidence
-- [ ] final STATUS-only head revalidation passes
-- [ ] C1B PR merged
-- [ ] post-merge `main` C1B revalidation passes
+- [x] C1B PR #25 merged
+- [x] post-merge `main` C1B revalidation passes: 5/5 + 149 + 18 + build + C0 + whitespace
+- [x] post-merge `main` C1A revalidation passes: 6/6 + 498/498
+- [x] post-merge standalone C0 and Governance pass
+
+C1 is complete and post-merge validated. The next Construction slice is C2 — Canonical Build IR.
