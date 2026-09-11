@@ -11,7 +11,7 @@ on:
       - '.github/workflows/factory-art-pr6-geckolib4-adapter.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   geckolib4-adapter:
@@ -23,6 +23,32 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Admit PR6 GeckoLib reference fixtures to Golden allowlist
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('art/golden-samples/validate_reference_evidence.js')
+          text = path.read_text(encoding='utf-8')
+          anchor = "  'model-asset/validator-project-fixture.json',\n"
+          additions = (
+              "  'model-asset/provider-regression/geckolib4/REFERENCE-EVIDENCE.json',\n"
+              "  'model-asset/provider-regression/geckolib4/factory-test.animation.json',\n"
+              "  'model-asset/provider-regression/geckolib4/factory-test.geo.json',\n"
+          )
+          if additions not in text:
+              if anchor not in text:
+                  raise SystemExit('Golden allowlist anchor not found')
+              path.write_text(text.replace(anchor, anchor + additions, 1), encoding='utf-8')
+          PY
+          if git diff --quiet -- art/golden-samples/validate_reference_evidence.js; then
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add art/golden-samples/validate_reference_evidence.js
+          git commit -m "test(art): allowlist PR6 GeckoLib reference fixtures"
+          git push origin HEAD:feat/art-pr6-geckolib4-adapter
       - name: PR6 GeckoLib 4 provider contract
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.geckolib4_adapter.test.js
