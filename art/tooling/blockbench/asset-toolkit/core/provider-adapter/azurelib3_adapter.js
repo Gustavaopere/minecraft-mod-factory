@@ -22,6 +22,8 @@ const AZURELIB3_PROFILE_IDS = new Set([
   'azurelib_armor',
 ]);
 
+const GEO_FORMAT_VERSIONS = new Set(['1.12.0', '1.14.0', '1.21.0']);
+
 const LOOP_VALUES = new Set([
   'false',
   'true',
@@ -116,6 +118,46 @@ function rejectUnknownFields(value, allowedFields, field) {
       fail('UNPROVEN_AZURELIB3_RUNTIME_FIELD', `${field}.${key} is not part of the audited AzureLib 3.1.11 runtime contract.`);
     }
   }
+}
+
+function validateAzureLib3GeoDocument(value) {
+  if (!isPlainObject(value)) {
+    fail('INVALID_AZURELIB3_GEO_DOCUMENT', 'Geo document must be an object.');
+  }
+
+  const formatVersion = value.format_version;
+  if (!GEO_FORMAT_VERSIONS.has(formatVersion)) {
+    fail('UNSUPPORTED_AZURELIB3_GEO_FORMAT', `format_version ${JSON.stringify(formatVersion)} is not supported by AzureLib 3.1.11.`);
+  }
+
+  const geometries = value['minecraft:geometry'];
+  if (!Array.isArray(geometries) || geometries.length === 0) {
+    fail('INVALID_AZURELIB3_GEO_DOCUMENT', 'minecraft:geometry must contain at least one geometry entry.');
+  }
+
+  let boneCount = 0;
+  geometries.forEach((geometry, geometryIndex) => {
+    if (!isPlainObject(geometry)) {
+      fail('INVALID_AZURELIB3_GEO_DOCUMENT', `minecraft:geometry[${geometryIndex}] must be an object.`);
+    }
+    const bones = geometry.bones === undefined ? [] : geometry.bones;
+    if (!Array.isArray(bones)) {
+      fail('INVALID_AZURELIB3_GEO_DOCUMENT', `minecraft:geometry[${geometryIndex}].bones must be an array.`);
+    }
+    bones.forEach((bone, boneIndex) => {
+      if (!isPlainObject(bone)) {
+        fail('INVALID_AZURELIB3_GEO_DOCUMENT', `minecraft:geometry[${geometryIndex}].bones[${boneIndex}] must be an object.`);
+      }
+      boneCount += 1;
+    });
+  });
+
+  return Object.freeze({
+    ok: true,
+    formatVersion,
+    geometryCount: geometries.length,
+    boneCount,
+  });
 }
 
 function validateMathScalar(value, field) {
@@ -469,6 +511,7 @@ module.exports = {
   AZURELIB3_AUTHORITY,
   AZURELIB3_PROFILE_IDS,
   AzureLib3ContractError,
+  validateAzureLib3GeoDocument,
   validateAzureLib3AnimationDocument,
   serializeAzureLib3EffectMarker,
   createAzureLib3ExportPlan,
