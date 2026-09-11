@@ -7,7 +7,9 @@ const ROOT = __dirname;
 const NATIVE_MODULE_ALLOWLIST = Object.freeze(['node:crypto']);
 const SOURCE_MODULES = Object.freeze([
   'core/project-model/project_model.js',
+  'core/common/contract_utils.js',
   'core/mutations/mutation_engine.js',
+  'core/animation/animation_engine.js',
   'core/uv-texture/uv_texture_engine.js',
   'core/uv-texture/uv_analysis.js',
   'core/uv-texture/uv_pack.js',
@@ -26,6 +28,7 @@ const SOURCE_MODULES = Object.freeze([
   'blockbench-plugin/live_bridge_adapter.js',
   'blockbench-plugin/modeling_adapter.js',
   'blockbench-plugin/uv_texture_adapter.js',
+  'blockbench-plugin/animation_adapter.js',
   'blockbench-plugin/plugin_adapter.js',
 ]);
 
