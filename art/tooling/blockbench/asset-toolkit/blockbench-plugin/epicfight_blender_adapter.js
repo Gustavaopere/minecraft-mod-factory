@@ -24,6 +24,8 @@ function createBlockbenchEpicFightHandoffAdapter(bb, options = {}) {
       blockbenchReferencePath: project.save_path,
       blenderSourcePath: options.blenderSourcePath,
       targetMinecraftVersion: options.targetMinecraftVersion,
+      boneMapping: options.boneMapping,
+      textureReferences: options.textureReferences,
     });
   }
 
