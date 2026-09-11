@@ -1,6 +1,6 @@
 'use strict';
 
-// Physical modlist authority snapshot checked 2026-09-10 (595 top-level mods).
+// Physical modlist authority snapshot checked 2026-09-11 (595 top-level mods).
 // Presence is not API proof, runtime-health proof, or MCP authorization.
 const CURRENT_PHYSICAL_PROVIDER_SNAPSHOT = Object.freeze({
   geckolib: Object.freeze({modId: 'geckolib', version: '4.9.2', presence: 'PRESENT', health: 'UNPROVEN'}),
@@ -15,7 +15,7 @@ const CURRENT_PHYSICAL_PROVIDER_SNAPSHOT = Object.freeze({
 });
 
 const SNAPSHOT_METADATA = Object.freeze({
-  checkedDate: '2026-09-10',
+  checkedDate: '2026-09-11',
   topLevelModCount: 595,
   authority: 'physical-modlist',
 });
