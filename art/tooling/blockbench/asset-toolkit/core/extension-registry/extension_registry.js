@@ -38,6 +38,14 @@ const EXTENSION_CATALOG = Object.freeze({
     mcpPolicy: 'ALLOWLIST',
     providerFamily: 'azurelib',
   }),
+  animation_to_json: Object.freeze({
+    pluginId: 'animation_to_json',
+    title: 'Animation to JSON Converter',
+    pluginVersion: '1.0.1',
+    classification: 'AUDIT_REQUIRED',
+    mcpPolicy: 'NEVER',
+    providerFamily: 'neoforge_native_animation',
+  }),
   cem_template_loader: Object.freeze({
     pluginId: 'cem_template_loader',
     title: 'CEM Template Loader',
