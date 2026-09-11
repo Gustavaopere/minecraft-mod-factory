@@ -3276,7 +3276,7 @@
         blockbenchPluginSource: 'MarkusBordihn/BOs-Easy-Model-Entities-Blockbench-Plugin',
         blockbenchPluginRef: '99c0bb118d1ef70fac7016c423b528c317e282dc',
         schemaVersion: '0.2.0',
-        apiVersion: '2.0.0',
+        apiVersion: '2.3.0',
         serverProfileRoot: 'easy_model_entities/profiles',
         renderProfileRoot: 'easy_model_entities/render_profiles',
         modelRoot: 'easy_model_entities/models',
