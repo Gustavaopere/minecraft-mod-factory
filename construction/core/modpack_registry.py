@@ -64,7 +64,7 @@ def normalize_physical_snapshot(snapshot):
     }
 
 
-def _resource_from_asset(name, marker, suffix):
+def _resource_from_asset(name, marker, suffix, *, resource_prefix=""):
     if not name.startswith("assets/") or marker not in name or not name.endswith(suffix):
         return None
     parts = name.split("/", 2)
@@ -75,7 +75,7 @@ def _resource_from_asset(name, marker, suffix):
     if not name.startswith(prefix):
         return None
     path = name[len(prefix):-len(suffix)]
-    value = f"{namespace}:{path}"
+    value = f"{namespace}:{resource_prefix}{path}"
     return value if RESOURCE_LOCATION_RE.fullmatch(value) else None
 
 
@@ -121,10 +121,10 @@ def _index_zip(data, *, jar_name, depth):
             value = _resource_from_asset(name, "blockstates/", ".json")
             if value:
                 blockstates.add(value)
-            value = _resource_from_asset(name, "models/block/", ".json")
+            value = _resource_from_asset(name, "models/block/", ".json", resource_prefix="block/")
             if value:
                 block_models.add(value)
-            value = _resource_from_asset(name, "textures/block/", ".png")
+            value = _resource_from_asset(name, "textures/block/", ".png", resource_prefix="block/")
             if value:
                 block_textures.add(value)
 
