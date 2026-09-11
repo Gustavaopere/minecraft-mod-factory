@@ -33,6 +33,7 @@ on:
       - 'construction/runtime/neoforge-registry-probe/**'
       - 'construction/scripts/prepare_neoforge_registry_probe.py'
       - 'construction/tests/test_c8_visual_qa.py'
+      - 'construction/tests/test_c8_palette_resolution_contract.py'
       - 'construction/tests/test_c7_architecture_qa.py'
       - 'construction/tests/test_c7_registry_authority.py'
       - 'construction/tests/test_c6_sponge_v3.py'
@@ -80,7 +81,11 @@ jobs:
           -v
 
       - name: Run C8 visual QA contract tests
-        run: python3 -m unittest construction/tests/test_c8_visual_qa.py -v
+        run: >-
+          python3 -m unittest
+          construction/tests/test_c8_visual_qa.py
+          construction/tests/test_c8_palette_resolution_contract.py
+          -v
 
       - name: Run C7 architecture QA regression
         run: >-
@@ -132,6 +137,7 @@ jobs:
           construction/qa
           construction/schemas/visual-qa-report.schema.json
           construction/tests/test_c8_visual_qa.py
+          construction/tests/test_c8_palette_resolution_contract.py
           construction/fixtures/vanilla-golden/c8
           docs/superpowers/specs/2026-09-11-construction-c8-visual-qa-design.md
           docs/superpowers/plans/2026-09-11-construction-c8-visual-qa.md
