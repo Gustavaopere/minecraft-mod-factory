@@ -91,7 +91,7 @@ jobs:
           PY
       - name: Regenerate standalone bundle
         working-directory: art/tooling/blockbench/asset-toolkit
-        run: node build_toolkit_bundle.js
+        run: node build_toolkit_bundle.js --write
       - name: PR9 regression
         working-directory: art/tooling/blockbench/asset-toolkit
         run: |
