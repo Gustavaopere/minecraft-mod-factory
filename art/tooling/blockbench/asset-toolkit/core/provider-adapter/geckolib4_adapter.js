@@ -260,7 +260,7 @@ function normalizedSourceAuthorityPath(value) {
 
 function normalizedRelativePath(value, field) {
   const output = nonEmptyString(value, field).replace(/\\/g, '/').replace(/\/$/, '');
-  if (output.startsWith('/') || output.split('/').includes('..')) fail('INVALID_GECKOLIB4_PATH', `${field} must be a safe relative path.`);
+  if (output.startsWith('/') || /^[A-Za-z]:/.test(output) || output.split('/').includes('..')) fail('INVALID_GECKOLIB4_PATH', `${field} must be a safe relative path.`);
   return output;
 }
 

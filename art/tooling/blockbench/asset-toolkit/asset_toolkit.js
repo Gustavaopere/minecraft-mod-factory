@@ -2420,7 +2420,7 @@
 
       function normalizedRelativePath(value, field) {
         const output = nonEmptyString(value, field).replace(/\\/g, '/').replace(/\/$/, '');
-        if (output.startsWith('/') || output.split('/').includes('..')) fail('INVALID_GECKOLIB4_PATH', `${field} must be a safe relative path.`);
+        if (output.startsWith('/') || /^[A-Za-z]:/.test(output) || output.split('/').includes('..')) fail('INVALID_GECKOLIB4_PATH', `${field} must be a safe relative path.`);
         return output;
       }
 
@@ -4807,6 +4807,12 @@
         }
       }
 
+      function deepFreezeJsonDocument(value) {
+        if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+        for (const child of Object.values(value)) deepFreezeJsonDocument(child);
+        return Object.freeze(value);
+      }
+
       function createBlockbenchGeckoLib4Adapter(bb) {
         if (!bb || typeof bb !== 'object') fail('GECKOLIB4_BLOCKBENCH_UNAVAILABLE', 'Blockbench API object is required.');
         const project = bb.Blockbench?.Project;
@@ -4827,7 +4833,7 @@
         function compileModelDocument() {
           const document = cloneJsonDocument(bb.Codecs.bedrock.compile(), 'INVALID_GECKOLIB4_COMPILED_MODEL', 'GeckoLib model');
           geckolib4.validateGeckoLib4GeoDocument(document);
-          return document;
+          return deepFreezeJsonDocument(document);
         }
 
         function compileAnimationDocument() {
@@ -4836,7 +4842,7 @@
           }
           const document = cloneJsonDocument(bb.Animator.buildFile(), 'INVALID_GECKOLIB4_COMPILED_ANIMATION', 'GeckoLib animation');
           geckolib4.validateGeckoLib4AnimationDocument(document);
-          return document;
+          return deepFreezeJsonDocument(document);
         }
 
         function previewExport(request) {

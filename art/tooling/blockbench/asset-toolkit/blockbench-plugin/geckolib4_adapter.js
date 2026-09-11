@@ -29,6 +29,12 @@ function cloneJsonDocument(value, code, label) {
   }
 }
 
+function deepFreezeJsonDocument(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  for (const child of Object.values(value)) deepFreezeJsonDocument(child);
+  return Object.freeze(value);
+}
+
 function createBlockbenchGeckoLib4Adapter(bb) {
   if (!bb || typeof bb !== 'object') fail('GECKOLIB4_BLOCKBENCH_UNAVAILABLE', 'Blockbench API object is required.');
   const project = bb.Blockbench?.Project;
@@ -49,7 +55,7 @@ function createBlockbenchGeckoLib4Adapter(bb) {
   function compileModelDocument() {
     const document = cloneJsonDocument(bb.Codecs.bedrock.compile(), 'INVALID_GECKOLIB4_COMPILED_MODEL', 'GeckoLib model');
     geckolib4.validateGeckoLib4GeoDocument(document);
-    return document;
+    return deepFreezeJsonDocument(document);
   }
 
   function compileAnimationDocument() {
@@ -58,7 +64,7 @@ function createBlockbenchGeckoLib4Adapter(bb) {
     }
     const document = cloneJsonDocument(bb.Animator.buildFile(), 'INVALID_GECKOLIB4_COMPILED_ANIMATION', 'GeckoLib animation');
     geckolib4.validateGeckoLib4AnimationDocument(document);
-    return document;
+    return deepFreezeJsonDocument(document);
   }
 
   function previewExport(request) {
