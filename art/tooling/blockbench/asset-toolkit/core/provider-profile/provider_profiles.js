@@ -50,6 +50,26 @@ const PROVIDER_PROFILES = Object.freeze([
     requiredProvider: null, requiredExtensions: ['animated_java'],
     capabilities: ['model', 'rig', 'animation', 'locator', 'variant', 'display_entity_export_handoff'],
   }),
+  frozenProfile({
+    id: 'cpm_player_model', family: 'cpm', authority: 'Customizable Player Models 0.6.27a player model runtime', assetKind: 'player_model',
+    requiredProvider: {modId: 'cpm', exactVersions: ['0.6.27a']}, requiredExtensions: ['cpm_plugin'],
+    capabilities: ['model', 'rig', 'animation', 'cpmproject_source', 'cpmproject_import_export', 'human_confirm_round_trip'],
+  }),
+  frozenProfile({
+    id: 'player_animation_library_player', family: 'player_animation_library', authority: 'Player Animation Library 1.1.6+mc.1.21.1 runtime consumer', assetKind: 'player_animation',
+    requiredProvider: {modId: 'player_animation_library', exactVersions: ['1.1.6+mc.1.21.1']}, requiredExtensions: [],
+    capabilities: ['player_animation', 'json_animation_handoff', 'resource_pack_handoff', 'runtime_consumer'],
+  }),
+  frozenProfile({
+    id: 'player_animator_player', family: 'player_animator', authority: 'Player Animator 2.0.4+1.21.1 client animation API', assetKind: 'player_animation',
+    requiredProvider: {modId: 'playeranimator', exactVersions: ['2.0.4+1.21.1']}, requiredExtensions: [],
+    capabilities: ['player_animation', 'api_integration', 'animation_stack', 'factory_registration', 'registry_lookup'],
+  }),
+  frozenProfile({
+    id: 'epicfight_blender_handoff', family: 'epicfight', authority: 'Epic Fight 21.17.3.1 external DCC / Blender custom combat animation handoff', assetKind: 'custom_combat_animation_handoff',
+    requiredProvider: {modId: 'epicfight', exactVersions: ['21.17.3.1']}, requiredExtensions: [],
+    capabilities: ['blockbench_reference', 'external_dcc_handoff', 'blender_source', 'epicfight_rig', 'epicfight_blender_export', 'runtime_qa_handoff'],
+  }),
 ]);
 
 const PROFILE_BY_ID = new Map(PROVIDER_PROFILES.map((profile) => [profile.id, profile]));

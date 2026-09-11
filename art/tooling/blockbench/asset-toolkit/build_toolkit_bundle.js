@@ -25,6 +25,8 @@ const SOURCE_MODULES = Object.freeze([
   'core/provider-adapter/easy_model_entities_adapter.js',
   'core/provider-adapter/emf_cem_adapter.js',
   'core/provider-adapter/animated_java_adapter.js',
+  'core/provider-adapter/player_profiles_adapter.js',
+  'core/provider-adapter/epicfight_blender_adapter.js',
   'core/index.js',
   'live-bridge/protocol.js',
   'live-bridge/project_snapshot.js',
@@ -41,6 +43,8 @@ const SOURCE_MODULES = Object.freeze([
   'blockbench-plugin/easy_model_entities_adapter.js',
   'blockbench-plugin/emf_cem_adapter.js',
   'blockbench-plugin/animated_java_adapter.js',
+  'blockbench-plugin/player_profiles_adapter.js',
+  'blockbench-plugin/epicfight_blender_adapter.js',
   'blockbench-plugin/plugin_adapter.js',
 ]);
 
