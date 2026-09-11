@@ -1,4 +1,4 @@
-# Construction Architecture — C0 Baseline
+# Construction Architecture
 
 ## 1. Authority
 
@@ -16,7 +16,7 @@ Construction Brief
   → Planner
   → Palette Resolver
   → Engine Adapter
-  → Voxel IR
+  → Canonical Build IR
   → Structural QA
   → Modded Registry QA
   → Preview
@@ -24,29 +24,38 @@ Construction Brief
   → Sponge v3 Export
 ```
 
-## 4. Canonical BuildSpec
+## 4. BuildSpec and Canonical Build IR
 
-`BuildSpec` is the engine-independent request contract. C0 defines only its first schema. C2 will implement the executable IR and transformation layer.
+`BuildSpec` is the engine-independent request contract. It expresses identity and deterministic seed, Minecraft target and modpack snapshot, size/bounds and terrain assumptions, architectural brief and required spaces, palette constraints, requested outputs and QA requirements.
 
-The contract must be able to express:
+C2 introduces the executable Canonical Build IR as the normalized voxel result contract between an engine adapter and later Construction stages.
 
-- identity and deterministic seed;
-- Minecraft target and modpack snapshot;
-- size/bounds and terrain assumptions;
-- architectural brief and required spaces;
-- palette constraints and modded-block policy;
-- output formats;
-- QA requirements.
+The IR is intentionally smaller than a provider runtime object:
+
+- sparse non-air placements only;
+- palette entries represented as namespaced block IDs plus block-state properties;
+- palette index referenced by each occupied `x/y/z` coordinate;
+- explicit bounds inherited from `BuildSpec.geometry.max_size`;
+- fixed coordinate system: axes `x/y/z`, `y` up, `min_corner` origin and block units;
+- source `BuildSpec` SHA-256 fingerprint;
+- canonical content SHA-256 fingerprint;
+- producer identity and producer version.
+
+The C2 normalization layer sorts block-state properties, palette entries and block coordinates deterministically. Duplicate coordinates, negative/out-of-bounds coordinates, malformed resource locations, malformed state properties and explicit air placements fail closed instead of being clipped, dropped or silently overwritten.
+
+C2 accepts syntactically valid namespaced modded states but does not claim those states exist in the installed modpack. Physical registry existence and safety classification remain C4/C5 responsibilities.
+
+BlockEntity payloads, entities, provider-specific serialization and output-format fields are excluded from the C2 IR. Controlled payload support belongs to later registry/export contracts where the exact runtime semantics can be proven.
 
 ## 5. Upstream integration classes
 
 ### IMMUTABLE_SNAPSHOT
 
-Redistributable source is copied at an exact commit in C1 and never edited in place. Schematica is the primary planned engine in this class.
+Redistributable source is pinned at an exact commit in C1 and never edited in place. Schematica is the primary engine in this class.
 
 ### ENGINE_REFERENCE
 
-A project may be preserved as a snapshot/reference while only selected concepts or adapters are used by the Factory. MineBench and Minecraft Builder MCP initially fit this class.
+A project may be preserved as a reference while only selected concepts or adapters are used by Factory. MineBench and Minecraft Builder MCP initially fit this class.
 
 ### LIBRARY_SNAPSHOT
 
@@ -75,9 +84,13 @@ Each catalogued block will eventually carry safety metadata distinguishing ordin
 
 The target canonical exchange artifact is Sponge Schematic v3. The Factory exporter must preserve namespaced block IDs, states, required-mod metadata and controlled BlockEntity payloads. Existing upstream exporters may continue to produce their native formats; the Factory adapter is responsible for canonical conversion and validation.
 
+C2 does not serialize that artifact. C6 owns the first canonical Sponge v3 exporter/validator gate.
+
 ## 8. Determinism
 
 Any stochastic generation must receive an explicit seed. A repeated run with identical BuildSpec, engine version, upstream pins and modpack registry snapshot should produce identical canonical voxel output unless a provider is explicitly marked nondeterministic.
+
+Within C2, canonicalization is independent of incoming placement order and block-state property-map order. The canonical content fingerprint therefore changes only when semantic IR content or its provenance changes.
 
 ## 9. QA layers
 
@@ -91,8 +104,14 @@ Visual QA includes silhouette, proportion, material hierarchy, repetition, facad
 
 C9 will expose narrow construction operations rather than arbitrary shell/code execution. Intended capabilities include registry search, palette resolution, build generation, bounded edits, preview, validation and export.
 
-Credentials or service-specific configuration are never required in C0. Manual setup is deferred until the first provider that actually needs it.
+Credentials or service-specific configuration are never required in C0-C2. Manual setup is deferred until the first provider that actually needs it.
 
-## 11. C0 non-goals
+## 11. Runtime/worldgen boundary
 
-C0 does not vendor third-party engines, scrape mod JARs, generate a schematic, install MCP servers, request API keys or claim in-game compatibility. Those claims require their later gates.
+Construction may produce reusable structure assets, references and canonical voxel data. Runtime placement, structure sets, biome tags, spacing/separation, processor rules, loot and spawn behavior remain owned by the individual mod runtime and its Mod Engineering worldgen gates.
+
+The visual pipeline may consume structures as reference material, including `.nbt` analysis, without turning a complete build into a runtime entity model by default.
+
+## 12. Current non-goals
+
+The current Construction foundation does not scrape mod JARs, claim modded block compatibility, install MCP servers, request provider API keys, serialize canonical Sponge v3, or claim in-game/worldgen compatibility. Those claims require their later roadmap gates.
