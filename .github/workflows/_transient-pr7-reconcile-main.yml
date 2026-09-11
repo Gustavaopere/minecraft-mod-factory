@@ -1,0 +1,58 @@
+name: Transient PR7 Reconcile Main
+
+on:
+  push:
+    branches:
+      - feat/art-pr7-azurelib3-adapter
+    paths:
+      - '.github/workflows/_transient-pr7-reconcile-main.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Merge current main without committing
+        run: |
+          git fetch origin main
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git merge --no-commit --no-ff origin/main
+      - name: Regenerate standalone for reconciled core
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: |
+          node build_toolkit_bundle.js --write
+          node build_toolkit_bundle.js --check
+      - name: Remove transient workflow before validation
+        run: git rm .github/workflows/_transient-pr7-reconcile-main.yml
+      - name: Validate reconciled PR7 tree
+        run: |
+          cd art/tooling/blockbench/asset-toolkit
+          node --test asset_toolkit.azurelib3_presence.test.js
+          node --test asset_toolkit.azurelib3_adapter.test.js
+          node --test asset_toolkit.azurelib3_geo.test.js
+          node --test asset_toolkit.azurelib3_blockbench_adapter.test.js
+          node --test asset_toolkit.azurelib3_public_api.test.js
+          node --test asset_toolkit.azurelib3_golden_reference.test.js
+          cd ../../../..
+          node art/golden-samples/validate_reference_evidence.js
+          node art/golden-samples/validate_golden_samples.js
+          cd art/tooling/blockbench/asset-toolkit
+          node --test asset_toolkit.geckolib4_adapter.test.js asset_toolkit.animation_core.test.js asset_toolkit.animation_adapter.test.js
+          node build_toolkit_bundle.js --check
+          cd ../../../..
+          git diff --cached --check
+          git diff --check
+      - name: Commit reconciled tree
+        run: |
+          git add art/tooling/blockbench/asset-toolkit/asset_toolkit.js
+          git commit -m 'merge: reconcile AzureLib PR7 with current main'
+          git push origin HEAD:feat/art-pr7-azurelib3-adapter
