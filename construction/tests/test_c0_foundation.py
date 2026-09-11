@@ -133,6 +133,18 @@ class ConstructionC0FoundationTest(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/factory-construction-c0-foundation.yml").read_text(encoding="utf-8")
         self.assertIn("submodules: recursive", workflow)
 
+    def test_c0_workflow_prepares_hashed_aggregate_test_environment(self) -> None:
+        workflow = (ROOT / ".github/workflows/factory-construction-c0-foundation.yml").read_text(encoding="utf-8")
+        self.assertIn(
+            "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+            workflow,
+        )
+        self.assertIn(
+            "construction/upstream/harness/schematica-test-lock.txt",
+            workflow,
+        )
+        self.assertIn("pip install --require-hashes --no-deps", workflow)
+
     def test_snapshot_boundary_accepts_current_repository_state(self) -> None:
         module = load_validator()
         registry = json.loads((CONSTRUCTION / "upstream" / "registry.json").read_text(encoding="utf-8"))
