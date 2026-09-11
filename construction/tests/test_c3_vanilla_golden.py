@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import importlib.util
 import json
 import unittest
@@ -15,6 +16,7 @@ BUILD_IR_MODULE = CONSTRUCTION / "core" / "build_ir.py"
 WORKFLOW = ROOT / ".github" / "workflows" / "factory-construction-c3-vanilla-golden.yml"
 SCHEMATICA_PIN = "0c88770005e7bbd7246997c81e810ba935c8e4cf"
 IMPLEMENTED = BUILD_SPEC.is_file() and GENERATOR.is_file() and EXPECTED_IR.is_file()
+SCHEMATICA_RUNTIME_AVAILABLE = importlib.util.find_spec("numpy") is not None
 
 
 def load_module(path: Path, name: str):
@@ -24,6 +26,22 @@ def load_module(path: Path, name: str):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def literal_module_constants(path: Path) -> dict[str, object]:
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    constants: dict[str, object] = {}
+    for node in tree.body:
+        if not isinstance(node, ast.Assign) or len(node.targets) != 1:
+            continue
+        target = node.targets[0]
+        if not isinstance(target, ast.Name):
+            continue
+        try:
+            constants[target.id] = ast.literal_eval(node.value)
+        except (ValueError, TypeError):
+            continue
+    return constants
 
 
 class ConstructionC3VanillaGoldenTest(unittest.TestCase):
@@ -58,12 +76,15 @@ class ConstructionC3VanillaGoldenTest(unittest.TestCase):
 
     @unittest.skipUnless(IMPLEMENTED, "C3 vanilla golden fixture not present yet")
     def test_generator_is_pinned_to_preserved_schematica(self) -> None:
-        generator = load_module(GENERATOR, "construction_c3_vanilla_golden")
-        self.assertEqual(generator.SCHEMATICA_PIN, SCHEMATICA_PIN)
-        self.assertEqual(generator.PRODUCER, "schematica")
-        self.assertEqual(generator.PRODUCER_VERSION, SCHEMATICA_PIN)
+        constants = literal_module_constants(GENERATOR)
+        self.assertEqual(constants["SCHEMATICA_PIN"], SCHEMATICA_PIN)
+        self.assertEqual(constants["PRODUCER"], "schematica")
+        self.assertEqual(constants["PRODUCER_VERSION"], SCHEMATICA_PIN)
 
-    @unittest.skipUnless(IMPLEMENTED, "C3 vanilla golden fixture not present yet")
+    @unittest.skipUnless(
+        IMPLEMENTED and SCHEMATICA_RUNTIME_AVAILABLE,
+        "C3 generation requires the dedicated hashed Schematica environment",
+    )
     def test_generated_ir_matches_checked_in_golden_exactly(self) -> None:
         generator = load_module(GENERATOR, "construction_c3_vanilla_golden_generate")
         expected = json.loads(EXPECTED_IR.read_text(encoding="utf-8"))
