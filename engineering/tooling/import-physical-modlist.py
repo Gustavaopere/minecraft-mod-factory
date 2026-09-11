@@ -297,11 +297,8 @@ def validate_normalized_snapshot(snapshot):
         for field in ("notes", "mod_id", "mod_name", "version", "modrinth_hash", "curseforge_hash"):
             if not isinstance(entry[field], str):
                 errors.append(f"entries[{index}].{field} must be a string")
-        if isinstance(entry.get("mod_id"), str):
-            if not entry["mod_id"]:
-                errors.append(f"entries[{index}].mod_id must be a non-empty physical identifier")
-            elif MOD_ID_RE.fullmatch(entry["mod_id"]) is None:
-                errors.append(f"entries[{index}].mod_id has invalid physical identifier syntax")
+        if isinstance(entry.get("mod_id"), str) and entry["mod_id"] and MOD_ID_RE.fullmatch(entry["mod_id"]) is None:
+            errors.append(f"entries[{index}].mod_id has invalid physical identifier syntax")
         if not isinstance(entry["mixin_configs"], list) or not all(isinstance(v, str) and v for v in entry["mixin_configs"]):
             errors.append(f"entries[{index}].mixin_configs must be an array of non-empty strings")
         if isinstance(entry.get("modrinth_hash"), str) and entry["modrinth_hash"] and SHA1_RE.fullmatch(entry["modrinth_hash"]) is None:

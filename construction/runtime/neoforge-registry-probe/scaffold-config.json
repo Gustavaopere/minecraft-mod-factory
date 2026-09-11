@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "project_name": "factory-construction-registry-probe",
+  "java_package": "dev.minecraftmodfactory.constructionprobe",
+  "mod_group_id": "dev.minecraftmodfactory",
+  "mod_version": "0.1.0",
+  "main_class": "FactoryConstructionRegistryProbe",
+  "client_class": "FactoryConstructionRegistryProbeClient",
+  "license": "MIT",
+  "authors": "Minecraft Mod Factory",
+  "description": "Factory-owned NeoForge runtime registry probe for Construction C4."
+}

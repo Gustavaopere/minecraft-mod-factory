@@ -65,6 +65,23 @@ The Golden intentionally stays narrow:
 
 C3 therefore proves the integration seam `BuildSpec → preserved Schematica → Canonical Build IR` without stealing responsibilities from C4–C8.
 
+## C4 scope
+
+C4 establishes the modpack-aware block registry without creating a second modlist authority.
+
+The shared Engineering I2 importer remains the physical-modlist authority. Construction consumes that normalized evidence, including top-level and nested JarJar artifacts. A physical entry with an empty `mod_id` remains valid evidence but is not promoted to a provider identity; malformed non-empty identifiers still fail closed.
+
+C4 then combines two evidence layers:
+
+- static JAR indexing discovers NeoForge metadata, blockstate JSON, block models, block textures and nested JARs without extracting or mutating the source artifacts;
+- a Factory-owned NeoForge runtime probe enumerates the post-registry `BuiltInRegistries.BLOCK` contents and every possible block state for the exact Minecraft 1.21.1 / NeoForge 21.1.248 environment.
+
+Static discovery is evidence only. When static assets and runtime data disagree about whether a block/state exists, the exact runtime registry snapshot wins. Runtime snapshots are bound to the physical snapshot SHA-256 and the exact target before they may be merged into the Construction registry.
+
+The runtime probe does not duplicate the Engineering build stack. `construction/scripts/prepare_neoforge_registry_probe.py` materializes it through the canonical I3 scaffolder, inheriting the Factory-owned Gradle 8.14 wrapper, Java 21 toolchain and NeoForge 21.1.248 dependency contract. CI compiles and tests the materialized probe with `./gradlew test build --no-daemon`.
+
+C4 does not select an optimal modded palette, claim advanced connected/copycat/dynamic-renderer semantics, serialize Sponge v3 or perform structural/visual/runtime acceptance. Those remain C5, C6, C7, C8 and C12 responsibilities.
+
 ## Planned pipeline
 
 ```text
@@ -91,9 +108,10 @@ Sponge Schematic v3 validator
 
 ## Directory map
 
-- `core/` — Factory-owned canonical Construction runtime contracts, beginning with Build IR
+- `core/` — Factory-owned canonical Construction runtime contracts, including Build IR and modpack registry composition
 - `docs/` — architecture and provider decisions
 - `fixtures/` — checked-in deterministic Construction Golden Samples and their generation inputs
+- `runtime/` — Factory-owned runtime probes materialized through shared Engineering scaffolding
 - `schemas/` — machine-readable contracts
 - `upstream/` — pinned provenance and immutable permitted snapshots/references
 - `scripts/` — Factory-owned validators and tooling
