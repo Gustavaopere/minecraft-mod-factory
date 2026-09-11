@@ -82,6 +82,26 @@ The runtime probe does not duplicate the Engineering build stack. `construction/
 
 C4 does not select an optimal modded palette, claim advanced connected/copycat/dynamic-renderer semantics, serialize Sponge v3 or perform structural/visual/runtime acceptance. Those remain C5, C6, C7, C8 and C12 responsibilities.
 
+## C6 scope
+
+C6 establishes the first Factory-owned canonical Sponge Schematic v3 exporter and validator at `construction/core/sponge_v3.py`.
+
+The exporter consumes only a C2-valid Canonical Build IR and fails closed when its target, coordinate, palette or content fingerprint contract is invalid. It serializes deterministic big-endian NBT inside GZip with a zero timestamp, an empty NBT root name and the required `Schematic` compound. The canonical target is fixed to Sponge `Version=3` and Minecraft 1.21.1 `DataVersion=3955`.
+
+C6 preserves the Construction contract across the format boundary:
+
+- sparse C2 cells become an explicit `minecraft:air` palette entry at local id `0` plus dense Sponge block data;
+- namespaced block IDs and sorted block-state properties are preserved as canonical Sponge palette strings;
+- `Blocks.Data` uses unsigned VarInt palette ids and the Sponge index order `x + z*Width + y*Width*Length`;
+- dimensions are encoded as Sponge unsigned 16-bit dimensions through NBT `Short` bit patterns and `Offset` is fixed to `[0,0,0]` for the C2 minimum-corner origin;
+- Factory-required mod provenance is preserved as `Metadata.RequiredMods` without claiming it is a Sponge-standard metadata key;
+- controlled BlockEntities preserve typed NBT `Compound` payloads with explicit namespaced ids and in-bounds positions;
+- the validator independently parses the emitted GZip/NBT payload and rejects wrong format/data versions, malformed dimensions, invalid palette/data references and malformed controlled BlockEntities.
+
+The pinned MineBench exporter remains an engine reference: it demonstrates Sponge v3 layout/VarInt mechanics but its audited revision hardcodes an older `DataVersion` and time-dependent metadata. The pinned `mcschematic` library recognizes Minecraft 1.21.1 data version 3955 but its audited serializer emits Sponge version 2. Neither upstream is silently modified; C6 therefore owns the canonical v3 adapter in Factory code.
+
+C6 does not claim structural or visual quality, advanced provider-specific placement semantics, MCP/provider integration, or in-game/worldgen compatibility. Those remain later Construction gates.
+
 ## Planned pipeline
 
 ```text
