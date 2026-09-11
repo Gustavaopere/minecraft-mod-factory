@@ -9,6 +9,7 @@ const azurelib3 = require('./azurelib3_adapter.js');
 const neoforgeNativeAnimation = require('./neoforge_native_animation_adapter.js');
 const easyModelEntities = require('./easy_model_entities_adapter.js');
 const emfCem = require('./emf_cem_adapter.js');
+const animatedJava = require('./animated_java_adapter.js');
 
 function registerBlockbenchPlugin(bb) {
   let auditAction = null;
@@ -267,4 +268,5 @@ module.exports = {
   createBlockbenchNeoForgeNativeAnimationAdapter: neoforgeNativeAnimation.createBlockbenchNeoForgeNativeAnimationAdapter,
   createBlockbenchEasyModelEntitiesAdapter: easyModelEntities.createBlockbenchEasyModelEntitiesAdapter,
   createBlockbenchEmfCemAdapter: emfCem.createBlockbenchEmfCemAdapter,
+  createBlockbenchAnimatedJavaAdapter: animatedJava.createBlockbenchAnimatedJavaAdapter,
 };
