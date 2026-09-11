@@ -1,7 +1,7 @@
 # STATUS — Construction
 
-UPDATED_AT=2026-09-10
-PHASE=C3_COMPLETE_POSTMERGE_VALIDATED
+UPDATED_AT=2026-09-11
+PHASE=C4_COMPLETE_POSTMERGE_VALIDATED
 REPOSITORY=Gustavaopere/minecraft-mod-factory
 BRANCH=main
 C0_PR=19
@@ -205,6 +205,48 @@ C3_OCCUPIED_BLOCKS=110
 C3_PALETTE_SIZE=3
 C3_GOLDEN_PATH=construction/fixtures/vanilla-golden
 C3_IMPLEMENTATION_MAIN_SHA=6112342cf562cc03e6a4d1a37c3f3d092b73075a
+C4_PR=42
+C4_INITIAL_RED_HEAD=7e9430e261f9c20f93e9ecfac06268f6bab5c131
+C4_INITIAL_RED_RUN=34555143552
+C4_INITIAL_RED_RESULT=8_TESTS_2_FAIL_6_SKIP_EXPECTED_I2_EMPTY_MOD_ID_AND_MISSING_C4_ARTIFACTS
+C4_RUNTIME_RED_HEAD=a8a553ea75c9a5d35da0800868c09cfcfce48cbe
+C4_RUNTIME_RED_RUN=34556219714
+C4_RUNTIME_RED_RESULT=I2_15_PASS_C4_REGISTRY_8_PASS_RUNTIME_4_TESTS_1_FAIL_2_SKIP_1_PASS_EXPECTED_MISSING_RUNTIME_PRODUCER
+C4_GREEN_RUN=34556926738
+C4_GREEN_I2=15_PASS_0_FAIL
+C4_GREEN_CONTRACT=12_PASS_0_FAIL
+C4_GREEN_RUNTIME_MATERIALIZATION=PASS
+C4_GREEN_NEOFORGE_BUILD=PASS_JAVA21_NEOFORGE_21_1_248_GRADLE_8_14
+C4_FINAL_PR_HEAD=a91522938fa9813efbe43a00272a30c9181fe172
+C4_FINAL_PR_SONARCLOUD=PASS_0_NEW_ISSUES_0_ACCEPTED_0_HOTSPOTS
+C4_MERGE_SHA=449785d3bed28c80bfb974e8c09b679700ebdb2a
+C4_POSTMERGE_RUN=34558103849
+C4_POSTMERGE_I2=15_PASS_0_FAIL
+C4_POSTMERGE_CONTRACT=12_PASS_0_FAIL
+C4_POSTMERGE_RUNTIME_MATERIALIZATION=PASS
+C4_POSTMERGE_NEOFORGE_BUILD=BUILD_SUCCESSFUL_31_TASKS_JAVA21_NEOFORGE_21_1_248
+C4_POSTMERGE_C3=7_PASS_0_FAIL
+C4_POSTMERGE_C2=10_PASS_0_FAIL
+C4_POSTMERGE_C0=10_PASS_0_FAIL_VALIDATOR_PASS
+C4_POSTMERGE_WHITESPACE=PASS
+C4_POSTMERGE_C1A_RUN=34558103863
+C4_POSTMERGE_C1A_CONTRACT=6_PASS_0_FAIL
+C4_POSTMERGE_SCHEMATICA_TESTS=498_PASS_0_FAIL
+C4_POSTMERGE_C1B_RUN=34558103832
+C4_POSTMERGE_C1B_CONTRACT=5_PASS_0_FAIL
+C4_POSTMERGE_C1B_REGRESSION_TEST_FILES=149_PASS
+C4_POSTMERGE_C1B_INTEGRATION_TEST_FILES=18_PASS
+C4_POSTMERGE_C1B_BUILD=PASS
+C4_POSTMERGE_C1B_C0=PASS
+C4_POSTMERGE_C1B_WHITESPACE=PASS
+C4_POSTMERGE_C1B_SCHEM_FIXTURE_BLOCKS=424
+C4_POSTMERGE_C1B_SCHEM_LARGE_BLOCKS=100000
+C4_POSTMERGE_STANDALONE_C0_RUN=34558103828
+C4_POSTMERGE_STANDALONE_C0=PASS
+C4_POSTMERGE_GOVERNANCE_RUN=34558103834
+C4_POSTMERGE_GOVERNANCE=PASS
+C4_IMPLEMENTATION_MAIN_SHA=449785d3bed28c80bfb974e8c09b679700ebdb2a
+C4_RECONCILED_MAIN_SHA=c77ab427b4b993061002ff5b6f9001a8c772f7c3
 HEAD_SHA=RESOLVE_FROM_GIT
 OPEN_CONSTRUCTION_IMPLEMENTATION_PR=NONE
 TARGET_MINECRAFT=1.21.1
@@ -214,7 +256,7 @@ CANONICAL_OUTPUT=SPONGE_SCHEMATIC_V3
 LATEST_MODLIST_SNAPSHOT=2026-09-09_595_TOP_LEVEL
 MANUAL_ACTION_REQUIRED=NO
 BLOCKERS=NONE_IN_CONSTRUCTION
-NEXT_ACTION=BEGIN_C4_MODPACK_REGISTRY
+NEXT_ACTION=BEGIN_C5_MODDED_PALETTE_ENGINE
 
 ## C1A — Schematica preservation
 
@@ -432,3 +474,56 @@ The checked-in C3 fingerprints are `20e1119cc06d0bfb1a40996f2e635d1d86d44ea17a16
 - [x] post-merge Governance passes
 
 C3 is complete and post-merge validated. The next Construction slice is C4 — Modpack Registry.
+
+## C4 — Modpack Registry
+
+C4 reconciles Construction with the shared Engineering I2 physical modlist authority instead of introducing a second parser or provider catalog. It adds a deterministic Construction registry surface with two evidence layers: a static JAR resource index for available assets and a normalized runtime NeoForge registry snapshot for actual block/state existence. Runtime registry evidence is authoritative whenever static and runtime evidence differ.
+
+C4_MODULE=construction/core/modpack_registry.py
+C4_SCHEMA=construction/schemas/modpack-registry.schema.json
+C4_STATIC_INDEXER=construction/scripts/index_modpack_jars.py
+C4_RUNTIME_MATERIALIZER=construction/scripts/prepare_neoforge_registry_probe.py
+C4_RUNTIME_PROBE=construction/runtime/neoforge-registry-probe
+C4_TEST=construction/tests/test_c4_modpack_registry.py
+C4_RUNTIME_TEST=construction/tests/test_c4_neoforge_registry_probe.py
+C4_WORKFLOW=.github/workflows/factory-construction-c4-modpack-registry.yml
+C4_PHYSICAL_MODLIST_SHA256=7c0a23d6013101383d196526e4b6ba6940fb54a0fed10eaed5956ab015cfcc00
+C4_PHYSICAL_TOP_LEVEL=595
+C4_PHYSICAL_NESTED=404
+C4_PHYSICAL_TOTAL=999
+C4_EMPTY_MOD_ID_ARTIFACTS=104
+C4_RUNTIME_STACK=MINECRAFT_1_21_1__NEOFORGE_21_1_248__JAVA_21__GRADLE_8_14
+
+The C4 audit found that Engineering I2 was already present in the Factory and originated from the historically proven RPG implementation. The physical modlist still hashes to `7c0a23d6013101383d196526e4b6ba6940fb54a0fed10eaed5956ab015cfcc00` and contains 595 top-level entries plus 404 nested JarJar artifacts. The audit also reproduced a migration regression: 104 physical artifacts have no `mod_id`, including two top-level JARs, while the Factory validator had started rejecting all empty IDs. Historical I2 correctly treated those rows as physical evidence without promoting them to provider identities. C4 restored that behavior while preserving fail-closed validation for malformed non-empty IDs.
+
+The initial C4 RED run `34555143552` produced exactly two expected failures: the I2 empty-ID regression and the absence of the C4 registry artifacts. After the shared I2 reconciliation and the deterministic static/runtime registry implementation, a second RED was intentionally added for the missing NeoForge runtime producer. Run `34556219714` kept I2 15/15 and the Python registry contract 8/8 green while the runtime contract failed only because its producer artifacts did not exist. The producer was then implemented as an overlay over the existing Engineering I3 scaffolder instead of creating a parallel Gradle project.
+
+Run `34556926738` proved the technical GREEN: Engineering I2 passed 15/15, the combined C4 registry/runtime contract passed 12/12, the I3-based runtime probe materialized successfully, and `./gradlew test build --no-daemon` passed against Java 21 and NeoForge 21.1.248. C3 passed 7/7, C2 passed 10/10, C0 passed 10/10 plus validator, and whitespace passed. PR #42 later exposed only a documentary C0 marker regression; the canonical `runtime NeoForge registry` marker was restored without semantic change. The final PR head `a91522938fa9813efbe43a00272a30c9181fe172` passed C4, C0, C1A, C2, C3, Engineering I1/I2, Governance and SonarCloud with 0 new issues, 0 accepted issues and 0 security hotspots, with no open review thread.
+
+PR #42 merged as `449785d3bed28c80bfb974e8c09b679700ebdb2a`. The resulting `main` push revalidated the complete Construction chain. C4 run `34558103849` passed Engineering I2 15/15, the C4 contract 12/12, I3 materialization and the NeoForge runtime build with `BUILD SUCCESSFUL` and 31 executed tasks; embedded C3 7/7, C2 10/10, C0 10/10 plus validator and whitespace also passed. C1A run `34558103863` passed 6/6 plus Schematica 498/498. C1B run `34558103832` passed 5/5, 149 regression/config/UI/unit files, 18 PostgreSQL integration files, production build, C0 and whitespace; its export smoke preserved the 424-block and 100,000-block evidence. Standalone C0 run `34558103828` and Governance run `34558103834` also passed. The later Art/AzureLib PR #43 advanced `main` to `c77ab427b4b993061002ff5b6f9001a8c772f7c3` without touching Construction or its STATUS, so the C4 evidence remained intact before this closeout.
+
+### C4 acceptance
+
+- [x] shared Engineering I2 remains the physical modlist authority; no duplicate Construction modlist parser exists
+- [x] physical evidence is reconciled against the exact 595 top-level + 404 nested = 999 artifact snapshot
+- [x] empty physical `mod_id` values remain evidence-only and are not synthesized into provider identities
+- [x] malformed non-empty provider identities still fail closed
+- [x] deterministic static JAR index is available for asset/resource discovery
+- [x] normalized runtime NeoForge snapshot is available for actual block/state existence
+- [x] runtime evidence wins over static evidence for block/state validity
+- [x] registry artifacts carry source/target fingerprints instead of silently mixing environments
+- [x] runtime producer reuses the Engineering I3 scaffolder and canonical Gradle stack
+- [x] runtime probe compiles with Java 21 against NeoForge 21.1.248
+- [x] C4 contract passes 12/12 and Engineering I2 passes 15/15
+- [x] final PR head passes C0, C1A, C2, C3, Engineering I1/I2, Governance and SonarCloud
+- [x] PR #42 merged
+- [x] post-merge C4 passes I2 15/15 + C4 12/12 + runtime materialization + NeoForge build
+- [x] post-merge C3, C2, C0, C1A and C1B regressions pass
+- [x] post-merge Schematica remains 498/498
+- [x] post-merge MineBench remains 149 + 18 + production build with 424/100000 export smoke
+- [x] post-merge standalone C0 and Governance pass
+- [ ] semantic modded palette selection is intentionally deferred to C5
+- [ ] canonical Sponge Schematic v3 serialization is intentionally deferred to C6
+- [ ] structural and visual QA remain C7/C8
+
+C4 is complete and post-merge validated. The next Construction slice is C5 — Modded Palette Engine.
