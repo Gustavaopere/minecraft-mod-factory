@@ -190,3 +190,16 @@ test('export plan preserves bbmodel authority and only stages provider artifacts
     (error) => error?.code === 'GECKOLIB4_SOURCE_MUST_BE_BBMODEL',
   );
 });
+
+test('export plan rejects Windows drive-absolute staging paths as non-relative output', () => {
+  assert.throws(
+    () => geckolib4.createGeckoLib4ExportPlan({
+      profileId: 'geckolib4_entity',
+      sourcePath: 'C:\\Users\\Gustavo\\Minecraft\\factory_test.bbmodel',
+      outputDirectory: 'C:\\Users\\Gustavo\\Minecraft\\staging',
+      resourceName: 'factory_test',
+      includeAnimations: false,
+    }),
+    (error) => error?.code === 'INVALID_GECKOLIB4_PATH',
+  );
+});
