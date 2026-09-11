@@ -33,7 +33,7 @@ C8 renders Canonical Build IR into deterministic diagnostic SVG views with a Fac
 
 Preview colors are stable diagnostic pseudo-colors derived from canonical block-state identity. They exist to distinguish regions and palette states reproducibly. They are never described as Minecraft material colors or texture fidelity.
 
-C8 computes objective metrics from Build IR and projections. Subjective visual checks become `PASS` or `FAIL` only through explicit `review_evidence` that is bound to the exact BuildSpec, Build IR, renderer version, and canonical view hashes. Missing subjective evidence remains `DEFERRED`.
+C8 computes objective metrics from Build IR and projections. Subjective visual checks become `PASS` or `FAIL` only through explicit `review_evidence` bound to the exact BuildSpec, Build IR, renderer version, and canonical view hashes. Missing subjective evidence remains `DEFERRED`.
 
 Rejected alternatives:
 
@@ -155,7 +155,7 @@ Malformed or mismatched supplied C5 evidence raises `VisualQAError`.
 6. `isometric`
 7. `layers`
 
-Every payload must be non-empty UTF-8 SVG bytes produced by renderer version `c8-svg-v1`. C8 parses the SVG safely with standard-library XML facilities, rejects script/external-resource elements or attributes, verifies embedded Build IR fingerprint metadata, recomputes each SHA-256, and records it in the report.
+Every payload must be non-empty UTF-8 SVG bytes produced by renderer version `c8-svg-v1`. C8 parses SVG with standard-library XML facilities, rejects script/external-resource elements or attributes, verifies embedded Build IR fingerprint metadata, recomputes each SHA-256, and records it in the report.
 
 Missing, extra, malformed, unsafe, or fingerprint-mismatched views raise `VisualQAError` before report emission.
 
@@ -164,50 +164,94 @@ Missing, extra, malformed, unsafe, or fingerprint-mismatched views raise `Visual
 ### Global constants
 
 - orthographic cell size: `16` SVG units;
-- orthographic padding: `16` SVG units on every side;
+- orthographic outer padding: `16` SVG units;
 - layer cell size: `8` SVG units;
 - layer tile gap: `8` SVG units;
+- layer outer padding: `8` SVG units;
 - isometric half-width: `8` SVG units;
 - isometric half-height: `4` SVG units;
 - isometric vertical height: `8` SVG units;
+- isometric outer padding: `16` SVG units;
 - SVG numeric geometry uses integers only.
 
-### Orthographic orientation and occlusion
+### Orthographic orientation, occlusion, and canvas
 
-For a C2 block at `(x, y, z)` with bounds `(size_x, size_y, size_z)`:
+For a C2 block `(x, y, z)` and bounds `(size_x, size_y, size_z)`:
 
-- `front`: viewer is at negative `z` looking toward positive `z`; screen `u=x`, screen `v=y`; smallest `z` wins occlusion.
-- `back`: viewer is at positive `z` looking toward negative `z`; screen `u=size_x-1-x`, screen `v=y`; largest `z` wins occlusion.
-- `left`: viewer is at negative `x` looking toward positive `x`; screen `u=size_z-1-z`, screen `v=y`; smallest `x` wins occlusion.
-- `right`: viewer is at positive `x` looking toward negative `x`; screen `u=z`, screen `v=y`; largest `x` wins occlusion.
-- `top`: viewer is above positive `y` looking toward negative `y`; screen `u=x`, screen `v=size_z-1-z`; largest `y` wins occlusion.
+- `front`: viewer at negative `z` looking positive `z`; logical `u=x`, `v=y`; smallest `z` wins.
+- `back`: viewer at positive `z` looking negative `z`; logical `u=size_x-1-x`, `v=y`; largest `z` wins.
+- `left`: viewer at negative `x` looking positive `x`; logical `u=size_z-1-z`, `v=y`; smallest `x` wins.
+- `right`: viewer at positive `x` looking negative `x`; logical `u=z`, `v=y`; largest `x` wins.
+- `top`: viewer above positive `y` looking negative `y`; logical `u=x`, `v=size_z-1-z`; largest `y` wins.
 
-SVG's downward-positive `y` coordinate is handled only at final rectangle placement; logical `v` remains bottom-up for vertical cardinal views.
+Canvas dimensions are fixed from full C2 bounds:
 
-Each orthographic canvas uses the full projected C2 bounds, not host-dependent occupied-content cropping. This keeps canvas size stable for the same BuildSpec bounds even if occupancy changes.
+- `front`/`back`: width `size_x*16 + 32`, height `size_y*16 + 32`;
+- `left`/`right`: width `size_z*16 + 32`, height `size_y*16 + 32`;
+- `top`: width `size_x*16 + 32`, height `size_z*16 + 32`.
 
-### Isometric projection
+Rectangle placement:
 
-For each block:
+- cardinal vertical views: `px=16 + u*16`, `py=16 + (size_y-1-v)*16`;
+- top view: `px=16 + u*16`, `py=16 + v*16`.
+
+Every visible block occupies one `16x16` rectangle. Full-bounds canvases prevent host-dependent cropping and keep dimensions stable when occupancy changes inside the same bounds.
+
+### Isometric projection and canvas
+
+For block origin `(x, y, z)`:
 
 ```text
 base_x = (x - z) * 8
 base_y = (x + z) * 4 - y * 8
 ```
 
-Only exposed top, negative-`x`, and negative-`z` diagnostic faces are emitted. Blocks are processed in fixed painter order `(x + z, y, z, x)`, then faces in fixed order `negative_z`, `negative_x`, `top`.
+Visible diagnostic faces use these exact vertices before global canvas translation:
 
-The isometric canvas is derived from the integer min/max of all emitted polygon vertices plus `16` units padding. Empty Build IR uses a deterministic minimal canvas derived from C2 bounds rather than a platform default.
+- `top`: `(base_x,base_y-4)`, `(base_x+8,base_y)`, `(base_x,base_y+4)`, `(base_x-8,base_y)`;
+- `negative_x`: `(base_x-8,base_y)`, `(base_x,base_y+4)`, `(base_x,base_y+12)`, `(base_x-8,base_y+8)`;
+- `negative_z`: `(base_x+8,base_y)`, `(base_x,base_y+4)`, `(base_x,base_y+12)`, `(base_x+8,base_y+8)`.
 
-The projection is diagnostic. C8 does not claim physical perspective or Minecraft camera fidelity.
+A face is emitted only when the immediately adjacent block in that face direction is absent from C2 occupancy. Top checks `(x,y+1,z)`, negative-`x` checks `(x-1,y,z)`, and negative-`z` checks `(x,y,z-1)`; coordinates outside C2 bounds are absent.
+
+Blocks are processed in fixed painter order `(x + z, y, z, x)`. For each block, emitted faces use fixed order `negative_z`, `negative_x`, `top`.
+
+The canvas is occupancy-independent. To calculate its raw min/max bounds, evaluate the three face polygons above for the eight extreme C2 block coordinates formed by:
+
+- `x` in `{0, size_x-1}`;
+- `y` in `{0, size_y-1}`;
+- `z` in `{0, size_z-1}`.
+
+Take min/max across all resulting vertices, then translate all rendered vertices so raw `(min_x,min_y)` maps to `(16,16)`. Final width is `(max_x-min_x)+32`; final height is `(max_y-min_y)+32`.
+
+This rule applies even when Build IR has zero occupied blocks, so empty output still has a fully defined deterministic canvas.
+
+The projection is diagnostic and does not claim Minecraft camera/perspective fidelity.
 
 ### Layers contact sheet
 
-Every C2 `y` level from `0` through `size_y-1` is represented exactly once, including empty levels. Each tile is a top-down `x/z` grid with cell size `8`.
+Every C2 `y` level from `0` through `size_y-1` is represented exactly once, including empty levels.
 
-Tiles are ordered by ascending `y`. Grid column count is integer `ceil_sqrt(size_y)`; row count is integer ceiling division. Tile placement uses only C2 bounds, cell size, and fixed gap. No font metrics or textual labels affect geometry. Each tile group carries its `y` value as inert SVG metadata/data attribute.
+Each tile is top-down with:
 
-Including empty levels prevents the contact sheet layout from changing merely because one level becomes empty.
+- tile width `size_x*8`;
+- tile height `size_z*8`;
+- cell logical `u=x`, `v=size_z-1-z`;
+- cell placement within tile `px=u*8`, `py=v*8`.
+
+Tiles are ordered by ascending `y`. Let `cols=ceil_sqrt(size_y)` using integer arithmetic and `rows=ceil_div(size_y, cols)`.
+
+Contact-sheet canvas:
+
+- width `16 + cols*(size_x*8) + (cols-1)*8`;
+- height `16 + rows*(size_z*8) + (rows-1)*8`.
+
+Tile at zero-based index `i` uses column `i % cols`, row `i // cols`, with origin:
+
+- `tile_x = 8 + column*(size_x*8 + 8)`;
+- `tile_y = 8 + row*(size_z*8 + 8)`.
+
+No font metrics or text labels affect geometry. Each tile group carries its `y` value as inert SVG data metadata. Including empty levels prevents layout changes merely because a layer becomes empty.
 
 ### Diagnostic pseudo-colors
 
@@ -216,23 +260,23 @@ For canonical block-state string `S`:
 1. compute `SHA-256(UTF-8(S))`;
 2. let the first three digest bytes be `b0`, `b1`, `b2`;
 3. base RGB is `(64 + b0 % 128, 64 + b1 % 128, 64 + b2 % 128)`;
-4. orthographic and layers views use base RGB;
-5. isometric `top` uses base RGB, `negative_x` uses `floor(channel*85/100)`, and `negative_z` uses `floor(channel*70/100)`;
+4. orthographic and layers use base RGB;
+5. isometric `top` uses base RGB, `negative_x` uses `floor(channel*85/100)`, `negative_z` uses `floor(channel*70/100)`;
 6. serialize colors as lowercase six-digit hex.
 
-This algorithm is a diagnostic identity mapping only. Color collisions do not imply semantic equality, and visual QA must never describe these colors as actual Minecraft texture/material colors.
+This algorithm is diagnostic identity mapping only. Color collisions do not imply semantic equality, and colors never claim actual Minecraft texture/material appearance.
 
 ### SVG safety and byte determinism
 
 Canonical SVG:
 
-- is UTF-8 with a final newline;
-- has a fixed XML/SVG element and attribute order controlled by Factory code;
-- uses no scripts, event handlers, foreign objects, external URLs, network resources, embedded filesystem paths, timestamps, random ids, stylesheets, or environment-derived content;
+- is UTF-8 with one final newline;
+- has fixed XML/SVG element and attribute order controlled by Factory code;
+- uses no scripts, event handlers, foreign objects, external URLs, network resources, filesystem paths, timestamps, random ids, stylesheets, or environment-derived content;
 - stores renderer version and exact C2 Build IR SHA-256 in inert metadata/data attributes;
-- does not use geometry that depends on system fonts, DPI, locale, browser layout, GPU state, or OS theme.
+- does not use geometry dependent on system fonts, DPI, locale, browser layout, GPU state, or OS theme.
 
-Tests compare canonical bytes and hashes, not rasterized font behavior.
+Tests compare canonical bytes/hashes, not rasterized font behavior.
 
 ## Objective metrics
 
@@ -248,18 +292,18 @@ Metrics are descriptive evidence, never aesthetic truth.
 - occupied density inside occupied bounding box as exact fraction;
 - occupied density inside full C2 bounds as exact fraction.
 
-Fractions use `{numerator, denominator}` integer objects reduced by greatest common divisor. Zero numerator uses denominator `1`.
+Fractions use reduced `{numerator, denominator}` integers. Zero numerator uses denominator `1`.
 
 ### Projection metrics
 
-For each `front`, `back`, `left`, `right`, and `top` view:
+For each `front`, `back`, `left`, `right`, `top`:
 
 - projected occupied-cell count;
 - projected occupied bounding width/height, zero when empty;
 - projected occupancy ratio as exact fraction;
 - cardinal connected-component count on projected occupied cells;
 - dominant component size;
-- aspect ratio as reduced `{numerator, denominator}` using width/height; empty height produces `{0,1}`.
+- aspect ratio as reduced `{numerator, denominator}` using width/height; empty height yields `{0,1}`.
 
 These metrics support silhouette review but do not define aesthetic thresholds.
 
@@ -279,19 +323,19 @@ C8 does not invent material names from block ids.
 
 For every orthographic/top visible grid:
 
-- count of distinct row signatures;
-- count of distinct column signatures;
+- distinct row-signature count;
+- distinct column-signature count;
 - repeated row-signature count;
 - repeated column-signature count;
 - longest adjacent identical-row run;
 - longest adjacent identical-column run;
 - repeated-row and repeated-column ratios as exact fractions.
 
-A signature includes visible canonical palette identity plus empty cells across the full projected C2 bounds. Metrics expose repetition but do not decide whether repetition is desirable.
+Signatures include canonical visible palette identity plus empty cells across full projected C2 bounds. Metrics expose repetition but do not decide whether repetition is desirable.
 
 ### Facade-depth metrics
 
-For `front`, `back`, `left`, and `right`, retain the winning ray depth for each visible projected cell and derive:
+For `front`, `back`, `left`, `right`, retain winning ray depth per visible projected cell and derive:
 
 - distinct visible depth count;
 - minimum/maximum visible depth, or `null` when empty;
@@ -300,24 +344,24 @@ For `front`, `back`, `left`, and `right`, retain the winning ray depth for each 
 - adjacent depth-transition count;
 - transition ratio as exact fraction.
 
-This is only a depth/readability proxy. It does not model lighting, textures, connected models, bevels, transparency, or dynamic-renderer depth.
+This is a depth/readability proxy only. It does not model lighting, textures, connected models, bevels, transparency, or dynamic-renderer depth.
 
 ### Layer-density metrics
 
-For every `y` level `0..size_y-1`:
+For every `y` in `0..size_y-1`:
 
 - occupied cells;
-- footprint area `size_x * size_z`;
+- footprint area `size_x*size_z`;
 - density as exact fraction;
 - palette-state counts in canonical palette order.
 
-Aggregate values include level count, minimum occupied cells, maximum occupied cells, and the ordered middle pair used as an exact median representation. No floating-point median is emitted.
+Aggregate values include level count, minimum occupied cells, maximum occupied cells, and the ordered middle pair used as exact median representation. No floating-point median is emitted.
 
 These metrics support interior-density review but do not identify rooms or intentional interior volumes.
 
 ## Visual QA report contract
 
-Top-level fields are:
+Top-level fields:
 
 - `schema_version`: `1`;
 - `build_spec_sha256`;
@@ -330,33 +374,33 @@ Top-level fields are:
 - `metrics`;
 - `checks`: fixed-order check results;
 - `overall_status`: `PASS`, `FAIL`, or `DEFERRED`;
-- `content_sha256`: report fingerprint computed from canonical report JSON with only `content_sha256` omitted.
+- `content_sha256`: report fingerprint from canonical report JSON with only `content_sha256` omitted.
 
-Canonical object hashing uses UTF-8 JSON with sorted keys, compact separators, `ensure_ascii=false`, and **no final newline in the hashed payload**, matching the C2/C5 JSON fingerprint convention. Serialization to a file adds one final newline after hashing.
+Canonical object hashing uses UTF-8 JSON with sorted keys, compact separators, `ensure_ascii=false`, and no final newline in the hashed payload, matching the C2/C5 JSON fingerprint convention. File serialization adds one final newline after hashing.
 
-Each view descriptor contains:
+Each view descriptor:
 
 - `id`;
-- deterministic `artifact_name` (`front.svg`, `back.svg`, `left.svg`, `right.svg`, `top.svg`, `isometric.svg`, or `layers.svg`);
+- deterministic `artifact_name` (`front.svg`, `back.svg`, `left.svg`, `right.svg`, `top.svg`, `isometric.svg`, `layers.svg`);
 - `media_type`: `image/svg+xml`;
 - `sha256`;
 - `byte_length`;
 - integer canvas `width` and `height`;
 - `evidence_class`: `canonical_offline_preview`.
 
-SVG bytes are separate artifacts and are not embedded in report JSON.
+SVG bytes are separate artifacts, not embedded in report JSON.
 
-Each check contains:
+Each check:
 
 - `id`;
 - `required`;
-- `status`: `PASS`, `FAIL`, `DEFERRED`, or `NOT_APPLICABLE`;
-- `severity`: `error`, `warning`, or `info`;
+- `status`: `PASS`, `FAIL`, `DEFERRED`, `NOT_APPLICABLE`;
+- `severity`: `error`, `warning`, `info`;
 - deterministic `summary`;
 - fixed/sorted `evidence_views`;
 - deterministic machine-readable `findings`.
 
-Overall status is derived in this order:
+Overall status:
 
 1. `FAIL` if any required check is `FAIL`;
 2. otherwise `DEFERRED` if any required check is `DEFERRED`;
@@ -366,115 +410,82 @@ Overall status is derived in this order:
 
 ### `canonical_preview_integrity`
 
-Always required.
-
-A complete, safe, fingerprint-matching canonical view set yields `PASS`. Malformed view input raises `VisualQAError` before report emission rather than producing a visual finding.
+Always required. A complete, safe, fingerprint-matching canonical view set yields `PASS`. Malformed view input raises `VisualQAError` before report emission.
 
 ### `silhouette_readability`
 
-Always required for C8 visual completion.
+Always required. Evidence set: `front`, `back`, `left`, `right`, `top`, `isometric`, plus projection metrics.
 
-Evidence: `front`, `back`, `left`, `right`, `top`, `isometric`, plus projection metrics.
-
-- no matching review decision => `DEFERRED`;
-- bound review `PASS` => `PASS`;
-- bound review `FAIL` => `FAIL`.
-
-No projection-density threshold automatically decides quality.
+No bound decision => `DEFERRED`; review `PASS` => `PASS`; review `FAIL` => `FAIL`. No projection-density threshold automatically decides quality.
 
 ### `proportion`
 
-Always required.
+Always required. Evidence set: `front`, `back`, `left`, `right`, `top`, `isometric`, plus occupied extents/aspect ratios and `geometry.architectural_brief` when present.
 
-Evidence: exterior views, occupied extents/aspect ratios, and `geometry.architectural_brief` when present.
-
-- no matching review decision => `DEFERRED`;
-- bound review decides `PASS` or `FAIL`.
-
-If the architectural brief is absent, the reviewer may assess internal massing consistency but must not invent a requested historical/style target.
+No bound decision => `DEFERRED`; bound review decides `PASS` or `FAIL`. If the brief is absent, review may assess internal massing consistency but cannot invent a requested style target.
 
 ### `material_hierarchy`
 
-Always required.
+Always required. Evidence set: all seven views, canonical block-state legend, palette-distribution metrics, optional C5 role labels.
 
-Evidence: diagnostic pseudo-color views, canonical block-state legend, palette-distribution metrics, and optional C5 role labels.
+No bound decision => `DEFERRED`; bound review decides `PASS` or `FAIL`.
 
-- no matching review decision => `DEFERRED`;
-- bound review decides `PASS` or `FAIL`.
-
-A `PASS` proves only offline palette/state distribution hierarchy. It does not prove texture quality, material appearance, CTM, emissive, transparency, tint, shader, or lighting fidelity.
+A `PASS` proves only offline palette/state distribution hierarchy. It does not prove texture quality, real material appearance, CTM, emissive, transparency, tint, shader, or lighting fidelity.
 
 ### `repetition`
 
-Always required.
+Always required. Evidence set: `front`, `back`, `left`, `right`, `top`, `isometric`, plus repetition metrics.
 
-Evidence: repetition metrics plus exterior/isometric views.
-
-- no matching review decision => `DEFERRED`;
-- bound review decides `PASS` or `FAIL`.
-
-No universal repetition threshold exists because repetition can be intentional architecture.
+No bound decision => `DEFERRED`; bound review decides `PASS` or `FAIL`. No universal repetition threshold exists because repetition may be intentional.
 
 ### `facade_readability`
 
-Always required.
+Always required. Evidence set: `front`, `back`, `left`, `right`, `isometric`, plus facade-depth metrics.
 
-Evidence: four cardinal views and facade-depth metrics.
-
-- no matching review decision => `DEFERRED`;
-- bound review decides `PASS` or `FAIL`.
-
-A `PASS` is limited to diagnostic mass/depth organization, not real Minecraft lighting or texture readability.
+No bound decision => `DEFERRED`; bound review decides `PASS` or `FAIL`. `PASS` is limited to diagnostic mass/depth organization, not runtime lighting/texture readability.
 
 ### `interior_density`
 
-Always required.
+Always required. Evidence set: `layers`, `isometric`, `top`, plus layer-density metrics and `geometry.required_spaces` names as non-spatial intent only.
 
-Evidence: `layers`, isometric view, layer-density metrics, and BuildSpec `geometry.required_spaces` names as non-spatial intent only.
-
-- no matching review decision => `DEFERRED`;
-- bound review decides `PASS` or `FAIL`.
-
-C8 never marks a named required space satisfied because BuildSpec v1 does not map spaces to coordinates.
+No bound decision => `DEFERRED`; bound review decides `PASS` or `FAIL`. C8 never marks a named required space satisfied because BuildSpec v1 does not map spaces to coordinates.
 
 ### `runtime_visual_fidelity`
 
-Not required for C8 completion. Always `DEFERRED` with severity `info`.
-
-C8 review evidence is forbidden from resolving this check. It remains the explicit handoff to C12/runtime visual evidence.
+Not required for C8 completion. Always `DEFERRED` with severity `info`. C8 review evidence is forbidden from resolving it; it is the explicit handoff to C12/runtime visual evidence.
 
 ## Review evidence contract
 
-`review_evidence` is optional. It is the only authority that may resolve C8 subjective checks from `DEFERRED` to `PASS` or `FAIL`.
+`review_evidence` is optional and is the only authority that may resolve C8 subjective checks.
 
-Required top-level fields when supplied:
+Required fields when supplied:
 
 - `schema_version`: `1`;
 - `build_spec_sha256`;
 - `build_ir_sha256`;
 - `renderer_version`: `c8-svg-v1`;
-- `views`: exactly seven `{id, sha256}` records matching the current canonical artifacts;
-- `reviewer`: object with `kind` in `human|agent` and non-empty stable `id`;
-- `decisions`: unique subjective check decisions.
+- `views`: exactly seven `{id, sha256}` records in canonical C8 view order, all matching current artifacts;
+- `reviewer`: `kind` in `human|agent` plus non-empty stable `id`;
+- `decisions`: unique subjective-check decisions in fixed C8 check order after normalization.
 
-Each decision contains:
+Each decision:
 
 - `check_id`: one of `silhouette_readability`, `proportion`, `material_hierarchy`, `repetition`, `facade_readability`, `interior_density`;
 - `status`: only `PASS` or `FAIL`;
-- `evidence_views`: non-empty unique list of relevant canonical view ids;
+- `evidence_views`: non-empty unique list whose members belong to that check's evidence set above;
 - `summary`: non-empty review statement.
 
 Validation rules:
 
 - BuildSpec, Build IR, renderer version, and all seven view hashes must match current C8 inputs exactly.
-- unknown or duplicate view records fail closed;
-- unknown or duplicate check decisions fail closed;
-- `runtime_visual_fidelity` is not a legal review decision;
-- each decision must reference at least one view from that check's allowed evidence set;
-- omitted subjective checks remain `DEFERRED`;
-- `review_evidence_sha256` is SHA-256 of canonical JSON of the exact supplied evidence.
+- unknown, missing, duplicate, or out-of-order canonical view records fail closed.
+- unknown or duplicate check decisions fail closed; decision input order is normalized to fixed C8 check order before report construction.
+- `runtime_visual_fidelity` is not a legal decision.
+- a decision must reference at least one allowed view for its check.
+- omitted subjective checks remain `DEFERRED`.
+- `review_evidence_sha256` is SHA-256 of canonical JSON of the exact supplied evidence object before decision-order normalization, preserving exact evidence provenance.
 
-A human or agent review is valid process evidence only when the reviewer actually inspects the named rendered artifacts. Merely reading metrics JSON is insufficient for subjective visual acceptance.
+A human or agent review is valid process evidence only when the reviewer actually inspects the named rendered artifacts. Reading metric JSON alone is insufficient for subjective visual acceptance.
 
 ## Determinism
 
@@ -483,28 +494,28 @@ A human or agent review is valid process evidence only when the reviewer actuall
 - seven fixed ids and fixed renderer version;
 - integer projection geometry only;
 - canonical C2 state identity and fixed pseudo-color algorithm;
-- fixed occlusion, traversal, face, row, and polygon ordering;
+- fixed occlusion, traversal, face, row, tile, and polygon ordering;
 - no timestamps, random ids, machine paths, external resources, GPU state, OS fonts, locale, or environment-derived configuration;
-- final newline;
+- one final newline;
 - each SHA-256 recorded in the report.
 
 ### JSON report
 
 - canonical sorted compact JSON;
 - exact integer/fraction objects instead of floating-point ratios;
-- fixed check and view order;
-- deterministic findings and role labels;
+- fixed view/check ordering;
+- deterministic findings/role labels;
 - no wall-clock timestamps or transient CI metadata;
 - `content_sha256` excludes only itself from the hashed payload;
 - serialized file ends with one final newline.
 
-When `qa.require_determinism=true`, tests render and analyze the same authoritative inputs at least twice and prove byte-identical SVG artifacts plus byte-identical canonical report JSON.
+When `qa.require_determinism=true`, tests render/analyze the same authoritative inputs at least twice and prove byte-identical SVG artifacts plus byte-identical canonical report JSON.
 
 ## Error handling
 
 C8 raises `PreviewRenderError` or `VisualQAError` for malformed/inconsistent authority or evidence inputs, including:
 
-- invalid BuildSpec version/type in consumed fields;
+- invalid BuildSpec type/version in consumed fields;
 - invalid/tampered C2 Build IR;
 - BuildSpec/Build IR fingerprint mismatch;
 - malformed/mismatched C7 structural report;
@@ -515,7 +526,8 @@ C8 raises `PreviewRenderError` or `VisualQAError` for malformed/inconsistent aut
 - embedded Build IR fingerprint mismatch;
 - stale review evidence;
 - wrong BuildSpec/Build IR/view hashes in review evidence;
-- unknown/duplicate review records or decisions;
+- missing/duplicate/unknown review view records;
+- unknown/duplicate review decisions;
 - attempt to resolve `runtime_visual_fidelity`.
 
 Aesthetic rejection of valid evidence is a report `FAIL`. Missing subjective review evidence is `DEFERRED`.
@@ -534,19 +546,19 @@ Golden acceptance proves:
 
 - all seven canonical SVGs render;
 - repeated rendering is byte-identical;
-- view hashes and embedded metadata bind to the expected Build IR;
+- view hashes and embedded metadata bind to expected Build IR;
 - objective metrics are stable;
-- invocation without review evidence yields `DEFERRED` subjective checks;
+- no-review invocation yields `DEFERRED` subjective checks;
 - stale/tampered review evidence fails closed;
-- the checked-in review record binds to exact canonical view hashes and resolves all six offline subjective checks to deterministic PASS/FAIL for the Golden artifact;
-- the checked-in expected report matches canonical output byte-for-byte;
-- `runtime_visual_fidelity` remains `DEFERRED` even when all offline visual checks pass.
+- checked-in review evidence binds to exact canonical view hashes and resolves all six offline subjective checks to deterministic PASS/FAIL for the Golden artifact;
+- expected report matches canonical output byte-for-byte;
+- `runtime_visual_fidelity` remains `DEFERRED` even if all offline visual checks pass.
 
 The Golden review record is evidence about C8 diagnostic preview only, never Minecraft runtime appearance.
 
 ## TDD acceptance matrix
 
-The implementation plan must include RED-first coverage for at least these scenarios:
+The implementation plan must include RED-first coverage for at least:
 
 1. C8 modules absent before implementation.
 2. Renderer rejects invalid/tampered C2 Build IR.
@@ -554,80 +566,82 @@ The implementation plan must include RED-first coverage for at least these scena
 4. Repeated rendering produces byte-identical SVG bytes.
 5. SVG metadata contains exact Build IR fingerprint and renderer version.
 6. `front` selects smallest-`z` occlusion winner.
-7. `back` selects largest-`z` winner and uses mirrored `x` screen orientation.
+7. `back` selects largest-`z` winner and mirrored `x` screen orientation.
 8. `left` selects smallest-`x` winner.
 9. `right` selects largest-`x` winner.
 10. `top` selects largest-`y` winner.
-11. Isometric projection and painter order are deterministic.
-12. Layers contact sheet includes all `0..size_y-1` levels exactly once, including empty levels.
-13. Diagnostic colors match the `c8-svg-v1` digest algorithm.
-14. SVG safety rejects scripts/external resources.
-15. Occupancy metrics are correct for empty and non-empty fixtures.
-16. Projection metrics are correct for an asymmetric fixture.
-17. Palette-distribution metrics match C2 block counts.
-18. Optional C5 role labels attach only to matching selected states.
-19. Repetition metrics distinguish repeated/non-repeated visible patterns without imposing quality thresholds.
-20. Facade-depth metrics distinguish flat and stepped facades.
-21. Layer-density metrics are exact and include empty levels.
-22. Missing review evidence leaves all six subjective checks `DEFERRED`.
-23. Valid review evidence resolves one subjective check to `PASS`.
-24. Valid review evidence resolves one subjective check to `FAIL`, making overall status `FAIL`.
-25. Partial review leaves omitted required checks `DEFERRED`, making overall status `DEFERRED` unless another required check fails.
-26. Stale view hash in review evidence fails closed.
-27. Wrong BuildSpec/Build IR fingerprint in review evidence fails closed.
-28. Unknown/duplicate view or decision records fail closed.
-29. Review evidence cannot resolve `runtime_visual_fidelity`.
-30. Matching C7 report records provenance only and does not alter visual decisions.
-31. Mismatched C7 report fails closed.
-32. Matching C5 evidence records deterministic provenance/labels only.
-33. Mismatched C5 evidence fails closed.
-34. Report `content_sha256` detects tampering.
-35. Report validates against `visual-qa-report.schema.json`.
-36. `qa.require_determinism=true` proves byte-identical views and report JSON.
-37. Vanilla Golden matches all checked-in C8 artifacts and expected report.
-38. C7/C6/C5/C4/C3/C2/C0 regressions remain green.
+11. Orthographic canvases/placement follow exact full-bounds formulas.
+12. Isometric polygons, exposed-face logic, painter order, and occupancy-independent canvas follow `c8-svg-v1`.
+13. Layers contact sheet includes every `0..size_y-1` level exactly once, including empty levels, with exact layout formulas.
+14. Diagnostic colors match digest algorithm.
+15. SVG safety rejects scripts/external resources/event handlers.
+16. Occupancy metrics are correct for empty/non-empty fixtures.
+17. Projection metrics are correct for asymmetric fixture.
+18. Palette-distribution metrics match C2 counts.
+19. Optional C5 role labels attach only to matching selected states.
+20. Repetition metrics distinguish repeated/non-repeated patterns without quality thresholds.
+21. Facade-depth metrics distinguish flat/stepped facades.
+22. Layer-density metrics are exact and include empty levels.
+23. Missing review evidence leaves six subjective checks `DEFERRED`.
+24. Valid review evidence resolves one subjective check to `PASS`.
+25. Valid review evidence resolves one subjective check to `FAIL`, making overall `FAIL`.
+26. Partial review leaves omitted required checks `DEFERRED`, making overall `DEFERRED` unless another required check fails.
+27. Stale view hash fails closed.
+28. Wrong BuildSpec/Build IR fingerprint fails closed.
+29. Missing/unknown/duplicate/out-of-order review view records fail closed.
+30. Unknown/duplicate review decisions fail closed.
+31. Review evidence cannot resolve `runtime_visual_fidelity`.
+32. Matching C7 report records provenance only and does not alter visual decisions.
+33. Mismatched C7 report fails closed.
+34. Matching C5 evidence records deterministic provenance/labels only.
+35. Mismatched C5 evidence fails closed.
+36. Report `content_sha256` detects tampering.
+37. Report validates against `visual-qa-report.schema.json`.
+38. `qa.require_determinism=true` proves byte-identical views/report.
+39. Vanilla Golden matches checked-in C8 artifacts and expected report.
+40. C7/C6/C5/C4/C3/C2/C0 regressions remain green.
 
 Minimal inline fixtures are allowed for projection/math tests. The existing Vanilla Golden is the C8 end-to-end fixture.
 
 ## CI design
 
-The dedicated workflow is `.github/workflows/factory-construction-c8-visual-qa.yml`.
+Dedicated workflow: `.github/workflows/factory-construction-c8-visual-qa.yml`.
 
-It reuses the action pins and environment conventions already present in Construction workflows rather than inventing versions.
+It reuses action pins/environment conventions already present in Construction workflows rather than inventing versions.
 
 Minimum sequence:
 
 1. recursive checkout preserving upstream references;
-2. Python 3.11 using the current pinned Construction setup action;
-3. Java 21 using the current pinned Construction setup action because C4 runtime-probe regression is inherited;
-4. install hashed Construction test environment with `--require-hashes --no-deps`;
-5. run C8 visual QA tests;
-6. run C7 regression;
-7. run C6 regression;
-8. run C5 regression;
-9. run shared Engineering I2 regression;
-10. run C4 registry tests including runtime-registry probe tests;
+2. Python 3.11 using current pinned Construction action;
+3. Java 21 using current pinned Construction action because C4 runtime-probe regression is inherited;
+4. install hashed Construction environment with `--require-hashes --no-deps`;
+5. C8 visual QA tests;
+6. C7 regression;
+7. C6 regression;
+8. C5 regression;
+9. shared Engineering I2 regression;
+10. C4 registry/runtime-probe tests;
 11. materialize C4 NeoForge runtime registry probe;
-12. run Gradle `test build --no-daemon` using the same isolated `GRADLE_USER_HOME` convention as C4/C7;
-13. run C3 regression;
-14. run C2 regression;
-15. run C0 tests;
-16. run `python3 construction/scripts/validate_c0.py`;
-17. run C8-scope `git diff --check`.
+12. Gradle `test build --no-daemon` with the same isolated `GRADLE_USER_HOME` convention as C4/C7;
+13. C3 regression;
+14. C2 regression;
+15. C0 tests;
+16. `python3 construction/scripts/validate_c0.py`;
+17. C8-scope `git diff --check`.
 
 C1A/C1B, Governance, Sonar, and repository-wide checks remain independent PR/repository gates. C8 does not weaken them.
 
-C8 is complete only after the exact PR head is green and the merged `main` passes post-merge Construction validation under the same evidence discipline used by prior phases.
+C8 completes only after exact PR-head gates are green and merged `main` passes post-merge Construction validation under the same evidence discipline used by prior phases.
 
 ## Documentation and status policy
 
 Only after executable C8 evidence exists:
 
-- `construction/README.md` may add the implemented C8 scope;
-- `construction/docs/ARCHITECTURE.md` may replace future-C8 language with the implemented contract;
-- `construction/STATUS.md` is updated after implementation/PR/post-merge evidence while preserving historical records.
+- `construction/README.md` may add implemented C8 scope;
+- `construction/docs/ARCHITECTURE.md` may replace future-C8 language with implemented contract;
+- `construction/STATUS.md` is updated after implementation/PR/post-merge evidence while preserving history.
 
-Code existing is not sufficient to mark C8 complete.
+Code existence alone is insufficient to mark C8 complete.
 
 ## Non-goals
 
@@ -636,8 +650,8 @@ C8 does not:
 - render actual Minecraft block models/textures;
 - resolve CTM, multipart runtime rendering, copycats/material-bearing blocks, dynamic renderers, shaders, biome tint, emissive behavior, or translucent sorting;
 - load resource packs/provider render pipelines;
-- boot a Minecraft client;
-- place structures in a live world;
+- boot Minecraft client;
+- place structures in live world;
 - capture in-game screenshots;
 - prove multiplayer visual consistency;
 - prove client/server separation or runtime performance;
@@ -653,21 +667,21 @@ C8 does not:
 
 ## Acceptance criteria
 
-C8 implementation is accepted only when it proves all of the following:
+C8 implementation is accepted only when it proves:
 
 1. canonical diagnostic rendering consumes only C2-valid Build IR;
 2. seven fixed SVG views are deterministic, safe, and fingerprint-bound;
-3. cardinal orientation/occlusion and isometric/layers geometry follow `c8-svg-v1` exactly;
-4. the report is schema-versioned, canonical, and self-fingerprinted;
+3. cardinal orientation/occlusion, isometric geometry/canvas, and layers geometry/canvas follow `c8-svg-v1` exactly;
+4. report is schema-versioned, canonical, and self-fingerprinted;
 5. objective metrics are deterministic exact evidence and remain proxies where appropriate;
-6. structural evidence cannot become visual PASS automatically;
+6. structural evidence cannot become visual `PASS` automatically;
 7. C5 role evidence may annotate palette hierarchy but cannot claim real render fidelity;
-8. subjective visual checks remain `DEFERRED` without explicit review evidence;
+8. subjective checks remain `DEFERRED` without explicit review evidence;
 9. stale/tampered review evidence fails closed;
-10. explicit bound review evidence can resolve the six offline visual checks to PASS/FAIL;
-11. `runtime_visual_fidelity` remains `DEFERRED` in C8 regardless of offline review outcome;
-12. the existing Vanilla Golden gains deterministic C8 evidence without duplicating the construction fixture;
+10. explicit bound review evidence can resolve six offline visual checks to PASS/FAIL;
+11. `runtime_visual_fidelity` remains `DEFERRED` regardless of offline review outcome;
+12. existing Vanilla Golden gains deterministic C8 evidence without duplicating the fixture;
 13. no C12/runtime/provider responsibility is pulled into C8;
 14. C7 through C0 regressions remain green;
 15. exact PR-head CI/repository gates pass;
-16. post-merge validation confirms the merged C8 state before status closeout.
+16. post-merge validation confirms merged C8 before status closeout.
