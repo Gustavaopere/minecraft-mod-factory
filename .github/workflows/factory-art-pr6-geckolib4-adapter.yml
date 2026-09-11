@@ -3,6 +3,7 @@ name: Factory Art PR6 GeckoLib 4 Adapter
 on:
   push:
     branches:
+      - main
       - feat/art-pr6-geckolib4-adapter
   pull_request:
     paths:
@@ -29,6 +30,9 @@ jobs:
       - name: PR6 GeckoLib 4 Blockbench integration
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.geckolib4_blockbench_adapter.test.js
+      - name: PR6 review regressions
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node --test asset_toolkit.geckolib4_review_regression.test.js
       - name: PR6 public API and standalone surface
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.geckolib4_public_api.test.js
