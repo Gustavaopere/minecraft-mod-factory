@@ -99,7 +99,7 @@ function createBlockbenchAnimationAdapter(bb) {
   function keyframeRevisionSnapshot() {
     return animations().map((animation) => ({
       animationId: idOf(animation),
-      animators: Object.keys(animation?.animators || {}).sort().map((targetId) => ({
+      animators: Object.keys(animation?.animators || {}).sort((left, right) => left.localeCompare(right, 'en')).map((targetId) => ({
         targetId,
         keyframes: array(animation.animators[targetId]?.keyframes).map((keyframe) => ({
           keyframeId: idOf(keyframe),
