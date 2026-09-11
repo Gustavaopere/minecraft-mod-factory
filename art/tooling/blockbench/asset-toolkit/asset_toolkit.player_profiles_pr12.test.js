@@ -106,6 +106,7 @@ test('PR12 exposes audited CPM, PAL, and Player Animator authorities', () => {
   assert.equal(authority?.playerAnimator?.runtimeSourceNeoForgeVersion, '21.1.89');
   assert.equal(authority?.playerAnimator?.runtimeSide, 'BOTH');
   assert.equal(authority?.playerAnimator?.resourceRegistrySide, 'CLIENT');
+  assert.equal(authority?.playerAnimator?.clientOnly, undefined);
 });
 
 test('PR12 CPM handoff preserves .cpmproject and never claims automated lossless round-trip', () => {
