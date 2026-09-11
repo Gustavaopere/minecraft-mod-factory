@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "identity": {
+    "name": "c3-vanilla-pavilion",
+    "seed": 20260910,
+    "description": "Deterministic vanilla pavilion golden for Construction C3."
+  },
+  "target": {
+    "minecraft_version": "1.21.1",
+    "loader": "none"
+  },
+  "geometry": {
+    "max_size": {
+      "x": 7,
+      "y": 5,
+      "z": 7
+    },
+    "terrain_policy": "flat",
+    "architectural_brief": "A compact open vanilla pavilion with a stone-brick floor, oak-log corner pillars, and oak-plank roof.",
+    "required_spaces": [
+      "covered_platform"
+    ]
+  },
+  "palette": {
+    "allow_modded": false,
+    "allowed_namespaces": [
+      "minecraft"
+    ],
+    "forbidden_blocks": []
+  },
+  "qa": {
+    "require_walkability": false,
+    "require_complete_interior": false,
+    "require_determinism": true
+  },
+  "outputs": {
+    "formats": [
+      "sponge_v3"
+    ]
+  }
+}
