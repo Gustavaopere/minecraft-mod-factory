@@ -6,6 +6,23 @@ function isPlainObject(value) {
   return prototype === Object.prototype || prototype === null;
 }
 
+function validateMinecraftNamespace(value, fail, code, message) {
+  if (typeof value !== 'string' || !/^[a-z0-9_.-]+$/.test(value)) fail(code, message);
+  return value;
+}
+
+function validateSafeResourceName(value, fail, code, message) {
+  if (typeof value !== 'string' || !/^[a-z0-9_-]+$/.test(value)) fail(code, message);
+  return value;
+}
+
+function normalizeBbmodelSourcePath(value, fail, code, missingMessage, invalidMessage) {
+  if (typeof value !== 'string' || value.length === 0) fail(code, missingMessage);
+  const normalized = value.replace(/\\/g, '/');
+  if (!normalized.toLowerCase().endsWith('.bbmodel')) fail(code, invalidMessage);
+  return normalized;
+}
+
 function rejectUnknownFields(value, allowed, fail, code, context) {
   for (const key of Object.keys(value)) {
     if (!allowed.has(key)) fail(code, `${context} contains unsupported field "${key}".`);
@@ -83,6 +100,9 @@ function applyOperationsTransaction(adapter, batch, beforeRevision) {
 
 module.exports = {
   isPlainObject,
+  validateMinecraftNamespace,
+  validateSafeResourceName,
+  normalizeBbmodelSourcePath,
   rejectUnknownFields,
   boundedString,
   finiteNumber,
