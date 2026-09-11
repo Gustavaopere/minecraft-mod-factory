@@ -37,7 +37,7 @@ This evidence is `TARGET_EXACT_SOURCE_GAMETEST_PASS`. It proves the pinned 2.3.0
 
 ## Physical snapshot boundary
 
-The current 2026-09-10 physical snapshot contains GeckoLib 4.9.2, AzureLib 3.1.11, Easy Model Entities 2.3.0 and Entity Model Features 3.3.5. Photon 2.2.6.a remains a known runtime-risk VFX candidate; Lodestone 1.8.2 is present but runtime health is unproven; Particle Effects is presentation-only; AAA Particles and AAA Particles World are absent. Presence does not prove API compatibility or runtime health.
+The current 2026-09-11 physical snapshot contains GeckoLib 4.9.2, AzureLib 3.1.11, Easy Model Entities 2.3.0 and Entity Model Features 3.3.5. Photon 2.2.6.a remains a known runtime-risk VFX candidate; Lodestone 1.8.2 is present but runtime health is unproven; Particle Effects is presentation-only; AAA Particles and AAA Particles World are absent. Presence does not prove API compatibility or runtime health.
 
 The NeoForge native animation profile is different from those provider-mod profiles: its runtime authority is the exact NeoForge 21.1.248 loader itself, not a separate mod discovered in the physical mod snapshot. This does not turn NeoForge presence into proof that a particular exported animation has executed successfully.
 
