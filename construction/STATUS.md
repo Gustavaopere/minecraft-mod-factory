@@ -1,7 +1,7 @@
 # STATUS — Construction
 
 UPDATED_AT=2026-09-10
-PHASE=C1_COMPLETE_POSTMERGE_VALIDATED
+PHASE=C2_COMPLETE_POSTMERGE_VALIDATED
 REPOSITORY=Gustavaopere/minecraft-mod-factory
 BRANCH=main
 C0_PR=19
@@ -88,6 +88,59 @@ C1B_POSTMERGE_STANDALONE_C0_RUN=34539399627
 C1B_POSTMERGE_STANDALONE_C0=PASS
 C1B_POSTMERGE_GOVERNANCE_RUN=34539399648
 C1B_POSTMERGE_GOVERNANCE=PASS
+C2_PR=33
+C2_INITIAL_RED_HEAD=f951d12448b6bd2fa7008971a31511e4c7b9c57a
+C2_INITIAL_RED_RUN=34546942313
+C2_INITIAL_RED_RESULT=8_TESTS_1_FAIL_1_PASS_6_SKIP_EXPECTED_MISSING_SCHEMA_AND_MODULE
+C2_INITIAL_GREEN_HEAD=57a73d84e5db91206b7cdc55b43e75535a959521
+C2_INITIAL_GREEN_RUN=34547097216
+C2_INITIAL_GREEN_CONTRACT=8_PASS_0_FAIL
+C2_INITIAL_GREEN_C0=PASS
+C2_INITIAL_GREEN_WHITESPACE=PASS
+C2_DOCUMENTATION_HEAD=4b9819b1a6e958edf195b637b865ffb97240c141
+C2_DOCUMENTATION_RUN=34547282335
+C2_REVIEW_RED_HEAD=29c04a76f81443d3adef0dae091a1df117169acd
+C2_REVIEW_RED_RUN=34548116239
+C2_REVIEW_RED_RESULT=10_TESTS_8_PASS_1_FAIL_1_ERROR_EXPECTED_TWO_CONTRACT_GAPS
+C2_FINAL_PR_HEAD=d5ae3d214009802fcd657d4328f71b45cf371cad
+C2_FINAL_PR_RUN=34548340862
+C2_FINAL_PR_CONTRACT=10_PASS_0_FAIL
+C2_FINAL_PR_C0_RUN=34548340799
+C2_FINAL_PR_C0=PASS
+C2_FINAL_PR_C1A_RUN=34548340794
+C2_FINAL_PR_C1A_CONTRACT=6_PASS_0_FAIL
+C2_FINAL_PR_SCHEMATICA_TESTS=498_PASS_0_FAIL
+C2_FINAL_PR_GOVERNANCE_RUN=34548340928
+C2_FINAL_PR_GOVERNANCE=PASS
+C2_FINAL_PR_SONARCLOUD_CHECK=103105886020
+C2_FINAL_PR_SONARCLOUD=PASS_0_NEW_ISSUES_0_ACCEPTED_0_HOTSPOTS
+C2_REVIEW_IDENTITY_THREAD=PRRT_kwDOUUL3Ts6hTMNQ
+C2_REVIEW_IDENTITY_THREAD_STATUS=RESOLVED
+C2_REVIEW_AIR_SCHEMA_THREAD=PRRT_kwDOUUL3Ts6hTMNY
+C2_REVIEW_AIR_SCHEMA_THREAD_STATUS=RESOLVED
+C2_MERGE_SHA=94c6185ef633870f5c9ef4fcbb1c583b6f83d05a
+C2_POSTMERGE_RUN=34549070578
+C2_POSTMERGE_CONTRACT=10_PASS_0_FAIL
+C2_POSTMERGE_C0=PASS
+C2_POSTMERGE_WHITESPACE=PASS
+C2_POSTMERGE_C1A_RUN=34549070573
+C2_POSTMERGE_C1A_CONTRACT=6_PASS_0_FAIL
+C2_POSTMERGE_SCHEMATICA_TESTS=498_PASS_0_FAIL
+C2_POSTMERGE_C1B_RUN=34549070657
+C2_POSTMERGE_C1B_CONTRACT=5_PASS_0_FAIL
+C2_POSTMERGE_C1B_REGRESSION_TEST_FILES=149_PASS
+C2_POSTMERGE_C1B_INTEGRATION_TEST_FILES=18_PASS
+C2_POSTMERGE_C1B_LINT=PASS
+C2_POSTMERGE_C1B_BUILD=PASS
+C2_POSTMERGE_C1B_C0=PASS
+C2_POSTMERGE_C1B_WHITESPACE=PASS
+C2_POSTMERGE_C1B_SCHEM_FIXTURE_BLOCKS=424
+C2_POSTMERGE_C1B_SCHEM_LARGE_BLOCKS=100000
+C2_POSTMERGE_GOVERNANCE_RUN=34549070656
+C2_POSTMERGE_GOVERNANCE=PASS
+C2_POSTMERGE_STANDALONE_C0_RUN=NOT_TRIGGERED
+C2_POSTMERGE_C0_EVIDENCE=C2_C1A_AND_C1B_EMBEDDED_REGRESSIONS_PASS
+C2_IMPLEMENTATION_MAIN_SHA=94c6185ef633870f5c9ef4fcbb1c583b6f83d05a
 HEAD_SHA=RESOLVE_FROM_GIT
 OPEN_CONSTRUCTION_IMPLEMENTATION_PR=NONE
 TARGET_MINECRAFT=1.21.1
@@ -97,7 +150,7 @@ CANONICAL_OUTPUT=SPONGE_SCHEMATIC_V3
 LATEST_MODLIST_SNAPSHOT=2026-09-09_595_TOP_LEVEL
 MANUAL_ACTION_REQUIRED=NO
 BLOCKERS=NONE_IN_CONSTRUCTION
-NEXT_ACTION=BEGIN_C2_CANONICAL_BUILD_IR
+NEXT_ACTION=BEGIN_C3_VANILLA_GOLDEN
 
 ## C1A — Schematica preservation
 
@@ -199,4 +252,60 @@ PR #25 merged as `bdb6eee2c6829ce8de0cc7e0cf283dfb6c01144c`. The resulting `main
 - [x] post-merge `main` C1A revalidation passes: 6/6 + 498/498
 - [x] post-merge standalone C0 and Governance pass
 
-C1 is complete and post-merge validated. The next Construction slice is C2 — Canonical Build IR.
+C1 is complete and post-merge validated.
+
+## C2 — Canonical Build IR
+
+C2 establishes the Factory-owned, provider-neutral executable voxel result contract between generation/planning adapters and later registry, palette, QA and export stages. It deliberately does not claim physical mod-state validity, Sponge serialization, BlockEntity/entity payload support or runtime/worldgen placement authority.
+
+C2_SCHEMA=construction/schemas/build-ir.schema.json
+C2_MODULE=construction/core/build_ir.py
+C2_TEST=construction/tests/test_c2_build_ir.py
+C2_WORKFLOW=.github/workflows/factory-construction-c2-build-ir.yml
+C2_SCHEMA_VERSION=1
+C2_REPRESENTATION=SPARSE_NON_AIR_BLOCKS_PLUS_INDEXED_CANONICAL_PALETTE
+C2_COORDINATES=X_Y_Z_Y_UP_MIN_CORNER_BLOCK_UNITS
+C2_DETERMINISM=CANONICAL_PALETTE_AND_COORDINATE_ORDER
+C2_BUILD_SPEC_FINGERPRINT=SHA256
+C2_CONTENT_FINGERPRINT=SHA256
+
+The initial TDD RED proved that the dedicated contract existed before the implementation: run `34546942313` failed only because the Build IR schema and module did not yet exist. The first GREEN implemented deterministic sparse placements, canonical palette indexing, fixed coordinates, fail-closed duplicate/out-of-bounds/explicit-air handling and content fingerprints; run `34547097216` passed C2 8/8 plus C0 and whitespace.
+
+PR #33 was repeatedly reconciled with concurrent non-Construction work before promotion. Review then found two real schema/validator parity defects. A dedicated RED on head `29c04a76f81443d3adef0dae091a1df117169acd` produced exactly 8 PASS, 1 FAIL and 1 ERROR: the Python validator accepted schema-invalid identity fields, and the JSON Schema accepted explicit air states. The GREEN made the validator enforce the exact identity field set and string description, while the schema now excludes `minecraft:air`, `minecraft:cave_air` and `minecraft:void_air`. Both review threads were resolved with RED/GREEN evidence.
+
+The final PR head `d5ae3d214009802fcd657d4328f71b45cf371cad` passed C2 10/10, standalone C0, C1A 6/6 plus Schematica 498/498, Governance and SonarCloud with 0 new issues, 0 accepted issues and 0 security hotspots. PR #33 merged as `94c6185ef633870f5c9ef4fcbb1c583b6f83d05a`.
+
+The resulting `main` push revalidated the Construction stack. C2 run `34549070578` passed 10/10, embedded C0 10/10 plus validator, and whitespace. C1A run `34549070573` passed 6/6, embedded C0, exact gitlink checks and unchanged Schematica 498/498. C1B run `34549070657` passed 5/5, exact MineBench pin checks, frozen dependency installation, lint, 149 regression/config/UI/unit test files, 18 PostgreSQL integration test files, production build, embedded C0 and whitespace; its export smoke again exercised 424-block and 100,000-block cases. Governance run `34549070656` passed. A separate standalone C0 workflow was not triggered by this merge; C0 was revalidated independently inside C2, C1A and C1B, and this STATUS does not claim otherwise.
+
+### C2 acceptance
+
+- [x] dedicated C2 workflow is read-only and revalidates on `main`
+- [x] expected RED captured before schema/module implementation
+- [x] Factory-owned Build IR schema and implementation added without editing upstream sources
+- [x] sparse representation contains non-air placements only
+- [x] palette is canonical, indexed and supports syntactically namespaced modded states
+- [x] coordinate contract is x/y/z with y up, min-corner origin and block units
+- [x] deterministic canonicalization is independent of placement/property input ordering
+- [x] duplicate coordinates fail closed
+- [x] out-of-bounds placements fail closed
+- [x] explicit air fails closed in both Python and JSON Schema contracts
+- [x] malformed block states fail closed
+- [x] validator and schema agree on exact identity fields and optional description type
+- [x] BuildSpec SHA-256 fingerprint is emitted
+- [x] canonical IR content SHA-256 fingerprint is emitted and tamper-checked
+- [x] C2 does not claim that syntactically valid modded states exist in the physical modpack; that remains C4/C5 authority
+- [x] C2 does not introduce BlockEntity/entity payload authority
+- [x] C2 does not serialize Sponge/Litematica output; Sponge v3 remains C6
+- [x] C2 does not become runtime/worldgen placement authority
+- [x] review defects captured by explicit RED before GREEN fixes
+- [x] both C2 review threads resolved
+- [x] final PR head passes C2 10/10, C0, C1A 6/6 + Schematica 498/498, Governance and SonarCloud
+- [x] PR #33 merged
+- [x] post-merge C2 passes 10/10 + embedded C0 + whitespace
+- [x] post-merge C1A passes 6/6 + Schematica 498/498 + embedded C0
+- [x] post-merge C1B passes 5/5 + 149 + 18 + build + embedded C0 + whitespace
+- [x] post-merge MineBench export smoke preserves 424-block and 100,000-block evidence
+- [x] post-merge Governance passes
+- [x] standalone C0 non-trigger is recorded accurately rather than claimed as PASS
+
+C2 is complete and post-merge validated. The next Construction slice is C3 — Vanilla Golden.
