@@ -1,0 +1,55 @@
+name: Transient PR7 Golden Allowlist Patch
+
+on:
+  push:
+    branches:
+      - feat/art-pr7-azurelib3-adapter
+    paths:
+      - '.github/workflows/_transient-pr7-golden-allowlist.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch AzureLib Golden allowlist deterministically
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('art/golden-samples/validate_reference_evidence.js')
+          source = path.read_text()
+          anchor = "  'model-asset/provider-regression/geckolib4/factory-test.geo.json',\n"
+          addition = (
+              anchor
+              + "  'model-asset/provider-regression/azurelib3/REFERENCE-EVIDENCE.json',\n"
+              + "  'model-asset/provider-regression/azurelib3/factory-test.animation.json',\n"
+              + "  'model-asset/provider-regression/azurelib3/factory-test.geo.json',\n"
+          )
+          if "model-asset/provider-regression/azurelib3/REFERENCE-EVIDENCE.json" in source:
+              raise SystemExit('AzureLib Golden allowlist already present; refusing duplicate patch')
+          if source.count(anchor) != 1:
+              raise SystemExit(f'Expected exactly one GeckoLib anchor, found {source.count(anchor)}')
+          path.write_text(source.replace(anchor, addition, 1))
+          PY
+      - name: Verify Golden evidence before commit
+        run: |
+          node --test art/tooling/blockbench/asset-toolkit/asset_toolkit.azurelib3_golden_reference.test.js
+          node art/golden-samples/validate_reference_evidence.js
+          node art/golden-samples/validate_golden_samples.js
+          git diff --check
+      - name: Commit patch and self-remove
+        run: |
+          git rm .github/workflows/_transient-pr7-golden-allowlist.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add art/golden-samples/validate_reference_evidence.js
+          git commit -m 'test(art): register AzureLib Golden reference evidence'
+          git push origin HEAD:feat/art-pr7-azurelib3-adapter
