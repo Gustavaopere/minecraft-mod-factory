@@ -121,7 +121,11 @@ test('PR13 handoff preserves explicit bone-name mapping and texture references w
   assert.deepEqual(handoff.boneMapping, input.boneMapping);
   assert.deepEqual(handoff.textureReferences, input.textureReferences);
   assert.notStrictEqual(handoff.boneMapping, input.boneMapping);
+  assert.notStrictEqual(handoff.boneMapping[0], input.boneMapping[0]);
   assert.notStrictEqual(handoff.textureReferences, input.textureReferences);
+  assert.equal(Object.isFrozen(handoff.boneMapping), true);
+  assert.equal(Object.isFrozen(handoff.boneMapping[0]), true);
+  assert.equal(Object.isFrozen(handoff.textureReferences), true);
 });
 
 test('PR13 handoff fails closed when explicit bone mapping or texture references are absent', () => {
