@@ -16,6 +16,7 @@ const geckolib4 = require('./provider-adapter/geckolib4_adapter.js');
 const azurelib3 = require('./provider-adapter/azurelib3_adapter.js');
 const neoforgeNativeAnimation = require('./provider-adapter/neoforge_native_animation_adapter.js');
 const easyModelEntities = require('./provider-adapter/easy_model_entities_adapter.js');
+const emfCem = require('./provider-adapter/emf_cem_adapter.js');
 
 module.exports = Object.assign(
   {},
@@ -35,4 +36,5 @@ module.exports = Object.assign(
   azurelib3,
   neoforgeNativeAnimation,
   easyModelEntities,
+  emfCem,
 );
