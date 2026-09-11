@@ -4,6 +4,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const core = require('./core/index.js');
+const blockbenchPlugin = require('./blockbench-plugin/plugin_adapter.js');
+const standalone = require('./asset_toolkit.js');
 
 const CPM_PROFILE = 'cpm_player_model';
 const PAL_PROFILE = 'player_animation_library_player';
@@ -161,4 +163,32 @@ test('PR12 Player Animator profile records the client API surface without preten
   assert.equal(audit.runtimeEvidence, 'UNPROVEN');
   assert.equal(audit.runtimeValidated, false);
   assert.equal(audit.f4I6Evidence, false);
+});
+
+test('PR12 exposes the player-profile contract through core, Blockbench, and standalone without auto-installing CPM', () => {
+  assert.equal(typeof blockbenchPlugin.createBlockbenchCpmPlayerProfileAdapter, 'function');
+  assert.equal(typeof standalone.createBlockbenchCpmPlayerProfileAdapter, 'function');
+  assert.equal(standalone.PLAYER_PROFILE_AUTHORITIES?.cpm?.pluginId, 'cpm_plugin');
+
+  const adapter = blockbenchPlugin.createBlockbenchCpmPlayerProfileAdapter({
+    Blockbench: {isWeb: false, isMobile: false},
+    Project: {
+      save_path: '/workspace/player.cpmproject',
+      format: {id: 'cpm'},
+    },
+  });
+  const preview = adapter.previewRoundTrip();
+  assert.equal(preview.sourcePath, '/workspace/player.cpmproject');
+  assert.equal(preview.humanConfirmationRequired, true);
+  assert.equal(preview.automatedLosslessRoundTripProven, false);
+  assert.equal(preview.runtimeEvidence, 'UNPROVEN');
+  assert.equal(adapter.installExtension, undefined);
+
+  assert.throws(
+    () => blockbenchPlugin.createBlockbenchCpmPlayerProfileAdapter({
+      Blockbench: {isWeb: false, isMobile: false},
+      Project: {save_path: '/workspace/player.bbmodel', format: {id: 'free'}},
+    }),
+    error => error?.code === 'CPM_PROJECT_FORMAT_REQUIRED',
+  );
 });
