@@ -1,0 +1,52 @@
+name: PR9 API Version Correction
+
+on:
+  push:
+    branches:
+      - feat/art-pr9-easy-model-entities
+
+permissions:
+  contents: write
+
+jobs:
+  correct:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/art-pr9-easy-model-entities
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Implement target-exact EME API version
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('art/tooling/blockbench/asset-toolkit/core/provider-adapter/easy_model_entities_adapter.js')
+          text = path.read_text()
+          old = "  apiVersion: '2.0.0',"
+          new = "  apiVersion: '2.3.0',"
+          if old not in text:
+            raise SystemExit('Expected EME API version authority not found')
+          path.write_text(text.replace(old, new, 1))
+          PY
+          cd art/tooling/blockbench/asset-toolkit
+          node build_toolkit_bundle.js --write
+      - name: Require GREEN after API version correction
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: |
+          node --test \
+            asset_toolkit.easy_model_entities_pr9.test.js \
+            asset_toolkit.easy_model_entities_api_version.test.js
+          node build_toolkit_bundle.js --check
+      - name: Remove transient workflow and commit correction
+        run: |
+          git rm .github/workflows/pr9-api-version-correction.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add art/tooling/blockbench/asset-toolkit/core/provider-adapter/easy_model_entities_adapter.js
+          git add art/tooling/blockbench/asset-toolkit/asset_toolkit.js
+          git commit -m 'fix(art): align EME API authority with 2.3.0'
+          git push origin HEAD:feat/art-pr9-easy-model-entities
