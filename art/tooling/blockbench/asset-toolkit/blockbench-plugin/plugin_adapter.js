@@ -11,6 +11,7 @@ const easyModelEntities = require('./easy_model_entities_adapter.js');
 const emfCem = require('./emf_cem_adapter.js');
 const animatedJava = require('./animated_java_adapter.js');
 const playerProfiles = require('./player_profiles_adapter.js');
+const epicFightBlender = require('./epic_fight_blender_adapter.js');
 
 function registerBlockbenchPlugin(bb) {
   let auditAction = null;
@@ -271,4 +272,5 @@ module.exports = {
   createBlockbenchEmfCemAdapter: emfCem.createBlockbenchEmfCemAdapter,
   createBlockbenchAnimatedJavaAdapter: animatedJava.createBlockbenchAnimatedJavaAdapter,
   createBlockbenchCpmPlayerProfileAdapter: playerProfiles.createBlockbenchCpmPlayerProfileAdapter,
+  createBlockbenchEpicFightReferenceHandoffAdapter: epicFightBlender.createBlockbenchEpicFightReferenceHandoffAdapter,
 };

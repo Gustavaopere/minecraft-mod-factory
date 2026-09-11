@@ -65,6 +65,11 @@ const PROVIDER_PROFILES = Object.freeze([
     requiredProvider: {modId: 'playeranimator', exactVersions: ['2.0.4+1.21.1']}, requiredExtensions: [],
     capabilities: ['player_animation', 'api_integration', 'animation_stack', 'factory_registration', 'registry_lookup'],
   }),
+  frozenProfile({
+    id: 'epicfight_blender_handoff', family: 'epicfight', authority: 'Epic Fight 21.17.3.1 external Blender animation handoff', assetKind: 'combat_animation',
+    requiredProvider: {modId: 'epicfight', exactVersions: ['21.17.3.1']}, requiredExtensions: [],
+    capabilities: ['external_dcc_handoff', 'blender_authoritative_animation', 'source_reference', 'bone_mapping', 'texture_reference', 'handoff_manifest', 'epicfight_json_runtime'],
+  }),
 ]);
 
 const PROFILE_BY_ID = new Map(PROVIDER_PROFILES.map((profile) => [profile.id, profile]));
