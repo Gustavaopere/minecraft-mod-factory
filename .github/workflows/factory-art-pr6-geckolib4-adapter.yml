@@ -10,7 +10,7 @@ on:
       - '.github/workflows/factory-art-pr6-geckolib4-adapter.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   geckolib4-adapter:
@@ -28,23 +28,6 @@ jobs:
       - name: PR6 GeckoLib 4 Blockbench integration
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.geckolib4_blockbench_adapter.test.js
-      - name: Regenerate standalone bundle on PR6 branch only
-        if: github.event_name == 'push' && github.ref == 'refs/heads/feat/art-pr6-geckolib4-adapter'
-        run: |
-          node art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js --write
-          changed="$(git diff --name-only)"
-          if [ -n "$changed" ] && [ "$changed" != "art/tooling/blockbench/asset-toolkit/asset_toolkit.js" ]; then
-            echo "Unexpected generated changes:"
-            printf '%s\n' "$changed"
-            exit 1
-          fi
-          if [ -n "$changed" ]; then
-            git config user.name github-actions[bot]
-            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-            git add art/tooling/blockbench/asset-toolkit/asset_toolkit.js
-            git commit -m "build(art): regenerate PR6 standalone bundle"
-            git push origin HEAD:feat/art-pr6-geckolib4-adapter
-          fi
       - name: PR6 public API and standalone surface
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.geckolib4_public_api.test.js
