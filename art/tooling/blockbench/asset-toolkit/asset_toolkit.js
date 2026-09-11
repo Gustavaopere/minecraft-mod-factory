@@ -1929,6 +1929,14 @@
           mcpPolicy: 'ALLOWLIST',
           providerFamily: 'azurelib',
         }),
+        animation_to_json: Object.freeze({
+          pluginId: 'animation_to_json',
+          title: 'Animation to JSON Converter',
+          pluginVersion: '1.0.1',
+          classification: 'AUDIT_REQUIRED',
+          mcpPolicy: 'NEVER',
+          providerFamily: 'neoforge_native_animation',
+        }),
         cem_template_loader: Object.freeze({
           pluginId: 'cem_template_loader',
           title: 'CEM Template Loader',
@@ -2075,6 +2083,11 @@
         frozenProfile({
           id: 'java_block_item', family: 'java_block_item', authority: 'Minecraft Java block/item model runtime',
           requiredProvider: null, requiredExtensions: [], capabilities: ['model', 'uv', 'texture', 'display_transforms'],
+        }),
+        frozenProfile({
+          id: 'neoforge_native_entity_animation', family: 'neoforge_native_animation', authority: 'NeoForge 21.1.248 JSON entity animation runtime', assetKind: 'entity_animation',
+          requiredProvider: null, requiredExtensions: [],
+          capabilities: ['animation', 'native_json_entity_animation', 'animation_definition_runtime', 'json_export_handoff'],
         }),
         ...['entity', 'item', 'block', 'armor'].map((kind) => frozenProfile({
           id: `geckolib4_${kind}`, family: 'geckolib4', authority: 'GeckoLib 4 runtime', assetKind: kind,
@@ -2979,6 +2992,251 @@
         createAzureLib3ExportPlan,
       };
     },
+    "core/provider-adapter/neoforge_native_animation_adapter.js": function(module, exports, require) {
+      'use strict';
+
+      const {isPlainObject} = require('../common/contract_utils.js');
+
+      const NEOFORGE_NATIVE_ANIMATION_AUTHORITY = Object.freeze({
+        providerFamily: 'neoforge_native_animation',
+        minecraftVersion: '1.21.1',
+        neoforgeVersion: '21.1.248',
+        runtimeSource: 'neoforged/NeoForge',
+        runtimeRef: 'd8d64b44bb46323d44520fe27feda0a9a08c1c82',
+        animationRoot: 'neoforge/animations/entity',
+        blockbenchPluginId: 'animation_to_json',
+        blockbenchPluginVersion: '1.0.1',
+        blockbenchPluginSource: 'JannisX11/blockbench-plugins',
+        blockbenchPluginRef: '91ba2b80c895960fe93de87fd0c30f9b840f28f2',
+      });
+
+      const ROOT_FIELDS = new Set(['length', 'loop', 'animations']);
+      const CHANNEL_FIELDS = new Set(['bone', 'target', 'keyframes']);
+      const KEYFRAME_FIELDS = new Set(['timestamp', 'target', 'interpolation']);
+      const SERIALIZER_FIELDS = new Set(['length', 'loop', 'channels', 'effectMarkers']);
+      const SERIALIZER_CHANNEL_FIELDS = new Set(['bone', 'channel', 'keyframes']);
+      const SERIALIZER_KEYFRAME_FIELDS = new Set(['time', 'value', 'easing']);
+      const TARGETS = new Set(['minecraft:position', 'minecraft:rotation', 'minecraft:scale']);
+      const INTERPOLATIONS = new Set(['minecraft:linear', 'minecraft:catmullrom']);
+      const PROFILE_ID = 'neoforge_native_entity_animation';
+
+      class NeoForgeNativeAnimationContractError extends Error {
+        constructor(code, message) {
+          super(`${code}: ${message}`);
+          this.name = 'NeoForgeNativeAnimationContractError';
+          this.code = code;
+        }
+      }
+
+      function fail(code, message) {
+        throw new NeoForgeNativeAnimationContractError(code, message);
+      }
+
+      function rejectUnknownFields(value, allowed, field) {
+        for (const key of Object.keys(value)) {
+          if (!allowed.has(key)) {
+            fail('UNPROVEN_NEOFORGE_NATIVE_ANIMATION_FIELD', `${field}.${key} is not part of the audited NeoForge 21.1.248 animation contract.`);
+          }
+        }
+      }
+
+      function finiteNumber(value, field) {
+        if (!Number.isFinite(value)) fail('INVALID_NEOFORGE_NATIVE_ANIMATION_NUMBER', `${field} must be finite.`);
+        return value;
+      }
+
+      function nonEmptyString(value, field) {
+        if (typeof value !== 'string' || value.length === 0) {
+          fail('INVALID_NEOFORGE_NATIVE_ANIMATION_STRING', `${field} must be a non-empty string.`);
+        }
+        return value;
+      }
+
+      function vector3(value, field) {
+        if (!Array.isArray(value) || value.length !== 3 || !value.every(Number.isFinite)) {
+          fail('INVALID_NEOFORGE_NATIVE_ANIMATION_VECTOR', `${field} must contain exactly three finite numbers.`);
+        }
+        return Object.freeze([...value]);
+      }
+
+      function resourceLocation(value, field) {
+        const raw = nonEmptyString(value, field).toLowerCase();
+        return raw.includes(':') ? raw : `minecraft:${raw}`;
+      }
+
+      function canonicalResourceLocation(value, field, allowed) {
+        const canonical = resourceLocation(value, field);
+        if (!allowed.has(canonical)) {
+          fail('UNPROVEN_NEOFORGE_NATIVE_ANIMATION_TYPE', `${field} ${JSON.stringify(value)} is not a built-in type audited for NeoForge 21.1.248.`);
+        }
+        return canonical;
+      }
+
+      function serializerInterpolation(value, field) {
+        const canonical = resourceLocation(value, field);
+        if (!INTERPOLATIONS.has(canonical)) {
+          fail('UNSUPPORTED_NEOFORGE_NATIVE_ANIMATION_INTERPOLATION', `${field} ${JSON.stringify(value)} has no audited NeoForge native representation.`);
+        }
+        return canonical;
+      }
+
+      function normalizedSourcePath(value) {
+        if (typeof value !== 'string' || value.length === 0) {
+          fail('NEOFORGE_NATIVE_ANIMATION_SOURCE_NOT_SAVED', 'Source project must be saved as a .bbmodel before NeoForge native export.');
+        }
+        const normalized = value.replace(/\\/g, '/');
+        if (!normalized.toLowerCase().endsWith('.bbmodel')) {
+          fail('NEOFORGE_NATIVE_ANIMATION_SOURCE_NOT_SAVED', 'Source authority must remain a saved .bbmodel file.');
+        }
+        return normalized;
+      }
+
+      function validateNamespace(value) {
+        if (typeof value !== 'string' || !/^[a-z0-9_.-]+$/.test(value)) {
+          fail('INVALID_NEOFORGE_NATIVE_ANIMATION_NAMESPACE', 'namespace must match the Minecraft lowercase namespace grammar.');
+        }
+        return value;
+      }
+
+      function validateResourceName(value) {
+        if (typeof value !== 'string' || !/^[a-z0-9_-]+(?:\/[a-z0-9_-]+)*$/.test(value)) {
+          fail('INVALID_NEOFORGE_NATIVE_ANIMATION_PATH', 'resourceName must be a safe lowercase relative resource path without an extension.');
+        }
+        return value;
+      }
+
+      function createNeoForgeNativeAnimationExportPlan(input) {
+        if (!isPlainObject(input)) fail('INVALID_NEOFORGE_NATIVE_ANIMATION_EXPORT_PLAN', 'Export plan input must be an object.');
+        if (input.profileId !== PROFILE_ID) {
+          fail('NEOFORGE_NATIVE_ANIMATION_PROFILE_REQUIRED', `profileId must be ${PROFILE_ID}.`);
+        }
+        const sourcePath = normalizedSourcePath(input.sourcePath);
+        const namespace = validateNamespace(input.namespace);
+        const resourceName = validateResourceName(input.resourceName);
+        return Object.freeze({
+          profileId: PROFILE_ID,
+          sourcePath,
+          preserveSource: true,
+          namespace,
+          resourceName,
+          outputPath: `assets/${namespace}/${NEOFORGE_NATIVE_ANIMATION_AUTHORITY.animationRoot}/${resourceName}.json`,
+          runtimeEvidence: 'UNPROVEN',
+        });
+      }
+
+      function validateNeoForgeNativeAnimationDocument(value) {
+        if (!isPlainObject(value)) {
+          fail('INVALID_NEOFORGE_NATIVE_ANIMATION_DOCUMENT', 'Animation document must be an object.');
+        }
+        rejectUnknownFields(value, ROOT_FIELDS, 'document');
+
+        const length = finiteNumber(value.length, 'document.length');
+        if (value.loop !== undefined && typeof value.loop !== 'boolean') {
+          fail('INVALID_NEOFORGE_NATIVE_ANIMATION_LOOP', 'document.loop must be boolean when present.');
+        }
+        if (!Array.isArray(value.animations)) {
+          fail('INVALID_NEOFORGE_NATIVE_ANIMATION_DOCUMENT', 'document.animations must be an array.');
+        }
+
+        let keyframeCount = 0;
+        value.animations.forEach((channel, channelIndex) => {
+          const field = `document.animations[${channelIndex}]`;
+          if (!isPlainObject(channel)) fail('INVALID_NEOFORGE_NATIVE_ANIMATION_CHANNEL', `${field} must be an object.`);
+          rejectUnknownFields(channel, CHANNEL_FIELDS, field);
+          nonEmptyString(channel.bone, `${field}.bone`);
+          canonicalResourceLocation(channel.target, `${field}.target`, TARGETS);
+          if (!Array.isArray(channel.keyframes)) {
+            fail('INVALID_NEOFORGE_NATIVE_ANIMATION_CHANNEL', `${field}.keyframes must be an array.`);
+          }
+          channel.keyframes.forEach((keyframe, keyframeIndex) => {
+            const keyframeField = `${field}.keyframes[${keyframeIndex}]`;
+            if (!isPlainObject(keyframe)) fail('INVALID_NEOFORGE_NATIVE_ANIMATION_KEYFRAME', `${keyframeField} must be an object.`);
+            rejectUnknownFields(keyframe, KEYFRAME_FIELDS, keyframeField);
+            finiteNumber(keyframe.timestamp, `${keyframeField}.timestamp`);
+            vector3(keyframe.target, `${keyframeField}.target`);
+            canonicalResourceLocation(keyframe.interpolation, `${keyframeField}.interpolation`, INTERPOLATIONS);
+            keyframeCount += 1;
+          });
+        });
+
+        return Object.freeze({
+          ok: true,
+          length,
+          loop: value.loop === true,
+          channelCount: value.animations.length,
+          keyframeCount,
+        });
+      }
+
+      function serializeNeoForgeNativeAnimation(input) {
+        if (!isPlainObject(input)) {
+          fail('INVALID_NEOFORGE_NATIVE_ANIMATION_SERIALIZER_INPUT', 'Animation serializer input must be an object.');
+        }
+        rejectUnknownFields(input, SERIALIZER_FIELDS, 'animation');
+
+        const length = finiteNumber(input.length, 'animation.length');
+        if (length <= 0) fail('INVALID_NEOFORGE_NATIVE_ANIMATION_NUMBER', 'animation.length must be greater than zero.');
+
+        let loop;
+        if (input.loop === 'loop') loop = true;
+        else if (input.loop === 'once') loop = false;
+        else fail('UNSUPPORTED_NEOFORGE_NATIVE_ANIMATION_LOOP_MODE', `animation.loop ${JSON.stringify(input.loop)} has no audited NeoForge native representation.`);
+
+        if (input.effectMarkers !== undefined) {
+          if (!Array.isArray(input.effectMarkers) || input.effectMarkers.length > 0) {
+            fail('UNSUPPORTED_NEOFORGE_NATIVE_ANIMATION_EFFECT_MARKERS', 'NeoForge 21.1.248 JSON entity animations have no audited effect-marker representation.');
+          }
+        }
+        if (!Array.isArray(input.channels)) {
+          fail('INVALID_NEOFORGE_NATIVE_ANIMATION_SERIALIZER_INPUT', 'animation.channels must be an array.');
+        }
+
+        const animations = input.channels.map((channel, channelIndex) => {
+          const field = `animation.channels[${channelIndex}]`;
+          if (!isPlainObject(channel)) fail('INVALID_NEOFORGE_NATIVE_ANIMATION_CHANNEL', `${field} must be an object.`);
+          rejectUnknownFields(channel, SERIALIZER_CHANNEL_FIELDS, field);
+          const bone = nonEmptyString(channel.bone, `${field}.bone`);
+          const target = canonicalResourceLocation(channel.channel, `${field}.channel`, TARGETS);
+          if (!Array.isArray(channel.keyframes)) {
+            fail('INVALID_NEOFORGE_NATIVE_ANIMATION_CHANNEL', `${field}.keyframes must be an array.`);
+          }
+
+          const keyframes = channel.keyframes.map((keyframe, keyframeIndex) => {
+            const keyframeField = `${field}.keyframes[${keyframeIndex}]`;
+            if (!isPlainObject(keyframe)) fail('INVALID_NEOFORGE_NATIVE_ANIMATION_KEYFRAME', `${keyframeField} must be an object.`);
+            rejectUnknownFields(keyframe, SERIALIZER_KEYFRAME_FIELDS, keyframeField);
+            const timestamp = finiteNumber(keyframe.time, `${keyframeField}.time`);
+            if (timestamp < 0 || timestamp > length) {
+              fail('INVALID_NEOFORGE_NATIVE_ANIMATION_TIMESTAMP', `${keyframeField}.time must be between 0 and animation.length.`);
+            }
+            const interpolation = serializerInterpolation(keyframe.easing, `${keyframeField}.easing`);
+            return Object.freeze({
+              timestamp,
+              target: vector3(keyframe.value, `${keyframeField}.value`),
+              interpolation,
+            });
+          }).sort((left, right) => left.timestamp - right.timestamp);
+
+          return Object.freeze({bone, target, keyframes: Object.freeze(keyframes)});
+        });
+
+        const document = {
+          length,
+          loop,
+          animations: Object.freeze(animations),
+        };
+        validateNeoForgeNativeAnimationDocument(document);
+        return Object.freeze(document);
+      }
+
+      module.exports = {
+        NEOFORGE_NATIVE_ANIMATION_AUTHORITY,
+        NeoForgeNativeAnimationContractError,
+        createNeoForgeNativeAnimationExportPlan,
+        validateNeoForgeNativeAnimationDocument,
+        serializeNeoForgeNativeAnimation,
+      };
+    },
     "core/index.js": function(module, exports, require) {
       'use strict';
 
@@ -2996,6 +3254,7 @@
       const physical = require('./provider-profile/physical_provider_snapshot.js');
       const geckolib4 = require('./provider-adapter/geckolib4_adapter.js');
       const azurelib3 = require('./provider-adapter/azurelib3_adapter.js');
+      const neoforgeNativeAnimation = require('./provider-adapter/neoforge_native_animation_adapter.js');
 
       module.exports = Object.assign(
         {},
@@ -3013,6 +3272,7 @@
         physical,
         geckolib4,
         azurelib3,
+        neoforgeNativeAnimation,
       );
     },
     "live-bridge/protocol.js": function(module, exports, require) {
@@ -5586,6 +5846,147 @@
         createBlockbenchAzureLib3Adapter,
       };
     },
+    "blockbench-plugin/neoforge_native_animation_adapter.js": function(module, exports, require) {
+      'use strict';
+
+      const neoforgeNative = require('../core/provider-adapter/neoforge_native_animation_adapter.js');
+
+      function fail(code, message) {
+        throw new neoforgeNative.NeoForgeNativeAnimationContractError(code, message);
+      }
+
+      function normalizedSourcePath(value) {
+        if (typeof value !== 'string' || value.length === 0) {
+          fail('NEOFORGE_NATIVE_ANIMATION_SOURCE_NOT_SAVED', 'Active Blockbench project must be saved as a .bbmodel before native animation export.');
+        }
+        const normalized = value.replace(/\\/g, '/');
+        if (!normalized.toLowerCase().endsWith('.bbmodel')) {
+          fail('NEOFORGE_NATIVE_ANIMATION_SOURCE_NOT_SAVED', 'Active Blockbench project source must remain a .bbmodel file.');
+        }
+        return normalized;
+      }
+
+      function createBlockbenchNeoForgeNativeAnimationAdapter(bb) {
+        if (!bb || typeof bb !== 'object') {
+          fail('NEOFORGE_NATIVE_ANIMATION_BLOCKBENCH_UNAVAILABLE', 'Blockbench API object is required.');
+        }
+        if (bb.Blockbench?.isWeb !== false) {
+          fail('NEOFORGE_NATIVE_ANIMATION_DESKTOP_REQUIRED', 'NeoForge native animation export requires desktop Blockbench.');
+        }
+        const project = bb.Blockbench?.Project;
+        if (!project || typeof project !== 'object') {
+          fail('NEOFORGE_NATIVE_ANIMATION_BLOCKBENCH_UNAVAILABLE', 'No active Blockbench project is available.');
+        }
+        const savedSourcePath = normalizedSourcePath(project.save_path);
+        if (typeof bb.BoneAnimator !== 'function') {
+          fail('NEOFORGE_NATIVE_ANIMATION_BLOCKBENCH_API_UNAVAILABLE', 'Blockbench BoneAnimator API is required.');
+        }
+
+        const trustedPreviews = new WeakSet();
+
+        function sourcePath() {
+          return savedSourcePath;
+        }
+
+        function animations() {
+          if (Array.isArray(bb.Animation?.all)) return bb.Animation.all;
+          return Array.isArray(project.animations) ? project.animations : [];
+        }
+
+        function requireAnimation(animationId) {
+          if (typeof animationId !== 'string' || animationId.length === 0) {
+            fail('NEOFORGE_NATIVE_ANIMATION_NOT_FOUND', 'animationId must identify an active Blockbench animation.');
+          }
+          const animation = animations().find((entry) => entry && entry.uuid === animationId) || null;
+          if (!animation) fail('NEOFORGE_NATIVE_ANIMATION_NOT_FOUND', `Animation ${JSON.stringify(animationId)} does not exist.`);
+          return animation;
+        }
+
+        function keyframeVector(keyframe, field) {
+          if (!keyframe || typeof keyframe.get !== 'function') {
+            fail('NEOFORGE_NATIVE_ANIMATION_KEYFRAME_UNAVAILABLE', `${field} does not expose Blockbench keyframe values.`);
+          }
+          return ['x', 'y', 'z'].map((axis) => keyframe.get(axis));
+        }
+
+        function providerNeutralAnimation(animation) {
+          const channels = [];
+          for (const animator of Object.values(animation.animators || {})) {
+            if (!(animator instanceof bb.BoneAnimator)) {
+              fail('UNPROVEN_NEOFORGE_NATIVE_ANIMATION_ANIMATOR', 'Only audited BoneAnimator transform channels can be exported to NeoForge native JSON.');
+            }
+            if (typeof animator.name !== 'string' || animator.name.length === 0) {
+              fail('UNPROVEN_NEOFORGE_NATIVE_ANIMATION_ANIMATOR', 'Each exported BoneAnimator must expose its bone name.');
+            }
+            for (const channel of ['position', 'rotation', 'scale']) {
+              const keyframes = Array.isArray(animator[channel]) ? animator[channel] : [];
+              if (keyframes.length === 0) continue;
+              channels.push({
+                bone: animator.name,
+                channel,
+                keyframes: keyframes.map((keyframe, index) => ({
+                  time: keyframe?.time,
+                  value: keyframeVector(keyframe, `${animator.name}.${channel}[${index}]`),
+                  easing: keyframe?.interpolation,
+                })),
+              });
+            }
+          }
+          return {
+            length: animation.length,
+            loop: animation.loop,
+            channels,
+            effectMarkers: Array.isArray(animation.markers) ? animation.markers : [],
+          };
+        }
+
+        function previewExport(request) {
+          if (!request || typeof request !== 'object' || Array.isArray(request)) {
+            fail('INVALID_NEOFORGE_NATIVE_ANIMATION_EXPORT_PLAN', 'Export request must be an object.');
+          }
+          const plan = neoforgeNative.createNeoForgeNativeAnimationExportPlan({...request, sourcePath: savedSourcePath});
+          const animation = requireAnimation(request.animationId);
+          const document = neoforgeNative.serializeNeoForgeNativeAnimation(providerNeutralAnimation(animation));
+          const artifact = Object.freeze({kind: 'animation', path: plan.outputPath, document});
+          const preview = Object.freeze({
+            plan,
+            artifacts: Object.freeze([artifact]),
+            runtimeEvidence: 'UNPROVEN',
+          });
+          trustedPreviews.add(preview);
+          return preview;
+        }
+
+        function stageExport(preview, writer) {
+          if (!preview || typeof preview !== 'object' || !trustedPreviews.has(preview)) {
+            fail('INVALID_NEOFORGE_NATIVE_ANIMATION_EXPORT_PREVIEW', 'Only a validated preview produced by this adapter can be staged.');
+          }
+          if (!writer || typeof writer.writeText !== 'function') {
+            fail('INVALID_NEOFORGE_NATIVE_ANIMATION_EXPORT_WRITER', 'Export writer must provide writeText(path, content).');
+          }
+          for (const artifact of preview.artifacts) {
+            if (artifact.path === preview.plan.sourcePath || artifact.path.toLowerCase().endsWith('.bbmodel')) {
+              fail('NEOFORGE_NATIVE_ANIMATION_SOURCE_OVERWRITE_FORBIDDEN', 'Native animation staging must never overwrite the source .bbmodel.');
+            }
+            neoforgeNative.validateNeoForgeNativeAnimationDocument(artifact.document);
+            writer.writeText(artifact.path, `${JSON.stringify(artifact.document, null, 2)}\n`);
+          }
+          return Object.freeze({
+            ok: true,
+            staged: preview.artifacts.length,
+            sourcePath: preview.plan.sourcePath,
+            preserveSource: true,
+            runtimeEvidence: 'UNPROVEN',
+          });
+        }
+
+        return Object.freeze({sourcePath, previewExport, stageExport});
+      }
+
+      module.exports = {
+        createBlockbenchNeoForgeNativeAnimationAdapter,
+      };
+    },
     "blockbench-plugin/plugin_adapter.js": function(module, exports, require) {
       'use strict';
 
@@ -5595,6 +5996,7 @@
       const animation = require('./animation_adapter.js');
       const geckolib4 = require('./geckolib4_adapter.js');
       const azurelib3 = require('./azurelib3_adapter.js');
+      const neoforgeNativeAnimation = require('./neoforge_native_animation_adapter.js');
 
       function registerBlockbenchPlugin(bb) {
         let auditAction = null;
@@ -5850,6 +6252,7 @@
         createBlockbenchAnimationAdapter: animation.createBlockbenchAnimationAdapter,
         createBlockbenchGeckoLib4Adapter: geckolib4.createBlockbenchGeckoLib4Adapter,
         createBlockbenchAzureLib3Adapter: azurelib3.createBlockbenchAzureLib3Adapter,
+        createBlockbenchNeoForgeNativeAnimationAdapter: neoforgeNativeAnimation.createBlockbenchNeoForgeNativeAnimationAdapter,
       };
     }
   };
