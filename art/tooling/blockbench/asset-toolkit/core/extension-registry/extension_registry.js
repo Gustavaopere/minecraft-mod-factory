@@ -46,6 +46,15 @@ const EXTENSION_CATALOG = Object.freeze({
     mcpPolicy: 'NEVER',
     providerFamily: 'neoforge_native_animation',
   }),
+  easy_model_entities: Object.freeze({
+    pluginId: 'easy_model_entities',
+    title: 'Easy Model Entities',
+    pluginVersion: '1.0.0',
+    classification: 'REQUIRED_PROFILE',
+    blockbenchCompatibility: Object.freeze({auditedExact: Object.freeze(['5.1.6'])}),
+    mcpPolicy: 'ALLOWLIST',
+    providerFamily: 'easy_model_entities',
+  }),
   cem_template_loader: Object.freeze({
     pluginId: 'cem_template_loader',
     title: 'CEM Template Loader',
