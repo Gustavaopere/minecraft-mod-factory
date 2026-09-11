@@ -23,6 +23,7 @@ const SERIALIZER_CHANNEL_FIELDS = new Set(['bone', 'channel', 'keyframes']);
 const SERIALIZER_KEYFRAME_FIELDS = new Set(['time', 'value', 'easing']);
 const TARGETS = new Set(['minecraft:position', 'minecraft:rotation', 'minecraft:scale']);
 const INTERPOLATIONS = new Set(['minecraft:linear', 'minecraft:catmullrom']);
+const PROFILE_ID = 'neoforge_native_entity_animation';
 
 class NeoForgeNativeAnimationContractError extends Error {
   constructor(code, message) {
@@ -84,6 +85,50 @@ function serializerInterpolation(value, field) {
   return canonical;
 }
 
+function normalizedSourcePath(value) {
+  if (typeof value !== 'string' || value.length === 0) {
+    fail('NEOFORGE_NATIVE_ANIMATION_SOURCE_NOT_SAVED', 'Source project must be saved as a .bbmodel before NeoForge native export.');
+  }
+  const normalized = value.replace(/\\/g, '/');
+  if (!normalized.toLowerCase().endsWith('.bbmodel')) {
+    fail('NEOFORGE_NATIVE_ANIMATION_SOURCE_NOT_SAVED', 'Source authority must remain a saved .bbmodel file.');
+  }
+  return normalized;
+}
+
+function validateNamespace(value) {
+  if (typeof value !== 'string' || !/^[a-z0-9_.-]+$/.test(value)) {
+    fail('INVALID_NEOFORGE_NATIVE_ANIMATION_NAMESPACE', 'namespace must match the Minecraft lowercase namespace grammar.');
+  }
+  return value;
+}
+
+function validateResourceName(value) {
+  if (typeof value !== 'string' || !/^[a-z0-9_-]+(?:\/[a-z0-9_-]+)*$/.test(value)) {
+    fail('INVALID_NEOFORGE_NATIVE_ANIMATION_PATH', 'resourceName must be a safe lowercase relative resource path without an extension.');
+  }
+  return value;
+}
+
+function createNeoForgeNativeAnimationExportPlan(input) {
+  if (!isPlainObject(input)) fail('INVALID_NEOFORGE_NATIVE_ANIMATION_EXPORT_PLAN', 'Export plan input must be an object.');
+  if (input.profileId !== PROFILE_ID) {
+    fail('NEOFORGE_NATIVE_ANIMATION_PROFILE_REQUIRED', `profileId must be ${PROFILE_ID}.`);
+  }
+  const sourcePath = normalizedSourcePath(input.sourcePath);
+  const namespace = validateNamespace(input.namespace);
+  const resourceName = validateResourceName(input.resourceName);
+  return Object.freeze({
+    profileId: PROFILE_ID,
+    sourcePath,
+    preserveSource: true,
+    namespace,
+    resourceName,
+    outputPath: `assets/${namespace}/${NEOFORGE_NATIVE_ANIMATION_AUTHORITY.animationRoot}/${resourceName}.json`,
+    runtimeEvidence: 'UNPROVEN',
+  });
+}
+
 function validateNeoForgeNativeAnimationDocument(value) {
   if (!isPlainObject(value)) {
     fail('INVALID_NEOFORGE_NATIVE_ANIMATION_DOCUMENT', 'Animation document must be an object.');
@@ -143,10 +188,7 @@ function serializeNeoForgeNativeAnimation(input) {
   else fail('UNSUPPORTED_NEOFORGE_NATIVE_ANIMATION_LOOP_MODE', `animation.loop ${JSON.stringify(input.loop)} has no audited NeoForge native representation.`);
 
   if (input.effectMarkers !== undefined) {
-    if (!Array.isArray(input.effectMarkers)) {
-      fail('UNSUPPORTED_NEOFORGE_NATIVE_ANIMATION_EFFECT_MARKERS', 'animation.effectMarkers must be absent or an empty array for NeoForge native export.');
-    }
-    if (input.effectMarkers.length > 0) {
+    if (!Array.isArray(input.effectMarkers) || input.effectMarkers.length > 0) {
       fail('UNSUPPORTED_NEOFORGE_NATIVE_ANIMATION_EFFECT_MARKERS', 'NeoForge 21.1.248 JSON entity animations have no audited effect-marker representation.');
     }
   }
@@ -195,6 +237,7 @@ function serializeNeoForgeNativeAnimation(input) {
 module.exports = {
   NEOFORGE_NATIVE_ANIMATION_AUTHORITY,
   NeoForgeNativeAnimationContractError,
+  createNeoForgeNativeAnimationExportPlan,
   validateNeoForgeNativeAnimationDocument,
   serializeNeoForgeNativeAnimation,
 };
