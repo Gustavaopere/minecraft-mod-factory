@@ -20,6 +20,7 @@ const SOURCE_MODULES = Object.freeze([
   'core/provider-profile/physical_provider_snapshot.js',
   'core/provider-profile/provider_profiles.js',
   'core/provider-adapter/geckolib4_adapter.js',
+  'core/provider-adapter/azurelib3_adapter.js',
   'core/index.js',
   'live-bridge/protocol.js',
   'live-bridge/project_snapshot.js',
@@ -31,6 +32,7 @@ const SOURCE_MODULES = Object.freeze([
   'blockbench-plugin/uv_texture_adapter.js',
   'blockbench-plugin/animation_adapter.js',
   'blockbench-plugin/geckolib4_adapter.js',
+  'blockbench-plugin/azurelib3_adapter.js',
   'blockbench-plugin/plugin_adapter.js',
 ]);
 

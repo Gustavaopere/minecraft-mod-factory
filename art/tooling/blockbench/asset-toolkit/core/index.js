@@ -13,6 +13,7 @@ const extensions = require('./extension-registry/extension_registry.js');
 const providers = require('./provider-profile/provider_profiles.js');
 const physical = require('./provider-profile/physical_provider_snapshot.js');
 const geckolib4 = require('./provider-adapter/geckolib4_adapter.js');
+const azurelib3 = require('./provider-adapter/azurelib3_adapter.js');
 
 module.exports = Object.assign(
   {},
@@ -29,4 +30,5 @@ module.exports = Object.assign(
   providers,
   physical,
   geckolib4,
+  azurelib3,
 );
