@@ -104,6 +104,8 @@ test('PR12 exposes audited CPM, PAL, and Player Animator authorities', () => {
   assert.equal(authority?.playerAnimator?.legacyResourceDirectory, 'player_animation');
   assert.deepEqual(authority?.playerAnimator?.defaultCodecs, ['emotecraft', 'gecko_legacy']);
   assert.equal(authority?.playerAnimator?.runtimeSourceNeoForgeVersion, '21.1.89');
+  assert.equal(authority?.playerAnimator?.runtimeSide, 'BOTH');
+  assert.equal(authority?.playerAnimator?.resourceRegistrySide, 'CLIENT');
 });
 
 test('PR12 CPM handoff preserves .cpmproject and never claims automated lossless round-trip', () => {
@@ -144,10 +146,12 @@ test('PR12 PAL handoff stages JSON only under the proven resource-pack root', ()
   assert.equal(handoff.f4I6Evidence, false);
 });
 
-test('PR12 Player Animator profile records the client API surface without pretending PAL equivalence', () => {
+test('PR12 Player Animator profile records provider side and client registry scope without pretending PAL equivalence', () => {
   assert.equal(typeof core.getPlayerAnimatorApiAudit, 'function');
   const audit = core.getPlayerAnimatorApiAudit();
-  assert.equal(audit.clientOnly, true);
+  assert.equal(audit.clientOnly, undefined);
+  assert.equal(audit.runtimeSide, 'BOTH');
+  assert.equal(audit.resourceRegistrySide, 'CLIENT');
   assert.deepEqual(audit.primaryApiClasses, [
     'PlayerAnimationAccess',
     'PlayerAnimationFactory',
