@@ -125,7 +125,7 @@ test('PR14 reuses project revision, structural QA, provider profile, and determi
   assert.equal(manifest.providerProfile.id, 'geckolib4_entity');
   assert.equal(manifest.structuralQa.status, 'PASS');
   assert.deepEqual(manifest.structuralQa.summary, core.validateProject(input.project));
-  assert.deepEqual(manifest.report, core.createDeterministicReport(input.project));
+  assert.equal(manifest.report, core.formatReport(core.validateProject(input.project)));
 });
 
 test('PR14 derives provider and extension fingerprints from the audited session fingerprint instead of inventing identities', () => {
