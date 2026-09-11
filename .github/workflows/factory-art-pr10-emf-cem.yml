@@ -28,6 +28,7 @@ jobs:
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.emf_cem_pr10.test.js
       - name: Existing provider profile regressions
+        if: always()
         working-directory: art/tooling/blockbench/asset-toolkit
         run: |
           node --test \
@@ -37,9 +38,9 @@ jobs:
             asset_toolkit.neoforge_native_animation_adapter.test.js \
             asset_toolkit.easy_model_entities_pr9.test.js
       - name: Standalone bundle reproducibility
+        if: always()
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node build_toolkit_bundle.js --check
-      - name: Runtime pack load and animation smoke gate
-        run: echo 'RED phase - target-exact EMF client runtime smoke is added before GREEN completion'
       - name: Whitespace
+        if: always()
         run: git diff --check HEAD^ -- art/tooling/blockbench/asset-toolkit art/standards .github/workflows/factory-art-pr10-emf-cem.yml
