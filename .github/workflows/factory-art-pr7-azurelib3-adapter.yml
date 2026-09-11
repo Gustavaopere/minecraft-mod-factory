@@ -46,9 +46,16 @@ jobs:
         run: |
           node art/golden-samples/validate_reference_evidence.js
           node art/golden-samples/validate_golden_samples.js
-      - name: Existing provider and generic animation regressions
+      - name: Existing GeckoLib shared-surface and generic animation regressions
         working-directory: art/tooling/blockbench/asset-toolkit
-        run: node --test asset_toolkit.geckolib4_adapter.test.js asset_toolkit.animation_core.test.js asset_toolkit.animation_adapter.test.js
+        run: |
+          node --test \
+            asset_toolkit.geckolib4_adapter.test.js \
+            asset_toolkit.geckolib4_blockbench_adapter.test.js \
+            asset_toolkit.geckolib4_public_api.test.js \
+            asset_toolkit.geckolib4_golden_reference.test.js \
+            asset_toolkit.animation_core.test.js \
+            asset_toolkit.animation_adapter.test.js
       - name: Standalone bundle reproducibility
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node build_toolkit_bundle.js --check
