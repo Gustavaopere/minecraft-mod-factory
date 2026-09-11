@@ -121,6 +121,18 @@ C7 deliberately does not guess semantics that the current contracts cannot prove
 
 C7 also does not score silhouette, proportion, materials, facade readability or other visual qualities, and it does not prove full modpack boot, live-world placement or worldgen compatibility. Those remain C8 Visual QA and C12 Runtime Acceptance responsibilities.
 
+## C8 scope
+
+C8 establishes deterministic offline Visual QA without promoting diagnostic previews into Minecraft runtime appearance authority.
+
+`construction/qa/preview_renderer.py` renders the C2-valid Canonical Build IR through the fixed `c8-svg-v1` contract into seven canonical SVG artifacts: `front`, `back`, `left`, `right`, `top`, `isometric` and `layers`. The renderer uses integer geometry, deterministic C2-state pseudo-colors, fixed occlusion/painter ordering, no external resources and embedded Build IR/renderer fingerprints. Re-rendering identical authoritative input produces byte-identical SVGs.
+
+`construction/core/visual_qa.py` validates those artifacts and emits `construction/schemas/visual-qa-report.schema.json`. Its objective evidence includes occupancy, projection, palette-distribution, repetition, facade-depth and layer-density metrics. C7 structural reports and C5 palette resolutions may be supplied only as fingerprinted provenance/context; they cannot resolve visual acceptance by themselves.
+
+The six required subjective checks are `silhouette_readability`, `proportion`, `material_hierarchy`, `repetition`, `facade_readability` and `interior_density`. They remain `DEFERRED` unless explicit review evidence is bound to the exact BuildSpec, Build IR, renderer version and all seven current view hashes. Matching human or agent review may resolve only those checks to `PASS` or `FAIL`. It cannot resolve `runtime_visual_fidelity`, which is deliberately non-required and always `DEFERRED` to C12.
+
+The C3 pavilion is extended under `construction/fixtures/vanilla-golden/c8/` with all seven canonical SVGs, bound review evidence and an expected Visual QA report. That Golden proves deterministic offline rendering/reporting and exact review-evidence binding; it does not prove Minecraft textures, CTM, tint, transparency, emissives, shaders, lighting, full-modpack boot or live-world appearance.
+
 ## Planned pipeline
 
 ```text
@@ -147,16 +159,17 @@ Sponge Schematic v3 validator
 
 ## Directory map
 
-- `core/` — Factory-owned canonical Construction runtime contracts, including Build IR, modpack registry composition and structural QA
+- `core/` — Factory-owned canonical Construction runtime contracts, including Build IR, modpack registry composition, structural QA and visual QA
 - `docs/` — architecture and provider decisions
 - `fixtures/` — checked-in deterministic Construction Golden Samples and their generation inputs
+- `qa/` — deterministic offline preview/rendering helpers used by Construction QA contracts
 - `runtime/` — Factory-owned runtime probes materialized through shared Engineering scaffolding
 - `schemas/` — machine-readable contracts
 - `upstream/` — pinned provenance and immutable permitted snapshots/references
 - `scripts/` — Factory-owned validators and tooling
 - `tests/` — construction-domain regression tests
 
-Future directories such as `engines/`, `catalog/`, `registry/`, `providers/`, `mcp/` and `qa/` are created only when their implementation starts.
+Future directories such as `engines/`, `catalog/`, `registry/`, `providers/` and `mcp/` are created only when their implementation starts.
 
 ## Roadmap
 
