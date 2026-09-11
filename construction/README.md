@@ -102,6 +102,25 @@ The pinned MineBench exporter remains an engine reference: it demonstrates Spong
 
 C6 does not claim structural or visual quality, advanced provider-specific placement semantics, MCP/provider integration, or in-game/worldgen compatibility. Those remain later Construction gates.
 
+## C7 scope
+
+C7 establishes deterministic offline Architecture QA at `construction/core/structural_qa.py` without creating a second voxel, palette or runtime authority. It consumes the current `BuildSpec`, a C2-valid Canonical Build IR and optional C4 runtime-registry evidence, then emits the versioned machine-readable contract `construction/schemas/structural-qa-report.schema.json`.
+
+The conservative C7 evidence layer provides:
+
+- C2-backed bounds and canonical Build IR integrity checks;
+- exact runtime block/state validation against C4 `runtime_confirmed` evidence when a registry is supplied;
+- geometric two-block head-clearance metrics;
+- a deterministic conservative walkable-surface graph;
+- connected-component analysis without inventing semantic room mappings;
+- conservative one-block vertical-step connectivity;
+- deterministic report fingerprints, findings, metrics and ordering;
+- explicit `PASS`, `FAIL`, `DEFERRED` and `NOT_APPLICABLE` check states, with required unresolved evidence preventing an overall `PASS`.
+
+C7 deliberately does not guess semantics that the current contracts cannot prove. Enclosure remains `DEFERRED` when the BuildSpec does not identify intentional openings or interior volumes; semantic floor continuity remains `DEFERRED` because named spaces are not mapped to voxel regions; provider-aware unsupported-placement checks remain `DEFERRED` until authoritative support/gravity/attachment metadata exists. These states are visible evidence gaps, not silent passes.
+
+C7 also does not score silhouette, proportion, materials, facade readability or other visual qualities, and it does not prove full modpack boot, live-world placement or worldgen compatibility. Those remain C8 Visual QA and C12 Runtime Acceptance responsibilities.
+
 ## Planned pipeline
 
 ```text
@@ -128,7 +147,7 @@ Sponge Schematic v3 validator
 
 ## Directory map
 
-- `core/` — Factory-owned canonical Construction runtime contracts, including Build IR and modpack registry composition
+- `core/` — Factory-owned canonical Construction runtime contracts, including Build IR, modpack registry composition and structural QA
 - `docs/` — architecture and provider decisions
 - `fixtures/` — checked-in deterministic Construction Golden Samples and their generation inputs
 - `runtime/` — Factory-owned runtime probes materialized through shared Engineering scaffolding
