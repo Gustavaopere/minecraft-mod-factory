@@ -56,3 +56,12 @@ test('AzureLib 3.1.11 geo validator fails closed on unenumerated format versions
     (error) => error?.code === 'INVALID_AZURELIB3_GEO_DOCUMENT',
   );
 });
+
+test('AzureLib 3.1.11 geo validator rejects authoring-only IK metadata from runtime artifacts', () => {
+  const leaked = validGeoDocument('1.21.0');
+  leaked.azureIKChains = [{name: 'leg'}];
+  assert.throws(
+    () => azurelib3.validateAzureLib3GeoDocument(leaked),
+    (error) => error?.code === 'UNPROVEN_AZURELIB3_RUNTIME_FIELD',
+  );
+});
