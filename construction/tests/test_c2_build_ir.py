@@ -122,6 +122,15 @@ class ConstructionC2BuildIRTest(unittest.TestCase):
             self.assertNotIn(forbidden, serialized.lower())
 
     @unittest.skipUnless(IMPLEMENTED, "C2 implementation not present yet")
+    def test_schema_excludes_explicit_air_states(self) -> None:
+        schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+        name_schema = schema["$defs"]["block_state"]["properties"]["name"]
+        self.assertEqual(
+            name_schema["not"]["enum"],
+            ["minecraft:air", "minecraft:cave_air", "minecraft:void_air"],
+        )
+
+    @unittest.skipUnless(IMPLEMENTED, "C2 implementation not present yet")
     def test_canonicalization_is_deterministic_and_does_not_mutate_inputs(self) -> None:
         module = load_build_ir_module()
         spec_a = build_spec()
@@ -176,6 +185,22 @@ class ConstructionC2BuildIRTest(unittest.TestCase):
         explicit_air[0]["block_state"] = {"name": "minecraft:air", "properties": {}}
         with self.assertRaisesRegex(module.BuildIRError, "explicit air"):
             module.canonicalize_build_ir(build_spec(), explicit_air, producer="contract", producer_version="1")
+
+    @unittest.skipUnless(IMPLEMENTED, "C2 implementation not present yet")
+    def test_validator_rejects_schema_invalid_identity_fields(self) -> None:
+        module = load_build_ir_module()
+
+        extra_field = module.canonicalize_build_ir(build_spec(), placements(), producer="contract", producer_version="1")
+        extra_field["identity"]["unexpected"] = "value"
+        extra_field["metadata"]["content_sha256"] = module.fingerprint_build_ir(extra_field)
+        extra_errors = module.validate_build_ir(extra_field)
+        self.assertTrue(any("identity fields" in error for error in extra_errors), extra_errors)
+
+        invalid_description = module.canonicalize_build_ir(build_spec(), placements(), producer="contract", producer_version="1")
+        invalid_description["identity"]["description"] = 42
+        invalid_description["metadata"]["content_sha256"] = module.fingerprint_build_ir(invalid_description)
+        description_errors = module.validate_build_ir(invalid_description)
+        self.assertTrue(any("identity.description" in error for error in description_errors), description_errors)
 
     @unittest.skipUnless(IMPLEMENTED, "C2 implementation not present yet")
     def test_invalid_state_and_hash_tampering_are_rejected(self) -> None:
