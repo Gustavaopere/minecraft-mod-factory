@@ -27,7 +27,7 @@ const ANIMATED_JAVA_AUTHORITY = Object.freeze({
 });
 
 const BLUEPRINT_FIELDS = new Set([
-  'meta', 'blueprint_settings', 'resolution', 'elements', 'groups', 'outliner', 'textures',
+  'meta', 'blueprint_settings', 'variants', 'resolution', 'elements', 'groups', 'outliner', 'textures',
   'animations', 'animation_controllers', 'animation_variable_placeholders', 'backgrounds',
   'collections',
 ]);
