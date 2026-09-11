@@ -10,6 +10,7 @@ const CURRENT_PHYSICAL_PROVIDER_SNAPSHOT = Object.freeze({
   cpm: Object.freeze({modId: 'cpm', version: '0.6.27a', presence: 'PRESENT', health: 'UNPROVEN'}),
   player_animation_library: Object.freeze({modId: 'player_animation_library', version: '1.1.6+mc.1.21.1', presence: 'PRESENT', health: 'UNPROVEN'}),
   playeranimator: Object.freeze({modId: 'playeranimator', version: '2.0.4+1.21.1', presence: 'PRESENT', health: 'UNPROVEN'}),
+  epicfight: Object.freeze({modId: 'epicfight', version: '21.17.3.1', presence: 'PRESENT', health: 'UNPROVEN'}),
   photon: Object.freeze({modId: 'photon', version: '2.2.6.a', presence: 'PRESENT', health: 'KNOWN_RUNTIME_RISK'}),
   lodestone: Object.freeze({modId: 'lodestone', version: '1.8.2', presence: 'PRESENT', health: 'UNPROVEN'}),
   particle_effects: Object.freeze({modId: 'particle_effects', version: '1.5.0+1.21.1+neoforge', presence: 'PRESENT', health: 'PRESENTATION_ONLY'}),
