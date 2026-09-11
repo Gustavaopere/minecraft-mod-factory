@@ -191,36 +191,114 @@ def _validate_palette_resolution(
     if palette_resolution is None:
         return None, {}
     value = _require_object(palette_resolution, "palette_resolution")
-    if value.get("schema_version") != 1:
+    _require_exact_keys(
+        value,
+        {"schema_version", "registry_fingerprint", "build_spec_sha256", "request_sha256", "roles"},
+        "palette_resolution",
+    )
+    if value["schema_version"] != 1:
         raise VisualQAError("palette_resolution schema_version must be 1")
-    if value.get("build_spec_sha256") != build_spec_sha:
+    _require_sha(value["registry_fingerprint"], "palette_resolution.registry_fingerprint")
+    _require_sha(value["request_sha256"], "palette_resolution.request_sha256")
+    if value["build_spec_sha256"] != build_spec_sha:
         raise VisualQAError("C5 palette resolution BuildSpec fingerprint does not match")
-    roles = value.get("roles")
-    if not isinstance(roles, list):
-        raise VisualQAError("palette_resolution.roles must be an array")
+    _require_sha(value["build_spec_sha256"], "palette_resolution.build_spec_sha256")
+    roles = value["roles"]
+    if not isinstance(roles, list) or not roles:
+        raise VisualQAError("palette_resolution.roles must be a non-empty array")
+
+    def validate_candidate(raw_candidate: object, label: str) -> str | None:
+        candidate = _require_object(raw_candidate, label)
+        _require_exact_keys(
+            candidate,
+            {"block", "namespace", "authority", "safety", "state_candidates", "selected_state"},
+            label,
+        )
+        block_id = _require_string(candidate["block"], f"{label}.block")
+        namespace = _require_string(candidate["namespace"], f"{label}.namespace")
+        try:
+            c2.canonical_block_state_string({"name": block_id, "properties": {}})
+        except Exception as exc:
+            raise VisualQAError(f"{label}.block is not a valid namespaced block id: {exc}") from exc
+        if block_id.split(":", 1)[0] != namespace:
+            raise VisualQAError(f"{label}.namespace does not match block namespace")
+        if candidate["authority"] != "runtime_confirmed":
+            raise VisualQAError(f"{label}.authority must be runtime_confirmed")
+        if candidate["safety"] not in {"ordinary", "block_entity"}:
+            raise VisualQAError(f"{label}.safety is not a selectable C5 safety class")
+
+        raw_states = candidate["state_candidates"]
+        if not isinstance(raw_states, list) or not raw_states:
+            raise VisualQAError(f"{label}.state_candidates must be a non-empty array")
+        state_keys: list[str] = []
+        for state_index, raw_state in enumerate(raw_states):
+            state = _require_object(raw_state, f"{label}.state_candidates[{state_index}]")
+            _require_exact_keys(
+                state,
+                {"name", "properties"},
+                f"{label}.state_candidates[{state_index}]",
+            )
+            try:
+                state_key = c2.canonical_block_state_string(state)
+            except Exception as exc:
+                raise VisualQAError(
+                    f"invalid C5 candidate state for {label}: {exc}"
+                ) from exc
+            if state.get("name") != block_id:
+                raise VisualQAError(f"{label} candidate state block does not match candidate block")
+            state_keys.append(state_key)
+        if len(state_keys) != len(set(state_keys)):
+            raise VisualQAError(f"{label}.state_candidates must be unique")
+        if state_keys != sorted(state_keys):
+            raise VisualQAError(f"{label}.state_candidates must use canonical order")
+
+        selected_state = candidate["selected_state"]
+        if len(state_keys) == 1:
+            if selected_state is None:
+                raise VisualQAError(f"{label}.selected_state is required for one candidate state")
+            selected = _require_object(selected_state, f"{label}.selected_state")
+            _require_exact_keys(selected, {"name", "properties"}, f"{label}.selected_state")
+            try:
+                selected_key = c2.canonical_block_state_string(selected)
+            except Exception as exc:
+                raise VisualQAError(f"invalid selected state for {label}: {exc}") from exc
+            if selected_key != state_keys[0]:
+                raise VisualQAError(f"{label}.selected_state must equal the sole candidate state")
+            return selected_key
+        if selected_state is not None:
+            raise VisualQAError(f"{label}.selected_state must be null when candidate state is ambiguous")
+        return None
 
     labels: dict[str, list[str]] = {}
     seen_roles: set[str] = set()
     for index, raw_role in enumerate(roles):
         role = _require_object(raw_role, f"palette_resolution.roles[{index}]")
-        role_name = _require_string(role.get("role"), f"palette_resolution.roles[{index}].role")
+        _require_exact_keys(
+            role,
+            {"role", "selected", "alternatives"},
+            f"palette_resolution.roles[{index}]",
+        )
+        role_name = _require_string(role["role"], f"palette_resolution.roles[{index}].role")
         if ROLE_RE.fullmatch(role_name) is None:
             raise VisualQAError(f"palette_resolution.roles[{index}].role has invalid format")
         if role_name in seen_roles:
             raise VisualQAError(f"duplicate C5 role: {role_name}")
         seen_roles.add(role_name)
-        selected = _require_object(role.get("selected"), f"palette_resolution.roles[{index}].selected")
-        block_id = _require_string(selected.get("block"), f"palette_resolution.roles[{index}].selected.block")
-        selected_state = selected.get("selected_state")
-        if selected_state is None:
-            continue
-        try:
-            state_key = c2.canonical_block_state_string(selected_state)
-        except Exception as exc:
-            raise VisualQAError(f"invalid selected state for C5 role {role_name}: {exc}") from exc
-        if selected_state.get("name") != block_id:
-            raise VisualQAError(f"C5 role {role_name} selected block does not match selected state")
-        labels.setdefault(state_key, []).append(role_name)
+
+        selected_key = validate_candidate(
+            role["selected"],
+            f"palette_resolution.roles[{index}].selected",
+        )
+        alternatives = role["alternatives"]
+        if not isinstance(alternatives, list):
+            raise VisualQAError(f"palette_resolution.roles[{index}].alternatives must be an array")
+        for alternative_index, alternative in enumerate(alternatives):
+            validate_candidate(
+                alternative,
+                f"palette_resolution.roles[{index}].alternatives[{alternative_index}]",
+            )
+        if selected_key is not None:
+            labels.setdefault(selected_key, []).append(role_name)
 
     for state_key in labels:
         labels[state_key] = sorted(labels[state_key])
