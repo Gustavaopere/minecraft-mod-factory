@@ -71,6 +71,39 @@ function requireExtension(value, extension, code, label) {
   return path;
 }
 
+function requireBoneMapping(value) {
+  if (!Array.isArray(value) || value.length === 0) {
+    fail('EPIC_FIGHT_BONE_MAPPING_REQUIRED', 'Explicit Blockbench-reference to Blender-rig bone mapping is required.');
+  }
+  return Object.freeze(value.map((entry, index) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      fail('EPIC_FIGHT_BONE_MAPPING_INVALID', `Bone mapping entry ${index} must be an object.`);
+    }
+    const referenceBone = requireNonEmptyString(
+      entry.referenceBone,
+      'EPIC_FIGHT_BONE_MAPPING_INVALID',
+      `Bone mapping entry ${index} referenceBone`,
+    );
+    const blenderRigBone = requireNonEmptyString(
+      entry.blenderRigBone,
+      'EPIC_FIGHT_BONE_MAPPING_INVALID',
+      `Bone mapping entry ${index} blenderRigBone`,
+    );
+    return Object.freeze({referenceBone, blenderRigBone});
+  }));
+}
+
+function requireTextureReferences(value) {
+  if (!Array.isArray(value) || value.length === 0) {
+    fail('EPIC_FIGHT_TEXTURE_REFERENCES_REQUIRED', 'At least one explicit texture reference is required.');
+  }
+  return Object.freeze(value.map((entry, index) => requireNonEmptyString(
+    entry,
+    'EPIC_FIGHT_TEXTURE_REFERENCES_INVALID',
+    `Texture reference ${index}`,
+  )));
+}
+
 function createEpicFightBlenderHandoff(input = {}) {
   const blockbenchReferencePath = requireExtension(
     input.blockbenchReferencePath,
@@ -90,10 +123,14 @@ function createEpicFightBlenderHandoff(input = {}) {
       `Epic Fight handoff is audited only for Minecraft ${EPIC_FIGHT_BLENDER_AUTHORITY.minecraftVersion}.`,
     );
   }
+  const boneMapping = requireBoneMapping(input.boneMapping);
+  const textureReferences = requireTextureReferences(input.textureReferences);
 
   return Object.freeze({
     blockbenchReferencePath,
     blenderSourcePath,
+    boneMapping,
+    textureReferences,
     targetMinecraftVersion: input.targetMinecraftVersion,
     runtimeVersion: EPIC_FIGHT_BLENDER_AUTHORITY.runtimeVersion,
     preserveBlockbenchSource: true,
