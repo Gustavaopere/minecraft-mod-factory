@@ -1,0 +1,84 @@
+name: PR13 Materialize Bundle Surfaces
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - feat/art-pr13-epicfight-blender-handoff
+    paths:
+      - '.github/workflows/pr13-materialize-bundle.yml'
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          ref: feat/art-pr13-epicfight-blender-handoff
+      - name: Provision Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch public surfaces deterministically
+        shell: python
+        run: |
+          from pathlib import Path
+
+          plugin = Path('art/tooling/blockbench/asset-toolkit/blockbench-plugin/plugin_adapter.js')
+          text = plugin.read_text()
+          old = "const playerProfiles = require('./player_profiles_adapter.js');\n"
+          new = old + "const epicFightBlender = require('./epicfight_blender_adapter.js');\n"
+          if text.count(old) != 1 or "epicFightBlender = require('./epicfight_blender_adapter.js')" in text:
+              raise SystemExit('unexpected plugin adapter require state')
+          text = text.replace(old, new)
+          old = "  createBlockbenchCpmPlayerProfileAdapter: playerProfiles.createBlockbenchCpmPlayerProfileAdapter,\n};\n"
+          new = "  createBlockbenchCpmPlayerProfileAdapter: playerProfiles.createBlockbenchCpmPlayerProfileAdapter,\n  createBlockbenchEpicFightHandoffAdapter: epicFightBlender.createBlockbenchEpicFightHandoffAdapter,\n};\n"
+          if text.count(old) != 1:
+              raise SystemExit('unexpected plugin adapter export state')
+          plugin.write_text(text)
+
+          build = Path('art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js')
+          text = build.read_text()
+          old = "  'core/provider-adapter/player_profiles_adapter.js',\n"
+          new = old + "  'core/provider-adapter/epicfight_blender_adapter.js',\n"
+          if text.count(old) != 1 or "core/provider-adapter/epicfight_blender_adapter.js" in text:
+              raise SystemExit('unexpected bundle core module state')
+          text = text.replace(old, new)
+          old = "  'blockbench-plugin/player_profiles_adapter.js',\n"
+          new = old + "  'blockbench-plugin/epicfight_blender_adapter.js',\n"
+          if text.count(old) != 1 or "blockbench-plugin/epicfight_blender_adapter.js" in text:
+              raise SystemExit('unexpected bundle Blockbench module state')
+          build.write_text(text.replace(old, new))
+      - name: Regenerate deterministic standalone bundle
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node build_toolkit_bundle.js --write
+      - name: Verify exact changed paths and bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          node art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js --check
+          git diff --check
+          mapfile -t paths < <(git diff --name-only | sort)
+          expected=(
+            art/tooling/blockbench/asset-toolkit/asset_toolkit.js
+            art/tooling/blockbench/asset-toolkit/blockbench-plugin/plugin_adapter.js
+            art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js
+          )
+          mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
+          diff -u <(printf '%s\n' "${expected_sorted[@]}") <(printf '%s\n' "${paths[@]}")
+      - name: Commit materialized surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'minecraft-mod-factory-bot'
+          git config user.email 'minecraft-mod-factory-bot@users.noreply.github.com'
+          git add \
+            art/tooling/blockbench/asset-toolkit/asset_toolkit.js \
+            art/tooling/blockbench/asset-toolkit/blockbench-plugin/plugin_adapter.js \
+            art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js
+          git commit -m 'build(art): materialize PR13 bundle surfaces'
+          git push origin HEAD:feat/art-pr13-epicfight-blender-handoff
