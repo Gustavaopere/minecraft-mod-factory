@@ -1,0 +1,187 @@
+name: C8 Materialize Palette Evidence Hardening
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - feat/construction-c8-visual-qa
+    paths:
+      - '.github/workflows/c8-materialize-palette-hardening.yml'
+
+jobs:
+  materialize:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          ref: feat/construction-c8-visual-qa
+
+      - name: Harden C5 palette evidence consumption
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('construction/core/visual_qa.py')
+          text = path.read_text(encoding='utf-8')
+          start_marker = 'def _validate_palette_resolution(\n'
+          end_marker = 'def _local_name(name: str) -> str:\n'
+          if text.count(start_marker) != 1 or text.count(end_marker) != 1:
+              raise SystemExit('unexpected C8 palette validation anchors')
+          start = text.index(start_marker)
+          end = text.index(end_marker, start)
+          replacement = '''def _validate_palette_resolution(
+              palette_resolution: object | None,
+              *,
+              build_spec_sha: str,
+              c2,
+          ) -> tuple[str | None, dict[str, list[str]]]:
+              if palette_resolution is None:
+                  return None, {}
+              value = _require_object(palette_resolution, "palette_resolution")
+              _require_exact_keys(
+                  value,
+                  {"schema_version", "registry_fingerprint", "build_spec_sha256", "request_sha256", "roles"},
+                  "palette_resolution",
+              )
+              if value["schema_version"] != 1:
+                  raise VisualQAError("palette_resolution schema_version must be 1")
+              _require_sha(value["registry_fingerprint"], "palette_resolution.registry_fingerprint")
+              _require_sha(value["request_sha256"], "palette_resolution.request_sha256")
+              if value["build_spec_sha256"] != build_spec_sha:
+                  raise VisualQAError("C5 palette resolution BuildSpec fingerprint does not match")
+              _require_sha(value["build_spec_sha256"], "palette_resolution.build_spec_sha256")
+              roles = value["roles"]
+              if not isinstance(roles, list) or not roles:
+                  raise VisualQAError("palette_resolution.roles must be a non-empty array")
+
+              def validate_candidate(raw_candidate: object, label: str) -> str | None:
+                  candidate = _require_object(raw_candidate, label)
+                  _require_exact_keys(
+                      candidate,
+                      {"block", "namespace", "authority", "safety", "state_candidates", "selected_state"},
+                      label,
+                  )
+                  block_id = _require_string(candidate["block"], f"{label}.block")
+                  namespace = _require_string(candidate["namespace"], f"{label}.namespace")
+                  try:
+                      c2.canonical_block_state_string({"name": block_id, "properties": {}})
+                  except Exception as exc:
+                      raise VisualQAError(f"{label}.block is not a valid namespaced block id: {exc}") from exc
+                  if block_id.split(":", 1)[0] != namespace:
+                      raise VisualQAError(f"{label}.namespace does not match block namespace")
+                  if candidate["authority"] != "runtime_confirmed":
+                      raise VisualQAError(f"{label}.authority must be runtime_confirmed")
+                  if candidate["safety"] not in {"ordinary", "block_entity"}:
+                      raise VisualQAError(f"{label}.safety is not a selectable C5 safety class")
+
+                  raw_states = candidate["state_candidates"]
+                  if not isinstance(raw_states, list) or not raw_states:
+                      raise VisualQAError(f"{label}.state_candidates must be a non-empty array")
+                  state_keys: list[str] = []
+                  for state_index, raw_state in enumerate(raw_states):
+                      state = _require_object(raw_state, f"{label}.state_candidates[{state_index}]")
+                      _require_exact_keys(
+                          state,
+                          {"name", "properties"},
+                          f"{label}.state_candidates[{state_index}]",
+                      )
+                      try:
+                          state_key = c2.canonical_block_state_string(state)
+                      except Exception as exc:
+                          raise VisualQAError(
+                              f"invalid C5 candidate state for {label}: {exc}"
+                          ) from exc
+                      if state.get("name") != block_id:
+                          raise VisualQAError(f"{label} candidate state block does not match candidate block")
+                      state_keys.append(state_key)
+                  if len(state_keys) != len(set(state_keys)):
+                      raise VisualQAError(f"{label}.state_candidates must be unique")
+                  if state_keys != sorted(state_keys):
+                      raise VisualQAError(f"{label}.state_candidates must use canonical order")
+
+                  selected_state = candidate["selected_state"]
+                  if len(state_keys) == 1:
+                      if selected_state is None:
+                          raise VisualQAError(f"{label}.selected_state is required for one candidate state")
+                      selected = _require_object(selected_state, f"{label}.selected_state")
+                      _require_exact_keys(selected, {"name", "properties"}, f"{label}.selected_state")
+                      try:
+                          selected_key = c2.canonical_block_state_string(selected)
+                      except Exception as exc:
+                          raise VisualQAError(f"invalid selected state for {label}: {exc}") from exc
+                      if selected_key != state_keys[0]:
+                          raise VisualQAError(f"{label}.selected_state must equal the sole candidate state")
+                      return selected_key
+                  if selected_state is not None:
+                      raise VisualQAError(f"{label}.selected_state must be null when candidate state is ambiguous")
+                  return None
+
+              labels: dict[str, list[str]] = {}
+              seen_roles: set[str] = set()
+              for index, raw_role in enumerate(roles):
+                  role = _require_object(raw_role, f"palette_resolution.roles[{index}]")
+                  _require_exact_keys(
+                      role,
+                      {"role", "selected", "alternatives"},
+                      f"palette_resolution.roles[{index}]",
+                  )
+                  role_name = _require_string(role["role"], f"palette_resolution.roles[{index}].role")
+                  if ROLE_RE.fullmatch(role_name) is None:
+                      raise VisualQAError(f"palette_resolution.roles[{index}].role has invalid format")
+                  if role_name in seen_roles:
+                      raise VisualQAError(f"duplicate C5 role: {role_name}")
+                  seen_roles.add(role_name)
+
+                  selected_key = validate_candidate(
+                      role["selected"],
+                      f"palette_resolution.roles[{index}].selected",
+                  )
+                  alternatives = role["alternatives"]
+                  if not isinstance(alternatives, list):
+                      raise VisualQAError(f"palette_resolution.roles[{index}].alternatives must be an array")
+                  for alternative_index, alternative in enumerate(alternatives):
+                      validate_candidate(
+                          alternative,
+                          f"palette_resolution.roles[{index}].alternatives[{alternative_index}]",
+                      )
+                  if selected_key is not None:
+                      labels.setdefault(selected_key, []).append(role_name)
+
+              for state_key in labels:
+                  labels[state_key] = sorted(labels[state_key])
+              return _sha256_json(value), labels
+
+
+'''
+          path.write_text(text[:start] + replacement + text[end:], encoding='utf-8')
+
+      - name: Run focused C8 palette evidence contract
+        run: >-
+          python3 -m unittest
+          construction/tests/test_c8_palette_resolution_contract.py
+          construction/tests/test_c8_visual_qa.py
+          -v
+
+      - name: Verify exact materialized scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          mapfile -t paths < <(git diff --name-only)
+          test "${#paths[@]}" -eq 1
+          test "${paths[0]}" = 'construction/core/visual_qa.py'
+
+      - name: Commit hardening and remove materializer
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'minecraft-mod-factory-bot'
+          git config user.email 'minecraft-mod-factory-bot@users.noreply.github.com'
+          git add construction/core/visual_qa.py
+          git rm .github/workflows/c8-materialize-palette-hardening.yml
+          git commit -m 'fix(construction): validate C5 evidence in C8'
+          git push origin HEAD:feat/construction-c8-visual-qa
