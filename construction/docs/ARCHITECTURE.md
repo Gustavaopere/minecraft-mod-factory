@@ -80,7 +80,7 @@ Construction adds two registry evidence layers:
 1. static JAR indexing discovers NeoForge metadata, blockstate JSON, block models, block textures and nested JAR topology without extracting or mutating the artifacts;
 2. a Factory-owned NeoForge runtime probe enumerates the post-registry `BuiltInRegistries.BLOCK` contents and every `getPossibleStates()` state in the exact installed runtime.
 
-Static evidence may identify a candidate blockstate that is not actually registered. Therefore static indexing never proves block/state availability. When static and runtime evidence disagree, the runtime registry snapshot wins for block and state existence.
+Static evidence may identify a candidate blockstate that is not actually registered. Therefore static indexing never proves block/state availability. When static and runtime evidence disagree, the runtime NeoForge registry snapshot wins for block and state existence.
 
 A runtime snapshot is accepted only when its `physical_snapshot_sha256` matches the exact Engineering I2 snapshot and its target is exactly Minecraft 1.21.1 / NeoForge 21.1.248. The merged registry is deterministically ordered and content-fingerprinted.
 
