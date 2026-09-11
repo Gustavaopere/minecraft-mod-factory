@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gustavaopere/minecraft-mod-factory/construction/schemas/build-ir.schema.json",
+  "title": "Construction Canonical Build IR",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "identity", "target", "bounds", "coordinate_system", "palette", "blocks", "metadata"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "seed"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "seed": {"type": "integer"},
+        "description": {"type": "string"}
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minecraft_version", "loader"],
+      "properties": {
+        "minecraft_version": {"const": "1.21.1"},
+        "loader": {"enum": ["neoforge", "none"]},
+        "modpack_snapshot": {"type": "string", "minLength": 1}
+      }
+    },
+    "bounds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["size"],
+      "properties": {
+        "size": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x", "y", "z"],
+          "properties": {
+            "x": {"type": "integer", "minimum": 1},
+            "y": {"type": "integer", "minimum": 1},
+            "z": {"type": "integer", "minimum": 1}
+          }
+        }
+      }
+    },
+    "coordinate_system": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["axes", "up", "origin", "unit"],
+      "properties": {
+        "axes": {"const": ["x", "y", "z"]},
+        "up": {"const": "y"},
+        "origin": {"const": "min_corner"},
+        "unit": {"const": "block"}
+      }
+    },
+    "palette": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/block_state"}
+    },
+    "blocks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["x", "y", "z", "palette_index"],
+        "properties": {
+          "x": {"type": "integer", "minimum": 0},
+          "y": {"type": "integer", "minimum": 0},
+          "z": {"type": "integer", "minimum": 0},
+          "palette_index": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["build_spec_sha256", "content_sha256", "producer", "producer_version"],
+      "properties": {
+        "build_spec_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "producer": {"type": "string", "minLength": 1},
+        "producer_version": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "$defs": {
+    "block_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "properties"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9_.-]+:[a-z0-9_./-]+$",
+          "not": {"enum": ["minecraft:air", "minecraft:cave_air", "minecraft:void_air"]}
+        },
+        "properties": {
+          "type": "object",
+          "propertyNames": {"pattern": "^[a-z0-9_]+$"},
+          "additionalProperties": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}
+        }
+      }
+    }
+  }
+}

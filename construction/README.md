@@ -32,6 +32,22 @@ C0 establishes only the construction control plane:
 
 No generation engine is vendored in C0. Upstream preservation begins in C1.
 
+## C2 scope
+
+C2 establishes the executable, engine-independent canonical Build IR used between generation adapters and later validation/export stages.
+
+The C2 contract provides:
+
+- sparse non-air block placement rather than a provider-specific dense runtime object;
+- a canonical palette of namespaced block IDs plus sorted block-state properties;
+- fixed `x/y/z` coordinates with `y` up, block units and a minimum-corner origin;
+- deterministic ordering independent of input placement or property-map order;
+- fail-closed duplicate-coordinate, out-of-bounds, explicit-air and malformed-state handling;
+- SHA-256 linkage back to the source `BuildSpec` and a canonical content fingerprint;
+- producer identity/version metadata without provider-specific serialization.
+
+C2 deliberately does not claim that a namespaced block exists in the physical modpack, does not carry arbitrary BlockEntity/entity payloads, does not export a schematic format and does not own runtime worldgen placement. Those gates belong to later Construction phases.
+
 ## Planned pipeline
 
 ```text
@@ -45,6 +61,8 @@ modded palette resolver
         ↓
 voxel engine
         ↓
+Canonical Build IR
+        ↓
 structural + modded QA
         ↓
 preview / critique loop
@@ -56,13 +74,14 @@ Sponge Schematic v3 validator
 
 ## Directory map
 
+- `core/` — Factory-owned canonical Construction runtime contracts, beginning with Build IR
 - `docs/` — architecture and provider decisions
 - `schemas/` — machine-readable contracts
-- `upstream/` — pinned provenance and, from C1 onward, immutable permitted snapshots
+- `upstream/` — pinned provenance and immutable permitted snapshots/references
 - `scripts/` — Factory-owned validators and tooling
 - `tests/` — construction-domain regression tests
 
-Future directories such as `core/`, `engines/`, `catalog/`, `registry/`, `providers/`, `mcp/`, `qa/` and `fixtures/` are created only when their implementation starts.
+Future directories such as `engines/`, `catalog/`, `registry/`, `providers/`, `mcp/`, `qa/` and `fixtures/` are created only when their implementation starts.
 
 ## Roadmap
 
