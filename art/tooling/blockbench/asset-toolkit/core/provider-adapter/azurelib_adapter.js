@@ -2,6 +2,7 @@
 
 const {isPlainObject, rejectUnknownFields} = require('../common/contract_utils.js');
 const bedrock = require('./bedrock_provider_common.js');
+const {createBedrockProviderFacade} = require('./bedrock_provider_facade.js');
 
 const AZURELIB_AUTHORITY = Object.freeze({
   providerFamily: 'azurelib',
@@ -162,60 +163,7 @@ function validateIncludes(value) {
   return value.length;
 }
 
-function validateAzureLibGeoDocument(value) {
-  return bedrock.validateGeoDocument(value, {
-    fail,
-    invalidDocumentCode: 'INVALID_AZURELIB_GEO_DOCUMENT',
-    unsupportedFormatCode: 'UNSUPPORTED_AZURELIB_GEO_FORMAT',
-    invalidLocatorCode: 'INVALID_AZURELIB_LOCATOR',
-    invalidStringCode: 'INVALID_AZURELIB_STRING',
-    locatorNameCode: 'INVALID_AZURELIB_LOCATOR',
-    providerLabel: 'AzureLib 3.1.11',
-    formatVersions: GEO_FORMAT_VERSIONS,
-    rejectRootMetadata: rejectAuthoringMetadata,
-    trimStrings: true,
-  });
-}
-
-function validateAzureLibAnimationDocument(value) {
-  return bedrock.validateAnimationDocument(value, {
-    fail,
-    invalidDocumentCode: 'INVALID_AZURELIB_ANIMATION_DOCUMENT',
-    invalidStringCode: 'INVALID_AZURELIB_STRING',
-    invalidNumberCode: 'INVALID_AZURELIB_NUMBER',
-    invalidLoopCode: 'UNSUPPORTED_AZURELIB_LOOP',
-    invalidKeyframeCode: 'INVALID_AZURELIB_KEYFRAME',
-    invalidTimestampCode: 'INVALID_AZURELIB_TIMESTAMP',
-    invalidEffectsCode: 'INVALID_AZURELIB_EFFECTS',
-    effectStringCode: 'INVALID_AZURELIB_EFFECTS',
-    loopValues: LOOP_VALUES,
-    validateKeyframeLeaf,
-    leafIndicatorFields: ['vector', 'easing', 'easingArgs', 'pre', 'post', 'lerp_mode'],
-    expectedFormatVersion: AZURELIB_AUTHORITY.animationFormatVersion,
-    unsupportedFormatCode: 'UNSUPPORTED_AZURELIB_ANIMATION_FORMAT',
-    rejectRootMetadata: rejectAuthoringMetadata,
-    validateIncludes,
-    requireParticleEffect: true,
-    requireNonEmptyTimeline: true,
-    trimStrings: true,
-  });
-}
-
-function serializeAzureLibEffectMarker(marker, providerData) {
-  return bedrock.serializeEffectMarker(marker, providerData, {
-    fail,
-    invalidMarkerCode: 'INVALID_AZURELIB_EFFECT_MARKER',
-    unsupportedMarkerCode: 'UNSUPPORTED_AZURELIB_EFFECT_MARKER',
-    invalidNumberCode: 'INVALID_AZURELIB_NUMBER',
-    stringCode: 'INVALID_AZURELIB_EFFECT_MARKER',
-    providerLabel: 'AzureLib',
-    requireParticleEffect: true,
-    requireNonEmptyTimeline: true,
-    trimStrings: true,
-  });
-}
-
-function createAzureLibExportPlan(input) {
+function prevalidateExport(input) {
   if (!isPlainObject(input)) fail('INVALID_AZURELIB_EXPORT_PLAN', 'Export plan request must be an object.');
   if (!AZURELIB_PROFILE_IDS.has(input.profileId)) {
     fail('INVALID_AZURELIB_PROFILE', `Profile ${JSON.stringify(input.profileId)} is not an AzureLib profile.`);
@@ -223,27 +171,38 @@ function createAzureLibExportPlan(input) {
   nonEmptyString(input.sourcePath, 'sourcePath', 'INVALID_AZURELIB_SOURCE_PATH');
   nonEmptyString(input.outputDirectory, 'outputDirectory', 'INVALID_AZURELIB_PATH');
   nonEmptyString(input.resourceName, 'resourceName', 'INVALID_AZURELIB_RESOURCE_NAME');
-  return bedrock.createExportPlan(input, {
-    fail,
-    profileIds: AZURELIB_PROFILE_IDS,
-    providerFamily: 'azurelib',
-    providerLabel: 'AzureLib',
-    invalidPlanCode: 'INVALID_AZURELIB_EXPORT_PLAN',
-    invalidProfileCode: 'INVALID_AZURELIB_PROFILE',
-    invalidSourcePathCode: 'INVALID_AZURELIB_SOURCE_PATH',
-    sourceMustBeBbmodelCode: 'AZURELIB_SOURCE_MUST_BE_BBMODEL',
-    invalidPathCode: 'INVALID_AZURELIB_PATH',
-    invalidResourceNameCode: 'INVALID_AZURELIB_RESOURCE_NAME',
-    invalidStringCode: 'INVALID_AZURELIB_STRING',
-    trimStrings: true,
-  });
 }
+
+const provider = createBedrockProviderFacade({
+  fail,
+  codePrefix: 'AZURELIB',
+  providerFamily: 'azurelib',
+  providerLabel: 'AzureLib',
+  geoProviderLabel: 'AzureLib 3.1.11',
+  profileIds: AZURELIB_PROFILE_IDS,
+  formatVersions: GEO_FORMAT_VERSIONS,
+  loopValues: LOOP_VALUES,
+  validateKeyframeLeaf,
+  leafIndicatorFields: ['vector', 'easing', 'easingArgs', 'pre', 'post', 'lerp_mode'],
+  expectedFormatVersion: AZURELIB_AUTHORITY.animationFormatVersion,
+  rejectRootMetadata: rejectAuthoringMetadata,
+  validateIncludes,
+  requireParticleEffect: true,
+  requireNonEmptyTimeline: true,
+  trimStrings: true,
+  prevalidateExport,
+  codeOverrides: {
+    invalidLoop: 'UNSUPPORTED_AZURELIB_LOOP',
+    locatorName: 'INVALID_AZURELIB_LOCATOR',
+    markerString: 'INVALID_AZURELIB_EFFECT_MARKER',
+  },
+});
 
 module.exports = {
   AZURELIB_AUTHORITY,
   AzureLibContractError,
-  validateAzureLibGeoDocument,
-  validateAzureLibAnimationDocument,
-  serializeAzureLibEffectMarker,
-  createAzureLibExportPlan,
+  validateAzureLibGeoDocument: provider.validateGeoDocument,
+  validateAzureLibAnimationDocument: provider.validateAnimationDocument,
+  serializeAzureLibEffectMarker: provider.serializeEffectMarker,
+  createAzureLibExportPlan: provider.createExportPlan,
 };
