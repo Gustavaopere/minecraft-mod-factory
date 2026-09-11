@@ -9,22 +9,43 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 CONSTRUCTION = ROOT / "construction"
 MODULE_PATH = CONSTRUCTION / "core" / "modded_palette.py"
+C4_MODULE_PATH = CONSTRUCTION / "core" / "modpack_registry.py"
 REQUEST_SCHEMA_PATH = CONSTRUCTION / "schemas" / "palette-request.schema.json"
 RESOLUTION_SCHEMA_PATH = CONSTRUCTION / "schemas" / "palette-resolution.schema.json"
+I2_IMPORTER = ROOT / "engineering" / "tooling" / "import-physical-modlist.py"
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "factory-construction-c5-modded-palette.yml"
 IMPLEMENTATION_READY = all(
     path.is_file()
     for path in (MODULE_PATH, REQUEST_SCHEMA_PATH, RESOLUTION_SCHEMA_PATH)
 )
 
+PHYSICAL_SAMPLE = """Mods count: 4
 
-def load_module():
-    spec = importlib.util.spec_from_file_location("construction_c5_modded_palette", MODULE_PATH)
+jar name | notes | mod id | mod name | mod version | mixin configs | modrinth hash | curseforge hash
+---------+-------+--------+----------+-------------+---------------+---------------+----------------
+neoforge-21.1.248 (modloader) | | neoforge | neoforge | neoforge-21.1.248 | | |
+alpha-1.0.0.jar | | alpha | Alpha | 1.0.0 | alpha.mixins.json | aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 111
+    /META-INF/jarjar/metadata-only.jar | | | | | | |
+opaque-top-level.jar | | | | | | |
+beta-1.1.0.jar | | beta | Beta | 1.1.0 | | bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb | 222
+"""
+
+
+def load_path(path: Path, name: str):
+    spec = importlib.util.spec_from_file_location(name, path)
     if spec is None or spec.loader is None:
-        raise AssertionError("unable to load C5 modded palette module")
+        raise AssertionError(f"unable to load {path}")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def load_module():
+    return load_path(MODULE_PATH, "construction_c5_modded_palette")
+
+
+def c4_registry_module():
+    return load_path(C4_MODULE_PATH, "construction_c4_registry_for_c5")
 
 
 def build_spec(*, allow_modded: bool = True) -> dict[str, object]:
@@ -34,7 +55,7 @@ def build_spec(*, allow_modded: bool = True) -> dict[str, object]:
         "target": {
             "minecraft_version": "1.21.1",
             "loader": "neoforge",
-            "modpack_snapshot": "physical-modlist-595",
+            "modpack_snapshot": "physical-modlist-test",
         },
         "geometry": {
             "max_size": {"x": 9, "y": 9, "z": 9},
@@ -44,8 +65,8 @@ def build_spec(*, allow_modded: bool = True) -> dict[str, object]:
         },
         "palette": {
             "allow_modded": allow_modded,
-            "allowed_namespaces": ["minecraft", "create"],
-            "forbidden_blocks": ["create:brass_casing"],
+            "allowed_namespaces": ["minecraft", "alpha"],
+            "forbidden_blocks": ["alpha:brass_casing"],
         },
         "qa": {"require_determinism": True},
         "outputs": {"formats": ["sponge_v3"]},
@@ -53,112 +74,66 @@ def build_spec(*, allow_modded: bool = True) -> dict[str, object]:
 
 
 def registry() -> dict[str, object]:
-    def state(block: str, **properties: str) -> dict[str, object]:
-        return {"block": block, "properties": properties}
-
-    return {
+    c4 = c4_registry_module()
+    i2 = load_path(I2_IMPORTER, "engineering_i2_modlist_for_c5")
+    physical = i2.parse_modlist_text(PHYSICAL_SAMPLE, captured_at="2026-09-11")
+    runtime = {
         "schema_version": 1,
-        "physical": {
-            "captured_at": "2026-09-11T00:00:00Z",
-            "source_name": "modlist.txt",
-            "source_sha256": "1" * 64,
-            "loader_version": "21.1.248",
-            "top_level_mods": 595,
-            "nested_mods": 0,
-            "total_entries": 595,
-            "provider_count": 595,
-            "unidentified_entries": 0,
-        },
-        "runtime": {
-            "authority": "neoforge_runtime_registry",
-            "minecraft_version": "1.21.1",
+        "captured_at": "2026-09-11T00:00:00Z",
+        "physical_snapshot_sha256": physical["source_sha256"],
+        "target": {
+            "minecraft": "1.21.1",
             "loader": "neoforge",
             "loader_version": "21.1.248",
         },
-        "static_index": {"authority": "jar_static_discovery"},
         "blocks": [
             {
-                "id": "minecraft:oak_log",
-                "namespace": "minecraft",
-                "source_mod": "minecraft",
-                "available": True,
-                "authority": "runtime_registry",
+                "id": "alpha:brass_casing",
+                "states": [{}],
                 "safety": "ordinary",
-                "states": [
-                    state("minecraft:oak_log", axis="x"),
-                    state("minecraft:oak_log", axis="y"),
-                    state("minecraft:oak_log", axis="z"),
-                ],
+            },
+            {
+                "id": "alpha:cut_granite_bricks",
+                "states": [{}],
+                "safety": "ordinary",
+            },
+            {
+                "id": "alpha:future_machine",
+                "states": [{}],
+                "safety": "functional_machine",
+            },
+            {
+                "id": "alpha:test_block_entity",
+                "states": [{"facing": "north"}, {"facing": "south"}],
+                "safety": "block_entity",
+            },
+            {
+                "id": "minecraft:oak_log",
+                "states": [{"axis": "x"}, {"axis": "y"}, {"axis": "z"}],
+                "safety": "ordinary",
             },
             {
                 "id": "minecraft:stone_bricks",
-                "namespace": "minecraft",
-                "source_mod": "minecraft",
-                "available": True,
-                "authority": "runtime_registry",
+                "states": [{}],
                 "safety": "ordinary",
-                "states": [state("minecraft:stone_bricks")],
-            },
-            {
-                "id": "create:cut_granite_bricks",
-                "namespace": "create",
-                "source_mod": "create",
-                "available": True,
-                "authority": "runtime_registry",
-                "safety": "ordinary",
-                "states": [state("create:cut_granite_bricks")],
-            },
-            {
-                "id": "create:brass_casing",
-                "namespace": "create",
-                "source_mod": "create",
-                "available": True,
-                "authority": "runtime_registry",
-                "safety": "ordinary",
-                "states": [state("create:brass_casing")],
-            },
-            {
-                "id": "create:test_block_entity",
-                "namespace": "create",
-                "source_mod": "create",
-                "available": True,
-                "authority": "runtime_registry",
-                "safety": "block_entity",
-                "states": [
-                    state("create:test_block_entity", facing="north"),
-                    state("create:test_block_entity", facing="south"),
-                ],
-            },
-            {
-                "id": "create:test_controller",
-                "namespace": "create",
-                "source_mod": "create",
-                "available": True,
-                "authority": "runtime_registry",
-                "safety": "multiblock_or_controller",
-                "states": [state("create:test_controller")],
-            },
-            {
-                "id": "create:unknown_machine",
-                "namespace": "create",
-                "source_mod": "create",
-                "available": True,
-                "authority": "runtime_registry",
-                "safety": "unsafe_or_unknown",
-                "states": [state("create:unknown_machine")],
-            },
-            {
-                "id": "create:static_only_bricks",
-                "namespace": "create",
-                "source_mod": "create",
-                "available": False,
-                "authority": "static_only_unconfirmed",
-                "safety": "ordinary",
-                "states": [],
             },
         ],
-        "content_sha256": "a" * 64,
     }
+    static_indexes = [
+        {
+            "jar": "alpha-1.0.0.jar",
+            "sha256": "0" * 64,
+            "mod_ids": ["alpha"],
+            "blockstates": [
+                "alpha:cut_granite_bricks",
+                "alpha:static_only_bricks",
+            ],
+            "block_models": [],
+            "block_textures": [],
+            "nested_jars": [],
+        }
+    ]
+    return c4.build_modpack_registry(physical, static_indexes, runtime)
 
 
 def request(
@@ -212,7 +187,10 @@ class ConstructionC5ModdedPaletteTest(unittest.TestCase):
         resolution_schema = json.loads(RESOLUTION_SCHEMA_PATH.read_text(encoding="utf-8"))
         self.assertEqual(request_schema["properties"]["schema_version"]["const"], 1)
         role = request_schema["properties"]["roles"]["items"]
-        self.assertEqual(role["properties"]["allowed_safety"]["items"]["enum"], ["ordinary", "block_entity"])
+        self.assertEqual(
+            role["properties"]["allowed_safety"]["items"]["enum"],
+            ["ordinary", "block_entity"],
+        )
         self.assertIn("required_state_properties", role["properties"])
         self.assertTrue(role["additionalProperties"] is False)
         self.assertEqual(resolution_schema["properties"]["schema_version"]["const"], 1)
@@ -220,38 +198,79 @@ class ConstructionC5ModdedPaletteTest(unittest.TestCase):
         selected = resolution_schema["properties"]["roles"]["items"]["properties"]["selected"]
         self.assertIn("state_candidates", selected["properties"])
         self.assertIn("selected_state", selected["properties"])
+        self.assertIn("authority", selected["properties"])
+        self.assertNotIn("source_mod", selected["properties"])
+
+    @unittest.skipUnless(IMPLEMENTATION_READY, "C5 implementation not present yet")
+    def test_fixture_is_produced_by_canonical_c4_registry_contract(self) -> None:
+        reg = registry()
+        blocks = {block["id"]: block for block in reg["blocks"]}
+        self.assertEqual("runtime_confirmed", blocks["alpha:cut_granite_bricks"]["authority"])
+        self.assertEqual([{}], blocks["alpha:cut_granite_bricks"]["states"])
+        self.assertEqual(
+            "static_only_unconfirmed",
+            blocks["alpha:static_only_bricks"]["authority"],
+        )
+        self.assertNotIn("namespace", blocks["alpha:cut_granite_bricks"])
+        self.assertNotIn("source_mod", blocks["alpha:cut_granite_bricks"])
 
     @unittest.skipUnless(IMPLEMENTATION_READY, "C5 implementation not present yet")
     def test_resolution_is_deterministic_and_bound_to_registry_fingerprint(self) -> None:
         module = load_module()
         spec = build_spec()
         reg = registry()
-        req = request(required_terms=["brick"], preferred_namespaces=["create", "minecraft"])
+        req = request(required_terms=["brick"], preferred_namespaces=["alpha", "minecraft"])
         first = module.resolve_palette(spec, reg, req)
         second = module.resolve_palette(spec, reg, req)
         self.assertEqual(first, second)
         self.assertEqual(first["registry_fingerprint"], reg["content_sha256"])
-        self.assertEqual(first["roles"][0]["selected"]["block"], "create:cut_granite_bricks")
+        selected = first["roles"][0]["selected"]
+        self.assertEqual(selected["block"], "alpha:cut_granite_bricks")
+        self.assertEqual(selected["namespace"], "alpha")
+        self.assertEqual(selected["authority"], "runtime_confirmed")
+
+    @unittest.skipUnless(IMPLEMENTATION_READY, "C5 implementation not present yet")
+    def test_registry_fingerprint_is_verified_not_merely_copied(self) -> None:
+        module = load_module()
+        reg = registry()
+        reg["blocks"][0]["id"] = "alpha:tampered_block"
+        with self.assertRaises(module.PaletteResolutionError):
+            module.resolve_palette(
+                build_spec(),
+                reg,
+                request(required_terms=["brick"]),
+            )
+
+    @unittest.skipUnless(IMPLEMENTATION_READY, "C5 implementation not present yet")
+    def test_build_spec_target_must_match_c4_runtime_target(self) -> None:
+        module = load_module()
+        spec = build_spec()
+        spec["target"]["minecraft_version"] = "1.20.1"
+        with self.assertRaises(module.PaletteResolutionError):
+            module.resolve_palette(spec, registry(), request(required_terms=["brick"]))
 
     @unittest.skipUnless(IMPLEMENTATION_READY, "C5 implementation not present yet")
     def test_allow_modded_false_effectively_restricts_selection_to_minecraft(self) -> None:
         module = load_module()
         spec = build_spec(allow_modded=False)
-        req = request(required_terms=["brick"], preferred_namespaces=["create", "minecraft"])
+        req = request(required_terms=["brick"], preferred_namespaces=["alpha", "minecraft"])
         result = module.resolve_palette(spec, registry(), req)
         self.assertEqual(result["roles"][0]["selected"]["block"], "minecraft:stone_bricks")
 
     @unittest.skipUnless(IMPLEMENTATION_READY, "C5 implementation not present yet")
-    def test_namespaces_forbidden_blocks_and_runtime_authority_are_enforced(self) -> None:
+    def test_namespaces_forbidden_blocks_and_c4_authority_are_enforced(self) -> None:
         module = load_module()
         spec = build_spec()
-        spec["palette"]["allowed_namespaces"] = ["create"]
-        req = request(required_terms=["bricks"], preferred_block_ids=["create:static_only_bricks", "create:brass_casing"])
+        spec["palette"]["allowed_namespaces"] = ["alpha"]
+        req = request(
+            required_terms=["bricks"],
+            preferred_block_ids=["alpha:static_only_bricks", "alpha:brass_casing"],
+        )
         result = module.resolve_palette(spec, registry(), req)
-        self.assertEqual(result["roles"][0]["selected"]["block"], "create:cut_granite_bricks")
+        self.assertEqual(result["roles"][0]["selected"]["block"], "alpha:cut_granite_bricks")
         alternatives = [candidate["block"] for candidate in result["roles"][0]["alternatives"]]
-        self.assertNotIn("create:static_only_bricks", alternatives)
-        self.assertNotIn("create:brass_casing", alternatives)
+        self.assertNotIn("alpha:static_only_bricks", alternatives)
+        self.assertNotIn("alpha:brass_casing", alternatives)
 
     @unittest.skipUnless(IMPLEMENTATION_READY, "C5 implementation not present yet")
     def test_safety_defaults_to_ordinary_and_block_entity_requires_explicit_opt_in(self) -> None:
@@ -267,19 +286,14 @@ class ConstructionC5ModdedPaletteTest(unittest.TestCase):
         self.assertEqual(result["roles"][0]["selected"]["safety"], "block_entity")
 
     @unittest.skipUnless(IMPLEMENTATION_READY, "C5 implementation not present yet")
-    def test_unsafe_and_multiblock_safety_classes_cannot_be_opted_in(self) -> None:
+    def test_reserved_c4_safety_classes_cannot_be_opted_in_by_c5(self) -> None:
         module = load_module()
-        for block_term, safety in (
-            ("test_controller", "multiblock_or_controller"),
-            ("unknown_machine", "unsafe_or_unknown"),
-        ):
-            with self.subTest(safety=safety):
-                with self.assertRaises(module.PaletteResolutionError):
-                    module.resolve_palette(
-                        build_spec(),
-                        registry(),
-                        request(required_terms=[block_term], allowed_safety=[safety]),
-                    )
+        with self.assertRaises(module.PaletteResolutionError):
+            module.resolve_palette(
+                build_spec(),
+                registry(),
+                request(required_terms=["future_machine"], allowed_safety=["functional_machine"]),
+            )
 
     @unittest.skipUnless(IMPLEMENTATION_READY, "C5 implementation not present yet")
     def test_required_terms_and_explicit_preferences_have_stable_precedence(self) -> None:
@@ -287,13 +301,13 @@ class ConstructionC5ModdedPaletteTest(unittest.TestCase):
         req = request(
             required_terms=["brick"],
             preferred_block_ids=["minecraft:stone_bricks"],
-            preferred_namespaces=["create"],
+            preferred_namespaces=["alpha"],
         )
         result = module.resolve_palette(build_spec(), registry(), req)
         self.assertEqual(result["roles"][0]["selected"]["block"], "minecraft:stone_bricks")
 
     @unittest.skipUnless(IMPLEMENTATION_READY, "C5 implementation not present yet")
-    def test_required_state_properties_only_filter_runtime_reported_states(self) -> None:
+    def test_required_state_properties_normalize_c4_states_to_c2_blockstates(self) -> None:
         module = load_module()
         result = module.resolve_palette(
             build_spec(),
@@ -305,7 +319,7 @@ class ConstructionC5ModdedPaletteTest(unittest.TestCase):
             ),
         )
         selected = result["roles"][0]["selected"]
-        expected = {"block": "minecraft:oak_log", "properties": {"axis": "y"}}
+        expected = {"name": "minecraft:oak_log", "properties": {"axis": "y"}}
         self.assertEqual(selected["state_candidates"], [expected])
         self.assertEqual(selected["selected_state"], expected)
 
@@ -320,6 +334,10 @@ class ConstructionC5ModdedPaletteTest(unittest.TestCase):
         selected = result["roles"][0]["selected"]
         self.assertEqual(len(selected["state_candidates"]), 3)
         self.assertIsNone(selected["selected_state"])
+        self.assertEqual(
+            [candidate["properties"]["axis"] for candidate in selected["state_candidates"]],
+            ["x", "y", "z"],
+        )
 
     @unittest.skipUnless(IMPLEMENTATION_READY, "C5 implementation not present yet")
     def test_zero_candidate_fails_closed(self) -> None:
