@@ -1,7 +1,7 @@
 # STATUS — Construction
 
 UPDATED_AT=2026-09-11
-PHASE=C5_COMPLETE_POSTMERGE_VALIDATED
+PHASE=C6_COMPLETE_POSTMERGE_VALIDATED
 REPOSITORY=Gustavaopere/minecraft-mod-factory
 BRANCH=main
 C0_PR=19
@@ -285,6 +285,53 @@ C5_POSTMERGE_GOVERNANCE_RUN=34570877188
 C5_POSTMERGE_GOVERNANCE=PASS
 C5_IMPLEMENTATION_MAIN_SHA=4d902da821883ff53d0ba7590033c0a881057470
 C5_CLOSEOUT_BASE_MAIN_SHA=f8c31b368a20b99ca421ec792b54ffa9bcf068cd
+C6_PR=50
+C6_RED1_HEAD=442a50e119790e063e47fd2664b48db71cbeb9c7
+C6_RED1_RUN=34621387968
+C6_RED1_RESULT=10_TESTS_1_PASS_1_FAIL_EXPECTED_MISSING_PRODUCTION_MODULE_8_SKIP
+C6_RED2_HEAD=82b5e32096b3f1418efce19ae31a1684a5c95a25
+C6_RED2_RUN=34621528763
+C6_RED2_RESULT=10_TESTS_3_PASS_7_ERROR_EXPECTED_EXPORTER_STUB
+C6_TECHNICAL_GREEN_HEAD=c4f73e6e5bc041108c57286b9c279f50af76bbcc
+C6_TECHNICAL_GREEN_RUN=34621909665
+C6_TECHNICAL_GREEN=10_PASS_0_FAIL_WITH_C5_C4_C3_C2_C0_REGRESSIONS_PASS
+C6_DOCUMENTATION_HEAD=cdf6be9964049a45a73d28896ce3a155dde2fa1e
+C6_DOCUMENTATION_RUN=34622280049
+C6_C0_ENV_RED_HEAD=e855f75588694c21bb2c323f089a93aa23afe163
+C6_C0_ENV_RED_C6_RUN=34624254097
+C6_C0_ENV_RED_STANDALONE_C0_RUN=34624254133
+C6_C0_ENV_RED_RESULT=EXPECTED_MISSING_HASHED_C0_ENV_AND_NBTLIB_IMPORT_FAILURE
+C6_C0_ENV_GREEN_HEAD=9a404965359091dec0da1d4bf24c8e69d634f4e4
+C6_FINAL_PR_HEAD=ee3b91abfeb1672dc08ea175bec142085d3b453a
+C6_FINAL_PR_C6_RUN=34625101874
+C6_FINAL_PR_C5_RUN=34625101915
+C6_FINAL_PR_C4_RUN=34625101931
+C6_FINAL_PR_C3_RUN=34625101987
+C6_FINAL_PR_C2_RUN=34625101906
+C6_FINAL_PR_C1A_RUN=34625101856
+C6_FINAL_PR_C0_RUN=34625101959
+C6_FINAL_PR_GOVERNANCE_RUN=34625101946
+C6_FINAL_PR_SONARCLOUD_CHECK=103348510888
+C6_FINAL_PR_SONARCLOUD=PASS_0_NEW_ISSUES_0_ACCEPTED_0_HOTSPOTS_0_DUPLICATION_NEW_CODE
+C6_MERGE_SHA=3eae9d1f8b74a720109b33ef6956ef4add515388
+C6_POSTMERGE_RUN=34625714164
+C6_POSTMERGE_CONTRACT=10_PASS_0_FAIL
+C6_POSTMERGE_C5=16_PASS_0_FAIL
+C6_POSTMERGE_C4=8_PASS_0_FAIL
+C6_POSTMERGE_C3=7_PASS_0_FAIL
+C6_POSTMERGE_C2=10_PASS_0_FAIL
+C6_POSTMERGE_C0_EMBEDDED=11_PASS_0_FAIL_VALIDATOR_PASS
+C6_POSTMERGE_WHITESPACE=PASS
+C6_POSTMERGE_C5_RUN=34625714186
+C6_POSTMERGE_C4_RUN=34625714211
+C6_POSTMERGE_C3_RUN=34625714288
+C6_POSTMERGE_C2_RUN=34625714240
+C6_POSTMERGE_C1A_RUN=34625714315
+C6_POSTMERGE_C1B_RUN=34625714158
+C6_POSTMERGE_C0_RUN=34625714116
+C6_POSTMERGE_GOVERNANCE_RUN=34625714178
+C6_IMPLEMENTATION_MAIN_SHA=3eae9d1f8b74a720109b33ef6956ef4add515388
+C6_CLOSEOUT_BASE_MAIN_SHA=698fa5122390a235699b9dc5de7e414a7e869b0c
 HEAD_SHA=RESOLVE_FROM_GIT
 OPEN_CONSTRUCTION_IMPLEMENTATION_PR=NONE
 TARGET_MINECRAFT=1.21.1
@@ -294,7 +341,7 @@ CANONICAL_OUTPUT=SPONGE_SCHEMATIC_V3
 LATEST_MODLIST_SNAPSHOT=2026-09-09_595_TOP_LEVEL
 MANUAL_ACTION_REQUIRED=NO
 BLOCKERS=NONE_IN_CONSTRUCTION
-NEXT_ACTION=BEGIN_C6_SPONGE_SCHEMATIC_V3
+NEXT_ACTION=BEGIN_C7_ARCHITECTURE_QA
 
 ## C1A — Schematica preservation
 
@@ -561,7 +608,7 @@ PR #42 merged as `449785d3bed28c80bfb974e8c09b679700ebdb2a`. The resulting `main
 - [x] post-merge MineBench remains 149 + 18 + production build with 424/100000 export smoke
 - [x] post-merge standalone C0 and Governance pass
 - [x] semantic modded palette selection is delivered by C5
-- [ ] canonical Sponge Schematic v3 serialization is intentionally deferred to C6
+- [x] canonical Sponge Schematic v3 serialization is delivered by C6
 - [ ] structural and visual QA remain C7/C8
 
 C4 is complete and post-merge validated. C5 is complete and post-merge validated below.
@@ -610,7 +657,62 @@ The resulting `main` push revalidated C5 in run `34570877283`, which passed Engi
 - [x] PR #47 merged
 - [x] post-merge C5 run passes I2 15/15 + C5 16/16 + C4 8/8 + C3 7/7 + C2 10/10 + C0 10/10 + validator + whitespace
 - [x] standalone post-merge C4, I2, C1B and Governance gates pass
-- [ ] canonical Sponge Schematic v3 serialization remains C6
+- [x] canonical Sponge Schematic v3 serialization is delivered by C6
 - [ ] structural and visual QA remain C7/C8
 
-C5 is complete and post-merge validated. The next Construction slice is C6 — Sponge Schematic v3.
+C5 is complete and post-merge validated. C6 is complete and post-merge validated below.
+
+## C6 — Sponge Schematic v3
+
+C6 adds the Factory-owned canonical Sponge Schematic v3 exporter and independent validator for Minecraft 1.21.1. Its input authority is a valid C2 canonical Build IR; it does not replace C4 runtime registry authority or C5 semantic palette resolution. The serializer writes deterministic GZip-compressed big-endian NBT with an empty root containing `Schematic`, Sponge `Version=3`, Minecraft 1.21.1 `DataVersion=3955`, explicit air palette id 0, canonical block states, official block index order `x + z*Width + y*Width*Length`, VarInt block data, explicit Factory `Metadata.RequiredMods`, controlled typed BlockEntity compounds and an Entities list.
+
+C6_MODULE=construction/core/sponge_v3.py
+C6_TEST=construction/tests/test_c6_sponge_v3.py
+C6_WORKFLOW=.github/workflows/factory-construction-c6-sponge-v3.yml
+C6_SPONGE_VERSION=3
+C6_MINECRAFT_DATA_VERSION=3955
+C6_INPUT_AUTHORITY=C2_CANONICAL_BUILD_IR
+C6_OUTPUT=DETERMINISTIC_GZIP_BIG_ENDIAN_NBT_SPONGE_V3
+C6_GZIP_MTIME=0
+C6_BLOCK_INDEX_ORDER=X_PLUS_Z_TIMES_WIDTH_PLUS_Y_TIMES_WIDTH_TIMES_LENGTH
+C6_REQUIRED_MODS=FACTORY_METADATA_CONVENTION
+C6_BOUNDARY=NO_C7_STRUCTURAL_ARCHITECTURE_QA_NO_C8_VISUAL_QA_NO_RUNTIME_WORLDGEN_ACCEPTANCE
+
+The initial RED1 on head `442a50e119790e063e47fd2664b48db71cbeb9c7`, run `34621387968`, created the permanent C6 contract before production code existed: 10 tests produced one pass, one expected failure for the missing `construction/core/sponge_v3.py`, and eight guarded skips. RED2 on head `82b5e32096b3f1418efce19ae31a1684a5c95a25`, run `34621528763`, introduced only the production surface/stub and produced three passes plus seven expected errors from the deliberate `SpongeV3Error` stub. Technical GREEN on head `c4f73e6e5bc041108c57286b9c279f50af76bbcc`, run `34621909665`, passed C6 10/10 plus C5 16/16, C4 8/8, C3 7/7, C2 10/10, C0 10/10, validator and whitespace. Documentation revalidation on head `cdf6be9964049a45a73d28896ce3a155dde2fa1e`, run `34622280049`, kept the full chain green.
+
+PR #50 then exposed a real aggregate-C0 environment defect rather than a serializer defect. The C0 workflow discovered every Construction test but had never installed the canonical hashed Construction environment, so importing the new C6 test failed with `ModuleNotFoundError: nbtlib`. Regression head `e855f75588694c21bb2c323f089a93aa23afe163` captured both sides of the defect before the fix: C6 run `34624254097` failed the new workflow-contract assertion, while standalone C0 run `34624254133` reproduced the missing `nbtlib` import. The fix kept aggregate discovery intact and added the already-pinned Python 3.11 setup plus `pip --require-hashes --no-deps` against `construction/upstream/harness/schematica-test-lock.txt`; no dependency version was invented or loosened.
+
+The final reconciled PR head `ee3b91abfeb1672dc08ea175bec142085d3b453a` passed C6, C5, C4, C3, C2, C1A, C0 and Governance. SonarCloud check `103348510888` passed with 0 new issues, 0 accepted issues, 0 security hotspots and 0.0% duplication on new code. PR #50 merged as `3eae9d1f8b74a720109b33ef6956ef4add515388`.
+
+The resulting `main` push revalidated C6 in run `34625714164`. The exact C6 job passed 10/10, C5 16/16, C4 8/8, C3 7/7, C2 10/10, embedded C0 11/11 plus the C0 validator, and whitespace. The same merged main also passed standalone C5 run `34625714186`, C4 run `34625714211`, C3 run `34625714288`, C2 run `34625714240`, C1A run `34625714315`, C1B run `34625714158`, C0 run `34625714116`, and Governance run `34625714178`. Later unrelated Art closeout work advanced `main` to `698fa5122390a235699b9dc5de7e414a7e869b0c` without touching Construction; this C6 closeout is based on that exact main.
+
+MineBench and mcschematic remain pinned, unchanged references rather than silently modified serializers. The audited MineBench exporter demonstrates Sponge v3 mechanics but hardcodes an older DataVersion and time-dependent metadata; the pinned mcschematic serializer emits Sponge version 2. C6 therefore keeps canonical v3 serialization under Factory ownership while preserving those upstream boundaries.
+
+### C6 acceptance
+
+- [x] dedicated C6 workflow is read-only, action-pinned and revalidates on `main`
+- [x] RED1 captured before the production module existed
+- [x] RED2 captured the deliberate exporter stub before behavior implementation
+- [x] Factory-owned exporter and independent validator are implemented without editing pinned upstream sources
+- [x] output is deterministic GZip-compressed big-endian NBT with gzip mtime zero
+- [x] NBT root is empty and contains the canonical `Schematic` compound
+- [x] Sponge `Version=3` and Minecraft 1.21.1 `DataVersion=3955` are enforced
+- [x] C2 Build IR is validated before serialization and tampered/invalid IR fails closed
+- [x] `minecraft:air` is explicit palette id 0 and canonical C2 states are preserved
+- [x] dense block data uses the official Sponge index order
+- [x] VarInt encoding is tested across palette indices above 127
+- [x] Factory `Metadata.RequiredMods` convention is explicit and validated
+- [x] controlled BlockEntities preserve typed NBT compounds, namespaced ids, bounds and unique positions
+- [x] malformed gzip, wrong Sponge version and wrong Minecraft DataVersion fail closed
+- [x] MineBench and mcschematic remain pinned unchanged references with their audited limitations recorded
+- [x] technical GREEN passes C6 10/10 plus C5/C4/C3/C2/C0 regressions, validator and whitespace
+- [x] aggregate C0 environment defect was captured by RED before correction
+- [x] C0 aggregate now uses pinned Python 3.11 and the canonical hashed lock instead of narrowing discovery
+- [x] final PR head passes C6/C5/C4/C3/C2/C1A/C0/Governance and SonarCloud
+- [x] PR #50 merged
+- [x] post-merge C6 passes 10/10 + C5 16/16 + C4 8/8 + C3 7/7 + C2 10/10 + C0 11/11 + validator + whitespace
+- [x] post-merge standalone C5, C4, C3, C2, C1A, C1B, C0 and Governance gates pass
+- [ ] structural/architecture QA remains C7
+- [ ] visual QA remains C8
+
+C6 is complete and post-merge validated. The next Construction slice is C7 — Architecture QA.
