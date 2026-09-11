@@ -12,6 +12,7 @@ const report = require('./report/report.js');
 const extensions = require('./extension-registry/extension_registry.js');
 const providers = require('./provider-profile/provider_profiles.js');
 const physical = require('./provider-profile/physical_provider_snapshot.js');
+const geckolib4 = require('./provider-adapter/geckolib4_adapter.js');
 
 module.exports = Object.assign(
   {},
@@ -27,4 +28,5 @@ module.exports = Object.assign(
   extensions,
   providers,
   physical,
+  geckolib4,
 );
