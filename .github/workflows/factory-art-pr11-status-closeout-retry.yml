@@ -18,45 +18,10 @@ jobs:
         with:
           ref: docs/art-pr11-closeout-status
           fetch-depth: 2
-      - name: Recover audited patch and relax only NEXT_ACTION matcher
+      - name: Apply audited PR11 STATUS patch
         shell: bash
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import base64
-          import re
-
-          workflow = Path('.github/workflows/factory-art-pr11-status-closeout-materializer.yml').read_text()
-          match = re.search(r"printf '%s' '([A-Za-z0-9+/=]+)' \\| base64", workflow)
-          if not match:
-              raise SystemExit('Audited PR11 closeout payload not found exactly once')
-          script = base64.b64decode(match.group(1)).decode()
-          pattern = r'''replace_once\(\n    "NEXT_ACTION=BEGIN_PR11_ANIMATED_JAVA_AUDIT;.*?\n\)\n'''
-          replacement = '''next_lines = [line for line in text.splitlines() if line.startswith("NEXT_ACTION=")]
-          if len(next_lines) != 1:
-              raise SystemExit(f"Expected exactly one NEXT_ACTION line, found {len(next_lines)}")
-          current_next = next_lines[0]
-          required_next_fragments = [
-              "BEGIN_PR11_ANIMATED_JAVA_AUDIT",
-              "DISPLAY_ENTITY_DATAPACK_RESOURCEPACK_PROFILE",
-              "DO_NOT_CLAIM_REAL_HANDOFF",
-              "F4/I6_REMAINS_NOT_COMPLETE",
-              "I7_REMAINS_BLOCKED",
-          ]
-          missing = [fragment for fragment in required_next_fragments if fragment not in current_next]
-          if missing:
-              raise SystemExit(f"NEXT_ACTION authority drift: missing {missing}")
-          replace_once(
-              current_next,
-              "NEXT_ACTION=BEGIN_PR12_PLAYER_PROFILES_AUDIT; FIRST_RECHECK_PHYSICAL_MODLIST_CURRENT_REPO_BRANCHES_PRS_STATUS_AND_EXACT_CPM_PAL_PLAYER_ANIMATOR_CONTRACTS; CPM_EXPERIMENTAL; PAL_HANDOFF; PLAYER_ANIMATOR_AUDIT; PRESERVE_SOURCE_FORMATS; NO_SILENT_PROVIDER_CONVERSION; DO_NOT_CLAIM_REAL_HANDOFF; F4/I6_REMAINS_NOT_COMPLETE; I7_REMAINS_BLOCKED",
-          )
-          '''
-          script, count = re.subn(pattern, replacement, script, count=1, flags=re.S)
-          if count != 1:
-              raise SystemExit(f'Expected one NEXT_ACTION matcher block, replaced {count}')
-          Path('/tmp/pr11-closeout.py').write_text(script)
-          PY
-          python3 /tmp/pr11-closeout.py
+          python3 .github/pr11-closeout-materialize.py
           git diff --check -- STATUS.md
       - name: Commit STATUS closeout
         shell: bash
