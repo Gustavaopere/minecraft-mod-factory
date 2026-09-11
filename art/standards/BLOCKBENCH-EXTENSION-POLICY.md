@@ -40,7 +40,9 @@ Easy Model Entities was re-audited on 2026-09-11 against the official Blockbench
 
 EMF/CEM was re-audited on 2026-09-11 against Blockbench 5.1.6 at `JannisX11/blockbench@794e964e966b6783b4e9b98ecbdda5152c0620cc`, CEM Template Loader 9.2.0 at `ewanhowell5195/blockbenchPlugins@bdea1d6c5e8f9fca3dbbeb446e568adb025b5ef2`, and the official Blockbench plugin catalog at `JannisX11/blockbench-plugins@38862eb66b219995b09926488f7d1084a0fb6b3a`. CEM Template Loader requires Blockbench >=5.0.0 and delegates model serialization to the built-in `optifine_entity`/`optifine_part` codecs. EMF Animation Addon 1.0.5 requires Blockbench >=4.9.0 and depends on CEM Template Loader. Its own warning states that EMF-only animation features are incompatible with OptiFine, so the Factory never enables those semantics implicitly and never silently stages them under the OptiFine-compatible resource root.
 
-The AzureLib plugin officially advertises Blockbench 4.8.0–15.0.0, but this repository keeps MCP enablement fail-closed to the audited project baseline 5.1.6 until another editor version is tested. Animated Java requires Blockbench >=5.1.4.
+The AzureLib plugin officially advertises Blockbench 4.8.0–15.0.0, but this repository keeps MCP enablement fail-closed to the audited project baseline 5.1.6 until another editor version is tested.
+
+Animated Java was re-audited on 2026-09-11 at `Animated-Java/animated-java@a5fc548d2a53cc0887fa070db33ccfcef1cd3541`, the exact commit tagged `v1.10.2`. The official `animated_java.js` release asset has SHA-256 `81aadc4def796d97dab6642ad05b564b470ecadcaf455c8cc5826c9e24759672`. The official Blockbench catalog declares `variant=desktop` and `min_version=5.1.4`; the Factory audit baseline is Blockbench 5.1.6. `.ajblueprint` remains source authority. PR11 permits the explicitly selected datapack/resource-pack workflow only and fails closed for Animated Java plugin JSON mode; installation remains human-only, and MCP use still requires the exact extension version, compatible desktop editor, selected Animated Java profile and explicit allowlist authorization.
 
 ## Classifications
 
