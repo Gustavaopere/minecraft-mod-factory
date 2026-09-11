@@ -1,7 +1,7 @@
 # STATUS — Construction
 
 UPDATED_AT=2026-09-11
-PHASE=C6_COMPLETE_POSTMERGE_VALIDATED
+PHASE=C7_COMPLETE_POSTMERGE_VALIDATED
 REPOSITORY=Gustavaopere/minecraft-mod-factory
 BRANCH=main
 C0_PR=19
@@ -45,7 +45,6 @@ C1B_MAIN_PUSH_RED_RUN=34537041302
 C1B_MAIN_PUSH_RED=5_TESTS_4_PASS_1_FAIL_EXPECTED_MISSING_MAIN_TRIGGER
 C1B_RECONCILED_MAIN_SHA=c3d66068474f18622e864ff28de63c393544e787
 C1B_GATED_PR_HEAD=187f97c0a4a6be910aa2d7736527ee47c931f7aa
-C1B_GATED_PR_MERGE_REF=c20c4c776357aa9310b84aa87ebde53723c3eba1
 C1B_FINAL_PR_RUN=34538625449
 C1B_FINAL_PR_CONTRACT=5_PASS_0_FAIL
 C1B_FINAL_PR_REGRESSION_TEST_FILES=149_PASS
@@ -332,6 +331,44 @@ C6_POSTMERGE_C0_RUN=34625714116
 C6_POSTMERGE_GOVERNANCE_RUN=34625714178
 C6_IMPLEMENTATION_MAIN_SHA=3eae9d1f8b74a720109b33ef6956ef4add515388
 C6_CLOSEOUT_BASE_MAIN_SHA=698fa5122390a235699b9dc5de7e414a7e869b0c
+C7_PR=60
+C7_REGISTRY_AUTHORITY_RED_HEAD=b0ec601471289cab78ef450b78168f4d148d2d5a
+C7_REGISTRY_AUTHORITY_RED_RUN=34644299834
+C7_REGISTRY_AUTHORITY_RED_RESULT=21_TESTS_20_PASS_1_FAIL_WITH_5_EXPECTED_C4_AUTHORITY_SUBFAILURES
+C7_FINAL_PR_HEAD=c5130adf23d43561a63a4679730c655f5a2ab373
+C7_FINAL_PR_C7_RUN=34645246622
+C7_FINAL_PR_C6_RUN=34645246648
+C7_FINAL_PR_C5_RUN=34645246734
+C7_FINAL_PR_C4_RUN=34645246717
+C7_FINAL_PR_C3_RUN=34645246667
+C7_FINAL_PR_C2_RUN=34645246631
+C7_FINAL_PR_C1A_RUN=34645246738
+C7_FINAL_PR_C0_RUN=34645246735
+C7_FINAL_PR_GOVERNANCE_RUN=34645246907
+C7_FINAL_PR_SONARCLOUD=PASS_0_NEW_ISSUES_0_ACCEPTED_0_HOTSPOTS_0_DUPLICATION_NEW_CODE
+C7_MERGE_SHA=aa4904d186f482a80358df56a3b426be24bfa215
+C7_POSTMERGE_RUN=34645821530
+C7_POSTMERGE_I2=15_PASS_0_FAIL
+C7_POSTMERGE_CONTRACT=21_PASS_0_FAIL
+C7_POSTMERGE_C6=10_PASS_0_FAIL
+C7_POSTMERGE_C5=16_PASS_0_FAIL
+C7_POSTMERGE_C4=12_PASS_0_FAIL
+C7_POSTMERGE_NEOFORGE_BUILD=BUILD_SUCCESSFUL_31_TASKS_JAVA21_NEOFORGE_21_1_248
+C7_POSTMERGE_C3=7_PASS_0_FAIL
+C7_POSTMERGE_C2=10_PASS_0_FAIL
+C7_POSTMERGE_C0=11_PASS_0_FAIL_VALIDATOR_PASS
+C7_POSTMERGE_WHITESPACE=PASS
+C7_POSTMERGE_C6_RUN=34645821344
+C7_POSTMERGE_C5_RUN=34645821461
+C7_POSTMERGE_C4_RUN=34645821572
+C7_POSTMERGE_C3_RUN=34645821366
+C7_POSTMERGE_C2_RUN=34645821471
+C7_POSTMERGE_C1A_RUN=34645821420
+C7_POSTMERGE_C1B_RUN=34645821497
+C7_POSTMERGE_C0_RUN=34645821436
+C7_POSTMERGE_GOVERNANCE_RUN=34645821416
+C7_IMPLEMENTATION_MAIN_SHA=aa4904d186f482a80358df56a3b426be24bfa215
+C7_CLOSEOUT_BASE_MAIN_SHA=aa4904d186f482a80358df56a3b426be24bfa215
 HEAD_SHA=RESOLVE_FROM_GIT
 OPEN_CONSTRUCTION_IMPLEMENTATION_PR=NONE
 TARGET_MINECRAFT=1.21.1
@@ -341,7 +378,7 @@ CANONICAL_OUTPUT=SPONGE_SCHEMATIC_V3
 LATEST_MODLIST_SNAPSHOT=2026-09-09_595_TOP_LEVEL
 MANUAL_ACTION_REQUIRED=NO
 BLOCKERS=NONE_IN_CONSTRUCTION
-NEXT_ACTION=BEGIN_C7_ARCHITECTURE_QA
+NEXT_ACTION=BEGIN_C8_VISUAL_QA
 
 ## C1A — Schematica preservation
 
@@ -716,3 +753,54 @@ MineBench and mcschematic remain pinned, unchanged references rather than silent
 - [ ] visual QA remains C8
 
 C6 is complete and post-merge validated. The next Construction slice is C7 — Architecture QA.
+
+## C7 — Architecture QA
+
+C7 adds the Factory-owned conservative offline structural QA layer over the canonical C2 Build IR, with C4 runtime registry evidence used only when required for modded state validity. It deliberately separates objective structural evidence from C8 visual judgment and from later runtime/worldgen acceptance. The report contract is deterministic and uses explicit `PASS`, `FAIL`, `DEFERRED` and `NOT_APPLICABLE` outcomes so semantic facts that cannot be proven from the current BuildSpec/IR are never fabricated.
+
+C7_MODULE=construction/core/structural_qa.py
+C7_SCHEMA=construction/schemas/structural-qa-report.schema.json
+C7_TEST=construction/tests/test_c7_architecture_qa.py
+C7_REGISTRY_AUTHORITY_TEST=construction/tests/test_c7_registry_authority.py
+C7_WORKFLOW=.github/workflows/factory-construction-c7-architecture-qa.yml
+C7_INPUT_AUTHORITY=C2_CANONICAL_BUILD_IR
+C7_REGISTRY_AUTHORITY=C4_RUNTIME_CONFIRMED_REGISTRY
+C7_REPORT_STATES=PASS_FAIL_DEFERRED_NOT_APPLICABLE
+C7_OBJECTIVE_CHECKS=BOUNDS_RUNTIME_STATE_VALIDITY_HEAD_CLEARANCE_WALKABLE_SURFACE_GRAPH_CIRCULATION_COMPONENTS_VERTICAL_STEP_CONNECTIVITY
+C7_DEFERRED_SEMANTICS=ENCLOSURE_SEMANTIC_FLOOR_CONTINUITY_PROVIDER_SUPPORT_REQUIRED_SPACE_REALIZATION
+C7_BOUNDARY=NO_C8_VISUAL_QA_NO_C12_RUNTIME_WORLDGEN_ACCEPTANCE
+
+The approved design selected conservative offline QA rather than widening BuildSpec with invented room geometry or moving runtime semantics forward from C12. C7 therefore reuses existing authorities: C2 validates/tamper-checks the voxel result, and C4 is consulted for exact runtime-confirmed modded block/state validity. Head clearance, walkable support cells, component metrics and bounded one-block vertical step connectivity are derived directly from voxel occupancy. Enclosure, semantic floor continuity, provider-aware support behavior and named `required_spaces` remain `DEFERRED` when current inputs do not contain sufficient evidence.
+
+During final hardening, a dedicated fail-closed regression exposed that C7 was validating the visible C4 block payload but not all C4 cross-authority bindings. Head `b0ec601471289cab78ef450b78168f4d148d2d5a`, run `34644299834`, produced 21 C7 tests with 20 passes and one failing authority test containing the five expected mismatches. The GREEN on head `c5130adf23d43561a63a4679730c655f5a2ab373` made C7 reject registry documents whose physical/runtime target or snapshot bindings contradict the canonical C4 contract, without creating a second registry authority.
+
+PR #60 passed the dedicated C7 workflow plus C6, C5, C4, C3, C2, C1A, C0 and Governance on the exact final head. SonarCloud passed with 0 new issues, 0 accepted issues, 0 security hotspots and 0.0% duplication on new code. PR #60 merged as `aa4904d186f482a80358df56a3b426be24bfa215`.
+
+The resulting `main` push fully revalidated the Construction stack. C7 run `34645821530` passed Engineering I2 15/15, C7 21/21, C6 10/10, C5 16/16, C4 12/12, the materialized Java 21 / NeoForge 21.1.248 runtime probe with `BUILD SUCCESSFUL` and 31/31 executed tasks, C3 7/7, C2 10/10, C0 11/11 plus validator, and whitespace. Standalone C6 run `34645821344`, C5 `34645821461`, C4 `34645821572`, C3 `34645821366`, C2 `34645821471`, C1A `34645821420`, C1B `34645821497`, C0 `34645821436`, and Governance `34645821416` all completed successfully on the same merged main.
+
+### C7 acceptance
+
+- [x] dedicated C7 workflow is read-only, action-pinned and revalidates on `main`
+- [x] C7 consumes canonical C2 Build IR rather than introducing another voxel model
+- [x] invalid or tampered C2 inputs fail closed
+- [x] deterministic structural report schema is closed and independently validated
+- [x] report outcomes are explicit `PASS`, `FAIL`, `DEFERRED` or `NOT_APPLICABLE`
+- [x] bounds are delegated to the C2 authority instead of redefined
+- [x] head clearance is derived from objective voxel occupancy
+- [x] walkable support cells and connected-component metrics are deterministic
+- [x] bounded one-block vertical step connectivity is detected without claiming ladder/elevator/provider semantics
+- [x] modded NeoForge state validity requires runtime-confirmed C4 registry evidence
+- [x] vanilla/no-loader builds can classify runtime state validation as not applicable
+- [x] C4 physical/runtime snapshot and target bindings fail closed when inconsistent
+- [x] required BuildSpec QA flags affect gating without mutating geometry metrics
+- [x] enclosure, semantic floor continuity, provider-aware support and named-space realization are deferred rather than fabricated
+- [x] C7 does not claim silhouette, proportion, material hierarchy or other C8 visual judgments
+- [x] C7 does not claim runtime/worldgen behavior reserved for later acceptance phases
+- [x] authority gap was captured by explicit RED before the final GREEN
+- [x] final PR head passes C7/C6/C5/C4/C3/C2/C1A/C0/Governance and SonarCloud
+- [x] PR #60 merged
+- [x] post-merge C7 passes 21/21 + I2 15/15 + C6 10/10 + C5 16/16 + C4 12/12 + NeoForge build + C3 7/7 + C2 10/10 + C0 11/11 + validator + whitespace
+- [x] post-merge standalone C6, C5, C4, C3, C2, C1A, C1B, C0 and Governance gates pass
+- [ ] visual QA remains C8
+
+C7 is complete and post-merge validated. The next Construction slice is C8 — Visual QA.
