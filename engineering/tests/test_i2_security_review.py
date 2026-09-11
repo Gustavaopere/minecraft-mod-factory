@@ -26,13 +26,18 @@ class I2SecurityAndReviewContractTest(unittest.TestCase):
             captured_at="2026-09-09",
         )
 
-    def test_empty_mod_id_is_rejected(self):
+    def test_blank_mod_id_is_evidence_only_and_invalid_nonempty_id_is_rejected(self):
         snapshot = json.loads(json.dumps(self.snapshot))
-        snapshot["entries"][0]["mod_id"] = ""
+        snapshot["entries"][1]["mod_id"] = ""
+        errors = self.module.validate_normalized_snapshot(snapshot)
+        self.assertEqual([], errors)
+        self.assertNotIn("", self.module.build_provider_catalog(snapshot))
+
+        snapshot["entries"][1]["mod_id"] = "Bad ID"
         errors = self.module.validate_normalized_snapshot(snapshot)
         self.assertTrue(
-            any("mod_id" in error for error in errors),
-            "I2 RED: empty physical mod IDs must fail closed",
+            any("invalid physical identifier syntax" in error for error in errors),
+            "non-empty physical mod IDs with invalid syntax must fail closed",
         )
 
     def test_snapshot_writer_rejects_destination_outside_working_directory(self):
