@@ -30,8 +30,6 @@ jobs:
         with:
           node-version: '22'
       - name: PR12 player profile contract
-        id: pr12
-        continue-on-error: true
         run: node --test asset_toolkit.player_profiles_pr12.test.js
       - name: Existing provider regressions
         if: always()
@@ -55,11 +53,3 @@ jobs:
           art/tooling/blockbench/asset-toolkit
           art/standards
           .github/workflows/factory-art-pr12-player-profiles.yml
-      - name: Enforce PR12 contract result
-        if: always()
-        working-directory: .
-        run: |
-          if [ "${{ steps.pr12.outcome }}" != "success" ]; then
-            echo "PR12 contract remains RED as expected until production capabilities exist."
-            exit 1
-          fi
