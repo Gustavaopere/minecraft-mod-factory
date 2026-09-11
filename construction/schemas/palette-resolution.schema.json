@@ -16,11 +16,11 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "block",
+        "name",
         "properties"
       ],
       "properties": {
-        "block": {
+        "name": {
           "type": "string",
           "pattern": "^[a-z0-9_.-]+:[a-z0-9_./-]+$"
         },
@@ -42,7 +42,7 @@
       "required": [
         "block",
         "namespace",
-        "source_mod",
+        "authority",
         "safety",
         "state_candidates",
         "selected_state"
@@ -56,9 +56,8 @@
           "type": "string",
           "pattern": "^[a-z0-9_.-]+$"
         },
-        "source_mod": {
-          "type": "string",
-          "minLength": 1
+        "authority": {
+          "const": "runtime_confirmed"
         },
         "safety": {
           "enum": [
@@ -126,7 +125,7 @@
             "required": [
               "block",
               "namespace",
-              "source_mod",
+              "authority",
               "safety",
               "state_candidates",
               "selected_state"
@@ -140,9 +139,8 @@
                 "type": "string",
                 "pattern": "^[a-z0-9_.-]+$"
               },
-              "source_mod": {
-                "type": "string",
-                "minLength": 1
+              "authority": {
+                "const": "runtime_confirmed"
               },
               "safety": {
                 "enum": [
