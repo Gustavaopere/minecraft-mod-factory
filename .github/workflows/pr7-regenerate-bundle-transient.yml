@@ -1,0 +1,37 @@
+name: PR7 Regenerate Bundle Transient
+
+on:
+  push:
+    branches:
+      - feat/art-pr7-azurelib-adapter
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate-bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Regenerate standalone bundle deterministically
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node build_toolkit_bundle.js --write
+      - name: Verify generated bundle
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node build_toolkit_bundle.js --check
+      - name: Commit generated bundle only when changed
+        run: |
+          if git diff --quiet -- art/tooling/blockbench/asset-toolkit/asset_toolkit.js; then
+            exit 0
+          fi
+          git diff --check -- art/tooling/blockbench/asset-toolkit/asset_toolkit.js
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add art/tooling/blockbench/asset-toolkit/asset_toolkit.js
+          git commit -m "build(art): regenerate standalone bundle for PR7"
+          git push
