@@ -15,6 +15,11 @@ const PROVIDER_PROFILES = Object.freeze([
     id: 'java_block_item', family: 'java_block_item', authority: 'Minecraft Java block/item model runtime',
     requiredProvider: null, requiredExtensions: [], capabilities: ['model', 'uv', 'texture', 'display_transforms'],
   }),
+  frozenProfile({
+    id: 'neoforge_native_entity_animation', family: 'neoforge_native_animation', authority: 'NeoForge 21.1.248 JSON entity animation runtime', assetKind: 'entity_animation',
+    requiredProvider: null, requiredExtensions: [],
+    capabilities: ['animation', 'native_json_entity_animation', 'animation_definition_runtime', 'json_export_handoff'],
+  }),
   ...['entity', 'item', 'block', 'armor'].map((kind) => frozenProfile({
     id: `geckolib4_${kind}`, family: 'geckolib4', authority: 'GeckoLib 4 runtime', assetKind: kind,
     requiredProvider: {modId: 'geckolib', exactVersions: ['4.9.2']}, requiredExtensions: ['geckolib'],
