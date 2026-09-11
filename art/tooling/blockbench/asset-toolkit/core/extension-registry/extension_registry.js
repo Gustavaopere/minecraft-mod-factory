@@ -82,6 +82,15 @@ const EXTENSION_CATALOG = Object.freeze({
     mcpPolicy: 'ALLOWLIST',
     providerFamily: 'animated_java',
   }),
+  cpm_plugin: Object.freeze({
+    pluginId: 'cpm_plugin',
+    title: 'Customizable Player Models Plugin',
+    pluginVersion: '0.6.27a',
+    classification: 'HUMAN_ONLY',
+    blockbenchCompatibility: Object.freeze({minInclusive: '5.0.0'}),
+    mcpPolicy: 'NEVER',
+    providerFamily: 'cpm',
+  }),
 });
 
 function numericVersion(value) {

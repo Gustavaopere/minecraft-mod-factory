@@ -18,6 +18,7 @@ const neoforgeNativeAnimation = require('./provider-adapter/neoforge_native_anim
 const easyModelEntities = require('./provider-adapter/easy_model_entities_adapter.js');
 const emfCem = require('./provider-adapter/emf_cem_adapter.js');
 const animatedJava = require('./provider-adapter/animated_java_adapter.js');
+const playerProfiles = require('./provider-adapter/player_profiles_adapter.js');
 
 module.exports = Object.assign(
   {},
@@ -39,4 +40,5 @@ module.exports = Object.assign(
   easyModelEntities,
   emfCem,
   animatedJava,
+  playerProfiles,
 );
