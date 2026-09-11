@@ -76,6 +76,37 @@ test('Blockbench GeckoLib adapter requires an active source-native geckolib_mode
   );
 });
 
+test('preview accepts absolute native Blockbench save paths while output staging stays relative', () => {
+  for (const [sourcePath, expectedSourcePath] of [
+    ['/home/gustavo/minecraft/factory_test.bbmodel', '/home/gustavo/minecraft/factory_test.bbmodel'],
+    ['C:\\Users\\Gustavo\\Minecraft\\factory_test.bbmodel', 'C:/Users/Gustavo/Minecraft/factory_test.bbmodel'],
+  ]) {
+    const {bb} = blockbenchMock();
+    bb.Blockbench.Project.save_path = sourcePath;
+    const adapter = integration.createBlockbenchGeckoLib4Adapter(bb);
+    assert.equal(adapter.sourcePath(), expectedSourcePath);
+    const preview = adapter.previewExport({
+      profileId: 'geckolib4_entity',
+      outputDirectory: 'staging/factory_test',
+      resourceName: 'factory_test',
+      includeAnimations: false,
+    });
+    assert.equal(preview.plan.sourcePath, expectedSourcePath);
+  }
+
+  const {bb} = blockbenchMock();
+  const adapter = integration.createBlockbenchGeckoLib4Adapter(bb);
+  assert.throws(
+    () => adapter.previewExport({
+      profileId: 'geckolib4_entity',
+      outputDirectory: '/absolute/staging',
+      resourceName: 'factory_test',
+      includeAnimations: false,
+    }),
+    (error) => error?.code === 'INVALID_GECKOLIB4_PATH',
+  );
+});
+
 test('preview compiles through the audited Blockbench hooks and validates provider documents without writing', () => {
   const {bb, calls} = blockbenchMock();
   const adapter = integration.createBlockbenchGeckoLib4Adapter(bb);
