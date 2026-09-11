@@ -96,6 +96,23 @@
         return prototype === Object.prototype || prototype === null;
       }
 
+      function validateMinecraftNamespace(value, fail, code, message) {
+        if (typeof value !== 'string' || !/^[a-z0-9_.-]+$/.test(value)) fail(code, message);
+        return value;
+      }
+
+      function validateSafeResourceName(value, fail, code, message) {
+        if (typeof value !== 'string' || !/^[a-z0-9_-]+$/.test(value)) fail(code, message);
+        return value;
+      }
+
+      function normalizeBbmodelSourcePath(value, fail, code, missingMessage, invalidMessage) {
+        if (typeof value !== 'string' || value.length === 0) fail(code, missingMessage);
+        const normalized = value.replace(/\\/g, '/');
+        if (!normalized.toLowerCase().endsWith('.bbmodel')) fail(code, invalidMessage);
+        return normalized;
+      }
+
       function rejectUnknownFields(value, allowed, fail, code, context) {
         for (const key of Object.keys(value)) {
           if (!allowed.has(key)) fail(code, `${context} contains unsupported field "${key}".`);
@@ -173,6 +190,9 @@
 
       module.exports = {
         isPlainObject,
+        validateMinecraftNamespace,
+        validateSafeResourceName,
+        normalizeBbmodelSourcePath,
         rejectUnknownFields,
         boundedString,
         finiteNumber,
@@ -3260,7 +3280,12 @@
     "core/provider-adapter/easy_model_entities_adapter.js": function(module, exports, require) {
       'use strict';
 
-      const {isPlainObject} = require('../common/contract_utils.js');
+      const {
+        isPlainObject,
+        validateMinecraftNamespace,
+        validateSafeResourceName,
+        normalizeBbmodelSourcePath,
+      } = require('../common/contract_utils.js');
 
       const EASY_MODEL_ENTITIES_AUTHORITY = Object.freeze({
         providerFamily: 'easy_model_entities',
@@ -3403,31 +3428,6 @@
         if (object && object[key] !== undefined) resourceLocation(object[key], `${field}.${key}`);
       }
 
-      function validateNamespace(value) {
-        if (typeof value !== 'string' || !/^[a-z0-9_.-]+$/.test(value)) {
-          fail('INVALID_EASY_MODEL_ENTITIES_NAMESPACE', 'namespace must match the Minecraft lowercase namespace grammar.');
-        }
-        return value;
-      }
-
-      function validateResourceName(value) {
-        if (typeof value !== 'string' || !/^[a-z0-9_-]+$/.test(value)) {
-          fail('INVALID_EASY_MODEL_ENTITIES_RESOURCE_NAME', 'resourceName must be a safe lowercase profile/model id without path traversal.');
-        }
-        return value;
-      }
-
-      function normalizedSourcePath(value) {
-        if (typeof value !== 'string' || value.length === 0) {
-          fail('EASY_MODEL_ENTITIES_SOURCE_NOT_SAVED', 'Source project must be saved as a .bbmodel before Easy Model Entities handoff.');
-        }
-        const normalized = value.replace(/\\/g, '/');
-        if (!normalized.toLowerCase().endsWith('.bbmodel')) {
-          fail('EASY_MODEL_ENTITIES_SOURCE_NOT_SAVED', 'Easy Model Entities source authority must remain a saved .bbmodel file.');
-        }
-        return normalized;
-      }
-
       function expectedModelType(profileId) {
         const modelType = PROFILE_MODEL_TYPES[profileId];
         if (!modelType) fail('EASY_MODEL_ENTITIES_PROFILE_REQUIRED', 'profileId must identify an audited Easy Model Entities entity or block-entity profile.');
@@ -3437,9 +3437,25 @@
       function createEasyModelEntitiesExportPlan(input) {
         requireObject(input, 'exportPlan', 'INVALID_EASY_MODEL_ENTITIES_EXPORT_PLAN');
         const modelType = expectedModelType(input.profileId);
-        const sourcePath = normalizedSourcePath(input.sourcePath);
-        const namespace = validateNamespace(input.namespace);
-        const resourceName = validateResourceName(input.resourceName);
+        const sourcePath = normalizeBbmodelSourcePath(
+          input.sourcePath,
+          fail,
+          'EASY_MODEL_ENTITIES_SOURCE_NOT_SAVED',
+          'Source project must be saved as a .bbmodel before Easy Model Entities handoff.',
+          'Easy Model Entities source authority must remain a saved .bbmodel file.',
+        );
+        const namespace = validateMinecraftNamespace(
+          input.namespace,
+          fail,
+          'INVALID_EASY_MODEL_ENTITIES_NAMESPACE',
+          'namespace must match the Minecraft lowercase namespace grammar.',
+        );
+        const resourceName = validateSafeResourceName(
+          input.resourceName,
+          fail,
+          'INVALID_EASY_MODEL_ENTITIES_RESOURCE_NAME',
+          'resourceName must be a safe lowercase profile/model id without path traversal.',
+        );
         return Object.freeze({
           profileId: input.profileId,
           modelType,
@@ -3529,8 +3545,18 @@
         optionalString(document, 'asset_fingerprint', 'renderProfile');
         if (document.body_type !== undefined) enumValue(document.body_type, BODY_TYPES, 'renderProfile.body_type');
 
-        const namespace = validateNamespace(options.namespace);
-        const resourceName = validateResourceName(options.resourceName);
+        const namespace = validateMinecraftNamespace(
+          options.namespace,
+          fail,
+          'INVALID_EASY_MODEL_ENTITIES_NAMESPACE',
+          'namespace must match the Minecraft lowercase namespace grammar.',
+        );
+        const resourceName = validateSafeResourceName(
+          options.resourceName,
+          fail,
+          'INVALID_EASY_MODEL_ENTITIES_RESOURCE_NAME',
+          'resourceName must be a safe lowercase profile/model id without path traversal.',
+        );
         const expectedModel = `${namespace}:${EASY_MODEL_ENTITIES_AUTHORITY.modelRoot}/${resourceName}`;
         if (document.model !== expectedModel) {
           fail('EASY_MODEL_ENTITIES_MODEL_PATH_MISMATCH', `renderProfile.model must reference the preserved model ${expectedModel}.`);
@@ -3573,7 +3599,12 @@
     "core/provider-adapter/emf_cem_adapter.js": function(module, exports, require) {
       'use strict';
 
-      const {isPlainObject} = require('../common/contract_utils.js');
+      const {
+        isPlainObject,
+        validateMinecraftNamespace,
+        validateSafeResourceName,
+        normalizeBbmodelSourcePath,
+      } = require('../common/contract_utils.js');
 
       const EMF_CEM_RUNTIME_ROOTS = Object.freeze({
         optifineCompatible: 'optifine/cem',
@@ -3646,31 +3677,6 @@
         for (const key of Object.keys(value)) {
           if (!allowed.has(key)) fail(code, `${field}.${key} is outside the audited EMF/CEM contract.`);
         }
-      }
-
-      function validateNamespace(value) {
-        if (typeof value !== 'string' || !/^[a-z0-9_.-]+$/.test(value)) {
-          fail('INVALID_EMF_CEM_NAMESPACE', 'namespace must match the lowercase Minecraft namespace grammar.');
-        }
-        return value;
-      }
-
-      function validateResourceName(value) {
-        if (typeof value !== 'string' || !/^[a-z0-9_-]+$/.test(value)) {
-          fail('INVALID_EMF_CEM_RESOURCE_NAME', 'resourceName must be a safe lowercase CEM id without path traversal.');
-        }
-        return value;
-      }
-
-      function normalizedSourcePath(value) {
-        if (typeof value !== 'string' || value.length === 0) {
-          fail('EMF_CEM_SOURCE_NOT_SAVED', 'Source project must be saved as a .bbmodel before EMF/CEM handoff.');
-        }
-        const normalized = value.replace(/\\/g, '/');
-        if (!normalized.toLowerCase().endsWith('.bbmodel')) {
-          fail('EMF_CEM_SOURCE_NOT_SAVED', 'EMF/CEM source authority must remain a saved .bbmodel file.');
-        }
-        return normalized;
       }
 
       function cloneAndFreeze(value, field = 'document') {
@@ -3865,9 +3871,25 @@
         if (input.profileId !== PROFILE_ID) {
           fail('EMF_CEM_PROFILE_REQUIRED', `profileId must be exactly ${PROFILE_ID}.`);
         }
-        const sourcePath = normalizedSourcePath(input.sourcePath);
-        const namespace = validateNamespace(input.namespace);
-        const resourceName = validateResourceName(input.resourceName);
+        const sourcePath = normalizeBbmodelSourcePath(
+          input.sourcePath,
+          fail,
+          'EMF_CEM_SOURCE_NOT_SAVED',
+          'Source project must be saved as a .bbmodel before EMF/CEM handoff.',
+          'EMF/CEM source authority must remain a saved .bbmodel file.',
+        );
+        const namespace = validateMinecraftNamespace(
+          input.namespace,
+          fail,
+          'INVALID_EMF_CEM_NAMESPACE',
+          'namespace must match the lowercase Minecraft namespace grammar.',
+        );
+        const resourceName = validateSafeResourceName(
+          input.resourceName,
+          fail,
+          'INVALID_EMF_CEM_RESOURCE_NAME',
+          'resourceName must be a safe lowercase CEM id without path traversal.',
+        );
 
         if (input.compatibilityMode !== 'optifine_compatible' && input.compatibilityMode !== 'emf_only') {
           fail('EMF_CEM_COMPATIBILITY_MODE_REQUIRED', 'compatibilityMode must be explicitly optifine_compatible or emf_only.');
@@ -6677,20 +6699,10 @@
       'use strict';
 
       const easyModelEntities = require('../core/provider-adapter/easy_model_entities_adapter.js');
+      const {normalizeBbmodelSourcePath} = require('../core/common/contract_utils.js');
 
       function fail(code, message) {
         throw new easyModelEntities.EasyModelEntitiesContractError(code, message);
-      }
-
-      function normalizedSourcePath(value) {
-        if (typeof value !== 'string' || value.length === 0) {
-          fail('EASY_MODEL_ENTITIES_SOURCE_NOT_SAVED', 'Active Blockbench project must be saved as a .bbmodel before Easy Model Entities handoff.');
-        }
-        const normalized = value.replace(/\\/g, '/');
-        if (!normalized.toLowerCase().endsWith('.bbmodel')) {
-          fail('EASY_MODEL_ENTITIES_SOURCE_NOT_SAVED', 'Active Blockbench project source must remain a .bbmodel file.');
-        }
-        return normalized;
       }
 
       function createBlockbenchEasyModelEntitiesAdapter(bb) {
@@ -6704,7 +6716,13 @@
         if (!project || typeof project !== 'object') {
           fail('EASY_MODEL_ENTITIES_BLOCKBENCH_UNAVAILABLE', 'No active Blockbench project is available.');
         }
-        const savedSourcePath = normalizedSourcePath(project.save_path);
+        const savedSourcePath = normalizeBbmodelSourcePath(
+          project.save_path,
+          fail,
+          'EASY_MODEL_ENTITIES_SOURCE_NOT_SAVED',
+          'Active Blockbench project must be saved as a .bbmodel before Easy Model Entities handoff.',
+          'Active Blockbench project source must remain a .bbmodel file.',
+        );
 
         function sourcePath() {
           return savedSourcePath;
@@ -6735,20 +6753,10 @@
       'use strict';
 
       const emfCem = require('../core/provider-adapter/emf_cem_adapter.js');
+      const {normalizeBbmodelSourcePath} = require('../core/common/contract_utils.js');
 
       function fail(code, message) {
         throw new emfCem.EmfCemContractError(code, message);
-      }
-
-      function normalizedSourcePath(value) {
-        if (typeof value !== 'string' || value.length === 0) {
-          fail('EMF_CEM_SOURCE_NOT_SAVED', 'Active Blockbench project must be saved as a .bbmodel before EMF/CEM handoff.');
-        }
-        const normalized = value.replace(/\\/g, '/');
-        if (!normalized.toLowerCase().endsWith('.bbmodel')) {
-          fail('EMF_CEM_SOURCE_NOT_SAVED', 'Active Blockbench project source must remain a .bbmodel file.');
-        }
-        return normalized;
       }
 
       function createBlockbenchEmfCemAdapter(bb) {
@@ -6759,7 +6767,13 @@
         if (!project || typeof project !== 'object') {
           fail('EMF_CEM_BLOCKBENCH_UNAVAILABLE', 'No active Blockbench project is available.');
         }
-        const savedSourcePath = normalizedSourcePath(project.save_path);
+        const savedSourcePath = normalizeBbmodelSourcePath(
+          project.save_path,
+          fail,
+          'EMF_CEM_SOURCE_NOT_SAVED',
+          'Active Blockbench project must be saved as a .bbmodel before EMF/CEM handoff.',
+          'Active Blockbench project source must remain a saved .bbmodel file.',
+        );
         if (bb.Format?.id !== emfCem.EMF_CEM_AUTHORITY.cemCodecId) {
           fail('EMF_CEM_FORMAT_REQUIRED', `Active Blockbench format must be ${emfCem.EMF_CEM_AUTHORITY.cemCodecId}.`);
         }

@@ -1,6 +1,11 @@
 'use strict';
 
-const {isPlainObject} = require('../common/contract_utils.js');
+const {
+  isPlainObject,
+  validateMinecraftNamespace,
+  validateSafeResourceName,
+  normalizeBbmodelSourcePath,
+} = require('../common/contract_utils.js');
 
 const EASY_MODEL_ENTITIES_AUTHORITY = Object.freeze({
   providerFamily: 'easy_model_entities',
@@ -143,31 +148,6 @@ function optionalResourceLocation(object, key, field) {
   if (object && object[key] !== undefined) resourceLocation(object[key], `${field}.${key}`);
 }
 
-function validateNamespace(value) {
-  if (typeof value !== 'string' || !/^[a-z0-9_.-]+$/.test(value)) {
-    fail('INVALID_EASY_MODEL_ENTITIES_NAMESPACE', 'namespace must match the Minecraft lowercase namespace grammar.');
-  }
-  return value;
-}
-
-function validateResourceName(value) {
-  if (typeof value !== 'string' || !/^[a-z0-9_-]+$/.test(value)) {
-    fail('INVALID_EASY_MODEL_ENTITIES_RESOURCE_NAME', 'resourceName must be a safe lowercase profile/model id without path traversal.');
-  }
-  return value;
-}
-
-function normalizedSourcePath(value) {
-  if (typeof value !== 'string' || value.length === 0) {
-    fail('EASY_MODEL_ENTITIES_SOURCE_NOT_SAVED', 'Source project must be saved as a .bbmodel before Easy Model Entities handoff.');
-  }
-  const normalized = value.replace(/\\/g, '/');
-  if (!normalized.toLowerCase().endsWith('.bbmodel')) {
-    fail('EASY_MODEL_ENTITIES_SOURCE_NOT_SAVED', 'Easy Model Entities source authority must remain a saved .bbmodel file.');
-  }
-  return normalized;
-}
-
 function expectedModelType(profileId) {
   const modelType = PROFILE_MODEL_TYPES[profileId];
   if (!modelType) fail('EASY_MODEL_ENTITIES_PROFILE_REQUIRED', 'profileId must identify an audited Easy Model Entities entity or block-entity profile.');
@@ -177,9 +157,25 @@ function expectedModelType(profileId) {
 function createEasyModelEntitiesExportPlan(input) {
   requireObject(input, 'exportPlan', 'INVALID_EASY_MODEL_ENTITIES_EXPORT_PLAN');
   const modelType = expectedModelType(input.profileId);
-  const sourcePath = normalizedSourcePath(input.sourcePath);
-  const namespace = validateNamespace(input.namespace);
-  const resourceName = validateResourceName(input.resourceName);
+  const sourcePath = normalizeBbmodelSourcePath(
+    input.sourcePath,
+    fail,
+    'EASY_MODEL_ENTITIES_SOURCE_NOT_SAVED',
+    'Source project must be saved as a .bbmodel before Easy Model Entities handoff.',
+    'Easy Model Entities source authority must remain a saved .bbmodel file.',
+  );
+  const namespace = validateMinecraftNamespace(
+    input.namespace,
+    fail,
+    'INVALID_EASY_MODEL_ENTITIES_NAMESPACE',
+    'namespace must match the Minecraft lowercase namespace grammar.',
+  );
+  const resourceName = validateSafeResourceName(
+    input.resourceName,
+    fail,
+    'INVALID_EASY_MODEL_ENTITIES_RESOURCE_NAME',
+    'resourceName must be a safe lowercase profile/model id without path traversal.',
+  );
   return Object.freeze({
     profileId: input.profileId,
     modelType,
@@ -269,8 +265,18 @@ function validateEasyModelEntitiesRenderProfile(value, options = {}) {
   optionalString(document, 'asset_fingerprint', 'renderProfile');
   if (document.body_type !== undefined) enumValue(document.body_type, BODY_TYPES, 'renderProfile.body_type');
 
-  const namespace = validateNamespace(options.namespace);
-  const resourceName = validateResourceName(options.resourceName);
+  const namespace = validateMinecraftNamespace(
+    options.namespace,
+    fail,
+    'INVALID_EASY_MODEL_ENTITIES_NAMESPACE',
+    'namespace must match the Minecraft lowercase namespace grammar.',
+  );
+  const resourceName = validateSafeResourceName(
+    options.resourceName,
+    fail,
+    'INVALID_EASY_MODEL_ENTITIES_RESOURCE_NAME',
+    'resourceName must be a safe lowercase profile/model id without path traversal.',
+  );
   const expectedModel = `${namespace}:${EASY_MODEL_ENTITIES_AUTHORITY.modelRoot}/${resourceName}`;
   if (document.model !== expectedModel) {
     fail('EASY_MODEL_ENTITIES_MODEL_PATH_MISMATCH', `renderProfile.model must reference the preserved model ${expectedModel}.`);

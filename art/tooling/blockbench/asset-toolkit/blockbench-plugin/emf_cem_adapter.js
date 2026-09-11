@@ -1,20 +1,10 @@
 'use strict';
 
 const emfCem = require('../core/provider-adapter/emf_cem_adapter.js');
+const {normalizeBbmodelSourcePath} = require('../core/common/contract_utils.js');
 
 function fail(code, message) {
   throw new emfCem.EmfCemContractError(code, message);
-}
-
-function normalizedSourcePath(value) {
-  if (typeof value !== 'string' || value.length === 0) {
-    fail('EMF_CEM_SOURCE_NOT_SAVED', 'Active Blockbench project must be saved as a .bbmodel before EMF/CEM handoff.');
-  }
-  const normalized = value.replace(/\\/g, '/');
-  if (!normalized.toLowerCase().endsWith('.bbmodel')) {
-    fail('EMF_CEM_SOURCE_NOT_SAVED', 'Active Blockbench project source must remain a .bbmodel file.');
-  }
-  return normalized;
 }
 
 function createBlockbenchEmfCemAdapter(bb) {
@@ -25,7 +15,13 @@ function createBlockbenchEmfCemAdapter(bb) {
   if (!project || typeof project !== 'object') {
     fail('EMF_CEM_BLOCKBENCH_UNAVAILABLE', 'No active Blockbench project is available.');
   }
-  const savedSourcePath = normalizedSourcePath(project.save_path);
+  const savedSourcePath = normalizeBbmodelSourcePath(
+    project.save_path,
+    fail,
+    'EMF_CEM_SOURCE_NOT_SAVED',
+    'Active Blockbench project must be saved as a .bbmodel before EMF/CEM handoff.',
+    'Active Blockbench project source must remain a saved .bbmodel file.',
+  );
   if (bb.Format?.id !== emfCem.EMF_CEM_AUTHORITY.cemCodecId) {
     fail('EMF_CEM_FORMAT_REQUIRED', `Active Blockbench format must be ${emfCem.EMF_CEM_AUTHORITY.cemCodecId}.`);
   }

@@ -1,6 +1,11 @@
 'use strict';
 
-const {isPlainObject} = require('../common/contract_utils.js');
+const {
+  isPlainObject,
+  validateMinecraftNamespace,
+  validateSafeResourceName,
+  normalizeBbmodelSourcePath,
+} = require('../common/contract_utils.js');
 
 const EMF_CEM_RUNTIME_ROOTS = Object.freeze({
   optifineCompatible: 'optifine/cem',
@@ -73,31 +78,6 @@ function rejectUnknownFields(value, allowed, code, field) {
   for (const key of Object.keys(value)) {
     if (!allowed.has(key)) fail(code, `${field}.${key} is outside the audited EMF/CEM contract.`);
   }
-}
-
-function validateNamespace(value) {
-  if (typeof value !== 'string' || !/^[a-z0-9_.-]+$/.test(value)) {
-    fail('INVALID_EMF_CEM_NAMESPACE', 'namespace must match the lowercase Minecraft namespace grammar.');
-  }
-  return value;
-}
-
-function validateResourceName(value) {
-  if (typeof value !== 'string' || !/^[a-z0-9_-]+$/.test(value)) {
-    fail('INVALID_EMF_CEM_RESOURCE_NAME', 'resourceName must be a safe lowercase CEM id without path traversal.');
-  }
-  return value;
-}
-
-function normalizedSourcePath(value) {
-  if (typeof value !== 'string' || value.length === 0) {
-    fail('EMF_CEM_SOURCE_NOT_SAVED', 'Source project must be saved as a .bbmodel before EMF/CEM handoff.');
-  }
-  const normalized = value.replace(/\\/g, '/');
-  if (!normalized.toLowerCase().endsWith('.bbmodel')) {
-    fail('EMF_CEM_SOURCE_NOT_SAVED', 'EMF/CEM source authority must remain a saved .bbmodel file.');
-  }
-  return normalized;
 }
 
 function cloneAndFreeze(value, field = 'document') {
@@ -292,9 +272,25 @@ function createEmfCemExportPlan(input) {
   if (input.profileId !== PROFILE_ID) {
     fail('EMF_CEM_PROFILE_REQUIRED', `profileId must be exactly ${PROFILE_ID}.`);
   }
-  const sourcePath = normalizedSourcePath(input.sourcePath);
-  const namespace = validateNamespace(input.namespace);
-  const resourceName = validateResourceName(input.resourceName);
+  const sourcePath = normalizeBbmodelSourcePath(
+    input.sourcePath,
+    fail,
+    'EMF_CEM_SOURCE_NOT_SAVED',
+    'Source project must be saved as a .bbmodel before EMF/CEM handoff.',
+    'EMF/CEM source authority must remain a saved .bbmodel file.',
+  );
+  const namespace = validateMinecraftNamespace(
+    input.namespace,
+    fail,
+    'INVALID_EMF_CEM_NAMESPACE',
+    'namespace must match the lowercase Minecraft namespace grammar.',
+  );
+  const resourceName = validateSafeResourceName(
+    input.resourceName,
+    fail,
+    'INVALID_EMF_CEM_RESOURCE_NAME',
+    'resourceName must be a safe lowercase CEM id without path traversal.',
+  );
 
   if (input.compatibilityMode !== 'optifine_compatible' && input.compatibilityMode !== 'emf_only') {
     fail('EMF_CEM_COMPATIBILITY_MODE_REQUIRED', 'compatibilityMode must be explicitly optifine_compatible or emf_only.');
