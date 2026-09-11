@@ -215,8 +215,93 @@ def _validate_registry(registry: Any) -> dict[str, Any]:
     )
     if document["schema_version"] != 1:
         raise StructuralQAError("C4 registry schema_version must be 1")
-    for field in ("physical", "runtime", "static_index"):
-        _require_object(document[field], f"C4 registry {field}")
+
+    physical = _require_object(document["physical"], "C4 registry physical")
+    _require_keys(
+        physical,
+        allowed={
+            "captured_at",
+            "source_name",
+            "source_sha256",
+            "loader_version",
+            "top_level_mods",
+            "nested_mods",
+            "total_entries",
+            "provider_count",
+            "unidentified_entries",
+        },
+        required={
+            "captured_at",
+            "source_name",
+            "source_sha256",
+            "loader_version",
+            "top_level_mods",
+            "nested_mods",
+            "total_entries",
+            "provider_count",
+            "unidentified_entries",
+        },
+        label="C4 registry physical",
+    )
+    for field in ("captured_at", "source_name", "loader_version"):
+        _require_string(physical[field], f"C4 registry physical.{field}")
+    physical_sha = _require_string(physical["source_sha256"], "C4 registry physical.source_sha256")
+    if SHA256_RE.fullmatch(physical_sha) is None:
+        raise StructuralQAError("C4 registry physical.source_sha256 is invalid")
+    for field in (
+        "top_level_mods",
+        "nested_mods",
+        "total_entries",
+        "provider_count",
+        "unidentified_entries",
+    ):
+        if not _is_int(physical[field]) or physical[field] < 0:
+            raise StructuralQAError(f"C4 registry physical.{field} must be a non-negative integer")
+
+    runtime = _require_object(document["runtime"], "C4 registry runtime")
+    _require_keys(
+        runtime,
+        allowed={"captured_at", "physical_snapshot_sha256", "target"},
+        required={"captured_at", "physical_snapshot_sha256", "target"},
+        label="C4 registry runtime",
+    )
+    _require_string(runtime["captured_at"], "C4 registry runtime.captured_at")
+    runtime_physical_sha = _require_string(
+        runtime["physical_snapshot_sha256"],
+        "C4 registry runtime.physical_snapshot_sha256",
+    )
+    if SHA256_RE.fullmatch(runtime_physical_sha) is None:
+        raise StructuralQAError("C4 registry runtime.physical_snapshot_sha256 is invalid")
+    if runtime_physical_sha != physical_sha:
+        raise StructuralQAError("C4 registry runtime must reference the exact physical snapshot SHA-256")
+
+    runtime_target = _require_object(runtime["target"], "C4 registry runtime.target")
+    _require_keys(
+        runtime_target,
+        allowed={"minecraft", "loader", "loader_version"},
+        required={"minecraft", "loader", "loader_version"},
+        label="C4 registry runtime.target",
+    )
+    if runtime_target["minecraft"] != "1.21.1" or runtime_target["loader"] != "neoforge":
+        raise StructuralQAError("C4 registry runtime target must be Minecraft 1.21.1 / NeoForge")
+    runtime_loader_version = _require_string(
+        runtime_target["loader_version"],
+        "C4 registry runtime.target.loader_version",
+    )
+    if runtime_loader_version != physical["loader_version"]:
+        raise StructuralQAError("C4 registry runtime loader version must match the physical snapshot")
+
+    static_index = _require_object(document["static_index"], "C4 registry static_index")
+    _require_keys(
+        static_index,
+        allowed={"jar_count", "nested_jar_count", "discovered_block_count"},
+        required={"jar_count", "nested_jar_count", "discovered_block_count"},
+        label="C4 registry static_index",
+    )
+    for field in ("jar_count", "nested_jar_count", "discovered_block_count"):
+        if not _is_int(static_index[field]) or static_index[field] < 0:
+            raise StructuralQAError(f"C4 registry static_index.{field} must be a non-negative integer")
+
     claimed = document["content_sha256"]
     if not isinstance(claimed, str) or SHA256_RE.fullmatch(claimed) is None:
         raise StructuralQAError("C4 registry content_sha256 is invalid")
