@@ -1,0 +1,50 @@
+name: Transient PR7 IK Boundary Patch
+
+on:
+  push:
+    branches:
+      - feat/art-pr7-azurelib3-adapter
+    paths:
+      - '.github/workflows/_transient-pr7-ik-boundary.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch authoring-only IK boundary deterministically
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('art/tooling/blockbench/asset-toolkit/core/provider-adapter/azurelib3_adapter.js')
+          source = path.read_text()
+          anchor = "  if (!isPlainObject(value)) {\n    fail('INVALID_AZURELIB3_GEO_DOCUMENT', 'Geo document must be an object.');\n  }\n\n  const formatVersion = value.format_version;\n"
+          replacement = "  if (!isPlainObject(value)) {\n    fail('INVALID_AZURELIB3_GEO_DOCUMENT', 'Geo document must be an object.');\n  }\n  if (Object.prototype.hasOwnProperty.call(value, 'azureIKChains')) {\n    fail('UNPROVEN_AZURELIB3_RUNTIME_FIELD', 'azureIKChains is Blockbench authoring metadata and must not be serialized into AzureLib runtime geometry.');\n  }\n\n  const formatVersion = value.format_version;\n"
+          if source.count(anchor) != 1:
+              raise SystemExit(f'Expected exactly one geo validator anchor, found {source.count(anchor)}')
+          if 'azureIKChains is Blockbench authoring metadata' in source:
+              raise SystemExit('IK boundary already present; refusing duplicate patch')
+          path.write_text(source.replace(anchor, replacement, 1))
+          PY
+      - name: Verify IK boundary before commit
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: |
+          node --test asset_toolkit.azurelib3_geo.test.js
+          node --test asset_toolkit.azurelib3_adapter.test.js
+          git diff --check
+      - name: Commit patch and self-remove
+        run: |
+          git rm .github/workflows/_transient-pr7-ik-boundary.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add art/tooling/blockbench/asset-toolkit/core/provider-adapter/azurelib3_adapter.js
+          git commit -m 'fix(art): keep AzureLib IK metadata authoring-only'
+          git push origin HEAD:feat/art-pr7-azurelib3-adapter
