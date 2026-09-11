@@ -3959,6 +3959,7 @@
         pluginRef: 'a5fc548d2a53cc0887fa070db33ccfcef1cd3541',
         releaseAsset: 'animated_java.js',
         releaseAssetSha256: '81aadc4def796d97dab6642ad05b564b470ecadcaf455c8cc5826c9e24759672',
+        pluginVariant: 'desktop',
         blockbenchVersion: '5.1.6',
         blockbenchSource: 'JannisX11/blockbench',
         blockbenchRef: '794e964e966b6783b4e9b98ecbdda5152c0620cc',
@@ -4087,6 +4088,37 @@
         return cloneAndFreeze(value);
       }
 
+      function inspectAnimatedJavaBlueprintFeatures(value) {
+        const blueprint = validateAnimatedJavaBlueprint(value);
+        const variants = isPlainObject(blueprint.variants) ? blueprint.variants : {};
+        const variantCount = (isPlainObject(variants.default) ? 1 : 0)
+          + (Array.isArray(variants.list) ? variants.list.length : 0);
+        const elements = Array.isArray(blueprint.elements) ? blueprint.elements : [];
+        const locatorCount = elements.filter((element) => isPlainObject(element) && element.type === 'locator').length;
+        const cameraCount = elements.filter((element) => isPlainObject(element) && element.type === 'camera').length;
+        let functionKeyframeCount = 0;
+        let variantKeyframeCount = 0;
+        const animations = Array.isArray(blueprint.animations) ? blueprint.animations : [];
+        for (const animation of animations) {
+          if (!isPlainObject(animation) || !isPlainObject(animation.animators)) continue;
+          for (const animator of Object.values(animation.animators)) {
+            if (!isPlainObject(animator) || !Array.isArray(animator.keyframes)) continue;
+            for (const keyframe of animator.keyframes) {
+              if (!isPlainObject(keyframe)) continue;
+              if (keyframe.channel === 'function') functionKeyframeCount += 1;
+              if (keyframe.channel === 'variant') variantKeyframeCount += 1;
+            }
+          }
+        }
+        return Object.freeze({
+          variantCount,
+          locatorCount,
+          cameraCount,
+          functionKeyframeCount,
+          variantKeyframeCount,
+        });
+      }
+
       function requireExportPath(mode, value, field) {
         if (mode === 'none') return value ?? '';
         if (typeof value !== 'string' || value.length === 0) {
@@ -4103,6 +4135,12 @@
           fail(
             'UNSUPPORTED_ANIMATED_JAVA_MINECRAFT_VERSION',
             `Factory PR11 is pinned to Minecraft ${ANIMATED_JAVA_AUTHORITY.minecraftVersion}.`,
+          );
+        }
+        if (input.enablePluginMode === true) {
+          fail(
+            'ANIMATED_JAVA_PLUGIN_MODE_UNAUDITED',
+            'PR11 audits the Animated Java datapack/resource-pack pipeline only; plugin JSON mode requires a separate contract.',
           );
         }
         const resourcePackExportMode = validateExportMode(input.resourcePackExportMode, 'resourcePackExportMode');
@@ -4122,7 +4160,7 @@
           dataPackExportMode,
           resourcePackPath,
           dataPackPath,
-          enablePluginMode: input.enablePluginMode === true,
+          enablePluginMode: false,
           modelExportRoot,
           textureExportRoot,
           blueprintFormatId: ANIMATED_JAVA_AUTHORITY.blueprintFormatId,
@@ -4139,6 +4177,7 @@
         ANIMATED_JAVA_AUTHORITY,
         AnimatedJavaContractError,
         validateAnimatedJavaBlueprint,
+        inspectAnimatedJavaBlueprintFeatures,
         createAnimatedJavaExportPlan,
       };
     },
