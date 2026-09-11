@@ -24,6 +24,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
       - name: PR8 registry profile and core adapter contract
         working-directory: art/tooling/blockbench/asset-toolkit
         run: |
@@ -53,6 +57,35 @@ jobs:
             asset_toolkit.azurelib3_adapter.test.js \
             asset_toolkit.azurelib3_blockbench_adapter.test.js \
             asset_toolkit.azurelib3_public_api.test.js
+      - name: Require PR8 target-exact runtime smoke fixtures
+        run: |
+          test -f art/tooling/blockbench/asset-toolkit/runtime-smoke/NeoForgeNativeAnimationCodecSmokeTest.java || {
+            echo 'PR8 RED: missing target-exact NeoForgeNativeAnimationCodecSmokeTest.java' >&2
+            exit 1
+          }
+          test -f art/tooling/blockbench/asset-toolkit/runtime-smoke/native-smoke.json || {
+            echo 'PR8 RED: missing target-exact native-smoke.json' >&2
+            exit 1
+          }
+      - name: Generate canonical NeoForge 21.1.248 smoke project
+        run: >-
+          python3 engineering/tooling/scaffolder/scaffold_mod.py
+          --mod-spec engineering/tests/fixtures/i3-golden-mod-spec.json
+          --config engineering/tests/fixtures/i3-golden-scaffold-config.json
+          --output '.factory-ci/pr8/generated'
+      - name: Materialize PR8 codec smoke into generated project
+        run: |
+          mkdir -p '.factory-ci/pr8/generated/src/test/java'
+          mkdir -p '.factory-ci/pr8/generated/src/test/resources/assets/factorypr8/neoforge/animations/entity'
+          cp art/tooling/blockbench/asset-toolkit/runtime-smoke/NeoForgeNativeAnimationCodecSmokeTest.java \
+            '.factory-ci/pr8/generated/src/test/java/NeoForgeNativeAnimationCodecSmokeTest.java'
+          cp art/tooling/blockbench/asset-toolkit/runtime-smoke/native-smoke.json \
+            '.factory-ci/pr8/generated/src/test/resources/assets/factorypr8/neoforge/animations/entity/native_smoke.json'
+      - name: Execute target-exact NeoForge codec smoke and build
+        run: |
+          chmod +x '.factory-ci/pr8/generated/gradlew'
+          cd '.factory-ci/pr8/generated'
+          GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/pr8/gradle-home" ./gradlew test build --no-daemon
       - name: Standalone bundle reproducibility
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node build_toolkit_bundle.js --check
