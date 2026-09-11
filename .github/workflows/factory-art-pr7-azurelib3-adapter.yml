@@ -1,0 +1,36 @@
+name: Factory Art PR7 AzureLib 3 Adapter
+
+on:
+  push:
+    branches:
+      - main
+      - feat/art-pr7-azurelib3-adapter
+  pull_request:
+    paths:
+      - 'art/tooling/blockbench/asset-toolkit/**'
+      - '.github/workflows/factory-art-pr7-azurelib3-adapter.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  azurelib3-adapter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: PR7 AzureLib 3 core provider contract
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node --test asset_toolkit.azurelib3_adapter.test.js
+      - name: Existing provider and generic animation regressions
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node --test asset_toolkit.geckolib4_adapter.test.js asset_toolkit.animation_core.test.js asset_toolkit.animation_adapter.test.js
+      - name: Standalone bundle reproducibility
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node build_toolkit_bundle.js --check
+      - name: Whitespace
+        run: git diff --check HEAD^ -- art/tooling/blockbench/asset-toolkit .github/workflows/factory-art-pr7-azurelib3-adapter.yml
