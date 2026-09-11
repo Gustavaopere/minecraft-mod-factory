@@ -252,6 +252,12 @@ function serializeGeckoLib4EffectMarker(marker, providerData) {
   }
 }
 
+function normalizedSourceAuthorityPath(value) {
+  const output = nonEmptyString(value, 'sourcePath').replace(/\\/g, '/').replace(/\/$/, '');
+  if (output.split('/').includes('..')) fail('INVALID_GECKOLIB4_SOURCE_PATH', 'sourcePath must not contain traversal segments.');
+  return output;
+}
+
 function normalizedRelativePath(value, field) {
   const output = nonEmptyString(value, field).replace(/\\/g, '/').replace(/\/$/, '');
   if (output.startsWith('/') || output.split('/').includes('..')) fail('INVALID_GECKOLIB4_PATH', `${field} must be a safe relative path.`);
@@ -261,7 +267,7 @@ function normalizedRelativePath(value, field) {
 function createGeckoLib4ExportPlan(input) {
   if (!isPlainObject(input)) fail('INVALID_GECKOLIB4_EXPORT_PLAN', 'Export plan request must be an object.');
   if (!GECKOLIB4_PROFILE_IDS.has(input.profileId)) fail('INVALID_GECKOLIB4_PROFILE', `Profile ${JSON.stringify(input.profileId)} is not a GeckoLib 4 profile.`);
-  const sourcePath = normalizedRelativePath(input.sourcePath, 'sourcePath');
+  const sourcePath = normalizedSourceAuthorityPath(input.sourcePath);
   if (!sourcePath.toLowerCase().endsWith('.bbmodel')) fail('GECKOLIB4_SOURCE_MUST_BE_BBMODEL', 'Source authority must remain a .bbmodel file.');
   const outputDirectory = normalizedRelativePath(input.outputDirectory, 'outputDirectory');
   const resourceName = nonEmptyString(input.resourceName, 'resourceName');
