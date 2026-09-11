@@ -38,5 +38,30 @@ jobs:
       - name: Standalone bundle reproducibility
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node build_toolkit_bundle.js --check
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Checkout audited Easy Model Entities 2.3.0 runtime source
+        uses: actions/checkout@v4
+        with:
+          repository: MarkusBordihn/BOs-Easy-Model-Entities
+          ref: 8c912371838c2a26bbb383008ad3999280f075d1
+          path: .factory-ci/pr9/easy-model-entities
+          persist-credentials: false
+      - name: Bind runtime smoke to audited source and spawn/place GameTests
+        run: |
+          grep -Fx 'version=2.3.0' .factory-ci/pr9/easy-model-entities/gradle.properties
+          grep -Fx 'minecraft_version=1.21.1' .factory-ci/pr9/easy-model-entities/gradle.properties
+          grep -Fx 'neoforge_min_version=21.1.0' .factory-ci/pr9/easy-model-entities/gradle.properties
+          grep -F 'entitySpawnItemSpawnsHostEntity' .factory-ci/pr9/easy-model-entities/NeoForge/src/main/java/de/markusbordihn/easymodelentities/gametest/HostEntityGameTest.java
+          grep -F 'blockSpawnItemPlacesHostBlock' .factory-ci/pr9/easy-model-entities/NeoForge/src/main/java/de/markusbordihn/easymodelentities/gametest/HostEntityGameTest.java
+      - name: Run target-exact NeoForge 21.1.248 spawn/place smoke
+        working-directory: .factory-ci/pr9/easy-model-entities
+        run: |
+          chmod +x gradlew
+          GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/pr9/gradle-home" \
+            ./gradlew -Pneoforge_version=21.1.248 -PghostRefIndex= \
+            :NeoForge:runGameTestServer --no-daemon
       - name: Whitespace
         run: git diff --check HEAD^ -- art/tooling/blockbench/asset-toolkit art/standards .github/workflows/factory-art-pr9-easy-model-entities.yml
