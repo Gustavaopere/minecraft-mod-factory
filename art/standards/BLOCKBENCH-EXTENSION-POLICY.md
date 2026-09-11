@@ -34,6 +34,7 @@ The project does not permit the MCP, sidecar or Toolkit to install arbitrary plu
 | `cem_template_loader` | CEM Template Loader | 9.2.0 | REQUIRED_PROFILE | EMF/CEM |
 | `emf_animation_addon` | EMF Animation Addon | 1.0.5 | PREFERRED | EMF/CEM animation authoring; required only for explicitly selected EMF-only animation semantics |
 | `animated_java` | Animated Java | 1.10.2 | OPTIONAL | display-entity/datapack-resource-pack pipeline |
+| `cpm_plugin` | Customizable Player Models Plugin | 0.6.27a | HUMAN_ONLY | CPM player-model `.cpmproject` import/export with mandatory human confirmation |
 | `animation_utils` | GeckoLib Animation Utils | 4.1.3 | BLOCKED_LEGACY | never MCP-enabled |
 
 Easy Model Entities was re-audited on 2026-09-11 against the official Blockbench catalog release 1.0.0. It requires Blockbench >=4.9.0. Installation remains human-only; MCP use still requires the exact plugin version, a compatible editor, the selected EME profile and explicit allowlist authorization.
@@ -43,6 +44,8 @@ EMF/CEM was re-audited on 2026-09-11 against Blockbench 5.1.6 at `JannisX11/bloc
 The AzureLib plugin officially advertises Blockbench 4.8.0–15.0.0, but this repository keeps MCP enablement fail-closed to the audited project baseline 5.1.6 until another editor version is tested.
 
 Animated Java was re-audited on 2026-09-11 at `Animated-Java/animated-java@a5fc548d2a53cc0887fa070db33ccfcef1cd3541`, the exact commit tagged `v1.10.2`. The official `animated_java.js` release asset has SHA-256 `81aadc4def796d97dab6642ad05b564b470ecadcaf455c8cc5826c9e24759672`. The official Blockbench catalog declares `variant=desktop` and `min_version=5.1.4`; the Factory audit baseline is Blockbench 5.1.6. `.ajblueprint` remains source authority. PR11 permits the explicitly selected datapack/resource-pack workflow only and fails closed for Animated Java plugin JSON mode; installation remains human-only, and MCP use still requires the exact extension version, compatible desktop editor, selected Animated Java profile and explicit allowlist authorization.
+
+Customizable Player Models was re-audited for PR12 against runtime `0.6.27a` and the upstream Blockbench integration in `tom5454/CustomPlayerModels`. The Factory records the authoring path as beta/experimental and `HUMAN_ONLY`: `.cpmproject` remains source authority, import/export is never treated as an automated lossless round-trip, and animation-import risk keeps human confirmation mandatory. The Toolkit and MCP never install or automatically authorize `cpm_plugin`; `mcpPolicy=NEVER` remains fail-closed even when the extension is present and version-matched.
 
 ## Classifications
 
