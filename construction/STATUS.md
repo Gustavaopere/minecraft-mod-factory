@@ -1,7 +1,7 @@
 # STATUS — Construction
 
 UPDATED_AT=2026-09-11
-PHASE=C4_COMPLETE_POSTMERGE_VALIDATED
+PHASE=C5_COMPLETE_POSTMERGE_VALIDATED
 REPOSITORY=Gustavaopere/minecraft-mod-factory
 BRANCH=main
 C0_PR=19
@@ -247,6 +247,44 @@ C4_POSTMERGE_GOVERNANCE_RUN=34558103834
 C4_POSTMERGE_GOVERNANCE=PASS
 C4_IMPLEMENTATION_MAIN_SHA=449785d3bed28c80bfb974e8c09b679700ebdb2a
 C4_RECONCILED_MAIN_SHA=c77ab427b4b993061002ff5b6f9001a8c772f7c3
+C5_PR=47
+C5_INITIAL_RED_HEAD=e8a0dd5ff0f55d76fca789f77c55a49beac52dbc
+C5_INITIAL_RED_RUN=34567047665
+C5_INITIAL_RED_RESULT=13_TESTS_1_FAIL_1_PASS_11_SKIP_EXPECTED_MISSING_PRODUCTION_FILES
+C5_FIRST_GREEN_RUN=34567521985
+C5_C4_RECONCILIATION_RED_HEAD=989265f1994fe794af4499ebd3b99904876a9cd5
+C5_C4_RECONCILIATION_RED_RUN=34567967028
+C5_C4_RECONCILIATION_RED_RESULT=16_TESTS_1_FAIL_8_ERROR_EXPECTED_STALE_PROVISIONAL_C4_SHAPE
+C5_FINAL_PR_HEAD=7fcda01a4c7122d6bb1c3cda1fda87243babf508
+C5_FINAL_PR_RUN=34570451691
+C5_FINAL_PR_I2=15_PASS_0_FAIL
+C5_FINAL_PR_CONTRACT=16_PASS_0_FAIL
+C5_FINAL_PR_C4=8_PASS_0_FAIL
+C5_FINAL_PR_C3=7_PASS_0_FAIL
+C5_FINAL_PR_C2=10_PASS_0_FAIL
+C5_FINAL_PR_C0=10_PASS_0_FAIL_VALIDATOR_PASS
+C5_FINAL_PR_WHITESPACE=PASS
+C5_FINAL_PR_SONARCLOUD_CHECK=103172075626
+C5_FINAL_PR_SONARCLOUD=PASS_0_NEW_ISSUES_0_ACCEPTED_0_HOTSPOTS
+C5_MERGE_SHA=4d902da821883ff53d0ba7590033c0a881057470
+C5_POSTMERGE_RUN=34570877283
+C5_POSTMERGE_I2=15_PASS_0_FAIL
+C5_POSTMERGE_CONTRACT=16_PASS_0_FAIL
+C5_POSTMERGE_C4=8_PASS_0_FAIL
+C5_POSTMERGE_C3=7_PASS_0_FAIL
+C5_POSTMERGE_C2=10_PASS_0_FAIL
+C5_POSTMERGE_C0=10_PASS_0_FAIL_VALIDATOR_PASS
+C5_POSTMERGE_WHITESPACE=PASS
+C5_POSTMERGE_C4_STANDALONE_RUN=34570877229
+C5_POSTMERGE_C4_STANDALONE=PASS
+C5_POSTMERGE_I2_STANDALONE_RUN=34570877210
+C5_POSTMERGE_I2_STANDALONE=PASS
+C5_POSTMERGE_C1B_RUN=34570877203
+C5_POSTMERGE_C1B=PASS
+C5_POSTMERGE_GOVERNANCE_RUN=34570877188
+C5_POSTMERGE_GOVERNANCE=PASS
+C5_IMPLEMENTATION_MAIN_SHA=4d902da821883ff53d0ba7590033c0a881057470
+C5_CLOSEOUT_BASE_MAIN_SHA=f8c31b368a20b99ca421ec792b54ffa9bcf068cd
 HEAD_SHA=RESOLVE_FROM_GIT
 OPEN_CONSTRUCTION_IMPLEMENTATION_PR=NONE
 TARGET_MINECRAFT=1.21.1
@@ -256,7 +294,7 @@ CANONICAL_OUTPUT=SPONGE_SCHEMATIC_V3
 LATEST_MODLIST_SNAPSHOT=2026-09-09_595_TOP_LEVEL
 MANUAL_ACTION_REQUIRED=NO
 BLOCKERS=NONE_IN_CONSTRUCTION
-NEXT_ACTION=BEGIN_C5_MODDED_PALETTE_ENGINE
+NEXT_ACTION=BEGIN_C6_SPONGE_SCHEMATIC_V3
 
 ## C1A — Schematica preservation
 
@@ -522,8 +560,57 @@ PR #42 merged as `449785d3bed28c80bfb974e8c09b679700ebdb2a`. The resulting `main
 - [x] post-merge Schematica remains 498/498
 - [x] post-merge MineBench remains 149 + 18 + production build with 424/100000 export smoke
 - [x] post-merge standalone C0 and Governance pass
-- [ ] semantic modded palette selection is intentionally deferred to C5
+- [x] semantic modded palette selection is delivered by C5
 - [ ] canonical Sponge Schematic v3 serialization is intentionally deferred to C6
 - [ ] structural and visual QA remain C7/C8
 
-C4 is complete and post-merge validated. The next Construction slice is C5 — Modded Palette Engine.
+C4 is complete and post-merge validated. C5 is complete and post-merge validated below.
+
+## C5 — Modded Palette Engine
+
+C5 adds the Factory-owned semantic palette resolver on top of the canonical C4 runtime registry. It selects deterministic blockstates only from runtime-confirmed evidence, applies BuildSpec modded-policy constraints, preserves runtime state truth, and remains deliberately separate from C6 Sponge serialization and later structural/visual QA.
+
+C5_MODULE=construction/core/modded_palette.py
+C5_REQUEST_SCHEMA=construction/schemas/palette-request.schema.json
+C5_RESOLUTION_SCHEMA=construction/schemas/palette-resolution.schema.json
+C5_TEST=construction/tests/test_c5_modded_palette.py
+C5_WORKFLOW=.github/workflows/factory-construction-c5-modded-palette.yml
+C5_AUTHORITY=RUNTIME_CONFIRMED_C4_REGISTRY
+C5_OUTPUT=DETERMINISTIC_SEMANTIC_PALETTE_RESOLUTION
+C5_BOUNDARY=NO_SPONGE_SERIALIZATION_NO_RUNTIME_PLACEMENT_NO_STRUCTURAL_OR_VISUAL_QA
+
+The initial C5 TDD RED was captured before production files existed. Run `34567047665` on head `e8a0dd5ff0f55d76fca789f77c55a49beac52dbc` kept Engineering I2 at 15/15 and produced the expected C5 failure with the production surface absent. A first implementation reached GREEN at run `34567521985`, after which the contract was deliberately reconciled against the canonical C4 output rather than retaining a provisional registry shape.
+
+The canonical-C4 reconciliation RED on head `989265f1994fe794af4499ebd3b99904876a9cd5`, run `34567967028`, isolated the stale provisional contract: C5 produced 1 failure and 8 errors across 16 tests while Engineering I2 remained 15/15. The GREEN removed `source_mod`, consumed C4's canonical `authority=runtime_confirmed` shape, normalized state maps into the C2 `name` + `properties` representation, verified the C4 SHA-256 fingerprint, and rejected BuildSpec Minecraft/loader targets that do not match the C4 runtime target.
+
+Final implementation head `7fcda01a4c7122d6bb1c3cda1fda87243babf508` passed run `34570451691`: Engineering I2 15/15, C5 16/16, C4 8/8, C3 7/7, C2 10/10, C0 10/10 plus validator, and whitespace. PR #47 also passed Governance, C0 and SonarCloud check `103172075626` with 0 new issues, 0 accepted issues and 0 security hotspots, then merged as `4d902da821883ff53d0ba7590033c0a881057470`.
+
+The resulting `main` push revalidated C5 in run `34570877283`, which passed Engineering I2 15/15, C5 16/16, C4 8/8, C3 7/7, C2 10/10, C0 10/10 plus validator and whitespace. Standalone C4 run `34570877229` also completed successfully, including its NeoForge/Java 21 build gate. Standalone Engineering I2 run `34570877210`, MineBench C1B run `34570877203`, and Governance run `34570877188` all passed. Later unrelated Art work advanced `main` without invalidating the Construction evidence; this closeout branch was based on `main@f8c31b368a20b99ca421ec792b54ffa9bcf068cd` with no open Construction implementation PR.
+
+### C5 acceptance
+
+- [x] dedicated C5 workflow is read-only, pinned and revalidates on `main`
+- [x] initial RED captured before production implementation exists
+- [x] canonical-C4 reconciliation RED captured before the provisional registry shape was removed
+- [x] resolver consumes only C4 `runtime_confirmed` block evidence
+- [x] C4 registry SHA-256 fingerprint is recomputed and verified
+- [x] BuildSpec Minecraft version and loader must match the C4 runtime target
+- [x] BuildSpec `allow_modded`, namespace allowlist and forbidden-block policy are enforced
+- [x] ordinary blocks are the default safety class
+- [x] BlockEntity states require explicit opt-in
+- [x] reserved functional-machine safety classes fail closed
+- [x] required/excluded semantic terms and deterministic block/namespace preferences are supported
+- [x] runtime-confirmed states are preserved instead of inventing arbitrary state values
+- [x] C4 state maps normalize into the C2 blockstate `name` + `properties` shape
+- [x] resolution output explicitly records `authority=runtime_confirmed`
+- [x] legacy/provisional `source_mod` is absent from the canonical resolution contract
+- [x] inputs are not mutated
+- [x] final PR head passes I2 15/15 + C5 16/16 + C4 8/8 + C3 7/7 + C2 10/10 + C0 10/10 + validator + whitespace
+- [x] PR #47 passes Governance and SonarCloud with 0 new issues / 0 accepted / 0 hotspots
+- [x] PR #47 merged
+- [x] post-merge C5 run passes I2 15/15 + C5 16/16 + C4 8/8 + C3 7/7 + C2 10/10 + C0 10/10 + validator + whitespace
+- [x] standalone post-merge C4, I2, C1B and Governance gates pass
+- [ ] canonical Sponge Schematic v3 serialization remains C6
+- [ ] structural and visual QA remain C7/C8
+
+C5 is complete and post-merge validated. The next Construction slice is C6 — Sponge Schematic v3.
