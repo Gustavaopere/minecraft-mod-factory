@@ -1,0 +1,52 @@
+name: Transient Art PR13 Status Reconcile
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - docs/art-pr13-closeout-status
+    paths:
+      - '.github/workflows/transient-art-pr13-status-reconcile.yml'
+
+jobs:
+  reconcile-status:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reconcile exact PR13 closeout evidence
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('STATUS.md')
+          text = path.read_text()
+          replacements = {
+              'OPEN_PRS_AT_STATUS_WRITE=PR66_MERGED; PR13_STATUS_CLOSEOUT_PR_PENDING; NO_OTHER_OPEN_PRS':
+                  'OPEN_PRS_AT_STATUS_WRITE=PR66_MERGED; PR67_CONSTRUCTION_C8_OPEN; PR13_STATUS_CLOSEOUT_PR_PENDING; NO_OTHER_OPEN_PRS',
+              'PR13_PREMERGE_SONAR=QUALITY_GATE_PASS; 3_NEW_ISSUES; 0_SECURITY_HOTSPOTS; 0.0_PERCENT_DUPLICATION_ON_NEW_CODE':
+                  'PR13_PREMERGE_SONAR=CHECK_103446891205; QUALITY_GATE_PASS; 3_NEW_ISSUES; 0_ACCEPTED_ISSUES; 0_SECURITY_HOTSPOTS; 0.0_PERCENT_DUPLICATION_ON_NEW_CODE',
+          }
+          for old, new in replacements.items():
+              if text.count(old) != 1:
+                  raise SystemExit(f'expected exactly one occurrence: {old}')
+              text = text.replace(old, new)
+          path.write_text(text)
+      - name: Validate closeout invariants
+        run: |
+          grep -Fx 'I6_REAL_HANDOFF=NOT_COMPLETE' STATUS.md
+          grep -Fx 'I7_STATE=BLOCKED_BY_F4_REAL_I6_HANDOFF' STATUS.md
+          grep -F 'NEXT=PR14_UNIFIED_QA_EXPORT_MANIFEST' STATUS.md
+          grep -F 'PR13_POSTMERGE_ACTIONS=27_OF_27_WORKFLOWS_SUCCESS' STATUS.md
+          grep -F 'PR13_POSTMERGE_SONAR=CHECK_103448526392; ANALYSIS_FAILED; CONCLUSION_CANCELLED; NOT_PASS' STATUS.md
+          git diff --check
+      - name: Commit STATUS only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add STATUS.md
+          test "$(git diff --cached --name-only)" = 'STATUS.md'
+          git commit -m 'docs(status): reconcile PR13 concurrent closeout evidence'
+          git push origin HEAD:${GITHUB_REF_NAME}
