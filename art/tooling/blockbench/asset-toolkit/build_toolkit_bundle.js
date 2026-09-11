@@ -21,6 +21,7 @@ const SOURCE_MODULES = Object.freeze([
   'core/provider-profile/provider_profiles.js',
   'core/provider-adapter/geckolib4_adapter.js',
   'core/provider-adapter/azurelib3_adapter.js',
+  'core/provider-adapter/neoforge_native_animation_adapter.js',
   'core/index.js',
   'live-bridge/protocol.js',
   'live-bridge/project_snapshot.js',
