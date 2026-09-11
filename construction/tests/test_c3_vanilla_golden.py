@@ -37,6 +37,9 @@ def literal_module_constants(path: Path) -> dict[str, object]:
         target = node.targets[0]
         if not isinstance(target, ast.Name):
             continue
+        if isinstance(node.value, ast.Name) and node.value.id in constants:
+            constants[target.id] = constants[node.value.id]
+            continue
         try:
             constants[target.id] = ast.literal_eval(node.value)
         except (ValueError, TypeError):
