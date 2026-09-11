@@ -1,0 +1,86 @@
+name: Factory Construction C5 Modded Palette Engine
+
+on:
+  push:
+    branches:
+      - main
+      - feat/construction-c5-modded-palette-engine
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/factory-construction-c5-modded-palette.yml'
+      - 'engineering/tooling/import-physical-modlist.py'
+      - 'engineering/tests/test_i2_modlist_catalog.py'
+      - 'engineering/tests/test_i2_security_review.py'
+      - 'construction/STATUS.md'
+      - 'construction/README.md'
+      - 'construction/docs/ARCHITECTURE.md'
+      - 'construction/core/modded_palette.py'
+      - 'construction/core/modpack_registry.py'
+      - 'construction/schemas/build-spec.schema.json'
+      - 'construction/schemas/modpack-registry.schema.json'
+      - 'construction/schemas/palette-request.schema.json'
+      - 'construction/schemas/palette-resolution.schema.json'
+      - 'construction/tests/test_c5_modded_palette.py'
+      - 'construction/tests/test_c4_modpack_registry.py'
+      - 'construction/tests/test_c3_vanilla_golden.py'
+      - 'construction/tests/test_c2_build_ir.py'
+      - 'construction/tests/test_c0_foundation.py'
+
+permissions:
+  contents: read
+
+jobs:
+  c5-modded-palette-engine:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout with preserved upstreams
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          submodules: recursive
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+
+      - name: Install hashed Schematica test environment
+        run: python3 -m pip install --require-hashes --no-deps -r construction/upstream/harness/schematica-test-lock.txt
+
+      - name: Run shared Engineering I2 regression
+        run: >-
+          python3 -m unittest
+          engineering/tests/test_i2_modlist_catalog.py
+          engineering/tests/test_i2_security_review.py
+          -v
+
+      - name: Run C5 modded palette contract tests
+        run: python3 -m unittest construction/tests/test_c5_modded_palette.py -v
+
+      - name: Run C4 registry regression
+        run: python3 -m unittest construction/tests/test_c4_modpack_registry.py -v
+
+      - name: Run C3 regression
+        run: python3 -m unittest construction/tests/test_c3_vanilla_golden.py -v
+
+      - name: Run C2 regression
+        run: python3 -m unittest construction/tests/test_c2_build_ir.py -v
+
+      - name: Run C0 regression
+        run: |
+          python3 -m unittest construction/tests/test_c0_foundation.py -v
+          python3 construction/scripts/validate_c0.py
+
+      - name: Check C5 whitespace
+        run: >-
+          git diff --check HEAD^ --
+          .github/workflows/factory-construction-c5-modded-palette.yml
+          construction/core/modded_palette.py
+          construction/schemas/palette-request.schema.json
+          construction/schemas/palette-resolution.schema.json
+          construction/tests/test_c5_modded_palette.py
+          construction/README.md
+          construction/docs/ARCHITECTURE.md
+          construction/STATUS.md
