@@ -2157,10 +2157,497 @@
         canConvertProfile,
       };
     },
+    "core/provider-adapter/bedrock_provider_common.js": function(module, exports, require) {
+      'use strict';
+
+      const {isPlainObject} = require('../common/contract_utils.js');
+
+      const LOCATOR_OBJECT_FIELDS = new Set(['ignore_inherited_scale', 'offset', 'rotation']);
+
+      function nonEmptyString(value, field, fail, code, trimStrings = false) {
+        const valid = typeof value === 'string' && (trimStrings ? value.trim().length > 0 : value.length > 0);
+        if (!valid) fail(code, `${field} must be a non-empty string.`);
+        return value;
+      }
+
+      function finiteNonNegative(value, field, fail, code) {
+        if (!Number.isFinite(value) || value < 0) fail(code, `${field} must be a finite non-negative number.`);
+        return value;
+      }
+
+      function vector3Numbers(value, field, fail, code) {
+        if (!Array.isArray(value) || value.length !== 3 || !value.every(Number.isFinite)) {
+          fail(code, `${field} must contain exactly three finite numbers.`);
+        }
+        return value;
+      }
+
+      function validateLocatorValue(value, field, options) {
+        const {fail, invalidLocatorCode, providerLabel} = options;
+        if (Array.isArray(value)) {
+          vector3Numbers(value, field, fail, invalidLocatorCode);
+          return;
+        }
+        if (!isPlainObject(value)) fail(invalidLocatorCode, `${field} must be a vector or locator object.`);
+        for (const key of Object.keys(value)) {
+          if (!LOCATOR_OBJECT_FIELDS.has(key)) {
+            fail(invalidLocatorCode, `${field}.${key} is not supported by ${providerLabel}.`);
+          }
+        }
+        if (value.ignore_inherited_scale !== undefined && typeof value.ignore_inherited_scale !== 'boolean') {
+          fail(invalidLocatorCode, `${field}.ignore_inherited_scale must be boolean.`);
+        }
+        if (value.offset !== undefined) vector3Numbers(value.offset, `${field}.offset`, fail, invalidLocatorCode);
+        if (value.rotation !== undefined) vector3Numbers(value.rotation, `${field}.rotation`, fail, invalidLocatorCode);
+        if (value.offset === undefined && value.rotation === undefined) {
+          fail(invalidLocatorCode, `${field} must define offset or rotation.`);
+        }
+      }
+
+      function validateGeoDocument(value, options) {
+        const {
+          fail,
+          invalidDocumentCode,
+          unsupportedFormatCode,
+          invalidLocatorCode,
+          invalidStringCode,
+          locatorNameCode = invalidStringCode,
+          providerLabel,
+          formatVersions,
+          rejectRootMetadata,
+          trimStrings = false,
+        } = options;
+        if (!isPlainObject(value)) fail(invalidDocumentCode, 'Geo document must be an object.');
+        if (rejectRootMetadata) rejectRootMetadata(value, 'geometry');
+        const formatVersion = value.format_version;
+        if (!formatVersions.has(formatVersion)) {
+          fail(unsupportedFormatCode, `format_version ${JSON.stringify(formatVersion)} is not supported by ${providerLabel}.`);
+        }
+        const geometries = value['minecraft:geometry'];
+        if (!Array.isArray(geometries) || geometries.length === 0) {
+          fail(invalidDocumentCode, 'minecraft:geometry must contain at least one geometry entry.');
+        }
+
+        let locatorCount = 0;
+        geometries.forEach((geometry, geometryIndex) => {
+          if (!isPlainObject(geometry)) fail(invalidDocumentCode, `minecraft:geometry[${geometryIndex}] must be an object.`);
+          const bones = geometry.bones === undefined ? [] : geometry.bones;
+          if (!Array.isArray(bones)) fail(invalidDocumentCode, `minecraft:geometry[${geometryIndex}].bones must be an array.`);
+          bones.forEach((bone, boneIndex) => {
+            if (!isPlainObject(bone)) fail(invalidDocumentCode, `bone ${boneIndex} must be an object.`);
+            if (bone.locators === undefined) return;
+            if (!isPlainObject(bone.locators)) fail(invalidLocatorCode, `bone ${boneIndex}.locators must be an object.`);
+            for (const [locatorName, locatorValue] of Object.entries(bone.locators)) {
+              nonEmptyString(locatorName, `bone ${boneIndex} locator name`, fail, locatorNameCode, trimStrings);
+              validateLocatorValue(locatorValue, `bone ${boneIndex}.locators.${locatorName}`, {
+                fail,
+                invalidLocatorCode,
+                providerLabel,
+              });
+              locatorCount++;
+            }
+          });
+        });
+
+        return Object.freeze({ok: true, formatVersion, geometryCount: geometries.length, locatorCount});
+      }
+
+      function validateMathScalar(value, field, fail, invalidKeyframeCode, trimStrings = false) {
+        if (Number.isFinite(value)) return;
+        if (typeof value === 'string' && (trimStrings ? value.trim().length > 0 : value.length > 0)) return;
+        fail(invalidKeyframeCode, `${field} must be a finite number or Molang string.`);
+      }
+
+      function validateVectorExpression(value, field, fail, invalidKeyframeCode, trimStrings = false) {
+        if (!Array.isArray(value) || value.length !== 3) {
+          fail(invalidKeyframeCode, `${field} must contain exactly three values.`);
+        }
+        value.forEach((entry, index) => validateMathScalar(
+          entry,
+          `${field}[${index}]`,
+          fail,
+          invalidKeyframeCode,
+          trimStrings,
+        ));
+      }
+
+      function validateTimestamp(timestamp, field, fail, invalidTimestampCode) {
+        const time = Number(timestamp);
+        if (!Number.isFinite(time) || time < 0) {
+          fail(invalidTimestampCode, `${field}.${timestamp} is not a valid non-negative timestamp.`);
+        }
+      }
+
+      function validateChannel(value, field, options) {
+        const {
+          fail,
+          invalidKeyframeCode,
+          invalidTimestampCode,
+          validateKeyframeLeaf,
+          leafIndicatorFields,
+          trimStrings = false,
+        } = options;
+        if (value === undefined) return;
+        if (
+          Number.isFinite(value)
+          || (typeof value === 'string' && (trimStrings ? value.trim().length > 0 : value.length > 0))
+          || Array.isArray(value)
+        ) {
+          validateKeyframeLeaf(value, field);
+          return;
+        }
+        if (!isPlainObject(value)) fail(invalidKeyframeCode, `${field} must be a keyframe value or timestamp map.`);
+        if (leafIndicatorFields.some((key) => value[key] !== undefined)) {
+          validateKeyframeLeaf(value, field);
+          return;
+        }
+        for (const [timestamp, frame] of Object.entries(value)) {
+          validateTimestamp(timestamp, field, fail, invalidTimestampCode);
+          validateKeyframeLeaf(frame, `${field}.${timestamp}`);
+        }
+      }
+
+      function validateEffectChannels(animationName, animation, options) {
+        const {
+          fail,
+          invalidEffectsCode,
+          invalidTimestampCode,
+          effectStringCode = invalidEffectsCode,
+          requireParticleEffect = false,
+          requireNonEmptyTimeline = false,
+          trimStrings = false,
+        } = options;
+        const counts = {sound: 0, particle: 0, timeline: 0};
+
+        const sounds = animation.sound_effects === undefined ? {} : animation.sound_effects;
+        if (!isPlainObject(sounds)) fail(invalidEffectsCode, `${animationName}.sound_effects must be an object.`);
+        for (const [timestamp, sound] of Object.entries(sounds)) {
+          validateTimestamp(timestamp, `${animationName}.sound_effects`, fail, invalidTimestampCode);
+          if (!isPlainObject(sound)) fail(invalidEffectsCode, `${animationName}.sound_effects.${timestamp} must be an object.`);
+          nonEmptyString(
+            sound.effect,
+            `${animationName}.sound_effects.${timestamp}.effect`,
+            fail,
+            effectStringCode,
+            trimStrings,
+          );
+          counts.sound++;
+        }
+
+        const particles = animation.particle_effects === undefined ? {} : animation.particle_effects;
+        if (!isPlainObject(particles)) fail(invalidEffectsCode, `${animationName}.particle_effects must be an object.`);
+        for (const [timestamp, particle] of Object.entries(particles)) {
+          validateTimestamp(timestamp, `${animationName}.particle_effects`, fail, invalidTimestampCode);
+          if (!isPlainObject(particle)) fail(invalidEffectsCode, `${animationName}.particle_effects.${timestamp} must be an object.`);
+          if (requireParticleEffect) {
+            nonEmptyString(
+              particle.effect,
+              `${animationName}.particle_effects.${timestamp}.effect`,
+              fail,
+              effectStringCode,
+              trimStrings,
+            );
+          }
+          for (const field of ['effect', 'locator', 'pre_effect_script']) {
+            if (particle[field] !== undefined && typeof particle[field] !== 'string') {
+              fail(invalidEffectsCode, `${animationName}.particle_effects.${timestamp}.${field} must be a string.`);
+            }
+            if (
+              trimStrings
+              && particle[field] !== undefined
+              && typeof particle[field] === 'string'
+              && particle[field].trim().length === 0
+            ) {
+              fail(invalidEffectsCode, `${animationName}.particle_effects.${timestamp}.${field} must be a non-empty string.`);
+            }
+          }
+          counts.particle++;
+        }
+
+        const timeline = animation.timeline === undefined ? {} : animation.timeline;
+        if (!isPlainObject(timeline)) fail(invalidEffectsCode, `${animationName}.timeline must be an object.`);
+        for (const [timestamp, instruction] of Object.entries(timeline)) {
+          validateTimestamp(timestamp, `${animationName}.timeline`, fail, invalidTimestampCode);
+          const validString = typeof instruction === 'string'
+            && (!requireNonEmptyTimeline || instruction.length > 0);
+          const validArray = Array.isArray(instruction)
+            && (!requireNonEmptyTimeline || instruction.length > 0)
+            && instruction.every((entry) => typeof entry === 'string'
+              && (!requireNonEmptyTimeline || entry.length > 0));
+          if (!validString && !validArray) {
+            fail(invalidEffectsCode, `${animationName}.timeline.${timestamp} must be a string or string array.`);
+          }
+          counts.timeline++;
+        }
+
+        return counts;
+      }
+
+      function validateAnimationDocument(value, options) {
+        const {
+          fail,
+          invalidDocumentCode,
+          invalidStringCode,
+          invalidNumberCode,
+          invalidLoopCode,
+          invalidKeyframeCode,
+          invalidTimestampCode,
+          invalidEffectsCode,
+          effectStringCode,
+          loopValues,
+          validateKeyframeLeaf,
+          leafIndicatorFields,
+          expectedFormatVersion,
+          unsupportedFormatCode,
+          rejectRootMetadata,
+          validateIncludes,
+          requireParticleEffect,
+          requireNonEmptyTimeline,
+          trimStrings = false,
+        } = options;
+        if (!isPlainObject(value)) fail(invalidDocumentCode, 'Animation document must be an object.');
+        if (rejectRootMetadata) rejectRootMetadata(value, 'animation');
+        if (expectedFormatVersion !== undefined && value.format_version !== expectedFormatVersion) {
+          fail(
+            unsupportedFormatCode,
+            `format_version ${JSON.stringify(value.format_version)} does not match audited output ${expectedFormatVersion}.`,
+          );
+        }
+        const includeCount = validateIncludes ? validateIncludes(value.includes) : 0;
+        if (!isPlainObject(value.animations) || Object.keys(value.animations).length === 0) {
+          fail(invalidDocumentCode, 'animations must be a non-empty object.');
+        }
+
+        const effectCounts = {sound: 0, particle: 0, timeline: 0};
+        for (const [animationName, animation] of Object.entries(value.animations)) {
+          nonEmptyString(animationName, 'animation name', fail, invalidStringCode, trimStrings);
+          if (!isPlainObject(animation)) fail(invalidDocumentCode, `Animation ${animationName} must be an object.`);
+          if (animation.animation_length !== undefined) {
+            finiteNonNegative(animation.animation_length, `${animationName}.animation_length`, fail, invalidNumberCode);
+          }
+          if (animation.loop !== undefined) {
+            const loop = typeof animation.loop === 'boolean' ? String(animation.loop) : animation.loop;
+            if (typeof loop !== 'string' || !loopValues.has(loop)) {
+              fail(invalidLoopCode, `${animationName}.loop ${JSON.stringify(animation.loop)} is not an audited loop mode.`);
+            }
+          }
+          const bones = animation.bones === undefined ? {} : animation.bones;
+          if (!isPlainObject(bones)) fail(invalidDocumentCode, `${animationName}.bones must be an object.`);
+          for (const [boneName, channels] of Object.entries(bones)) {
+            nonEmptyString(boneName, `${animationName} bone name`, fail, invalidStringCode, trimStrings);
+            if (!isPlainObject(channels)) fail(invalidDocumentCode, `${animationName}.bones.${boneName} must be an object.`);
+            const channelOptions = {
+              fail,
+              invalidKeyframeCode,
+              invalidTimestampCode,
+              validateKeyframeLeaf,
+              leafIndicatorFields,
+              trimStrings,
+            };
+            validateChannel(channels.position, `${animationName}.bones.${boneName}.position`, channelOptions);
+            validateChannel(channels.rotation, `${animationName}.bones.${boneName}.rotation`, channelOptions);
+            validateChannel(channels.scale, `${animationName}.bones.${boneName}.scale`, channelOptions);
+          }
+          const counts = validateEffectChannels(animationName, animation, {
+            fail,
+            invalidEffectsCode,
+            invalidTimestampCode,
+            effectStringCode,
+            requireParticleEffect,
+            requireNonEmptyTimeline,
+            trimStrings,
+          });
+          effectCounts.sound += counts.sound;
+          effectCounts.particle += counts.particle;
+          effectCounts.timeline += counts.timeline;
+        }
+
+        const result = {
+          ok: true,
+          animationCount: Object.keys(value.animations).length,
+          effectCounts: Object.freeze(effectCounts),
+        };
+        if (expectedFormatVersion !== undefined) result.formatVersion = value.format_version;
+        if (validateIncludes) result.includeCount = includeCount;
+        return Object.freeze(result);
+      }
+
+      function serializeEffectMarker(marker, providerData, options) {
+        const {
+          fail,
+          invalidMarkerCode,
+          unsupportedMarkerCode,
+          invalidNumberCode,
+          stringCode,
+          providerLabel,
+          requireParticleEffect = false,
+          requireNonEmptyTimeline = false,
+          trimStrings = false,
+        } = options;
+        if (!isPlainObject(marker) || !isPlainObject(providerData)) {
+          fail(invalidMarkerCode, 'Effect marker and provider data must be objects.');
+        }
+        const time = String(finiteNonNegative(marker.time, 'effect marker time', fail, invalidNumberCode));
+        switch (marker.markerType) {
+          case 'sound':
+            return Object.freeze({
+              channel: 'sound_effects',
+              time,
+              value: Object.freeze({
+                effect: nonEmptyString(providerData.effect, 'sound effect', fail, stringCode, trimStrings),
+              }),
+            });
+          case 'particle': {
+            const value = {};
+            if (requireParticleEffect) {
+              value.effect = nonEmptyString(providerData.effect, 'particle effect', fail, stringCode, trimStrings);
+            }
+            for (const [sourceField, targetField] of [
+              ['effect', 'effect'],
+              ['locator', 'locator'],
+              ['preEffectScript', 'pre_effect_script'],
+            ]) {
+              if (providerData[sourceField] !== undefined && value[targetField] === undefined) {
+                value[targetField] = nonEmptyString(
+                  providerData[sourceField],
+                  `particle ${sourceField}`,
+                  fail,
+                  stringCode,
+                  trimStrings,
+                );
+              }
+            }
+            return Object.freeze({channel: 'particle_effects', time, value: Object.freeze(value)});
+          }
+          case 'timeline': {
+            const instruction = providerData.instruction;
+            const validString = typeof instruction === 'string'
+              && (!requireNonEmptyTimeline || instruction.length > 0);
+            const validArray = Array.isArray(instruction)
+              && (!requireNonEmptyTimeline || instruction.length > 0)
+              && instruction.every((entry) => typeof entry === 'string'
+                && (!requireNonEmptyTimeline || entry.length > 0));
+            if (!validString && !validArray) {
+              fail(invalidMarkerCode, 'timeline instruction must be a string or string array.');
+            }
+            return Object.freeze({
+              channel: 'timeline',
+              time,
+              value: Array.isArray(instruction) ? Object.freeze([...instruction]) : instruction,
+            });
+          }
+          default:
+            fail(
+              unsupportedMarkerCode,
+              `Marker type ${JSON.stringify(marker.markerType)} has no audited ${providerLabel} mapping.`,
+            );
+        }
+      }
+
+      function normalizeSourcePath(value, options) {
+        const {fail, invalidSourcePathCode, invalidStringCode, trimStrings = false} = options;
+        const output = nonEmptyString(
+          value,
+          'sourcePath',
+          fail,
+          invalidStringCode,
+          trimStrings,
+        ).replace(/\\/g, '/').replace(/\/$/, '');
+        if (output.split('/').includes('..')) {
+          fail(invalidSourcePathCode, 'sourcePath must not contain traversal segments.');
+        }
+        return output;
+      }
+
+      function normalizeRelativePath(value, field, options) {
+        const {fail, invalidPathCode, invalidStringCode, trimStrings = false} = options;
+        const output = nonEmptyString(value, field, fail, invalidStringCode, trimStrings)
+          .replace(/\\/g, '/')
+          .replace(/\/$/, '');
+        if (output.startsWith('/') || /^[A-Za-z]:/.test(output) || output.split('/').includes('..')) {
+          fail(invalidPathCode, `${field} must be a safe relative path.`);
+        }
+        return output;
+      }
+
+      function createExportPlan(input, options) {
+        const {
+          fail,
+          profileIds,
+          providerFamily,
+          providerLabel,
+          invalidPlanCode,
+          invalidProfileCode,
+          invalidSourcePathCode,
+          sourceMustBeBbmodelCode,
+          invalidPathCode,
+          invalidResourceNameCode,
+          invalidStringCode,
+          trimStrings = false,
+        } = options;
+        if (!isPlainObject(input)) fail(invalidPlanCode, 'Export plan request must be an object.');
+        if (!profileIds.has(input.profileId)) {
+          fail(invalidProfileCode, `Profile ${JSON.stringify(input.profileId)} is not a ${providerLabel} profile.`);
+        }
+        const sourcePath = normalizeSourcePath(input.sourcePath, {
+          fail,
+          invalidSourcePathCode,
+          invalidStringCode,
+          trimStrings,
+        });
+        if (!sourcePath.toLowerCase().endsWith('.bbmodel')) {
+          fail(sourceMustBeBbmodelCode, 'Source authority must remain a .bbmodel file.');
+        }
+        const outputDirectory = normalizeRelativePath(input.outputDirectory, 'outputDirectory', {
+          fail,
+          invalidPathCode,
+          invalidStringCode,
+          trimStrings,
+        });
+        const resourceName = nonEmptyString(
+          input.resourceName,
+          'resourceName',
+          fail,
+          invalidResourceNameCode,
+          trimStrings,
+        );
+        if (!/^[a-z0-9_.-]+$/.test(resourceName)) {
+          fail(invalidResourceNameCode, 'resourceName must be filesystem/resource-safe lowercase text.');
+        }
+        if (input.includeAnimations !== undefined && typeof input.includeAnimations !== 'boolean') {
+          fail(invalidPlanCode, 'includeAnimations must be boolean.');
+        }
+
+        const artifacts = [{kind: 'model', path: `${outputDirectory}/${resourceName}.geo.json`}];
+        if (input.includeAnimations === true) {
+          artifacts.push({kind: 'animation', path: `${outputDirectory}/${resourceName}.animation.json`});
+        }
+        return Object.freeze({
+          providerFamily,
+          profileId: input.profileId,
+          sourcePath,
+          preserveSource: true,
+          artifacts: Object.freeze(artifacts.map((artifact) => Object.freeze(artifact))),
+          runtimeEvidence: 'UNPROVEN',
+        });
+      }
+
+      module.exports = {
+        nonEmptyString,
+        finiteNonNegative,
+        vector3Numbers,
+        validateVectorExpression,
+        validateGeoDocument,
+        validateAnimationDocument,
+        serializeEffectMarker,
+        createExportPlan,
+      };
+    },
     "core/provider-adapter/geckolib4_adapter.js": function(module, exports, require) {
       'use strict';
 
       const {isPlainObject} = require('../common/contract_utils.js');
+      const bedrock = require('./bedrock_provider_common.js');
 
       const GECKOLIB4_AUTHORITY = Object.freeze({
         providerFamily: 'geckolib4',
@@ -2181,7 +2668,6 @@
       ]);
       const GEO_FORMAT_VERSIONS = new Set(['1.12.0', '1.14.0', '1.21.0']);
       const LOOP_VALUES = new Set(['false', 'play_once', 'true', 'loop', 'hold_on_last_frame']);
-      const LOCATOR_OBJECT_FIELDS = new Set(['ignore_inherited_scale', 'offset', 'rotation']);
 
       class GeckoLib4ContractError extends Error {
         constructor(code, message) {
@@ -2195,82 +2681,8 @@
         throw new GeckoLib4ContractError(code, message);
       }
 
-      function nonEmptyString(value, field) {
-        if (typeof value !== 'string' || value.length === 0) fail('INVALID_GECKOLIB4_STRING', `${field} must be a non-empty string.`);
-        return value;
-      }
-
-      function finiteNonNegative(value, field) {
-        if (!Number.isFinite(value) || value < 0) fail('INVALID_GECKOLIB4_NUMBER', `${field} must be a finite non-negative number.`);
-        return value;
-      }
-
-      function vector3(value, field, code = 'INVALID_GECKOLIB4_VECTOR3') {
-        if (!Array.isArray(value) || value.length !== 3 || !value.every(Number.isFinite)) {
-          fail(code, `${field} must contain exactly three finite numbers.`);
-        }
-        return value;
-      }
-
-      function validateLocatorValue(value, field) {
-        if (Array.isArray(value)) {
-          vector3(value, field, 'INVALID_GECKOLIB4_LOCATOR');
-          return;
-        }
-        if (!isPlainObject(value)) fail('INVALID_GECKOLIB4_LOCATOR', `${field} must be a vector or locator object.`);
-        for (const key of Object.keys(value)) {
-          if (!LOCATOR_OBJECT_FIELDS.has(key)) fail('INVALID_GECKOLIB4_LOCATOR', `${field}.${key} is not supported by GeckoLib 4.9.2.`);
-        }
-        if (value.ignore_inherited_scale !== undefined && typeof value.ignore_inherited_scale !== 'boolean') {
-          fail('INVALID_GECKOLIB4_LOCATOR', `${field}.ignore_inherited_scale must be boolean.`);
-        }
-        if (value.offset !== undefined) vector3(value.offset, `${field}.offset`, 'INVALID_GECKOLIB4_LOCATOR');
-        if (value.rotation !== undefined) vector3(value.rotation, `${field}.rotation`, 'INVALID_GECKOLIB4_LOCATOR');
-        if (value.offset === undefined && value.rotation === undefined) {
-          fail('INVALID_GECKOLIB4_LOCATOR', `${field} must define offset or rotation.`);
-        }
-      }
-
-      function validateGeckoLib4GeoDocument(value) {
-        if (!isPlainObject(value)) fail('INVALID_GECKOLIB4_GEO_DOCUMENT', 'Geo document must be an object.');
-        const formatVersion = value.format_version;
-        if (!GEO_FORMAT_VERSIONS.has(formatVersion)) {
-          fail('UNSUPPORTED_GECKOLIB4_GEO_FORMAT', `format_version ${JSON.stringify(formatVersion)} is not supported by GeckoLib 4.9.2.`);
-        }
-        const geometries = value['minecraft:geometry'];
-        if (!Array.isArray(geometries) || geometries.length === 0) {
-          fail('INVALID_GECKOLIB4_GEO_DOCUMENT', 'minecraft:geometry must contain at least one geometry entry.');
-        }
-
-        let locatorCount = 0;
-        geometries.forEach((geometry, geometryIndex) => {
-          if (!isPlainObject(geometry)) fail('INVALID_GECKOLIB4_GEO_DOCUMENT', `minecraft:geometry[${geometryIndex}] must be an object.`);
-          const bones = geometry.bones === undefined ? [] : geometry.bones;
-          if (!Array.isArray(bones)) fail('INVALID_GECKOLIB4_GEO_DOCUMENT', `minecraft:geometry[${geometryIndex}].bones must be an array.`);
-          bones.forEach((bone, boneIndex) => {
-            if (!isPlainObject(bone)) fail('INVALID_GECKOLIB4_GEO_DOCUMENT', `bone ${boneIndex} must be an object.`);
-            if (bone.locators === undefined) return;
-            if (!isPlainObject(bone.locators)) fail('INVALID_GECKOLIB4_LOCATOR', `bone ${boneIndex}.locators must be an object.`);
-            for (const [locatorName, locatorValue] of Object.entries(bone.locators)) {
-              nonEmptyString(locatorName, `bone ${boneIndex} locator name`);
-              validateLocatorValue(locatorValue, `bone ${boneIndex}.locators.${locatorName}`);
-              locatorCount++;
-            }
-          });
-        });
-
-        return Object.freeze({ok: true, formatVersion, geometryCount: geometries.length, locatorCount});
-      }
-
-      function validateMathScalar(value, field) {
-        if (Number.isFinite(value)) return;
-        if (typeof value === 'string' && value.length > 0) return;
-        fail('INVALID_GECKOLIB4_KEYFRAME', `${field} must be a finite number or Molang string.`);
-      }
-
       function validateVectorExpression(value, field) {
-        if (!Array.isArray(value) || value.length !== 3) fail('INVALID_GECKOLIB4_KEYFRAME', `${field} must contain exactly three values.`);
-        value.forEach((entry, index) => validateMathScalar(entry, `${field}[${index}]`));
+        bedrock.validateVectorExpression(value, field, fail, 'INVALID_GECKOLIB4_KEYFRAME');
       }
 
       function validateKeyframeLeaf(value, field) {
@@ -2282,7 +2694,9 @@
         if (!isPlainObject(value)) fail('INVALID_GECKOLIB4_KEYFRAME', `${field} has an unsupported keyframe shape.`);
         if (value.vector !== undefined) {
           validateVectorExpression(value.vector, `${field}.vector`);
-          if (value.easing !== undefined && typeof value.easing !== 'string') fail('INVALID_GECKOLIB4_KEYFRAME', `${field}.easing must be a string.`);
+          if (value.easing !== undefined && typeof value.easing !== 'string') {
+            fail('INVALID_GECKOLIB4_KEYFRAME', `${field}.easing must be a string.`);
+          }
           if (value.easingArgs !== undefined && (!Array.isArray(value.easingArgs) || !value.easingArgs.every(Number.isFinite))) {
             fail('INVALID_GECKOLIB4_KEYFRAME', `${field}.easingArgs must contain finite numbers.`);
           }
@@ -2290,160 +2704,67 @@
         }
         if (value.pre !== undefined) validateVectorExpression(value.pre, `${field}.pre`);
         if (value.post !== undefined) validateVectorExpression(value.post, `${field}.post`);
-        if (value.pre === undefined && value.post === undefined) fail('INVALID_GECKOLIB4_KEYFRAME', `${field} must define vector, pre, or post.`);
-        if (value.lerp_mode !== undefined && typeof value.lerp_mode !== 'string') fail('INVALID_GECKOLIB4_KEYFRAME', `${field}.lerp_mode must be a string.`);
-      }
-
-      function validateChannel(value, field) {
-        if (value === undefined) return;
-        if (Number.isFinite(value) || (typeof value === 'string' && value.length > 0) || Array.isArray(value)) {
-          validateKeyframeLeaf(value, field);
-          return;
+        if (value.pre === undefined && value.post === undefined) {
+          fail('INVALID_GECKOLIB4_KEYFRAME', `${field} must define vector, pre, or post.`);
         }
-        if (!isPlainObject(value)) fail('INVALID_GECKOLIB4_KEYFRAME', `${field} must be a keyframe value or timestamp map.`);
-        if (value.vector !== undefined || value.pre !== undefined || value.post !== undefined) {
-          validateKeyframeLeaf(value, field);
-          return;
-        }
-        for (const [timestamp, frame] of Object.entries(value)) {
-          const time = Number(timestamp);
-          if (!Number.isFinite(time) || time < 0) fail('INVALID_GECKOLIB4_TIMESTAMP', `${field}.${timestamp} is not a valid non-negative timestamp.`);
-          validateKeyframeLeaf(frame, `${field}.${timestamp}`);
+        if (value.lerp_mode !== undefined && typeof value.lerp_mode !== 'string') {
+          fail('INVALID_GECKOLIB4_KEYFRAME', `${field}.lerp_mode must be a string.`);
         }
       }
 
-      function validateEffectTimestamp(timestamp, field) {
-        const time = Number(timestamp);
-        if (!Number.isFinite(time) || time < 0) fail('INVALID_GECKOLIB4_TIMESTAMP', `${field}.${timestamp} is not a valid non-negative timestamp.`);
-      }
-
-      function validateGeckoLib4AnimationDocument(value) {
-        if (!isPlainObject(value)) fail('INVALID_GECKOLIB4_ANIMATION_DOCUMENT', 'Animation document must be an object.');
-        if (!isPlainObject(value.animations) || Object.keys(value.animations).length === 0) {
-          fail('INVALID_GECKOLIB4_ANIMATION_DOCUMENT', 'animations must be a non-empty object.');
-        }
-
-        const effectCounts = {sound: 0, particle: 0, timeline: 0};
-        for (const [animationName, animation] of Object.entries(value.animations)) {
-          nonEmptyString(animationName, 'animation name');
-          if (!isPlainObject(animation)) fail('INVALID_GECKOLIB4_ANIMATION_DOCUMENT', `Animation ${animationName} must be an object.`);
-          if (animation.animation_length !== undefined) finiteNonNegative(animation.animation_length, `${animationName}.animation_length`);
-          if (animation.loop !== undefined) {
-            const loop = typeof animation.loop === 'boolean' ? String(animation.loop) : animation.loop;
-            if (typeof loop !== 'string' || !LOOP_VALUES.has(loop)) fail('INVALID_GECKOLIB4_LOOP', `${animationName}.loop is not a supported GeckoLib 4 loop mode.`);
-          }
-          const bones = animation.bones === undefined ? {} : animation.bones;
-          if (!isPlainObject(bones)) fail('INVALID_GECKOLIB4_ANIMATION_DOCUMENT', `${animationName}.bones must be an object.`);
-          for (const [boneName, channels] of Object.entries(bones)) {
-            nonEmptyString(boneName, `${animationName} bone name`);
-            if (!isPlainObject(channels)) fail('INVALID_GECKOLIB4_ANIMATION_DOCUMENT', `${animationName}.bones.${boneName} must be an object.`);
-            validateChannel(channels.position, `${animationName}.bones.${boneName}.position`);
-            validateChannel(channels.rotation, `${animationName}.bones.${boneName}.rotation`);
-            validateChannel(channels.scale, `${animationName}.bones.${boneName}.scale`);
-          }
-
-          const sounds = animation.sound_effects === undefined ? {} : animation.sound_effects;
-          if (!isPlainObject(sounds)) fail('INVALID_GECKOLIB4_EFFECTS', `${animationName}.sound_effects must be an object.`);
-          for (const [timestamp, sound] of Object.entries(sounds)) {
-            validateEffectTimestamp(timestamp, `${animationName}.sound_effects`);
-            if (!isPlainObject(sound)) fail('INVALID_GECKOLIB4_EFFECTS', `${animationName}.sound_effects.${timestamp} must be an object.`);
-            nonEmptyString(sound.effect, `${animationName}.sound_effects.${timestamp}.effect`);
-            effectCounts.sound++;
-          }
-
-          const particles = animation.particle_effects === undefined ? {} : animation.particle_effects;
-          if (!isPlainObject(particles)) fail('INVALID_GECKOLIB4_EFFECTS', `${animationName}.particle_effects must be an object.`);
-          for (const [timestamp, particle] of Object.entries(particles)) {
-            validateEffectTimestamp(timestamp, `${animationName}.particle_effects`);
-            if (!isPlainObject(particle)) fail('INVALID_GECKOLIB4_EFFECTS', `${animationName}.particle_effects.${timestamp} must be an object.`);
-            for (const field of ['effect', 'locator', 'pre_effect_script']) {
-              if (particle[field] !== undefined && typeof particle[field] !== 'string') {
-                fail('INVALID_GECKOLIB4_EFFECTS', `${animationName}.particle_effects.${timestamp}.${field} must be a string.`);
-              }
-            }
-            effectCounts.particle++;
-          }
-
-          const timeline = animation.timeline === undefined ? {} : animation.timeline;
-          if (!isPlainObject(timeline)) fail('INVALID_GECKOLIB4_EFFECTS', `${animationName}.timeline must be an object.`);
-          for (const [timestamp, instruction] of Object.entries(timeline)) {
-            validateEffectTimestamp(timestamp, `${animationName}.timeline`);
-            const validInstruction = typeof instruction === 'string' || (Array.isArray(instruction) && instruction.every((entry) => typeof entry === 'string'));
-            if (!validInstruction) fail('INVALID_GECKOLIB4_EFFECTS', `${animationName}.timeline.${timestamp} must be a string or string array.`);
-            effectCounts.timeline++;
-          }
-        }
-
-        return Object.freeze({
-          ok: true,
-          animationCount: Object.keys(value.animations).length,
-          effectCounts: Object.freeze(effectCounts),
+      function validateGeckoLib4GeoDocument(value) {
+        return bedrock.validateGeoDocument(value, {
+          fail,
+          invalidDocumentCode: 'INVALID_GECKOLIB4_GEO_DOCUMENT',
+          unsupportedFormatCode: 'UNSUPPORTED_GECKOLIB4_GEO_FORMAT',
+          invalidLocatorCode: 'INVALID_GECKOLIB4_LOCATOR',
+          invalidStringCode: 'INVALID_GECKOLIB4_STRING',
+          providerLabel: 'GeckoLib 4.9.2',
+          formatVersions: GEO_FORMAT_VERSIONS,
         });
       }
 
-      function effectTimeKey(value) {
-        return String(finiteNonNegative(value, 'effect marker time'));
+      function validateGeckoLib4AnimationDocument(value) {
+        return bedrock.validateAnimationDocument(value, {
+          fail,
+          invalidDocumentCode: 'INVALID_GECKOLIB4_ANIMATION_DOCUMENT',
+          invalidStringCode: 'INVALID_GECKOLIB4_STRING',
+          invalidNumberCode: 'INVALID_GECKOLIB4_NUMBER',
+          invalidLoopCode: 'INVALID_GECKOLIB4_LOOP',
+          invalidKeyframeCode: 'INVALID_GECKOLIB4_KEYFRAME',
+          invalidTimestampCode: 'INVALID_GECKOLIB4_TIMESTAMP',
+          invalidEffectsCode: 'INVALID_GECKOLIB4_EFFECTS',
+          effectStringCode: 'INVALID_GECKOLIB4_STRING',
+          loopValues: LOOP_VALUES,
+          validateKeyframeLeaf,
+          leafIndicatorFields: ['vector', 'pre', 'post'],
+        });
       }
 
       function serializeGeckoLib4EffectMarker(marker, providerData) {
-        if (!isPlainObject(marker) || !isPlainObject(providerData)) fail('INVALID_GECKOLIB4_EFFECT_MARKER', 'Effect marker and provider data must be objects.');
-        const time = effectTimeKey(marker.time);
-        switch (marker.markerType) {
-          case 'sound':
-            return Object.freeze({
-              channel: 'sound_effects',
-              time,
-              value: Object.freeze({effect: nonEmptyString(providerData.effect, 'sound effect')}),
-            });
-          case 'particle': {
-            const value = {};
-            for (const [sourceField, targetField] of [['effect', 'effect'], ['locator', 'locator'], ['preEffectScript', 'pre_effect_script']]) {
-              if (providerData[sourceField] !== undefined) value[targetField] = nonEmptyString(providerData[sourceField], `particle ${sourceField}`);
-            }
-            return Object.freeze({channel: 'particle_effects', time, value: Object.freeze(value)});
-          }
-          case 'timeline':
-            if (typeof providerData.instruction !== 'string' && !(Array.isArray(providerData.instruction) && providerData.instruction.every((entry) => typeof entry === 'string'))) {
-              fail('INVALID_GECKOLIB4_EFFECT_MARKER', 'timeline instruction must be a string or string array.');
-            }
-            return Object.freeze({channel: 'timeline', time, value: providerData.instruction});
-          default:
-            fail('UNSUPPORTED_GECKOLIB4_EFFECT_MARKER', `Marker type ${JSON.stringify(marker.markerType)} has no audited GeckoLib 4 mapping.`);
-        }
-      }
-
-      function normalizedSourceAuthorityPath(value) {
-        const output = nonEmptyString(value, 'sourcePath').replace(/\\/g, '/').replace(/\/$/, '');
-        if (output.split('/').includes('..')) fail('INVALID_GECKOLIB4_SOURCE_PATH', 'sourcePath must not contain traversal segments.');
-        return output;
-      }
-
-      function normalizedRelativePath(value, field) {
-        const output = nonEmptyString(value, field).replace(/\\/g, '/').replace(/\/$/, '');
-        if (output.startsWith('/') || /^[A-Za-z]:/.test(output) || output.split('/').includes('..')) fail('INVALID_GECKOLIB4_PATH', `${field} must be a safe relative path.`);
-        return output;
+        return bedrock.serializeEffectMarker(marker, providerData, {
+          fail,
+          invalidMarkerCode: 'INVALID_GECKOLIB4_EFFECT_MARKER',
+          unsupportedMarkerCode: 'UNSUPPORTED_GECKOLIB4_EFFECT_MARKER',
+          invalidNumberCode: 'INVALID_GECKOLIB4_NUMBER',
+          stringCode: 'INVALID_GECKOLIB4_STRING',
+          providerLabel: 'GeckoLib 4',
+        });
       }
 
       function createGeckoLib4ExportPlan(input) {
-        if (!isPlainObject(input)) fail('INVALID_GECKOLIB4_EXPORT_PLAN', 'Export plan request must be an object.');
-        if (!GECKOLIB4_PROFILE_IDS.has(input.profileId)) fail('INVALID_GECKOLIB4_PROFILE', `Profile ${JSON.stringify(input.profileId)} is not a GeckoLib 4 profile.`);
-        const sourcePath = normalizedSourceAuthorityPath(input.sourcePath);
-        if (!sourcePath.toLowerCase().endsWith('.bbmodel')) fail('GECKOLIB4_SOURCE_MUST_BE_BBMODEL', 'Source authority must remain a .bbmodel file.');
-        const outputDirectory = normalizedRelativePath(input.outputDirectory, 'outputDirectory');
-        const resourceName = nonEmptyString(input.resourceName, 'resourceName');
-        if (!/^[a-z0-9_.-]+$/.test(resourceName)) fail('INVALID_GECKOLIB4_RESOURCE_NAME', 'resourceName must be filesystem/resource-safe lowercase text.');
-        if (input.includeAnimations !== undefined && typeof input.includeAnimations !== 'boolean') fail('INVALID_GECKOLIB4_EXPORT_PLAN', 'includeAnimations must be boolean.');
-
-        const artifacts = [{kind: 'model', path: `${outputDirectory}/${resourceName}.geo.json`}];
-        if (input.includeAnimations === true) artifacts.push({kind: 'animation', path: `${outputDirectory}/${resourceName}.animation.json`});
-
-        return Object.freeze({
+        return bedrock.createExportPlan(input, {
+          fail,
+          profileIds: GECKOLIB4_PROFILE_IDS,
           providerFamily: 'geckolib4',
-          profileId: input.profileId,
-          sourcePath,
-          preserveSource: true,
-          artifacts: Object.freeze(artifacts.map((artifact) => Object.freeze(artifact))),
-          runtimeEvidence: 'UNPROVEN',
+          providerLabel: 'GeckoLib 4',
+          invalidPlanCode: 'INVALID_GECKOLIB4_EXPORT_PLAN',
+          invalidProfileCode: 'INVALID_GECKOLIB4_PROFILE',
+          invalidSourcePathCode: 'INVALID_GECKOLIB4_SOURCE_PATH',
+          sourceMustBeBbmodelCode: 'GECKOLIB4_SOURCE_MUST_BE_BBMODEL',
+          invalidPathCode: 'INVALID_GECKOLIB4_PATH',
+          invalidResourceNameCode: 'INVALID_GECKOLIB4_RESOURCE_NAME',
+          invalidStringCode: 'INVALID_GECKOLIB4_STRING',
         });
       }
 
@@ -2460,6 +2781,7 @@
       'use strict';
 
       const {isPlainObject, rejectUnknownFields} = require('../common/contract_utils.js');
+      const bedrock = require('./bedrock_provider_common.js');
 
       const AZURELIB_AUTHORITY = Object.freeze({
         providerFamily: 'azurelib',
@@ -2484,7 +2806,6 @@
       const GEO_FORMAT_VERSIONS = new Set(['1.12.0', '1.14.0', '1.21.0']);
       const LOOP_VALUES = new Set(['false', 'true', 'play_once', 'loop', 'hold_on_last_frame']);
       const BEDROCK_LERP_MODES = new Set(['linear', 'catmullrom']);
-      const LOCATOR_OBJECT_FIELDS = new Set(['ignore_inherited_scale', 'offset', 'rotation']);
       const AZURE_KEYFRAME_FIELDS = new Set(['vector', 'easing', 'easingArgs']);
       const BEDROCK_KEYFRAME_FIELDS = new Set(['pre', 'post', 'lerp_mode']);
       const RESOURCE_LOCATION = /^[a-z0-9_.-]+:[a-z0-9/._-]+$/;
@@ -2506,18 +2827,6 @@
         return value;
       }
 
-      function finiteNonNegative(value, field) {
-        if (!Number.isFinite(value) || value < 0) fail('INVALID_AZURELIB_NUMBER', `${field} must be a finite non-negative number.`);
-        return value;
-      }
-
-      function vector3Numbers(value, field, code = 'INVALID_AZURELIB_VECTOR3') {
-        if (!Array.isArray(value) || value.length !== 3 || !value.every(Number.isFinite)) {
-          fail(code, `${field} must contain exactly three finite numbers.`);
-        }
-        return value;
-      }
-
       function rejectAuthoringMetadata(value, artifact) {
         if (Object.prototype.hasOwnProperty.call(value, 'azureIKChains')) {
           fail(
@@ -2527,66 +2836,8 @@
         }
       }
 
-      function validateLocatorValue(value, field) {
-        if (Array.isArray(value)) {
-          vector3Numbers(value, field, 'INVALID_AZURELIB_LOCATOR');
-          return;
-        }
-        if (!isPlainObject(value)) fail('INVALID_AZURELIB_LOCATOR', `${field} must be a vector or locator object.`);
-        rejectUnknownFields(value, LOCATOR_OBJECT_FIELDS, fail, 'INVALID_AZURELIB_LOCATOR', field);
-        if (value.ignore_inherited_scale !== undefined && typeof value.ignore_inherited_scale !== 'boolean') {
-          fail('INVALID_AZURELIB_LOCATOR', `${field}.ignore_inherited_scale must be boolean.`);
-        }
-        if (value.offset !== undefined) vector3Numbers(value.offset, `${field}.offset`, 'INVALID_AZURELIB_LOCATOR');
-        if (value.rotation !== undefined) vector3Numbers(value.rotation, `${field}.rotation`, 'INVALID_AZURELIB_LOCATOR');
-        if (value.offset === undefined && value.rotation === undefined) {
-          fail('INVALID_AZURELIB_LOCATOR', `${field} must define offset or rotation.`);
-        }
-      }
-
-      function validateAzureLibGeoDocument(value) {
-        if (!isPlainObject(value)) fail('INVALID_AZURELIB_GEO_DOCUMENT', 'Geo document must be an object.');
-        rejectAuthoringMetadata(value, 'geometry');
-        const formatVersion = value.format_version;
-        if (!GEO_FORMAT_VERSIONS.has(formatVersion)) {
-          fail('UNSUPPORTED_AZURELIB_GEO_FORMAT', `format_version ${JSON.stringify(formatVersion)} is not supported by AzureLib 3.1.11.`);
-        }
-        const geometries = value['minecraft:geometry'];
-        if (!Array.isArray(geometries) || geometries.length === 0) {
-          fail('INVALID_AZURELIB_GEO_DOCUMENT', 'minecraft:geometry must contain at least one geometry entry.');
-        }
-
-        let locatorCount = 0;
-        geometries.forEach((geometry, geometryIndex) => {
-          if (!isPlainObject(geometry)) fail('INVALID_AZURELIB_GEO_DOCUMENT', `minecraft:geometry[${geometryIndex}] must be an object.`);
-          const bones = geometry.bones === undefined ? [] : geometry.bones;
-          if (!Array.isArray(bones)) fail('INVALID_AZURELIB_GEO_DOCUMENT', `minecraft:geometry[${geometryIndex}].bones must be an array.`);
-          bones.forEach((bone, boneIndex) => {
-            if (!isPlainObject(bone)) fail('INVALID_AZURELIB_GEO_DOCUMENT', `bone ${boneIndex} must be an object.`);
-            if (bone.locators === undefined) return;
-            if (!isPlainObject(bone.locators)) fail('INVALID_AZURELIB_LOCATOR', `bone ${boneIndex}.locators must be an object.`);
-            for (const [locatorName, locatorValue] of Object.entries(bone.locators)) {
-              nonEmptyString(locatorName, `bone ${boneIndex} locator name`, 'INVALID_AZURELIB_LOCATOR');
-              validateLocatorValue(locatorValue, `bone ${boneIndex}.locators.${locatorName}`);
-              locatorCount++;
-            }
-          });
-        });
-
-        return Object.freeze({ok: true, formatVersion, geometryCount: geometries.length, locatorCount});
-      }
-
-      function validateMathScalar(value, field) {
-        if (Number.isFinite(value)) return;
-        if (typeof value === 'string' && value.trim()) return;
-        fail('INVALID_AZURELIB_KEYFRAME', `${field} must be a finite number or Molang string.`);
-      }
-
       function validateVectorExpression(value, field) {
-        if (!Array.isArray(value) || value.length !== 3) {
-          fail('INVALID_AZURELIB_KEYFRAME', `${field} must contain exactly three values.`);
-        }
-        value.forEach((entry, index) => validateMathScalar(entry, `${field}[${index}]`));
+        bedrock.validateVectorExpression(value, field, fail, 'INVALID_AZURELIB_KEYFRAME', true);
       }
 
       function validateBedrockVector(value, field) {
@@ -2613,14 +2864,21 @@
         const hasAzureShape = value.vector !== undefined || value.easing !== undefined || value.easingArgs !== undefined;
         const hasBedrockShape = value.pre !== undefined || value.post !== undefined || value.lerp_mode !== undefined;
         if (hasAzureShape && hasBedrockShape) {
-          fail('INVALID_AZURELIB_KEYFRAME', `${field} must not mix AzureLib vector/easing fields with Bedrock pre/post/lerp_mode fields in one keyframe.`);
+          fail(
+            'INVALID_AZURELIB_KEYFRAME',
+            `${field} must not mix AzureLib vector/easing fields with Bedrock pre/post/lerp_mode fields in one keyframe.`,
+          );
         }
 
         if (hasAzureShape) {
           rejectUnknownFields(value, AZURE_KEYFRAME_FIELDS, fail, 'INVALID_AZURELIB_KEYFRAME', field);
-          if (value.vector === undefined) fail('INVALID_AZURELIB_KEYFRAME', `${field}.vector is required for AzureLib easing keyframes.`);
+          if (value.vector === undefined) {
+            fail('INVALID_AZURELIB_KEYFRAME', `${field}.vector is required for AzureLib easing keyframes.`);
+          }
           validateVectorExpression(value.vector, `${field}.vector`);
-          if (value.easing !== undefined) nonEmptyString(value.easing, `${field}.easing`, 'INVALID_AZURELIB_KEYFRAME');
+          if (value.easing !== undefined) {
+            nonEmptyString(value.easing, `${field}.easing`, 'INVALID_AZURELIB_KEYFRAME');
+          }
           if (value.easingArgs !== undefined && (!Array.isArray(value.easingArgs) || !value.easingArgs.every(Number.isFinite))) {
             fail('INVALID_AZURELIB_KEYFRAME', `${field}.easingArgs must contain finite numbers.`);
           }
@@ -2635,38 +2893,15 @@
             fail('INVALID_AZURELIB_KEYFRAME', `${field} must define pre or post when using Bedrock keyframe fields.`);
           }
           if (value.lerp_mode !== undefined && !BEDROCK_LERP_MODES.has(value.lerp_mode)) {
-            fail('UNSUPPORTED_AZURELIB_LERP_MODE', `${field}.lerp_mode ${JSON.stringify(value.lerp_mode)} is not audited for AzureLib 3.1.11.`);
+            fail(
+              'UNSUPPORTED_AZURELIB_LERP_MODE',
+              `${field}.lerp_mode ${JSON.stringify(value.lerp_mode)} is not audited for AzureLib 3.1.11.`,
+            );
           }
           return;
         }
 
         fail('INVALID_AZURELIB_KEYFRAME', `${field} has an unsupported keyframe object.`);
-      }
-
-      function validateChannel(value, field) {
-        if (value === undefined) return;
-        if (Number.isFinite(value) || (typeof value === 'string' && value.trim()) || Array.isArray(value)) {
-          validateKeyframeLeaf(value, field);
-          return;
-        }
-        if (!isPlainObject(value)) fail('INVALID_AZURELIB_KEYFRAME', `${field} must be a keyframe value or timestamp map.`);
-        if (
-          value.vector !== undefined || value.easing !== undefined || value.easingArgs !== undefined
-          || value.pre !== undefined || value.post !== undefined || value.lerp_mode !== undefined
-        ) {
-          validateKeyframeLeaf(value, field);
-          return;
-        }
-        for (const [timestamp, frame] of Object.entries(value)) {
-          const time = Number(timestamp);
-          if (!Number.isFinite(time) || time < 0) fail('INVALID_AZURELIB_TIMESTAMP', `${field}.${timestamp} is not a valid non-negative timestamp.`);
-          validateKeyframeLeaf(frame, `${field}.${timestamp}`);
-        }
-      }
-
-      function validateEffectTimestamp(timestamp, field) {
-        const time = Number(timestamp);
-        if (!Number.isFinite(time) || time < 0) fail('INVALID_AZURELIB_TIMESTAMP', `${field}.${timestamp} is not a valid non-negative timestamp.`);
       }
 
       function validateIncludes(value) {
@@ -2675,16 +2910,31 @@
         const claimedAnimations = new Set();
         value.forEach((entry, index) => {
           if (!isPlainObject(entry)) fail('INVALID_AZURELIB_INCLUDES', `includes[${index}] must be an object.`);
-          rejectUnknownFields(entry, new Set(['file_id', 'animations']), fail, 'INVALID_AZURELIB_INCLUDES', `includes[${index}]`);
+          rejectUnknownFields(
+            entry,
+            new Set(['file_id', 'animations']),
+            fail,
+            'INVALID_AZURELIB_INCLUDES',
+            `includes[${index}]`,
+          );
           const fileId = nonEmptyString(entry.file_id, `includes[${index}].file_id`, 'INVALID_AZURELIB_INCLUDES');
-          if (!RESOURCE_LOCATION.test(fileId)) fail('INVALID_AZURELIB_INCLUDES', `includes[${index}].file_id must be a Minecraft resource location.`);
+          if (!RESOURCE_LOCATION.test(fileId)) {
+            fail('INVALID_AZURELIB_INCLUDES', `includes[${index}].file_id must be a Minecraft resource location.`);
+          }
           if (!Array.isArray(entry.animations) || entry.animations.length === 0) {
             fail('INVALID_AZURELIB_INCLUDES', `includes[${index}].animations must be a non-empty string array.`);
           }
           for (const animationName of entry.animations) {
-            const name = nonEmptyString(animationName, `includes[${index}] animation name`, 'INVALID_AZURELIB_INCLUDES');
+            const name = nonEmptyString(
+              animationName,
+              `includes[${index}] animation name`,
+              'INVALID_AZURELIB_INCLUDES',
+            );
             if (claimedAnimations.has(name)) {
-              fail('DUPLICATE_AZURELIB_INCLUDE_ANIMATION', `Animation ${JSON.stringify(name)} is claimed by more than one include entry.`);
+              fail(
+                'DUPLICATE_AZURELIB_INCLUDE_ANIMATION',
+                `Animation ${JSON.stringify(name)} is claimed by more than one include entry.`,
+              );
             }
             claimedAnimations.add(name);
           }
@@ -2692,160 +2942,80 @@
         return value.length;
       }
 
-      function validateAzureLibAnimationDocument(value) {
-        if (!isPlainObject(value)) fail('INVALID_AZURELIB_ANIMATION_DOCUMENT', 'Animation document must be an object.');
-        rejectAuthoringMetadata(value, 'animation');
-        if (value.format_version !== AZURELIB_AUTHORITY.animationFormatVersion) {
-          fail(
-            'UNSUPPORTED_AZURELIB_ANIMATION_FORMAT',
-            `format_version ${JSON.stringify(value.format_version)} does not match AzureLib Animator ${AZURELIB_AUTHORITY.blockbenchPluginVersion} output ${AZURELIB_AUTHORITY.animationFormatVersion}.`,
-          );
-        }
-        const includeCount = validateIncludes(value.includes);
-        if (!isPlainObject(value.animations) || Object.keys(value.animations).length === 0) {
-          fail('INVALID_AZURELIB_ANIMATION_DOCUMENT', 'animations must be a non-empty object.');
-        }
-
-        const effectCounts = {sound: 0, particle: 0, timeline: 0};
-        for (const [animationName, animation] of Object.entries(value.animations)) {
-          nonEmptyString(animationName, 'animation name');
-          if (!isPlainObject(animation)) fail('INVALID_AZURELIB_ANIMATION_DOCUMENT', `Animation ${animationName} must be an object.`);
-          if (animation.animation_length !== undefined) finiteNonNegative(animation.animation_length, `${animationName}.animation_length`);
-          if (animation.loop !== undefined) {
-            const loop = typeof animation.loop === 'boolean' ? String(animation.loop) : animation.loop;
-            if (typeof loop !== 'string' || !LOOP_VALUES.has(loop)) {
-              fail('UNSUPPORTED_AZURELIB_LOOP', `${animationName}.loop ${JSON.stringify(animation.loop)} is not a built-in audited AzureLib 3.1.11 loop mode.`);
-            }
-          }
-
-          const bones = animation.bones === undefined ? {} : animation.bones;
-          if (!isPlainObject(bones)) fail('INVALID_AZURELIB_ANIMATION_DOCUMENT', `${animationName}.bones must be an object.`);
-          for (const [boneName, channels] of Object.entries(bones)) {
-            nonEmptyString(boneName, `${animationName} bone name`);
-            if (!isPlainObject(channels)) fail('INVALID_AZURELIB_ANIMATION_DOCUMENT', `${animationName}.bones.${boneName} must be an object.`);
-            validateChannel(channels.position, `${animationName}.bones.${boneName}.position`);
-            validateChannel(channels.rotation, `${animationName}.bones.${boneName}.rotation`);
-            validateChannel(channels.scale, `${animationName}.bones.${boneName}.scale`);
-          }
-
-          const sounds = animation.sound_effects === undefined ? {} : animation.sound_effects;
-          if (!isPlainObject(sounds)) fail('INVALID_AZURELIB_EFFECTS', `${animationName}.sound_effects must be an object.`);
-          for (const [timestamp, sound] of Object.entries(sounds)) {
-            validateEffectTimestamp(timestamp, `${animationName}.sound_effects`);
-            if (!isPlainObject(sound)) fail('INVALID_AZURELIB_EFFECTS', `${animationName}.sound_effects.${timestamp} must be an object.`);
-            nonEmptyString(sound.effect, `${animationName}.sound_effects.${timestamp}.effect`, 'INVALID_AZURELIB_EFFECTS');
-            effectCounts.sound++;
-          }
-
-          const particles = animation.particle_effects === undefined ? {} : animation.particle_effects;
-          if (!isPlainObject(particles)) fail('INVALID_AZURELIB_EFFECTS', `${animationName}.particle_effects must be an object.`);
-          for (const [timestamp, particle] of Object.entries(particles)) {
-            validateEffectTimestamp(timestamp, `${animationName}.particle_effects`);
-            if (!isPlainObject(particle)) fail('INVALID_AZURELIB_EFFECTS', `${animationName}.particle_effects.${timestamp} must be an object.`);
-            nonEmptyString(particle.effect, `${animationName}.particle_effects.${timestamp}.effect`, 'INVALID_AZURELIB_EFFECTS');
-            for (const field of ['locator', 'pre_effect_script']) {
-              if (particle[field] !== undefined && typeof particle[field] !== 'string') {
-                fail('INVALID_AZURELIB_EFFECTS', `${animationName}.particle_effects.${timestamp}.${field} must be a string.`);
-              }
-            }
-            effectCounts.particle++;
-          }
-
-          const timeline = animation.timeline === undefined ? {} : animation.timeline;
-          if (!isPlainObject(timeline)) fail('INVALID_AZURELIB_EFFECTS', `${animationName}.timeline must be an object.`);
-          for (const [timestamp, instruction] of Object.entries(timeline)) {
-            validateEffectTimestamp(timestamp, `${animationName}.timeline`);
-            const validInstruction = typeof instruction === 'string'
-              ? instruction.length > 0
-              : Array.isArray(instruction) && instruction.length > 0 && instruction.every((entry) => typeof entry === 'string' && entry.length > 0);
-            if (!validInstruction) fail('INVALID_AZURELIB_EFFECTS', `${animationName}.timeline.${timestamp} must be a non-empty string or non-empty string array.`);
-            effectCounts.timeline++;
-          }
-        }
-
-        return Object.freeze({
-          ok: true,
-          formatVersion: value.format_version,
-          animationCount: Object.keys(value.animations).length,
-          includeCount,
-          effectCounts: Object.freeze(effectCounts),
+      function validateAzureLibGeoDocument(value) {
+        return bedrock.validateGeoDocument(value, {
+          fail,
+          invalidDocumentCode: 'INVALID_AZURELIB_GEO_DOCUMENT',
+          unsupportedFormatCode: 'UNSUPPORTED_AZURELIB_GEO_FORMAT',
+          invalidLocatorCode: 'INVALID_AZURELIB_LOCATOR',
+          invalidStringCode: 'INVALID_AZURELIB_STRING',
+          locatorNameCode: 'INVALID_AZURELIB_LOCATOR',
+          providerLabel: 'AzureLib 3.1.11',
+          formatVersions: GEO_FORMAT_VERSIONS,
+          rejectRootMetadata: rejectAuthoringMetadata,
+          trimStrings: true,
         });
       }
 
-      function effectTimeKey(value) {
-        return String(finiteNonNegative(value, 'effect marker time'));
+      function validateAzureLibAnimationDocument(value) {
+        return bedrock.validateAnimationDocument(value, {
+          fail,
+          invalidDocumentCode: 'INVALID_AZURELIB_ANIMATION_DOCUMENT',
+          invalidStringCode: 'INVALID_AZURELIB_STRING',
+          invalidNumberCode: 'INVALID_AZURELIB_NUMBER',
+          invalidLoopCode: 'UNSUPPORTED_AZURELIB_LOOP',
+          invalidKeyframeCode: 'INVALID_AZURELIB_KEYFRAME',
+          invalidTimestampCode: 'INVALID_AZURELIB_TIMESTAMP',
+          invalidEffectsCode: 'INVALID_AZURELIB_EFFECTS',
+          effectStringCode: 'INVALID_AZURELIB_EFFECTS',
+          loopValues: LOOP_VALUES,
+          validateKeyframeLeaf,
+          leafIndicatorFields: ['vector', 'easing', 'easingArgs', 'pre', 'post', 'lerp_mode'],
+          expectedFormatVersion: AZURELIB_AUTHORITY.animationFormatVersion,
+          unsupportedFormatCode: 'UNSUPPORTED_AZURELIB_ANIMATION_FORMAT',
+          rejectRootMetadata: rejectAuthoringMetadata,
+          validateIncludes,
+          requireParticleEffect: true,
+          requireNonEmptyTimeline: true,
+          trimStrings: true,
+        });
       }
 
       function serializeAzureLibEffectMarker(marker, providerData) {
-        if (!isPlainObject(marker) || !isPlainObject(providerData)) {
-          fail('INVALID_AZURELIB_EFFECT_MARKER', 'Effect marker and provider data must be objects.');
-        }
-        const time = effectTimeKey(marker.time);
-        switch (marker.markerType) {
-          case 'sound':
-            return Object.freeze({
-              channel: 'sound_effects',
-              time,
-              value: Object.freeze({effect: nonEmptyString(providerData.effect, 'sound effect', 'INVALID_AZURELIB_EFFECT_MARKER')}),
-            });
-          case 'particle': {
-            const value = {
-              effect: nonEmptyString(providerData.effect, 'particle effect', 'INVALID_AZURELIB_EFFECT_MARKER'),
-            };
-            if (providerData.locator !== undefined) value.locator = nonEmptyString(providerData.locator, 'particle locator', 'INVALID_AZURELIB_EFFECT_MARKER');
-            if (providerData.preEffectScript !== undefined) {
-              value.pre_effect_script = nonEmptyString(providerData.preEffectScript, 'particle preEffectScript', 'INVALID_AZURELIB_EFFECT_MARKER');
-            }
-            return Object.freeze({channel: 'particle_effects', time, value: Object.freeze(value)});
-          }
-          case 'timeline': {
-            const instruction = providerData.instruction;
-            const valid = typeof instruction === 'string'
-              ? instruction.length > 0
-              : Array.isArray(instruction) && instruction.length > 0 && instruction.every((entry) => typeof entry === 'string' && entry.length > 0);
-            if (!valid) fail('INVALID_AZURELIB_EFFECT_MARKER', 'timeline instruction must be a non-empty string or non-empty string array.');
-            return Object.freeze({channel: 'timeline', time, value: Array.isArray(instruction) ? Object.freeze([...instruction]) : instruction});
-          }
-          default:
-            fail('UNSUPPORTED_AZURELIB_EFFECT_MARKER', `Marker type ${JSON.stringify(marker.markerType)} has no audited AzureLib mapping.`);
-        }
-      }
-
-      function normalizedSourceAuthorityPath(value) {
-        const output = nonEmptyString(value, 'sourcePath', 'INVALID_AZURELIB_SOURCE_PATH').replace(/\\/g, '/').replace(/\/$/, '');
-        if (output.split('/').includes('..')) fail('INVALID_AZURELIB_SOURCE_PATH', 'sourcePath must not contain traversal segments.');
-        return output;
-      }
-
-      function normalizedRelativePath(value, field) {
-        const output = nonEmptyString(value, field, 'INVALID_AZURELIB_PATH').replace(/\\/g, '/').replace(/\/$/, '');
-        if (output.startsWith('/') || /^[A-Za-z]:/.test(output) || output.split('/').includes('..')) {
-          fail('INVALID_AZURELIB_PATH', `${field} must be a safe relative path.`);
-        }
-        return output;
+        return bedrock.serializeEffectMarker(marker, providerData, {
+          fail,
+          invalidMarkerCode: 'INVALID_AZURELIB_EFFECT_MARKER',
+          unsupportedMarkerCode: 'UNSUPPORTED_AZURELIB_EFFECT_MARKER',
+          invalidNumberCode: 'INVALID_AZURELIB_NUMBER',
+          stringCode: 'INVALID_AZURELIB_EFFECT_MARKER',
+          providerLabel: 'AzureLib',
+          requireParticleEffect: true,
+          requireNonEmptyTimeline: true,
+          trimStrings: true,
+        });
       }
 
       function createAzureLibExportPlan(input) {
         if (!isPlainObject(input)) fail('INVALID_AZURELIB_EXPORT_PLAN', 'Export plan request must be an object.');
-        if (!AZURELIB_PROFILE_IDS.has(input.profileId)) fail('INVALID_AZURELIB_PROFILE', `Profile ${JSON.stringify(input.profileId)} is not an AzureLib profile.`);
-        const sourcePath = normalizedSourceAuthorityPath(input.sourcePath);
-        if (!sourcePath.toLowerCase().endsWith('.bbmodel')) fail('AZURELIB_SOURCE_MUST_BE_BBMODEL', 'Source authority must remain a .bbmodel file.');
-        const outputDirectory = normalizedRelativePath(input.outputDirectory, 'outputDirectory');
-        const resourceName = nonEmptyString(input.resourceName, 'resourceName', 'INVALID_AZURELIB_RESOURCE_NAME');
-        if (!/^[a-z0-9_.-]+$/.test(resourceName)) fail('INVALID_AZURELIB_RESOURCE_NAME', 'resourceName must be filesystem/resource-safe lowercase text.');
-        if (input.includeAnimations !== undefined && typeof input.includeAnimations !== 'boolean') {
-          fail('INVALID_AZURELIB_EXPORT_PLAN', 'includeAnimations must be boolean.');
+        if (!AZURELIB_PROFILE_IDS.has(input.profileId)) {
+          fail('INVALID_AZURELIB_PROFILE', `Profile ${JSON.stringify(input.profileId)} is not an AzureLib profile.`);
         }
-
-        const artifacts = [{kind: 'model', path: `${outputDirectory}/${resourceName}.geo.json`}];
-        if (input.includeAnimations === true) artifacts.push({kind: 'animation', path: `${outputDirectory}/${resourceName}.animation.json`});
-        return Object.freeze({
+        nonEmptyString(input.sourcePath, 'sourcePath', 'INVALID_AZURELIB_SOURCE_PATH');
+        nonEmptyString(input.outputDirectory, 'outputDirectory', 'INVALID_AZURELIB_PATH');
+        nonEmptyString(input.resourceName, 'resourceName', 'INVALID_AZURELIB_RESOURCE_NAME');
+        return bedrock.createExportPlan(input, {
+          fail,
+          profileIds: AZURELIB_PROFILE_IDS,
           providerFamily: 'azurelib',
-          profileId: input.profileId,
-          sourcePath,
-          preserveSource: true,
-          artifacts: Object.freeze(artifacts.map((artifact) => Object.freeze(artifact))),
-          runtimeEvidence: 'UNPROVEN',
+          providerLabel: 'AzureLib',
+          invalidPlanCode: 'INVALID_AZURELIB_EXPORT_PLAN',
+          invalidProfileCode: 'INVALID_AZURELIB_PROFILE',
+          invalidSourcePathCode: 'INVALID_AZURELIB_SOURCE_PATH',
+          sourceMustBeBbmodelCode: 'AZURELIB_SOURCE_MUST_BE_BBMODEL',
+          invalidPathCode: 'INVALID_AZURELIB_PATH',
+          invalidResourceNameCode: 'INVALID_AZURELIB_RESOURCE_NAME',
+          invalidStringCode: 'INVALID_AZURELIB_STRING',
+          trimStrings: true,
         });
       }
 
@@ -5179,23 +5349,27 @@
 
       module.exports = {createBlockbenchAnimationAdapter};
     },
-    "blockbench-plugin/geckolib4_adapter.js": function(module, exports, require) {
+    "blockbench-plugin/provider_adapter_common.js": function(module, exports, require) {
       'use strict';
 
-      const geckolib4 = require('../core/provider-adapter/geckolib4_adapter.js');
-
-      function fail(code, message) {
-        throw new geckolib4.GeckoLib4ContractError(code, message);
-      }
-
-      function normalizedSourcePath(value) {
-        if (typeof value !== 'string' || value.length === 0) fail('GECKOLIB4_SOURCE_NOT_SAVED', 'Active GeckoLib project must be saved as a .bbmodel before provider export.');
+      function normalizeSavedSourcePath(value, options) {
+        const {
+          fail,
+          notSavedCode,
+          sourceMustBeBbmodelCode,
+          notSavedMessage,
+          sourceMustBeBbmodelMessage,
+        } = options;
+        if (typeof value !== 'string' || value.length === 0) fail(notSavedCode, notSavedMessage);
         const normalized = value.replace(/\\/g, '/');
-        if (!normalized.toLowerCase().endsWith('.bbmodel')) fail('GECKOLIB4_SOURCE_MUST_BE_BBMODEL', 'Active GeckoLib project source must remain a .bbmodel file.');
+        if (!normalized.toLowerCase().endsWith('.bbmodel')) {
+          fail(sourceMustBeBbmodelCode, sourceMustBeBbmodelMessage);
+        }
         return normalized;
       }
 
-      function cloneJsonDocument(value, code, label) {
+      function cloneJsonDocument(value, options) {
+        const {fail, code, label} = options;
         if (typeof value === 'string') {
           try {
             return JSON.parse(value);
@@ -5203,7 +5377,9 @@
             fail(code, `${label} compiler returned invalid JSON: ${error.message}`);
           }
         }
-        if (!value || typeof value !== 'object') fail(code, `${label} compiler must return JSON text or an object.`);
+        if (!value || typeof value !== 'object') {
+          fail(code, `${label} compiler must return JSON text or an object.`);
+        }
         try {
           return JSON.parse(JSON.stringify(value));
         } catch (error) {
@@ -5217,15 +5393,40 @@
         return Object.freeze(value);
       }
 
-      function createBlockbenchGeckoLib4Adapter(bb) {
-        if (!bb || typeof bb !== 'object') fail('GECKOLIB4_BLOCKBENCH_UNAVAILABLE', 'Blockbench API object is required.');
-        const project = bb.Blockbench?.Project;
-        if (!project || project.format?.id !== 'geckolib_model') {
-          fail('GECKOLIB4_PROJECT_FORMAT_REQUIRED', 'Active Blockbench project must use the GeckoLib plugin format geckolib_model.');
+      function createProviderBlockbenchAdapter(bb, config) {
+        const {
+          fail,
+          blockbenchUnavailableCode,
+          blockbenchUnavailableMessage,
+          projectFormatId,
+          projectFormatCode,
+          projectFormatMessage,
+          sourcePathOptions,
+          modelCodecUnavailableCode,
+          modelCodecUnavailableMessage,
+          invalidCompiledModelCode,
+          modelLabel,
+          validateModelDocument,
+          compileAnimationArtifact,
+          createExportPlan,
+          invalidExportPlanCode,
+          invalidExportPreviewCode,
+          invalidExportPreviewMessage,
+          invalidExportWriterCode,
+          sourceOverwriteCode,
+          sourceOverwriteMessage,
+        } = config;
+
+        if (!bb || typeof bb !== 'object') {
+          fail(blockbenchUnavailableCode, blockbenchUnavailableMessage);
         }
-        const savedSourcePath = normalizedSourcePath(project.save_path);
+        const project = bb.Blockbench?.Project;
+        if (!project || project.format?.id !== projectFormatId) {
+          fail(projectFormatCode, projectFormatMessage);
+        }
+        const savedSourcePath = normalizeSavedSourcePath(project.save_path, {fail, ...sourcePathOptions});
         if (typeof bb.Codecs?.bedrock?.compile !== 'function') {
-          fail('GECKOLIB4_MODEL_CODEC_UNAVAILABLE', 'Blockbench Codecs.bedrock.compile is required by the audited GeckoLib 4.2.5 integration.');
+          fail(modelCodecUnavailableCode, modelCodecUnavailableMessage);
         }
 
         const trustedPreviews = new WeakSet();
@@ -5235,30 +5436,56 @@
         }
 
         function compileModelDocument() {
-          const document = cloneJsonDocument(bb.Codecs.bedrock.compile(), 'INVALID_GECKOLIB4_COMPILED_MODEL', 'GeckoLib model');
-          geckolib4.validateGeckoLib4GeoDocument(document);
+          const document = cloneJsonDocument(bb.Codecs.bedrock.compile(), {
+            fail,
+            code: invalidCompiledModelCode,
+            label: modelLabel,
+          });
+          validateModelDocument(document);
           return deepFreezeJsonDocument(document);
+        }
+
+        function compileAnimationArtifactInternal() {
+          const artifact = compileAnimationArtifact({
+            bb,
+            project,
+            fail,
+            cloneJsonDocument,
+            deepFreezeJsonDocument,
+          });
+          if (!artifact || typeof artifact !== 'object' || !artifact.document) {
+            throw new TypeError('compileAnimationArtifact must return an object containing document.');
+          }
+          return Object.freeze(artifact);
         }
 
         function compileAnimationDocument() {
-          if (typeof bb.Animator?.buildFile !== 'function') {
-            fail('GECKOLIB4_ANIMATION_CODEC_UNAVAILABLE', 'Blockbench Animator.buildFile is required by the audited GeckoLib 4.2.5 integration.');
-          }
-          const document = cloneJsonDocument(bb.Animator.buildFile(), 'INVALID_GECKOLIB4_COMPILED_ANIMATION', 'GeckoLib animation');
-          geckolib4.validateGeckoLib4AnimationDocument(document);
-          return deepFreezeJsonDocument(document);
+          return compileAnimationArtifactInternal().document;
         }
 
         function previewExport(request) {
-          if (!request || typeof request !== 'object' || Array.isArray(request)) fail('INVALID_GECKOLIB4_EXPORT_PLAN', 'Export request must be an object.');
-          const plan = geckolib4.createGeckoLib4ExportPlan({...request, sourcePath: savedSourcePath});
+          if (!request || typeof request !== 'object' || Array.isArray(request)) {
+            fail(invalidExportPlanCode, 'Export request must be an object.');
+          }
+          const plan = createExportPlan({...request, sourcePath: savedSourcePath});
           const modelDocument = compileModelDocument();
-          const animationDocument = request.includeAnimations === true ? compileAnimationDocument() : null;
-          const artifacts = plan.artifacts.map((artifact) => Object.freeze({
-            kind: artifact.kind,
-            path: artifact.path,
-            document: artifact.kind === 'model' ? modelDocument : animationDocument,
-          }));
+          const animationArtifact = request.includeAnimations === true
+            ? compileAnimationArtifactInternal()
+            : null;
+          const artifacts = plan.artifacts.map((artifact) => {
+            if (artifact.kind === 'model') {
+              return Object.freeze({kind: artifact.kind, path: artifact.path, document: modelDocument});
+            }
+            const output = {
+              kind: artifact.kind,
+              path: artifact.path,
+              document: animationArtifact.document,
+            };
+            if (typeof animationArtifact.serializedContent === 'string') {
+              output.serializedContent = animationArtifact.serializedContent;
+            }
+            return Object.freeze(output);
+          });
           const preview = Object.freeze({
             plan,
             artifacts: Object.freeze(artifacts),
@@ -5270,16 +5497,19 @@
 
         function stageExport(preview, writer) {
           if (!preview || typeof preview !== 'object' || !trustedPreviews.has(preview)) {
-            fail('INVALID_GECKOLIB4_EXPORT_PREVIEW', 'Only a validated preview produced by this adapter can be staged.');
+            fail(invalidExportPreviewCode, invalidExportPreviewMessage);
           }
           if (!writer || typeof writer.writeText !== 'function') {
-            fail('INVALID_GECKOLIB4_EXPORT_WRITER', 'Export writer must provide writeText(path, content).');
+            fail(invalidExportWriterCode, 'Export writer must provide writeText(path, content).');
           }
           for (const artifact of preview.artifacts) {
             if (artifact.path === preview.plan.sourcePath || artifact.path.toLowerCase().endsWith('.bbmodel')) {
-              fail('GECKOLIB4_SOURCE_OVERWRITE_FORBIDDEN', 'Provider staging must never overwrite the source .bbmodel.');
+              fail(sourceOverwriteCode, sourceOverwriteMessage);
             }
-            writer.writeText(artifact.path, `${JSON.stringify(artifact.document, null, 2)}\n`);
+            const content = typeof artifact.serializedContent === 'string'
+              ? artifact.serializedContent
+              : JSON.stringify(artifact.document, null, 2);
+            writer.writeText(artifact.path, content.endsWith('\n') ? content : `${content}\n`);
           }
           return Object.freeze({
             ok: true,
@@ -5300,6 +5530,68 @@
       }
 
       module.exports = {
+        cloneJsonDocument,
+        deepFreezeJsonDocument,
+        createProviderBlockbenchAdapter,
+      };
+    },
+    "blockbench-plugin/geckolib4_adapter.js": function(module, exports, require) {
+      'use strict';
+
+      const geckolib4 = require('../core/provider-adapter/geckolib4_adapter.js');
+      const common = require('./provider_adapter_common.js');
+
+      function fail(code, message) {
+        throw new geckolib4.GeckoLib4ContractError(code, message);
+      }
+
+      function compileAnimationArtifact({bb, fail: failProvider, cloneJsonDocument, deepFreezeJsonDocument}) {
+        if (typeof bb.Animator?.buildFile !== 'function') {
+          failProvider(
+            'GECKOLIB4_ANIMATION_CODEC_UNAVAILABLE',
+            'Blockbench Animator.buildFile is required by the audited GeckoLib 4.2.5 integration.',
+          );
+        }
+        const document = cloneJsonDocument(bb.Animator.buildFile(), {
+          fail: failProvider,
+          code: 'INVALID_GECKOLIB4_COMPILED_ANIMATION',
+          label: 'GeckoLib animation',
+        });
+        geckolib4.validateGeckoLib4AnimationDocument(document);
+        return {document: deepFreezeJsonDocument(document)};
+      }
+
+      function createBlockbenchGeckoLib4Adapter(bb) {
+        return common.createProviderBlockbenchAdapter(bb, {
+          fail,
+          blockbenchUnavailableCode: 'GECKOLIB4_BLOCKBENCH_UNAVAILABLE',
+          blockbenchUnavailableMessage: 'Blockbench API object is required.',
+          projectFormatId: 'geckolib_model',
+          projectFormatCode: 'GECKOLIB4_PROJECT_FORMAT_REQUIRED',
+          projectFormatMessage: 'Active Blockbench project must use the GeckoLib plugin format geckolib_model.',
+          sourcePathOptions: {
+            notSavedCode: 'GECKOLIB4_SOURCE_NOT_SAVED',
+            sourceMustBeBbmodelCode: 'GECKOLIB4_SOURCE_MUST_BE_BBMODEL',
+            notSavedMessage: 'Active GeckoLib project must be saved as a .bbmodel before provider export.',
+            sourceMustBeBbmodelMessage: 'Active GeckoLib project source must remain a .bbmodel file.',
+          },
+          modelCodecUnavailableCode: 'GECKOLIB4_MODEL_CODEC_UNAVAILABLE',
+          modelCodecUnavailableMessage: 'Blockbench Codecs.bedrock.compile is required by the audited GeckoLib 4.2.5 integration.',
+          invalidCompiledModelCode: 'INVALID_GECKOLIB4_COMPILED_MODEL',
+          modelLabel: 'GeckoLib model',
+          validateModelDocument: geckolib4.validateGeckoLib4GeoDocument,
+          compileAnimationArtifact,
+          createExportPlan: geckolib4.createGeckoLib4ExportPlan,
+          invalidExportPlanCode: 'INVALID_GECKOLIB4_EXPORT_PLAN',
+          invalidExportPreviewCode: 'INVALID_GECKOLIB4_EXPORT_PREVIEW',
+          invalidExportPreviewMessage: 'Only a validated preview produced by this adapter can be staged.',
+          invalidExportWriterCode: 'INVALID_GECKOLIB4_EXPORT_WRITER',
+          sourceOverwriteCode: 'GECKOLIB4_SOURCE_OVERWRITE_FORBIDDEN',
+          sourceOverwriteMessage: 'Provider staging must never overwrite the source .bbmodel.',
+        });
+      }
+
+      module.exports = {
         createBlockbenchGeckoLib4Adapter,
       };
     },
@@ -5307,182 +5599,93 @@
       'use strict';
 
       const azurelib = require('../core/provider-adapter/azurelib_adapter.js');
+      const common = require('./provider_adapter_common.js');
 
       function fail(code, message) {
         throw new azurelib.AzureLibContractError(code, message);
       }
 
-      function normalizedSourcePath(value) {
-        if (typeof value !== 'string' || value.length === 0) {
-          fail('AZURELIB_SOURCE_NOT_SAVED', 'Active AzureLib project must be saved as a .bbmodel before provider export.');
+      function compileAnimationArtifact({bb, project, fail: failProvider, cloneJsonDocument, deepFreezeJsonDocument}) {
+        const codec = project.format?.animation_codec || bb.Format?.animation_codec || null;
+        if (
+          !codec
+          || (codec.id !== undefined && codec.id !== azurelib.AZURELIB_AUTHORITY.animationCodecId)
+          || typeof codec.compileFile !== 'function'
+          || typeof codec.write !== 'function'
+        ) {
+          failProvider(
+            'AZURELIB_ANIMATION_CODEC_UNAVAILABLE',
+            'AzureLib Animator 2.1.5 AnimationCodec azure_animation with compileFile() and write() is required for animation export.',
+          );
         }
-        const normalized = value.replace(/\\/g, '/');
-        if (!normalized.toLowerCase().endsWith('.bbmodel')) {
-          fail('AZURELIB_SOURCE_MUST_BE_BBMODEL', 'Active AzureLib project source must remain a .bbmodel file.');
-        }
-        return normalized;
-      }
 
-      function cloneJsonDocument(value, code, label) {
-        if (typeof value === 'string') {
-          try {
-            return JSON.parse(value);
-          } catch (error) {
-            fail(code, `${label} compiler returned invalid JSON: ${error.message}`);
-          }
-        }
-        if (!value || typeof value !== 'object') fail(code, `${label} compiler must return JSON text or an object.`);
+        const document = cloneJsonDocument(codec.compileFile(), {
+          fail: failProvider,
+          code: 'INVALID_AZURELIB_COMPILED_ANIMATION',
+          label: 'AzureLib animation',
+        });
+        azurelib.validateAzureLibAnimationDocument(document);
+
+        let serializedContent;
         try {
-          return JSON.parse(JSON.stringify(value));
+          serializedContent = codec.write(document);
         } catch (error) {
-          fail(code, `${label} compiler returned a non-serializable object: ${error.message}`);
+          failProvider(
+            'INVALID_AZURELIB_SERIALIZED_ANIMATION',
+            `AzureLib AnimationCodec write() failed: ${error.message}`,
+          );
         }
-      }
+        if (typeof serializedContent !== 'string' || serializedContent.length === 0) {
+          failProvider(
+            'INVALID_AZURELIB_SERIALIZED_ANIMATION',
+            'AzureLib AnimationCodec write() must return serialized JSON text.',
+          );
+        }
 
-      function deepFreezeJsonDocument(value) {
-        if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
-        for (const child of Object.values(value)) deepFreezeJsonDocument(child);
-        return Object.freeze(value);
+        let serializedDocument;
+        try {
+          serializedDocument = JSON.parse(serializedContent);
+        } catch (error) {
+          failProvider(
+            'INVALID_AZURELIB_SERIALIZED_ANIMATION',
+            `AzureLib AnimationCodec write() returned invalid JSON: ${error.message}`,
+          );
+        }
+        azurelib.validateAzureLibAnimationDocument(serializedDocument);
+
+        return {
+          document: deepFreezeJsonDocument(document),
+          serializedContent,
+        };
       }
 
       function createBlockbenchAzureLibAdapter(bb) {
-        if (!bb || typeof bb !== 'object') fail('AZURELIB_BLOCKBENCH_UNAVAILABLE', 'Blockbench API object is required.');
-        const project = bb.Blockbench?.Project;
-        if (!project || project.format?.id !== azurelib.AZURELIB_AUTHORITY.blockbenchFormatId) {
-          fail('AZURELIB_PROJECT_FORMAT_REQUIRED', 'Active Blockbench project must use the AzureLib Animator format azure_model.');
-        }
-        const savedSourcePath = normalizedSourcePath(project.save_path);
-        if (typeof bb.Codecs?.bedrock?.compile !== 'function') {
-          fail('AZURELIB_MODEL_CODEC_UNAVAILABLE', 'Blockbench Codecs.bedrock.compile is required by the audited AzureLib Animator 2.1.5 integration.');
-        }
-
-        const trustedPreviews = new WeakSet();
-
-        function sourcePath() {
-          return savedSourcePath;
-        }
-
-        function animationCodec() {
-          const codec = project.format?.animation_codec || bb.Format?.animation_codec || null;
-          if (
-            !codec
-            || (codec.id !== undefined && codec.id !== azurelib.AZURELIB_AUTHORITY.animationCodecId)
-            || typeof codec.compileFile !== 'function'
-            || typeof codec.write !== 'function'
-          ) {
-            fail(
-              'AZURELIB_ANIMATION_CODEC_UNAVAILABLE',
-              'AzureLib Animator 2.1.5 AnimationCodec azure_animation with compileFile() and write() is required for animation export.',
-            );
-          }
-          return codec;
-        }
-
-        function compileModelDocument() {
-          const document = cloneJsonDocument(
-            bb.Codecs.bedrock.compile(),
-            'INVALID_AZURELIB_COMPILED_MODEL',
-            'AzureLib model',
-          );
-          azurelib.validateAzureLibGeoDocument(document);
-          return deepFreezeJsonDocument(document);
-        }
-
-        function compileAnimationArtifact() {
-          const codec = animationCodec();
-          const document = cloneJsonDocument(
-            codec.compileFile(),
-            'INVALID_AZURELIB_COMPILED_ANIMATION',
-            'AzureLib animation',
-          );
-          azurelib.validateAzureLibAnimationDocument(document);
-
-          let serializedContent;
-          try {
-            serializedContent = codec.write(document);
-          } catch (error) {
-            fail('INVALID_AZURELIB_SERIALIZED_ANIMATION', `AzureLib AnimationCodec write() failed: ${error.message}`);
-          }
-          if (typeof serializedContent !== 'string' || serializedContent.length === 0) {
-            fail('INVALID_AZURELIB_SERIALIZED_ANIMATION', 'AzureLib AnimationCodec write() must return serialized JSON text.');
-          }
-
-          let serializedDocument;
-          try {
-            serializedDocument = JSON.parse(serializedContent);
-          } catch (error) {
-            fail('INVALID_AZURELIB_SERIALIZED_ANIMATION', `AzureLib AnimationCodec write() returned invalid JSON: ${error.message}`);
-          }
-          azurelib.validateAzureLibAnimationDocument(serializedDocument);
-
-          return Object.freeze({
-            document: deepFreezeJsonDocument(document),
-            serializedContent,
-          });
-        }
-
-        function compileAnimationDocument() {
-          return compileAnimationArtifact().document;
-        }
-
-        function previewExport(request) {
-          if (!request || typeof request !== 'object' || Array.isArray(request)) {
-            fail('INVALID_AZURELIB_EXPORT_PLAN', 'Export request must be an object.');
-          }
-          const plan = azurelib.createAzureLibExportPlan({...request, sourcePath: savedSourcePath});
-          const modelDocument = compileModelDocument();
-          const animationArtifact = request.includeAnimations === true ? compileAnimationArtifact() : null;
-          const artifacts = plan.artifacts.map((artifact) => {
-            if (artifact.kind === 'model') {
-              return Object.freeze({kind: artifact.kind, path: artifact.path, document: modelDocument});
-            }
-            return Object.freeze({
-              kind: artifact.kind,
-              path: artifact.path,
-              document: animationArtifact.document,
-              serializedContent: animationArtifact.serializedContent,
-            });
-          });
-          const preview = Object.freeze({
-            plan,
-            artifacts: Object.freeze(artifacts),
-            runtimeEvidence: 'UNPROVEN',
-          });
-          trustedPreviews.add(preview);
-          return preview;
-        }
-
-        function stageExport(preview, writer) {
-          if (!preview || typeof preview !== 'object' || !trustedPreviews.has(preview)) {
-            fail('INVALID_AZURELIB_EXPORT_PREVIEW', 'Only a validated preview produced by this adapter can be staged.');
-          }
-          if (!writer || typeof writer.writeText !== 'function') {
-            fail('INVALID_AZURELIB_EXPORT_WRITER', 'Export writer must provide writeText(path, content).');
-          }
-          for (const artifact of preview.artifacts) {
-            if (artifact.path === preview.plan.sourcePath || artifact.path.toLowerCase().endsWith('.bbmodel')) {
-              fail('AZURELIB_SOURCE_OVERWRITE_FORBIDDEN', 'Provider staging must never overwrite the source .bbmodel.');
-            }
-            const content = artifact.kind === 'animation'
-              ? artifact.serializedContent
-              : JSON.stringify(artifact.document, null, 2);
-            writer.writeText(artifact.path, content.endsWith('\n') ? content : `${content}\n`);
-          }
-          return Object.freeze({
-            ok: true,
-            staged: preview.artifacts.length,
-            sourcePath: preview.plan.sourcePath,
-            preserveSource: true,
-            runtimeEvidence: 'UNPROVEN',
-          });
-        }
-
-        return Object.freeze({
-          sourcePath,
-          compileModelDocument,
-          compileAnimationDocument,
-          previewExport,
-          stageExport,
+        return common.createProviderBlockbenchAdapter(bb, {
+          fail,
+          blockbenchUnavailableCode: 'AZURELIB_BLOCKBENCH_UNAVAILABLE',
+          blockbenchUnavailableMessage: 'Blockbench API object is required.',
+          projectFormatId: azurelib.AZURELIB_AUTHORITY.blockbenchFormatId,
+          projectFormatCode: 'AZURELIB_PROJECT_FORMAT_REQUIRED',
+          projectFormatMessage: 'Active Blockbench project must use the AzureLib Animator format azure_model.',
+          sourcePathOptions: {
+            notSavedCode: 'AZURELIB_SOURCE_NOT_SAVED',
+            sourceMustBeBbmodelCode: 'AZURELIB_SOURCE_MUST_BE_BBMODEL',
+            notSavedMessage: 'Active AzureLib project must be saved as a .bbmodel before provider export.',
+            sourceMustBeBbmodelMessage: 'Active AzureLib project source must remain a .bbmodel file.',
+          },
+          modelCodecUnavailableCode: 'AZURELIB_MODEL_CODEC_UNAVAILABLE',
+          modelCodecUnavailableMessage: 'Blockbench Codecs.bedrock.compile is required by the audited AzureLib Animator 2.1.5 integration.',
+          invalidCompiledModelCode: 'INVALID_AZURELIB_COMPILED_MODEL',
+          modelLabel: 'AzureLib model',
+          validateModelDocument: azurelib.validateAzureLibGeoDocument,
+          compileAnimationArtifact,
+          createExportPlan: azurelib.createAzureLibExportPlan,
+          invalidExportPlanCode: 'INVALID_AZURELIB_EXPORT_PLAN',
+          invalidExportPreviewCode: 'INVALID_AZURELIB_EXPORT_PREVIEW',
+          invalidExportPreviewMessage: 'Only a validated preview produced by this adapter can be staged.',
+          invalidExportWriterCode: 'INVALID_AZURELIB_EXPORT_WRITER',
+          sourceOverwriteCode: 'AZURELIB_SOURCE_OVERWRITE_FORBIDDEN',
+          sourceOverwriteMessage: 'Provider staging must never overwrite the source .bbmodel.',
         });
       }
 
