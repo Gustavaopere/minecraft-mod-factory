@@ -1,0 +1,60 @@
+name: Factory Art PR14 Bundle Materializer
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - feat/art-pr14-unified-qa-export-manifest
+    paths:
+      - '.github/workflows/factory-art-pr14-bundle-materializer.yml'
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: art/tooling/blockbench/asset-toolkit
+    steps:
+      - name: Checkout PR14 branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/art-pr14-unified-qa-export-manifest
+          fetch-depth: 2
+      - name: Provision Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Generate standalone bundle
+        run: node build_toolkit_bundle.js --write
+      - name: Verify PR14 contract with generated bundle
+        run: node --test asset_toolkit.unified_qa_export_manifest_pr14.test.js
+      - name: Verify provider regressions
+        run: >-
+          node --test
+          asset_toolkit.provider_expansion.test.js
+          asset_toolkit.geckolib4_adapter.test.js
+          asset_toolkit.azurelib3_adapter.test.js
+          asset_toolkit.neoforge_native_animation_adapter.test.js
+          asset_toolkit.easy_model_entities_pr9.test.js
+          asset_toolkit.emf_cem_pr10.test.js
+          asset_toolkit.animated_java_pr11.test.js
+          asset_toolkit.player_profiles_pr12.test.js
+          asset_toolkit.epicfight_blender_pr13.test.js
+      - name: Verify deterministic standalone bundle
+        run: node build_toolkit_bundle.js --check
+      - name: Enforce generated-file scope
+        working-directory: .
+        run: |
+          changed="$(git diff --name-only)"
+          test "$changed" = "art/tooling/blockbench/asset-toolkit/asset_toolkit.js"
+          git diff --check
+      - name: Commit generated bundle
+        working-directory: .
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add art/tooling/blockbench/asset-toolkit/asset_toolkit.js
+          git commit -m 'build(art): regenerate PR14 standalone bundle'
+          git push origin HEAD:feat/art-pr14-unified-qa-export-manifest
