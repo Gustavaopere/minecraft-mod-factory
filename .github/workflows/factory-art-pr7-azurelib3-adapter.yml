@@ -32,6 +32,9 @@ jobs:
       - name: PR7 AzureLib 3 geometry runtime contract
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.azurelib3_geo.test.js
+      - name: PR7 AzureLib 3 Blockbench provider contract
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node --test asset_toolkit.azurelib3_blockbench_adapter.test.js
       - name: PR7 AzureLib 3 public API and standalone surface
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.azurelib3_public_api.test.js
