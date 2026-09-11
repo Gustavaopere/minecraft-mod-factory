@@ -148,7 +148,7 @@ test('PR13 Blockbench surface creates reference handoff only and exposes no dire
 test('PR13 does not create an automatic conversion lane from Blockbench/provider profiles into Epic Fight', () => {
   for (const sourceProfile of [
     'geckolib4_entity',
-    'azurelib3_entity',
+    'azurelib_entity',
     'animated_java_display_entities',
     'player_animation_library_player',
     'player_animator_player',
