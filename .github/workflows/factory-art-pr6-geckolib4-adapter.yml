@@ -28,6 +28,9 @@ jobs:
       - name: PR6 GeckoLib 4 Blockbench integration
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.geckolib4_blockbench_adapter.test.js
+      - name: PR6 public API and standalone surface
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node --test asset_toolkit.geckolib4_public_api.test.js
       - name: Existing generic animation regressions
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.animation_core.test.js asset_toolkit.animation_adapter.test.js
