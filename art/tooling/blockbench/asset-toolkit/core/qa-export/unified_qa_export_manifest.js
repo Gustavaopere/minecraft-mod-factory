@@ -2,7 +2,7 @@
 
 const crypto = require('node:crypto');
 const {validateProject} = require('../validator/validator.js');
-const {createDeterministicReport} = require('../report/report.js');
+const {formatReport} = require('../report/report.js');
 const {getProviderProfile} = require('../provider-profile/provider_profiles.js');
 
 const TARGET = Object.freeze({
@@ -315,7 +315,7 @@ function createUnifiedQaExportManifest(input = {}) {
 
   const structuralSummary = validateProject(input.project);
   const structuralQa = {status: structuralSummary.errors.length ? 'FAIL' : 'PASS', summary: structuralSummary};
-  const report = createDeterministicReport(input.project);
+  const report = formatReport(structuralSummary);
   const {providerFingerprint, extensionFingerprint} = createFingerprints(input.sessionFingerprint);
   const sourceArtifacts = normalizeSourceArtifacts(input.sourceArtifacts || []);
   const captureEvidence = normalizeCaptureEvidence(input.captureEvidence || []);
