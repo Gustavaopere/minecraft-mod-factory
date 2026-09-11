@@ -1,0 +1,55 @@
+name: Factory Art PR12 Player Profiles
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    paths:
+      - 'art/tooling/blockbench/asset-toolkit/**'
+      - 'art/standards/**'
+      - '.github/workflows/factory-art-pr12-player-profiles.yml'
+  push:
+    branches:
+      - main
+      - feat/art-pr12-player-profiles
+
+jobs:
+  player-profiles:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: art/tooling/blockbench/asset-toolkit
+    steps:
+      - name: Checkout Factory source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Provision Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: PR12 player profile contract
+        run: node --test asset_toolkit.player_profiles_pr12.test.js
+      - name: Existing provider regressions
+        if: always()
+        run: >-
+          node --test
+          asset_toolkit.provider_expansion.test.js
+          asset_toolkit.geckolib4_adapter.test.js
+          asset_toolkit.azurelib3_adapter.test.js
+          asset_toolkit.neoforge_native_animation_adapter.test.js
+          asset_toolkit.easy_model_entities_pr9.test.js
+          asset_toolkit.emf_cem_pr10.test.js
+          asset_toolkit.animated_java_pr11.test.js
+      - name: Verify deterministic standalone bundle
+        if: always()
+        run: node build_toolkit_bundle.js --check
+      - name: Reject whitespace errors in PR12 scope
+        if: always()
+        working-directory: .
+        run: >-
+          git diff --check HEAD^ --
+          art/tooling/blockbench/asset-toolkit
+          art/standards
+          .github/workflows/factory-art-pr12-player-profiles.yml
