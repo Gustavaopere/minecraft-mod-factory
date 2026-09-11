@@ -130,6 +130,33 @@ test('preview compiles through the audited Blockbench hooks and validates provid
   assert.deepEqual(preview.artifacts[1].document, animationDocument());
 });
 
+test('validated preview documents are deeply immutable before trusted staging', () => {
+  const {bb} = blockbenchMock();
+  const preview = integration.createBlockbenchGeckoLib4Adapter(bb).previewExport({
+    profileId: 'geckolib4_entity',
+    outputDirectory: 'staging/factory_test',
+    resourceName: 'factory_test',
+    includeAnimations: true,
+  });
+
+  const geo = preview.artifacts[0].document;
+  const animation = preview.artifacts[1].document;
+  assert.equal(Object.isFrozen(geo), true);
+  assert.equal(Object.isFrozen(geo['minecraft:geometry']), true);
+  assert.equal(Object.isFrozen(geo['minecraft:geometry'][0]), true);
+  assert.equal(Object.isFrozen(geo['minecraft:geometry'][0].bones), true);
+  assert.equal(Object.isFrozen(geo['minecraft:geometry'][0].bones[0]), true);
+  assert.equal(Object.isFrozen(animation), true);
+  assert.equal(Object.isFrozen(animation.animations), true);
+  assert.equal(Object.isFrozen(animation.animations['animation.factory_test.idle']), true);
+  assert.throws(() => {
+    geo['minecraft:geometry'][0].bones[0].name = 'tampered';
+  }, TypeError);
+  assert.throws(() => {
+    animation.animations['animation.factory_test.idle'].loop = false;
+  }, TypeError);
+});
+
 test('preview can omit animation output and never invokes Animator.buildFile in that mode', () => {
   const {bb, calls} = blockbenchMock();
   const preview = integration.createBlockbenchGeckoLib4Adapter(bb).previewExport({
