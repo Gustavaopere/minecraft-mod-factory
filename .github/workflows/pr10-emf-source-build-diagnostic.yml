@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  source-build:
+  upstream-pin:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,7 +20,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '25'
-      - name: Checkout exact EMF 3.3.5 source for upstream-pin build
+      - name: Checkout exact EMF 3.3.5 source
         uses: actions/checkout@v4
         with:
           repository: Traben-0/Entity_Model_Features
@@ -30,12 +30,24 @@ jobs:
         run: |
           grep -Fx 'essential.defaults.loom.neoForge=net.neoforged:neoforge:21.0.167' emf-upstream/versions/1.21-neoforge/gradle.properties
           grep -F 'mod_version=3.3.5' emf-upstream/gradle.properties
-      - name: Build exact upstream 1.21 NeoForge source
+      - name: Build only exact upstream 1.21 NeoForge source
         working-directory: emf-upstream
         run: |
           chmod +x ./gradlew
-          ./gradlew :1.21-neoforge:build --no-daemon
-      - name: Checkout exact EMF 3.3.5 source for Factory-target override
+          ./gradlew :1.21-neoforge:build --configure-on-demand --no-daemon
+
+  factory-target:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Checkout exact EMF 3.3.5 source
         uses: actions/checkout@v4
         with:
           repository: Traben-0/Entity_Model_Features
@@ -43,10 +55,12 @@ jobs:
           path: emf-target
       - name: Apply ephemeral Factory NeoForge target override
         run: |
+          grep -Fx 'essential.defaults.loom.neoForge=net.neoforged:neoforge:21.0.167' emf-target/versions/1.21-neoforge/gradle.properties
           sed -i 's/net.neoforged:neoforge:21.0.167/net.neoforged:neoforge:21.1.248/' emf-target/versions/1.21-neoforge/gradle.properties
           grep -Fx 'essential.defaults.loom.neoForge=net.neoforged:neoforge:21.1.248' emf-target/versions/1.21-neoforge/gradle.properties
-      - name: Build exact EMF source with Factory NeoForge target override
+          grep -F 'mod_version=3.3.5' emf-target/gradle.properties
+      - name: Build only exact EMF source with Factory NeoForge target override
         working-directory: emf-target
         run: |
           chmod +x ./gradlew
-          ./gradlew :1.21-neoforge:build --no-daemon
+          ./gradlew :1.21-neoforge:build --configure-on-demand --no-daemon
