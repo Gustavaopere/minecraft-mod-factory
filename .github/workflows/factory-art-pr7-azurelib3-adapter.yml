@@ -8,6 +8,7 @@ on:
   pull_request:
     paths:
       - 'art/tooling/blockbench/asset-toolkit/**'
+      - 'art/golden-samples/**'
       - '.github/workflows/factory-art-pr7-azurelib3-adapter.yml'
 
 permissions:
@@ -38,6 +39,13 @@ jobs:
       - name: PR7 AzureLib 3 public API and standalone surface
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.azurelib3_public_api.test.js
+      - name: PR7 AzureLib 3 Golden reference regression
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node --test asset_toolkit.azurelib3_golden_reference.test.js
+      - name: Existing Golden Samples evidence gates
+        run: |
+          node art/golden-samples/validate_reference_evidence.js
+          node art/golden-samples/validate_golden_samples.js
       - name: Existing provider and generic animation regressions
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.geckolib4_adapter.test.js asset_toolkit.animation_core.test.js asset_toolkit.animation_adapter.test.js
@@ -45,4 +53,4 @@ jobs:
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node build_toolkit_bundle.js --check
       - name: Whitespace
-        run: git diff --check HEAD^ -- art/tooling/blockbench/asset-toolkit .github/workflows/factory-art-pr7-azurelib3-adapter.yml
+        run: git diff --check HEAD^ -- art/tooling/blockbench/asset-toolkit art/golden-samples .github/workflows/factory-art-pr7-azurelib3-adapter.yml
