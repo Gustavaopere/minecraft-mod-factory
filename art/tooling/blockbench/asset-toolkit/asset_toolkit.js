@@ -690,11 +690,11 @@
       function normalizePose(value, field) {
         if (!isPlainObject(value)) fail('INVALID_LOOP_SEAM_POSE', `${field} must be an object keyed by target id.`);
         const output = new Map();
-        for (const targetId of Object.keys(value).sort()) {
+        for (const targetId of Object.keys(value).sort((left, right) => left.localeCompare(right, 'en'))) {
           const target = value[targetId];
           if (!isPlainObject(target)) fail('INVALID_LOOP_SEAM_POSE', `${field}.${targetId} must be an object.`);
           const channels = new Map();
-          for (const channelName of Object.keys(target).sort()) {
+          for (const channelName of Object.keys(target).sort((left, right) => left.localeCompare(right, 'en'))) {
             if (!ANIMATION_CHANNELS.has(channelName)) {
               fail('INVALID_LOOP_SEAM_POSE', `${field}.${targetId}.${channelName} is not a provider-neutral transform channel.`);
             }
@@ -720,7 +720,7 @@
         const start = normalizePose(input.startPose, 'startPose');
         const end = normalizePose(input.endPose, 'endPose');
 
-        const targetIds = [...new Set([...start.keys(), ...end.keys()])].sort();
+        const targetIds = [...new Set([...start.keys(), ...end.keys()])].sort((left, right) => left.localeCompare(right, 'en'));
         let maxDelta = 0;
         const mismatches = [];
         for (const targetId of targetIds) {
@@ -730,7 +730,7 @@
             mismatches.push(Object.freeze({targetId, channel: null, delta: null, reason: 'MISSING_TARGET'}));
             continue;
           }
-          const channels = [...new Set([...left.keys(), ...right.keys()])].sort();
+          const channels = [...new Set([...left.keys(), ...right.keys()])].sort((left, right) => left.localeCompare(right, 'en'));
           for (const channelName of channels) {
             const leftValue = left.get(channelName);
             const rightValue = right.get(channelName);
@@ -4153,7 +4153,7 @@
         function keyframeRevisionSnapshot() {
           return animations().map((animation) => ({
             animationId: idOf(animation),
-            animators: Object.keys(animation?.animators || {}).sort().map((targetId) => ({
+            animators: Object.keys(animation?.animators || {}).sort((left, right) => left.localeCompare(right, 'en')).map((targetId) => ({
               targetId,
               keyframes: array(animation.animators[targetId]?.keyframes).map((keyframe) => ({
                 keyframeId: idOf(keyframe),
