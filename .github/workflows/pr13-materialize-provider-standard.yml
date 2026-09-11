@@ -1,4 +1,4 @@
-name: PR13 Materialize Provider Standard
+name: PR13 Finalize Generated Surfaces
 
 permissions:
   contents: write
@@ -11,7 +11,7 @@ on:
       - '.github/workflows/pr13-materialize-provider-standard.yml'
 
 jobs:
-  materialize:
+  finalize:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout feature branch
@@ -19,7 +19,11 @@ jobs:
         with:
           fetch-depth: 2
           ref: feat/art-pr13-epicfight-blender-handoff
-      - name: Update canonical provider standard
+      - name: Provision Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Tighten canonical PR13 provider standard
         shell: python
         run: |
           from pathlib import Path
@@ -27,52 +31,52 @@ jobs:
           path = Path('art/standards/ASSET-PROVIDER-PROFILES.md')
           text = path.read_text()
 
-          profile_anchor = "- `player_animator_player` — Player Animator `2.0.4+1.21.1` runtime/API profile. The audited public surface is `PlayerAnimationAccess`, `PlayerAnimationFactory` and `PlayerAnimationRegistry`, with layered APIs including `AnimationStack` and `ModifierLayer`. The NeoForge mod metadata declares the Minecraft dependency with `side=BOTH`; separately, `PlayerAnimationRegistry` is client-environment code and reloads `assets/<namespace>/player_animations/*`, retaining legacy `player_animation` loading with warning. Its default JSON codecs are `emotecraft` followed by `gecko_legacy`. This profile is distinct from PAL and does not imply PAL equivalence or automatic PAL conversion.\n"
-          profile_line = "- `epicfight_blender_handoff` — Epic Fight `21.17.3.1` external-DCC handoff for custom combat animation. The physical provider is `epicfight`; no Blockbench extension is invented or required. Blockbench remains concept/reference/model authority only, while custom Epic Fight combat animation is Blender-authoritative. The handoff preserves both `.bbmodel` and `.blend` sources, requires the official Epic Fight Blender rig/exporter path, records exporter output as JSON, forbids direct Blockbench Epic Fight animation export, and forbids implicit cross-provider conversion.\n"
-          if profile_line not in text:
-              if text.count(profile_anchor) != 1:
-                  raise SystemExit('unexpected player animator profile anchor state')
-              text = text.replace(profile_anchor, profile_anchor + profile_line)
+          old_profile = "- `epicfight_blender_handoff` — Epic Fight `21.17.3.1` external-DCC handoff for custom combat animation. The physical provider is `epicfight`; no Blockbench extension is invented or required. Blockbench remains concept/reference/model authority only, while custom Epic Fight combat animation is Blender-authoritative. The handoff preserves both `.bbmodel` and `.blend` sources, requires the official Epic Fight Blender rig/exporter path, records exporter output as JSON, forbids direct Blockbench Epic Fight animation export, and forbids implicit cross-provider conversion."
+          new_profile = old_profile + " It also requires caller-provided explicit Blockbench-reference-to-Blender-rig `boneMapping` plus non-empty `textureReferences`; the Factory validates and preserves those references but does not invent provider bone names, remap textures, or infer semantic equivalence."
+          if new_profile not in text:
+              if text.count(old_profile) != 1:
+                  raise SystemExit('unexpected PR13 profile documentation state')
+              text = text.replace(old_profile, new_profile)
 
-          evidence_anchor = "## Physical snapshot boundary\n"
-          evidence = "## Epic Fight / Blender evidence boundary\n\nPR13 pins the physical provider to `epic-fight-21.17.3.1-mc1.21.1-neoforge.jar` (`mod_id=epicfight`, version `21.17.3.1`) and the exact official source artifact to `epic-fight-21.17.3.1-mc1.21.1-neoforge-sources.jar`, CurseForge file `8175610`. The immutable Git source-audit reference is `Antikythera-Studios/epicfight@a78aa24b72e90a9d09f5fd61925e4369d117abaf`; the Factory deliberately records `binaryToGitCommitMapping=UNPROVEN` rather than claiming that distribution artifact and Git commit are byte-identical. Official documentation is audited at `Antikythera-Studios/epic-fight.github.io@1c055a4b2500a9a0ba6be04f9b5ec7361bcf84e1`.\n\nThe custom-combat-animation workflow is explicitly `Blockbench concept/reference/model -> handoff manifest -> Blender Epic Fight rig -> Epic Fight Blender exporter -> Epic Fight runtime`. The exporter authority is `Antikythera-Studios/blender-json-addon@b9c6844193074f8c21b35513052d61c82cc2c207`. The official rig authority is `Antikythera-Studios/atk-resources@1d0455bc3d87b613be77c43250363220facad19f`, file `EpicFight Animation Rig.blend`, blob `0f093f8e3f29281a5b8d248d6ce6d5653f7cf22a`. The Factory preview adapter does not install Blender tooling and exposes no `exportEpicFightAnimation` operation.\n\nThe upstream `21.17.3.1` release evidence is tested against NeoForge `21.1.219`, while the Factory physical target is NeoForge `21.1.248`; therefore `targetExactRuntimeCompatibility=UNPROVEN`. Official issue `Antikythera-Studios/epicfight#2572` is retained as an open multiplayer-animation runtime risk for later QA. PR13 proves the audited authority, source-preserving external-DCC handoff contract, fail-closed target/source validation and deterministic core/Blockbench/standalone surfaces. It does **not** prove a real Blender export playing in Epic Fight, target-exact client/server runtime compatibility, multiplayer correctness, full-modpack health, or F4 real I6 handoff. `runtimeEvidence=UNPROVEN`, `runtimeValidated=false`, `f4I6Evidence=false`; I6 real handoff remains incomplete and I7 remains blocked.\n\n"
-          if evidence not in text:
-              if text.count(evidence_anchor) != 1:
-                  raise SystemExit('unexpected physical snapshot anchor state')
-              text = text.replace(evidence_anchor, evidence + evidence_anchor)
-
-          old_snapshot = "The current 2026-09-11 physical snapshot contains GeckoLib 4.9.2, AzureLib 3.1.11, Easy Model Entities 2.3.0, Entity Model Features 3.3.5, Customizable Player Models 0.6.27a, Player Animation Library 1.1.6+mc.1.21.1 and Player Animator 2.0.4+1.21.1."
-          new_snapshot = "The current 2026-09-11 physical snapshot contains GeckoLib 4.9.2, AzureLib 3.1.11, Easy Model Entities 2.3.0, Entity Model Features 3.3.5, Customizable Player Models 0.6.27a, Player Animation Library 1.1.6+mc.1.21.1, Player Animator 2.0.4+1.21.1 and Epic Fight 21.17.3.1."
-          if new_snapshot not in text:
-              if text.count(old_snapshot) != 1:
-                  raise SystemExit('unexpected physical snapshot sentence state')
-              text = text.replace(old_snapshot, new_snapshot)
-
-          fidelity_anchor = "PAL -> Player Animator, Player Animator -> PAL, CPM -> PAL, CPM -> Player Animator, and the reverse player-profile paths are likewise denied unless a dedicated audited adapter explicitly defines the conversion.\n"
-          fidelity_replacement = fidelity_anchor.rstrip('\n') + " Epic Fight custom combat animation is likewise not an implicit Blockbench, PAL, Player Animator, GeckoLib or AzureLib conversion target: `epicfight_blender_handoff` preserves Blockbench reference source and hands animation authoring to Blender explicitly.\n"
-          if fidelity_replacement not in text:
-              if text.count(fidelity_anchor) != 1:
-                  raise SystemExit('unexpected fidelity anchor state')
-              text = text.replace(fidelity_anchor, fidelity_replacement)
+          old_evidence = "The Factory preview adapter does not install Blender tooling and exposes no `exportEpicFightAnimation` operation."
+          new_evidence = old_evidence + " The handoff manifest requires explicit caller-supplied naming/bone mapping and texture references, copies them into the immutable preview/contract result, and fails closed when either set is absent; these fields are references only and are not evidence that the named rig bones or textures were exercised in Blender or Minecraft."
+          if new_evidence not in text:
+              if text.count(old_evidence) != 1:
+                  raise SystemExit('unexpected PR13 evidence documentation state')
+              text = text.replace(old_evidence, new_evidence)
 
           path.write_text(text)
-      - name: Verify exact changed path and whitespace
+      - name: Regenerate deterministic standalone bundle
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node build_toolkit_bundle.js --write
+      - name: Remove transient finalizer
+        run: rm .github/workflows/pr13-materialize-provider-standard.yml
+      - name: Verify exact materialized paths
         shell: bash
         run: |
           set -euo pipefail
+          node art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js --check
           git diff --check
-          mapfile -t paths < <(git diff --name-only)
-          test "${#paths[@]}" -eq 1
-          test "${paths[0]}" = 'art/standards/ASSET-PROVIDER-PROFILES.md'
-          grep -Fq '`epicfight_blender_handoff`' art/standards/ASSET-PROVIDER-PROFILES.md
-          grep -Fq 'binaryToGitCommitMapping=UNPROVEN' art/standards/ASSET-PROVIDER-PROFILES.md
-          grep -Fq 'f4I6Evidence=false' art/standards/ASSET-PROVIDER-PROFILES.md
-      - name: Commit canonical provider standard
+          mapfile -t paths < <(git diff --name-only | sort)
+          expected=(
+            .github/workflows/pr13-materialize-provider-standard.yml
+            art/standards/ASSET-PROVIDER-PROFILES.md
+            art/tooling/blockbench/asset-toolkit/asset_toolkit.js
+          )
+          mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
+          diff -u <(printf '%s\n' "${expected_sorted[@]}") <(printf '%s\n' "${paths[@]}")
+          grep -Fq '`boneMapping`' art/standards/ASSET-PROVIDER-PROFILES.md
+          grep -Fq '`textureReferences`' art/standards/ASSET-PROVIDER-PROFILES.md
+          grep -Fq 'does not invent provider bone names' art/standards/ASSET-PROVIDER-PROFILES.md
+      - name: Commit final generated surfaces and cleanup
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'minecraft-mod-factory-bot'
           git config user.email 'minecraft-mod-factory-bot@users.noreply.github.com'
-          git add art/standards/ASSET-PROVIDER-PROFILES.md
-          git commit -m 'docs(art): document PR13 Epic Fight Blender authority'
+          git add -A \
+            .github/workflows/pr13-materialize-provider-standard.yml \
+            art/standards/ASSET-PROVIDER-PROFILES.md \
+            art/tooling/blockbench/asset-toolkit/asset_toolkit.js
+          git commit -m 'build(art): finalize PR13 handoff surfaces'
           git push origin HEAD:feat/art-pr13-epicfight-blender-handoff
