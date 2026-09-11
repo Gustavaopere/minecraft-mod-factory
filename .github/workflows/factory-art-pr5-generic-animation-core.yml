@@ -11,7 +11,7 @@ on:
       - '.github/workflows/factory-art-pr5-generic-animation-core.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   generic-animation-core:
@@ -23,6 +23,54 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Apply PR5 Sonar sort fixes and regenerate bundle
+        if: github.event_name == 'push' && github.ref == 'refs/heads/feat/art-pr5-generic-animation-core'
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              Path('core/animation/animation_engine.js'): [
+                  (
+                      'Object.keys(value).sort()',
+                      "Object.keys(value).sort((left, right) => left.localeCompare(right, 'en'))",
+                  ),
+                  (
+                      'Object.keys(target).sort()',
+                      "Object.keys(target).sort((left, right) => left.localeCompare(right, 'en'))",
+                  ),
+                  (
+                      '[...new Set([...start.keys(), ...end.keys()])].sort()',
+                      "[...new Set([...start.keys(), ...end.keys()])].sort((left, right) => left.localeCompare(right, 'en'))",
+                  ),
+                  (
+                      '[...new Set([...left.keys(), ...right.keys()])].sort()',
+                      "[...new Set([...left.keys(), ...right.keys()])].sort((left, right) => left.localeCompare(right, 'en'))",
+                  ),
+              ],
+              Path('blockbench-plugin/animation_adapter.js'): [
+                  (
+                      'Object.keys(animation?.animators || {}).sort().map',
+                      "Object.keys(animation?.animators || {}).sort((left, right) => left.localeCompare(right, 'en')).map",
+                  ),
+              ],
+          }
+
+          for path, pairs in replacements.items():
+              text = path.read_text(encoding='utf-8')
+              for old, new in pairs:
+                  old_count = text.count(old)
+                  new_count = text.count(new)
+                  if old_count == 1 and new_count == 0:
+                      text = text.replace(old, new)
+                  elif old_count == 0 and new_count == 1:
+                      pass
+                  else:
+                      raise SystemExit(f'{path}: unexpected replacement state for {old!r}: old={old_count}, new={new_count}')
+              path.write_text(text, encoding='utf-8')
+          PY
+          node build_toolkit_bundle.js --write
       - name: PR5 generic animation core contract
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.animation_core.test.js
@@ -40,3 +88,19 @@ jobs:
         run: node build_toolkit_bundle.js --check
       - name: Whitespace
         run: git diff --check HEAD^ -- art/tooling/blockbench/asset-toolkit .github/workflows/factory-art-pr5-generic-animation-core.yml
+      - name: Commit PR5 Sonar sort fixes
+        if: github.event_name == 'push' && github.ref == 'refs/heads/feat/art-pr5-generic-animation-core'
+        run: |
+          git diff --check -- art/tooling/blockbench/asset-toolkit
+          if git diff --quiet -- art/tooling/blockbench/asset-toolkit; then
+            echo 'PR5 Sonar sort fixes already committed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            art/tooling/blockbench/asset-toolkit/core/animation/animation_engine.js \
+            art/tooling/blockbench/asset-toolkit/blockbench-plugin/animation_adapter.js \
+            art/tooling/blockbench/asset-toolkit/asset_toolkit.js
+          git commit -m 'fix(art): make animation ordering explicit'
+          git push origin HEAD:feat/art-pr5-generic-animation-core
