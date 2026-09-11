@@ -272,4 +272,5 @@ module.exports = {
   createBlockbenchEmfCemAdapter: emfCem.createBlockbenchEmfCemAdapter,
   createBlockbenchAnimatedJavaAdapter: animatedJava.createBlockbenchAnimatedJavaAdapter,
   createBlockbenchCpmPlayerProfileAdapter: playerProfiles.createBlockbenchCpmPlayerProfileAdapter,
+  createBlockbenchEpicFightHandoffAdapter: epicFightBlender.createBlockbenchEpicFightHandoffAdapter,
 };
