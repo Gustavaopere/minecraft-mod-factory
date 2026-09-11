@@ -30,10 +30,13 @@ The project does not permit the MCP, sidecar or Toolkit to install arbitrary plu
 |---|---|---:|---|---|
 | `geckolib` | GeckoLib Models & Animations | 4.2.5 | REQUIRED_PROFILE | GeckoLib 4 |
 | `azurelib_utils` | AzureLib Animator | 2.1.5 | REQUIRED_PROFILE | AzureLib |
+| `easy_model_entities` | Easy Model Entities | 1.0.0 | REQUIRED_PROFILE | EME 2.3.0 entity/block-entity authoring and export |
 | `cem_template_loader` | CEM Template Loader | 9.2.0 | REQUIRED_PROFILE | EMF/CEM |
 | `emf_animation_addon` | EMF Animation Addon | 1.0.5 | PREFERRED | EMF/CEM animation authoring |
 | `animated_java` | Animated Java | 1.10.2 | OPTIONAL | display-entity/datapack-resource-pack pipeline |
 | `animation_utils` | GeckoLib Animation Utils | 4.1.3 | BLOCKED_LEGACY | never MCP-enabled |
+
+Easy Model Entities was re-audited on 2026-09-11 against the official Blockbench catalog release 1.0.0. It requires Blockbench >=4.9.0. Installation remains human-only; MCP use still requires the exact plugin version, a compatible editor, the selected EME profile and explicit allowlist authorization.
 
 The AzureLib plugin officially advertises Blockbench 4.8.0–15.0.0, but this repository keeps MCP enablement fail-closed to the audited project baseline 5.1.6 until another editor version is tested. CEM Template Loader requires Blockbench >=5.0.0; EMF Animation Addon >=4.9.0; Animated Java >=5.1.4.
 

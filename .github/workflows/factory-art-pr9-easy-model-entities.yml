@@ -1,0 +1,88 @@
+name: Factory Art PR9 Easy Model Entities
+
+on:
+  push:
+    branches:
+      - main
+      - feat/art-pr9-easy-model-entities
+  pull_request:
+    paths:
+      - 'art/tooling/blockbench/asset-toolkit/**'
+      - 'art/standards/**'
+      - '.github/workflows/factory-art-pr9-easy-model-entities.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  easy-model-entities:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: PR9 audited provider/exporter contract
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: |
+          node --test \
+            asset_toolkit.easy_model_entities_pr9.test.js \
+            asset_toolkit.easy_model_entities_api_version.test.js
+      - name: Existing provider/profile regressions
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: |
+          node --test \
+            asset_toolkit.provider_expansion.test.js \
+            asset_toolkit.geckolib4_adapter.test.js \
+            asset_toolkit.azurelib3_adapter.test.js \
+            asset_toolkit.neoforge_native_animation_adapter.test.js
+      - name: Standalone bundle reproducibility
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node build_toolkit_bundle.js --check
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Checkout audited Easy Model Entities 2.3.0 runtime source
+        uses: actions/checkout@v4
+        with:
+          repository: MarkusBordihn/BOs-Easy-Model-Entities
+          ref: 8c912371838c2a26bbb383008ad3999280f075d1
+          path: .factory-ci/pr9/easy-model-entities
+          persist-credentials: false
+      - name: Bind runtime smoke to audited source and spawn/place GameTests
+        run: |
+          grep -Fx 'version=2.3.0' .factory-ci/pr9/easy-model-entities/gradle.properties
+          grep -Fx 'minecraft_version=1.21.1' .factory-ci/pr9/easy-model-entities/gradle.properties
+          grep -Fx 'neoforge_min_version=21.1.0' .factory-ci/pr9/easy-model-entities/gradle.properties
+          grep -F 'entitySpawnItemSpawnsHostEntity' .factory-ci/pr9/easy-model-entities/NeoForge/src/main/java/de/markusbordihn/easymodelentities/gametest/HostEntityGameTest.java
+          grep -F 'blockSpawnItemPlacesHostBlock' .factory-ci/pr9/easy-model-entities/NeoForge/src/main/java/de/markusbordihn/easymodelentities/gametest/HostEntityGameTest.java
+      - name: Align upstream ASM pins for NeoForge 21.1.248 smoke only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('.factory-ci/pr9/easy-model-entities/build.gradle')
+          text = path.read_text()
+          replacements = {
+              "'org.ow2.asm:asm-analysis:9.7'": "'org.ow2.asm:asm-analysis:9.10.1'",
+              "'org.ow2.asm:asm-util:9.7'": "'org.ow2.asm:asm-util:9.10.1'",
+          }
+          for old, new in replacements.items():
+              if old not in text:
+                  raise SystemExit(f'Expected upstream ASM pin not found: {old}')
+              text = text.replace(old, new, 1)
+          path.write_text(text)
+          PY
+          grep -F "asm-analysis:9.10.1" .factory-ci/pr9/easy-model-entities/build.gradle
+          grep -F "asm-util:9.10.1" .factory-ci/pr9/easy-model-entities/build.gradle
+      - name: Run target-exact NeoForge 21.1.248 spawn/place smoke
+        working-directory: .factory-ci/pr9/easy-model-entities
+        run: |
+          chmod +x gradlew
+          GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/pr9/gradle-home" \
+            ./gradlew -Pneoforge_version=21.1.248 -PghostRefIndex= \
+            :NeoForge:runGameTestServer --no-daemon
+      - name: Whitespace
+        run: git diff --check HEAD^ -- art/tooling/blockbench/asset-toolkit art/standards .github/workflows/factory-art-pr9-easy-model-entities.yml

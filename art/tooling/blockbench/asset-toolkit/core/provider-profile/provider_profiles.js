@@ -20,6 +20,16 @@ const PROVIDER_PROFILES = Object.freeze([
     requiredProvider: null, requiredExtensions: [],
     capabilities: ['animation', 'native_json_entity_animation', 'animation_definition_runtime', 'json_export_handoff'],
   }),
+  frozenProfile({
+    id: 'easy_model_entities_entity', family: 'easy_model_entities', authority: 'Easy Model Entities 2.3.0 runtime', assetKind: 'entity',
+    requiredProvider: {modId: 'easy_model_entities', exactVersions: ['2.3.0']}, requiredExtensions: ['easy_model_entities'],
+    capabilities: ['model', 'bbmodel_source', 'server_profile', 'render_profile', 'datapack_resourcepack_handoff', 'spawn_runtime'],
+  }),
+  frozenProfile({
+    id: 'easy_model_entities_block_entity', family: 'easy_model_entities', authority: 'Easy Model Entities 2.3.0 runtime', assetKind: 'block_entity',
+    requiredProvider: {modId: 'easy_model_entities', exactVersions: ['2.3.0']}, requiredExtensions: ['easy_model_entities'],
+    capabilities: ['model', 'bbmodel_source', 'server_profile', 'render_profile', 'datapack_resourcepack_handoff', 'place_runtime'],
+  }),
   ...['entity', 'item', 'block', 'armor'].map((kind) => frozenProfile({
     id: `geckolib4_${kind}`, family: 'geckolib4', authority: 'GeckoLib 4 runtime', assetKind: kind,
     requiredProvider: {modId: 'geckolib', exactVersions: ['4.9.2']}, requiredExtensions: ['geckolib'],
