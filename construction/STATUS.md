@@ -1,7 +1,7 @@
 # STATUS — Construction
 
 UPDATED_AT=2026-09-11
-PHASE=C7_COMPLETE_POSTMERGE_VALIDATED
+PHASE=C8_COMPLETE_POSTMERGE_VALIDATED
 REPOSITORY=Gustavaopere/minecraft-mod-factory
 BRANCH=main
 C0_PR=19
@@ -370,6 +370,54 @@ C7_POSTMERGE_C0_RUN=34645821436
 C7_POSTMERGE_GOVERNANCE_RUN=34645821416
 C7_IMPLEMENTATION_MAIN_SHA=aa4904d186f482a80358df56a3b426be24bfa215
 C7_CLOSEOUT_BASE_MAIN_SHA=aa4904d186f482a80358df56a3b426be24bfa215
+C8_PR=67
+C8_BEHAVIORAL_RED_HEAD=79f0b4eecbfed5b0d6ea726e02713dbcf2d135b2
+C8_BEHAVIORAL_RED_RUN=34653245613
+C8_BEHAVIORAL_RED_RESULT=37_TESTS_36_PASS_1_FAIL_EXPECTED_MISSING_GOLDEN_DIRECTORY
+C8_FIRST_FULL_GREEN_HEAD=d0dd0052eb1623b26220e1f2dd5ca0348d721134
+C8_FIRST_FULL_GREEN_RUN=34654260600
+C8_C5_CONSUMER_RED_HEAD=8fe50188fca786363917db2abddf3fd6065ddfb2
+C8_C5_CONSUMER_RED_RUN=34655240122
+C8_C5_CONSUMER_RED_RESULT=38_TESTS_37_PASS_1_FAIL_WITH_6_EXPECTED_C5_FAIL_CLOSED_SUBFAILURES
+C8_FINAL_PR_HEAD=9641e420eaed6b4371247bc57cec38d4603a8c6d
+C8_FINAL_PR_RUN=34656801079
+C8_FINAL_PR_I2=15_PASS_0_FAIL
+C8_FINAL_PR_CONTRACT=38_PASS_0_FAIL
+C8_FINAL_PR_C7=21_PASS_0_FAIL
+C8_FINAL_PR_C6=10_PASS_0_FAIL
+C8_FINAL_PR_C5=16_PASS_0_FAIL
+C8_FINAL_PR_C4=12_PASS_0_FAIL
+C8_FINAL_PR_NEOFORGE_BUILD=BUILD_SUCCESSFUL_31_TASKS_JAVA21_NEOFORGE_21_1_248
+C8_FINAL_PR_C3=7_PASS_0_FAIL
+C8_FINAL_PR_C2=10_PASS_0_FAIL
+C8_FINAL_PR_C0=11_PASS_0_FAIL_VALIDATOR_PASS
+C8_FINAL_PR_WHITESPACE=PASS
+C8_FINAL_PR_SONARCLOUD=PASS_0_NEW_ISSUES_0_HOTSPOTS
+C8_MERGE_SHA=76c2540bbaeed4e76c1d372400bbfadf89c3e3be
+C8_POSTMERGE_RUN=34657707412
+C8_POSTMERGE_I2=15_PASS_0_FAIL
+C8_POSTMERGE_CONTRACT=38_PASS_0_FAIL
+C8_POSTMERGE_C7=21_PASS_0_FAIL
+C8_POSTMERGE_C6=10_PASS_0_FAIL
+C8_POSTMERGE_C5=16_PASS_0_FAIL
+C8_POSTMERGE_C4=12_PASS_0_FAIL
+C8_POSTMERGE_NEOFORGE_BUILD=BUILD_SUCCESSFUL_31_TASKS_3M59S_JAVA21_NEOFORGE_21_1_248
+C8_POSTMERGE_C3=7_PASS_0_FAIL
+C8_POSTMERGE_C2=10_PASS_0_FAIL
+C8_POSTMERGE_C0=11_PASS_0_FAIL_VALIDATOR_PASS
+C8_POSTMERGE_WHITESPACE=PASS
+C8_POSTMERGE_C7_RUN=34657707384
+C8_POSTMERGE_C6_RUN=34657707429
+C8_POSTMERGE_C5_RUN=34657707539
+C8_POSTMERGE_C4_RUN=34657707492
+C8_POSTMERGE_C3_RUN=34657707375
+C8_POSTMERGE_C2_RUN=34657707570
+C8_POSTMERGE_C1A_RUN=34657707638
+C8_POSTMERGE_C1B_RUN=34657707513
+C8_POSTMERGE_C0_RUN=34657707565
+C8_POSTMERGE_GOVERNANCE_RUN=34657707397
+C8_IMPLEMENTATION_MAIN_SHA=76c2540bbaeed4e76c1d372400bbfadf89c3e3be
+C8_CLOSEOUT_BASE_MAIN_SHA=76c2540bbaeed4e76c1d372400bbfadf89c3e3be
 HEAD_SHA=RESOLVE_FROM_GIT
 OPEN_CONSTRUCTION_IMPLEMENTATION_PR=NONE
 TARGET_MINECRAFT=1.21.1
@@ -379,7 +427,7 @@ CANONICAL_OUTPUT=SPONGE_SCHEMATIC_V3
 LATEST_MODLIST_SNAPSHOT=2026-09-09_595_TOP_LEVEL
 MANUAL_ACTION_REQUIRED=NO
 BLOCKERS=NONE_IN_CONSTRUCTION
-NEXT_ACTION=BEGIN_C8_VISUAL_QA
+NEXT_ACTION=BEGIN_C9_AGENT_MCP
 
 ## C1A — Schematica preservation
 
@@ -805,3 +853,55 @@ The resulting `main` push fully revalidated the Construction stack. C7 run `3464
 - [ ] visual QA remains C8
 
 C7 is complete and post-merge validated. The next Construction slice is C8 — Visual QA.
+
+## C8 — Visual QA
+
+C8 adds the Factory-owned deterministic offline visual-evidence layer over the canonical C2 Build IR. It renders seven fixed SVG views with renderer version `c8-svg-v1`, derives objective geometry/material metrics, and requires explicit review evidence before subjective visual checks can resolve from `DEFERRED` to `PASS` or `FAIL`. C5 palette resolutions and C7 structural reports are accepted only as fingerprint-bound provenance/context; neither is promoted into visual-quality authority.
+
+C8_MODULE=construction/core/visual_qa.py
+C8_SCHEMA=construction/schemas/visual-qa-report.schema.json
+C8_TEST=construction/tests/test_c8_visual_qa.py
+C8_PALETTE_CONTRACT_TEST=construction/tests/test_c8_palette_resolution_contract.py
+C8_WORKFLOW=.github/workflows/factory-construction-c8-visual-qa.yml
+C8_GOLDEN=construction/fixtures/vanilla-golden/c8
+C8_RENDERER=c8-svg-v1
+C8_VIEWS=FRONT_BACK_LEFT_RIGHT_TOP_ISOMETRIC_LAYERS
+C8_OBJECTIVE_METRICS=OCCUPANCY_PROJECTIONS_COMPONENTS_ASPECT_RATIOS_PALETTE_DISTRIBUTION_REPETITION_FACADE_DEPTH_LAYER_DENSITY
+C8_SUBJECTIVE_REVIEW=EXPLICIT_EVIDENCE_BOUND_TO_BUILDSPEC_BUILD_IR_RENDERER_AND_ALL_SEVEN_VIEW_HASHES
+C8_RUNTIME_VISUAL_FIDELITY=DEFERRED_TO_C12
+C8_BOUNDARY=NO_LIVE_RUNTIME_VISUAL_FIDELITY_NO_FULL_MODPACK_ACCEPTANCE_NO_WORLDGEN_PLACEMENT
+
+Behavioral RED was captured before the Golden evidence existed. Run `34653245613` on head `79f0b4eecbfed5b0d6ea726e02713dbcf2d135b2` passed 36 of 37 C8 tests and failed only because the required C8 Golden directory had not yet been materialized. The first complete GREEN on head `d0dd0052eb1623b26220e1f2dd5ca0348d721134`, run `34654260600`, materialized the reviewed seven-view Golden and passed the inherited matrix.
+
+Final hardening then exposed a real fail-closed gap in C8's C5-consumer boundary. Head `8fe50188fca786363917db2abddf3fd6065ddfb2`, run `34655240122`, kept Engineering I2 at 15/15 and the original C8 suite/Golden at 37/37 while the new focused contract failed because six malformed C5 resolution variants were still accepted. The GREEN validates exact C5 resolution shape, fingerprints, runtime-confirmed authority, namespace consistency, state-candidate validity and resolved-versus-ambiguous selection semantics before using any C5 evidence.
+
+Concurrent Art-only work advanced `main` during PR validation. The C8 branch was synchronized without changing its 19-file implementation diff. Exact final PR head `9641e420eaed6b4371247bc57cec38d4603a8c6d`, run `34656801079`, passed Engineering I2 15/15, C8 38/38, C7 21/21, C6 10/10, C5 16/16, C4 12/12, Java 21 / NeoForge 21.1.248 runtime build with 31/31 tasks, C3 7/7, C2 10/10, C0 11/11 plus validator, and whitespace. All PR-triggered Construction C0–C8 workflows and Governance passed, and SonarCloud reported 0 new issues and 0 security hotspots. PR #67 merged as `76c2540bbaeed4e76c1d372400bbfadf89c3e3be`.
+
+The resulting `main` push fully revalidated C8. Run `34657707412` checked out exact `main@76c2540bbaeed4e76c1d372400bbfadf89c3e3be` and passed Engineering I2 15/15, C8 38/38, C7 21/21, C6 10/10, C5 16/16, C4 12/12, the Java 21 / NeoForge 21.1.248 runtime probe with `BUILD SUCCESSFUL in 3m 59s` and 31/31 executed tasks, C3 7/7, C2 10/10, C0 11/11 plus validator, and whitespace. Standalone C7 run `34657707384`, C6 `34657707429`, C5 `34657707539`, C4 `34657707492`, C3 `34657707375`, C2 `34657707570`, C1A `34657707638`, C1B `34657707513`, C0 `34657707565`, and Governance `34657707397` all completed successfully on the same merged main.
+
+### C8 acceptance
+
+- [x] dedicated C8 workflow is read-only, action-pinned and revalidates on `main`
+- [x] renderer emits exactly seven canonical `c8-svg-v1` views: front, back, left, right, top, isometric and layers
+- [x] view bytes and report bytes are deterministic across repeated execution
+- [x] SVG metadata binds each view to renderer version and canonical Build IR
+- [x] SVG safety contract rejects unsafe/noncanonical output
+- [x] objective metrics cover occupancy, projections/components/aspect ratios, palette distribution, repetition, facade depth and layer density
+- [x] six subjective checks remain `DEFERRED` without explicit review evidence
+- [x] review evidence is bound to exact BuildSpec, Build IR, renderer version and all seven current view hashes
+- [x] stale/mismatched review evidence fails closed
+- [x] C7 evidence is provenance only and cannot resolve C8 visual judgments
+- [x] C5 evidence is provenance/label context only and cannot resolve C8 visual judgments
+- [x] malformed or cross-authority-inconsistent C5 evidence fails closed
+- [x] runtime visual fidelity cannot be resolved by the offline C8 report and remains deferred to C12
+- [x] checked-in vanilla C8 Golden contains all seven deterministic SVGs, review evidence and byte-stable expected report
+- [x] behavioral RED captured before Golden materialization
+- [x] C5-consumer fail-closed RED captured before hardening
+- [x] synchronized final PR head passes I2 15/15 + C8 38/38 + C7 21/21 + C6 10/10 + C5 16/16 + C4 12/12 + NeoForge build + C3 7/7 + C2 10/10 + C0 11/11 + validator + whitespace
+- [x] PR #67 passes all triggered Construction C0–C8 workflows, Governance and SonarCloud
+- [x] PR #67 merged
+- [x] post-merge C8 passes I2 15/15 + C8 38/38 + C7 21/21 + C6 10/10 + C5 16/16 + C4 12/12 + NeoForge build + C3 7/7 + C2 10/10 + C0 11/11 + validator + whitespace
+- [x] post-merge standalone C7, C6, C5, C4, C3, C2, C1A, C1B, C0 and Governance gates pass
+- [ ] live runtime visual fidelity remains C12
+
+C8 is complete and post-merge validated. The next Construction slice is C9 — Agent/MCP.
