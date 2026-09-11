@@ -62,7 +62,7 @@ def _string_list(
 def _build_spec_policy(build_spec: object) -> tuple[bool, set[str] | None, set[str]]:
     spec = _require_object(build_spec, "build_spec")
     if spec.get("schema_version") != 1:
-        raise PaletteResolutionError("build_spec.schema_version must be 1")
+        raise PaletteResolutionError("build_spec schema_version must be 1")
     palette = _require_object(spec.get("palette"), "build_spec.palette")
     allow_modded = palette.get("allow_modded")
     if not isinstance(allow_modded, bool):
@@ -93,7 +93,7 @@ def _build_spec_policy(build_spec: object) -> tuple[bool, set[str] | None, set[s
 def _validate_registry(registry: object) -> tuple[dict[str, Any], str]:
     value = _require_object(registry, "registry")
     if value.get("schema_version") != 1:
-        raise PaletteResolutionError("registry.schema_version must be 1")
+        raise PaletteResolutionError("registry schema_version must be 1")
     fingerprint = _require_string(value.get("content_sha256"), "registry.content_sha256", SHA256_RE)
     blocks = value.get("blocks")
     if not isinstance(blocks, list):
@@ -104,7 +104,7 @@ def _validate_registry(registry: object) -> tuple[dict[str, Any], str]:
 def _validate_request(request: object) -> list[dict[str, Any]]:
     value = _require_object(request, "request")
     if value.get("schema_version") != 1:
-        raise PaletteResolutionError("request.schema_version must be 1")
+        raise PaletteResolutionError("request schema_version must be 1")
     roles = value.get("roles")
     if not isinstance(roles, list) or not roles:
         raise PaletteResolutionError("request.roles must be a non-empty array")
