@@ -32,6 +32,7 @@ const SOURCE_MODULES = Object.freeze([
   'blockbench-plugin/uv_texture_adapter.js',
   'blockbench-plugin/animation_adapter.js',
   'blockbench-plugin/geckolib4_adapter.js',
+  'blockbench-plugin/azurelib3_adapter.js',
   'blockbench-plugin/plugin_adapter.js',
 ]);
 

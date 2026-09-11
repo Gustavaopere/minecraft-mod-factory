@@ -5,6 +5,7 @@ const modeling = require('./modeling_adapter.js');
 const uvTexture = require('./uv_texture_adapter.js');
 const animation = require('./animation_adapter.js');
 const geckolib4 = require('./geckolib4_adapter.js');
+const azurelib3 = require('./azurelib3_adapter.js');
 
 function registerBlockbenchPlugin(bb) {
   let auditAction = null;
@@ -259,4 +260,5 @@ module.exports = {
   createBlockbenchUvTextureAdapter: uvTexture.createBlockbenchUvTextureAdapter,
   createBlockbenchAnimationAdapter: animation.createBlockbenchAnimationAdapter,
   createBlockbenchGeckoLib4Adapter: geckolib4.createBlockbenchGeckoLib4Adapter,
+  createBlockbenchAzureLib3Adapter: azurelib3.createBlockbenchAzureLib3Adapter,
 };
