@@ -1,0 +1,370 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://minecraft-mod-factory.local/schemas/visual-qa-report.schema.json",
+  "title": "Minecraft Mod Factory Construction C8 Visual QA Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "build_spec_sha256",
+    "build_ir_sha256",
+    "structural_report_sha256",
+    "palette_resolution_sha256",
+    "review_evidence_sha256",
+    "renderer_version",
+    "views",
+    "metrics",
+    "checks",
+    "overall_status",
+    "content_sha256"
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nullable_sha256": {
+      "oneOf": [
+        {"$ref": "#/$defs/sha256"},
+        {"type": "null"}
+      ]
+    },
+    "fraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["numerator", "denominator"],
+      "properties": {
+        "numerator": {"type": "integer"},
+        "denominator": {"type": "integer", "minimum": 1}
+      }
+    },
+    "axis_position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "z"],
+      "properties": {
+        "x": {"type": "integer"},
+        "y": {"type": "integer"},
+        "z": {"type": "integer"}
+      }
+    },
+    "extent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "z"],
+      "properties": {
+        "x": {"type": "integer", "minimum": 0},
+        "y": {"type": "integer", "minimum": 0},
+        "z": {"type": "integer", "minimum": 0}
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_.-]*$"
+        },
+        "message": {"type": "string", "minLength": 1},
+        "subject": {"type": "string", "minLength": 1}
+      }
+    },
+    "view_descriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "artifact_name",
+        "media_type",
+        "sha256",
+        "byte_length",
+        "width",
+        "height",
+        "evidence_class"
+      ],
+      "properties": {
+        "id": {
+          "enum": ["front", "back", "left", "right", "top", "isometric", "layers"]
+        },
+        "artifact_name": {
+          "enum": ["front.svg", "back.svg", "left.svg", "right.svg", "top.svg", "isometric.svg", "layers.svg"]
+        },
+        "media_type": {"const": "image/svg+xml"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "byte_length": {"type": "integer", "minimum": 1},
+        "width": {"type": "integer", "minimum": 1},
+        "height": {"type": "integer", "minimum": 1},
+        "evidence_class": {"const": "canonical_offline_preview"}
+      }
+    },
+    "projection_metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "occupied_cell_count",
+        "bounding_width",
+        "bounding_height",
+        "occupancy_ratio",
+        "component_count",
+        "dominant_component_size",
+        "aspect_ratio"
+      ],
+      "properties": {
+        "id": {"enum": ["front", "back", "left", "right", "top"]},
+        "occupied_cell_count": {"type": "integer", "minimum": 0},
+        "bounding_width": {"type": "integer", "minimum": 0},
+        "bounding_height": {"type": "integer", "minimum": 0},
+        "occupancy_ratio": {"$ref": "#/$defs/fraction"},
+        "component_count": {"type": "integer", "minimum": 0},
+        "dominant_component_size": {"type": "integer", "minimum": 0},
+        "aspect_ratio": {"$ref": "#/$defs/fraction"}
+      }
+    },
+    "visible_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["front", "back", "left", "right", "top"],
+      "properties": {
+        "front": {"type": "integer", "minimum": 0},
+        "back": {"type": "integer", "minimum": 0},
+        "left": {"type": "integer", "minimum": 0},
+        "right": {"type": "integer", "minimum": 0},
+        "top": {"type": "integer", "minimum": 0}
+      }
+    },
+    "palette_metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "occupied_block_count", "fraction", "visible_counts", "roles"],
+      "properties": {
+        "state": {"type": "string", "minLength": 1},
+        "occupied_block_count": {"type": "integer", "minimum": 0},
+        "fraction": {"$ref": "#/$defs/fraction"},
+        "visible_counts": {"$ref": "#/$defs/visible_counts"},
+        "roles": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        }
+      }
+    },
+    "repetition_metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "distinct_row_signature_count",
+        "distinct_column_signature_count",
+        "repeated_row_signature_count",
+        "repeated_column_signature_count",
+        "longest_adjacent_identical_row_run",
+        "longest_adjacent_identical_column_run",
+        "repeated_row_ratio",
+        "repeated_column_ratio"
+      ],
+      "properties": {
+        "id": {"enum": ["front", "back", "left", "right", "top"]},
+        "distinct_row_signature_count": {"type": "integer", "minimum": 0},
+        "distinct_column_signature_count": {"type": "integer", "minimum": 0},
+        "repeated_row_signature_count": {"type": "integer", "minimum": 0},
+        "repeated_column_signature_count": {"type": "integer", "minimum": 0},
+        "longest_adjacent_identical_row_run": {"type": "integer", "minimum": 0},
+        "longest_adjacent_identical_column_run": {"type": "integer", "minimum": 0},
+        "repeated_row_ratio": {"$ref": "#/$defs/fraction"},
+        "repeated_column_ratio": {"$ref": "#/$defs/fraction"}
+      }
+    },
+    "facade_depth_metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "distinct_visible_depth_count",
+        "minimum_visible_depth",
+        "maximum_visible_depth",
+        "depth_range",
+        "adjacent_visible_pair_count",
+        "adjacent_depth_transition_count",
+        "transition_ratio"
+      ],
+      "properties": {
+        "id": {"enum": ["front", "back", "left", "right"]},
+        "distinct_visible_depth_count": {"type": "integer", "minimum": 0},
+        "minimum_visible_depth": {"type": ["integer", "null"]},
+        "maximum_visible_depth": {"type": ["integer", "null"]},
+        "depth_range": {"type": "integer", "minimum": 0},
+        "adjacent_visible_pair_count": {"type": "integer", "minimum": 0},
+        "adjacent_depth_transition_count": {"type": "integer", "minimum": 0},
+        "transition_ratio": {"$ref": "#/$defs/fraction"}
+      }
+    },
+    "layer_palette_count": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "count"],
+      "properties": {
+        "state": {"type": "string", "minLength": 1},
+        "count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "layer_metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["y", "occupied_cells", "footprint_area", "density", "palette_counts"],
+      "properties": {
+        "y": {"type": "integer", "minimum": 0},
+        "occupied_cells": {"type": "integer", "minimum": 0},
+        "footprint_area": {"type": "integer", "minimum": 1},
+        "density": {"$ref": "#/$defs/fraction"},
+        "palette_counts": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/layer_palette_count"}
+        }
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "required", "status", "severity", "summary", "evidence_views", "findings"],
+      "properties": {
+        "id": {
+          "enum": [
+            "canonical_preview_integrity",
+            "silhouette_readability",
+            "proportion",
+            "material_hierarchy",
+            "repetition",
+            "facade_readability",
+            "interior_density",
+            "runtime_visual_fidelity"
+          ]
+        },
+        "required": {"type": "boolean"},
+        "status": {"enum": ["PASS", "FAIL", "DEFERRED", "NOT_APPLICABLE"]},
+        "severity": {"enum": ["error", "warning", "info"]},
+        "summary": {"type": "string", "minLength": 1},
+        "evidence_views": {
+          "type": "array",
+          "items": {"enum": ["front", "back", "left", "right", "top", "isometric", "layers"]},
+          "uniqueItems": true
+        },
+        "findings": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/finding"}
+        }
+      }
+    }
+  },
+  "properties": {
+    "schema_version": {"const": 1},
+    "build_spec_sha256": {"$ref": "#/$defs/sha256"},
+    "build_ir_sha256": {"$ref": "#/$defs/sha256"},
+    "structural_report_sha256": {"$ref": "#/$defs/nullable_sha256"},
+    "palette_resolution_sha256": {"$ref": "#/$defs/nullable_sha256"},
+    "review_evidence_sha256": {"$ref": "#/$defs/nullable_sha256"},
+    "renderer_version": {"const": "c8-svg-v1"},
+    "views": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": {"$ref": "#/$defs/view_descriptor"}
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["occupancy", "projections", "palette_distribution", "repetition", "facade_depth", "layers"],
+      "properties": {
+        "occupancy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "occupied_block_count",
+            "palette_state_count",
+            "occupied_min",
+            "occupied_max",
+            "occupied_extent",
+            "occupied_bounding_box_volume",
+            "occupied_density",
+            "full_bounds_density"
+          ],
+          "properties": {
+            "occupied_block_count": {"type": "integer", "minimum": 0},
+            "palette_state_count": {"type": "integer", "minimum": 0},
+            "occupied_min": {
+              "oneOf": [
+                {"$ref": "#/$defs/axis_position"},
+                {"type": "null"}
+              ]
+            },
+            "occupied_max": {
+              "oneOf": [
+                {"$ref": "#/$defs/axis_position"},
+                {"type": "null"}
+              ]
+            },
+            "occupied_extent": {"$ref": "#/$defs/extent"},
+            "occupied_bounding_box_volume": {"type": "integer", "minimum": 0},
+            "occupied_density": {"$ref": "#/$defs/fraction"},
+            "full_bounds_density": {"$ref": "#/$defs/fraction"}
+          }
+        },
+        "projections": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {"$ref": "#/$defs/projection_metric"}
+        },
+        "palette_distribution": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/palette_metric"}
+        },
+        "repetition": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {"$ref": "#/$defs/repetition_metric"}
+        },
+        "facade_depth": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {"$ref": "#/$defs/facade_depth_metric"}
+        },
+        "layers": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["levels", "level_count", "minimum_occupied_cells", "maximum_occupied_cells", "median_middle_pair"],
+          "properties": {
+            "levels": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/layer_metric"}
+            },
+            "level_count": {"type": "integer", "minimum": 1},
+            "minimum_occupied_cells": {"type": "integer", "minimum": 0},
+            "maximum_occupied_cells": {"type": "integer", "minimum": 0},
+            "median_middle_pair": {
+              "type": "array",
+              "prefixItems": [
+                {"type": "integer", "minimum": 0},
+                {"type": "integer", "minimum": 0}
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": {"$ref": "#/$defs/check"}
+    },
+    "overall_status": {"enum": ["PASS", "FAIL", "DEFERRED"]},
+    "content_sha256": {"$ref": "#/$defs/sha256"}
+  }
+}
