@@ -2,6 +2,7 @@
 
 const {isPlainObject} = require('../common/contract_utils.js');
 const bedrock = require('./bedrock_provider_common.js');
+const {createBedrockProviderFacade} = require('./bedrock_provider_facade.js');
 
 const GECKOLIB4_AUTHORITY = Object.freeze({
   providerFamily: 'geckolib4',
@@ -66,67 +67,28 @@ function validateKeyframeLeaf(value, field) {
   }
 }
 
-function validateGeckoLib4GeoDocument(value) {
-  return bedrock.validateGeoDocument(value, {
-    fail,
-    invalidDocumentCode: 'INVALID_GECKOLIB4_GEO_DOCUMENT',
-    unsupportedFormatCode: 'UNSUPPORTED_GECKOLIB4_GEO_FORMAT',
-    invalidLocatorCode: 'INVALID_GECKOLIB4_LOCATOR',
-    invalidStringCode: 'INVALID_GECKOLIB4_STRING',
-    providerLabel: 'GeckoLib 4.9.2',
-    formatVersions: GEO_FORMAT_VERSIONS,
-  });
-}
-
-function validateGeckoLib4AnimationDocument(value) {
-  return bedrock.validateAnimationDocument(value, {
-    fail,
-    invalidDocumentCode: 'INVALID_GECKOLIB4_ANIMATION_DOCUMENT',
-    invalidStringCode: 'INVALID_GECKOLIB4_STRING',
-    invalidNumberCode: 'INVALID_GECKOLIB4_NUMBER',
-    invalidLoopCode: 'INVALID_GECKOLIB4_LOOP',
-    invalidKeyframeCode: 'INVALID_GECKOLIB4_KEYFRAME',
-    invalidTimestampCode: 'INVALID_GECKOLIB4_TIMESTAMP',
-    invalidEffectsCode: 'INVALID_GECKOLIB4_EFFECTS',
-    effectStringCode: 'INVALID_GECKOLIB4_STRING',
-    loopValues: LOOP_VALUES,
-    validateKeyframeLeaf,
-    leafIndicatorFields: ['vector', 'pre', 'post'],
-  });
-}
-
-function serializeGeckoLib4EffectMarker(marker, providerData) {
-  return bedrock.serializeEffectMarker(marker, providerData, {
-    fail,
-    invalidMarkerCode: 'INVALID_GECKOLIB4_EFFECT_MARKER',
-    unsupportedMarkerCode: 'UNSUPPORTED_GECKOLIB4_EFFECT_MARKER',
-    invalidNumberCode: 'INVALID_GECKOLIB4_NUMBER',
-    stringCode: 'INVALID_GECKOLIB4_STRING',
-    providerLabel: 'GeckoLib 4',
-  });
-}
-
-function createGeckoLib4ExportPlan(input) {
-  return bedrock.createExportPlan(input, {
-    fail,
-    profileIds: GECKOLIB4_PROFILE_IDS,
-    providerFamily: 'geckolib4',
-    providerLabel: 'GeckoLib 4',
-    invalidPlanCode: 'INVALID_GECKOLIB4_EXPORT_PLAN',
-    invalidProfileCode: 'INVALID_GECKOLIB4_PROFILE',
-    invalidSourcePathCode: 'INVALID_GECKOLIB4_SOURCE_PATH',
-    sourceMustBeBbmodelCode: 'GECKOLIB4_SOURCE_MUST_BE_BBMODEL',
-    invalidPathCode: 'INVALID_GECKOLIB4_PATH',
-    invalidResourceNameCode: 'INVALID_GECKOLIB4_RESOURCE_NAME',
-    invalidStringCode: 'INVALID_GECKOLIB4_STRING',
-  });
-}
+const provider = createBedrockProviderFacade({
+  fail,
+  codePrefix: 'GECKOLIB4',
+  providerFamily: 'geckolib4',
+  providerLabel: 'GeckoLib 4',
+  geoProviderLabel: 'GeckoLib 4.9.2',
+  profileIds: GECKOLIB4_PROFILE_IDS,
+  formatVersions: GEO_FORMAT_VERSIONS,
+  loopValues: LOOP_VALUES,
+  validateKeyframeLeaf,
+  leafIndicatorFields: ['vector', 'pre', 'post'],
+  codeOverrides: {
+    effectValidationString: 'INVALID_GECKOLIB4_STRING',
+    markerString: 'INVALID_GECKOLIB4_STRING',
+  },
+});
 
 module.exports = {
   GECKOLIB4_AUTHORITY,
   GeckoLib4ContractError,
-  validateGeckoLib4GeoDocument,
-  validateGeckoLib4AnimationDocument,
-  serializeGeckoLib4EffectMarker,
-  createGeckoLib4ExportPlan,
+  validateGeckoLib4GeoDocument: provider.validateGeoDocument,
+  validateGeckoLib4AnimationDocument: provider.validateAnimationDocument,
+  serializeGeckoLib4EffectMarker: provider.serializeEffectMarker,
+  createGeckoLib4ExportPlan: provider.createExportPlan,
 };
