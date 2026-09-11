@@ -57,6 +57,9 @@ jobs:
             asset_toolkit.azurelib3_adapter.test.js \
             asset_toolkit.azurelib3_blockbench_adapter.test.js \
             asset_toolkit.azurelib3_public_api.test.js
+      - name: Bind runtime smoke fixture to Factory serializer and export plan
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node --test asset_toolkit.neoforge_native_animation_runtime_smoke.test.js
       - name: Require PR8 target-exact runtime smoke fixtures
         run: |
           test -f art/tooling/blockbench/asset-toolkit/runtime-smoke/NeoForgeNativeAnimationCodecSmokeTest.java || {
