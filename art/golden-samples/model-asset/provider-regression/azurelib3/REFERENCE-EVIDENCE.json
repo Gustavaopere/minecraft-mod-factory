@@ -1,0 +1,20 @@
+{
+  "authority": {
+    "providerFamily": "azurelib",
+    "runtimeVersion": "3.1.11",
+    "runtimeSource": "AzureDoom/AzureLib",
+    "runtimeRef": "74ca485d43089c6953492ae7a10fc896eda30385",
+    "blockbenchPluginId": "azurelib_utils",
+    "blockbenchPluginVersion": "2.1.5",
+    "blockbenchPluginSource": "AzureDoom/AzureLib",
+    "blockbenchPluginRef": "4aac02dcefff5440874b3ec64871a1cd0feffadf",
+    "blockbenchFormatId": "azure_model",
+    "animationFormatVersion": "1.8.0"
+  },
+  "classification": "REFERENCE_ONLY",
+  "sourceNativeBbmodel": false,
+  "exporterProduced": false,
+  "runtimeValidated": false,
+  "f4I6Evidence": false,
+  "runtimeEvidence": "UNPROVEN"
+}
