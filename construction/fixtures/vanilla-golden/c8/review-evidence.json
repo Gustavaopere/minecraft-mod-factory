@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "build_spec_sha256": "20e1119cc06d0bfb1a40996f2e635d1d86d44ea17a1644c05d7a89cec255a7d7",
+  "build_ir_sha256": "76dfe4de03ed335dbb21b04cabacdb0bac28a078637069e343193bf144cacdd0",
+  "renderer_version": "c8-svg-v1",
+  "views": [
+    {
+      "id": "front",
+      "sha256": "18d755b33d578d293caa97230810a20084d2479629b8292398b8c01e63221d53"
+    },
+    {
+      "id": "back",
+      "sha256": "9c888f08ab2c4e197a29d7a3d2040bec7dbb03d7ce7e330a4e865e4f4a10e121"
+    },
+    {
+      "id": "left",
+      "sha256": "405f269b32f3e15e345ca9233b7d6104dd4c53bb10f0acde9524b87216ffb090"
+    },
+    {
+      "id": "right",
+      "sha256": "aaae71f4d68580d3b7fd8490165f48a0765fc6b46e2a55ce087fbb409769c436"
+    },
+    {
+      "id": "top",
+      "sha256": "3ddb1592052994e650778588d9f34f0a2930ee020524a025cbfdbe20dfd0f9b5"
+    },
+    {
+      "id": "isometric",
+      "sha256": "ba2debdb09ffc4b77c0bb51f1c85578af1e94d2263669899ed45f550a9948320"
+    },
+    {
+      "id": "layers",
+      "sha256": "1ad89f5b39de44624e1fea2a10af12ce6b923517370ff59252d31c0ee8586918"
+    }
+  ],
+  "reviewer": {
+    "kind": "agent",
+    "id": "openai-gpt-5.6-sol"
+  },
+  "decisions": [
+    {
+      "check_id": "silhouette_readability",
+      "status": "PASS",
+      "evidence_views": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "isometric"
+      ],
+      "summary": "Canonical offline views show a clear pavilion silhouette with an unambiguous roof, platform, and corner supports."
+    },
+    {
+      "check_id": "proportion",
+      "status": "PASS",
+      "evidence_views": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "isometric"
+      ],
+      "summary": "The diagnostic massing is proportionally coherent with the compact open-pavilion brief across all orthographic and isometric views."
+    },
+    {
+      "check_id": "material_hierarchy",
+      "status": "PASS",
+      "evidence_views": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "isometric",
+        "layers"
+      ],
+      "summary": "The canonical state-color evidence consistently distinguishes the stone-brick platform, oak-log supports, and oak-plank roof without claiming runtime texture fidelity."
+    },
+    {
+      "check_id": "repetition",
+      "status": "PASS",
+      "evidence_views": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "isometric"
+      ],
+      "summary": "Repeated elements are regular and symmetric in the offline previews, consistent with the pavilion structure rather than visually accidental duplication."
+    },
+    {
+      "check_id": "facade_readability",
+      "status": "PASS",
+      "evidence_views": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "isometric"
+      ],
+      "summary": "All four diagnostic facades read as open bays framed by corner supports between the platform and roof."
+    },
+    {
+      "check_id": "interior_density",
+      "status": "PASS",
+      "evidence_views": [
+        "top",
+        "isometric",
+        "layers"
+      ],
+      "summary": "The layer and isometric evidence shows an intentionally open, low-density interior beneath the roof; this does not assert semantic satisfaction of named spaces."
+    }
+  ]
+}

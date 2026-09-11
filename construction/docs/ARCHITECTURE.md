@@ -19,7 +19,8 @@ Construction Brief
   → Canonical Build IR
   → Structural QA
   → Modded Registry QA
-  → Preview
+  → Canonical Preview
+  → Visual QA / Review Evidence
   → Revision
   → Sponge v3 Export
 ```
@@ -120,9 +121,11 @@ Within C6, the canonical palette order comes from C2, sparse cells are expanded 
 
 Within C7, report fingerprints derive from the exact BuildSpec, C2 Build IR and supplied C4 registry evidence. Occupancy traversal, graph traversal, connected-component ordering, findings and metrics use deterministic ordering and the report contains no timestamps, random identifiers or machine-specific paths. Equivalent authoritative inputs therefore reproduce an equivalent structural QA report.
 
+Within C8, `c8-svg-v1` uses fixed view ids, integer projection/isometric geometry, deterministic C2-state pseudo-colors, fixed occlusion/painter/layer ordering and no external resources, timestamps, machine paths, fonts, GPU state or environment-derived configuration. The Visual QA report uses fixed view/check order, reduced integer fraction objects and canonical compact JSON. Each SVG is SHA-256 bound into the report; review evidence is additionally bound to the exact BuildSpec, Build IR, renderer version and all seven current view hashes.
+
 ## 9. QA layers
 
-C7 implements structural Architecture QA while C8 remains the later visual-quality layer.
+C7 implements conservative structural Architecture QA. C8 implements a separate deterministic offline Visual QA layer. Neither layer is permitted to promote evidence outside its authority.
 
 `construction/core/structural_qa.py` consumes the current BuildSpec, a C2-valid Canonical Build IR and optional C4 runtime-registry evidence. The paired `construction/schemas/structural-qa-report.schema.json` records deterministic fingerprints, metrics, findings and check states.
 
@@ -145,22 +148,30 @@ C7 therefore keeps the following concepts explicit but deferred instead of guess
 
 Disconnected conservative walkable components are measurable, but C7 does not claim which component corresponds to a named room or intended circulation path without a spatial intent mapping. Likewise, ladders, elevators, scaffolding, trapdoors and modded traversal mechanisms are not inferred from block names.
 
-C8 visual QA remains responsible for silhouette, proportion, material hierarchy, repetition, facade readability, interior density and canonical rendered views. Structural evidence is not used as a proxy for those visual properties.
+C8 starts from the same C2 voxel authority but owns visual evidence only. `construction/qa/preview_renderer.py` emits seven canonical SVG views — `front`, `back`, `left`, `right`, `top`, `isometric` and `layers` — under the fixed `c8-svg-v1` renderer contract. `construction/core/visual_qa.py` validates those artifacts, computes deterministic objective metrics and emits `construction/schemas/visual-qa-report.schema.json`.
+
+C8 objective metrics cover occupancy, orthographic projections/components/aspect ratios, canonical state distribution, repeated row/column signatures, facade visible-depth transitions and per-layer density. They are diagnostic evidence, not universal aesthetic thresholds.
+
+The six required subjective C8 checks are silhouette readability, proportion, material hierarchy, repetition, facade readability and interior density. No subjective check becomes `PASS` merely because metrics look favorable. It remains `DEFERRED` until explicit human or agent review evidence is bound to the exact BuildSpec, Build IR, renderer version and all seven current artifact hashes. Bound evidence can resolve only those six checks to `PASS` or `FAIL`.
+
+C7 structural reports and C5 palette-resolution documents may be supplied to C8 only as validated provenance/context. C7 cannot decide C8 visual quality. C5 role labels may annotate exact selected states, but they do not prove texture/material appearance. `runtime_visual_fidelity` is deliberately non-required and always `DEFERRED`: C8 does not prove textures, CTM, tint, transparency, emissives, shaders, lighting or live Minecraft appearance. That boundary remains C12.
+
+The C3 vanilla pavilion has a C8 Golden extension under `construction/fixtures/vanilla-golden/c8/`. It binds the seven exact SVG artifacts to explicit review evidence and an expected byte-stable Visual QA report while preserving the runtime-fidelity deferment.
 
 ## 10. MCP boundary
 
 C9 will expose narrow construction operations rather than arbitrary shell/code execution. Intended capabilities include registry search, palette resolution, build generation, bounded edits, preview, validation and export.
 
-Credentials or service-specific configuration are not introduced by C0-C7. Manual setup remains deferred until the first provider that actually needs it.
+Credentials or service-specific configuration are not introduced by C0-C8. Manual setup remains deferred until the first provider that actually needs it.
 
 ## 11. Runtime/worldgen boundary
 
 Construction may produce reusable structure assets, references and canonical voxel data. Runtime placement, structure sets, biome tags, spacing/separation, processor rules, loot and spawn behavior remain owned by the individual mod runtime and its Mod Engineering worldgen gates.
 
-The C4 NeoForge probe is evidence-gathering infrastructure only. Compiling that probe and defining the post-registry export contract does not by itself prove the complete physical modpack can boot, capture the snapshot or place a generated structure. C7 state evidence likewise does not promote offline structural QA into live-world acceptance. Full runtime acceptance remains C12.
+The C4 NeoForge probe is evidence-gathering infrastructure only. Compiling that probe and defining the post-registry export contract does not by itself prove the complete physical modpack can boot, capture the snapshot or place a generated structure. C7 state evidence likewise does not promote offline structural QA into live-world acceptance. C8 diagnostic SVGs and bound review evidence also do not promote offline visual acceptance into live-world fidelity. Full runtime acceptance remains C12.
 
 The visual pipeline may consume structures as reference material, including `.nbt` analysis, without turning a complete build into a runtime entity model by default.
 
 ## 12. Current non-goals
 
-Through C7, Construction now owns canonical Build IR validation, modpack registry evidence, semantic palette resolution, deterministic Sponge v3 serialization and conservative offline structural QA. It still does not infer provider-specific support/traversal semantics without explicit authority, perform C8 visual QA, install C9 MCP servers, request C10 external-provider credentials, or claim C12 full-modpack/in-game/worldgen compatibility.
+Through C8, Construction now owns canonical Build IR validation, modpack registry evidence, semantic palette resolution, deterministic Sponge v3 serialization, conservative offline structural QA and deterministic evidence-gated offline Visual QA. It still does not infer provider-specific support/traversal semantics without explicit authority, install C9 MCP servers, request C10 external-provider credentials, or claim C12 full-modpack/in-game/worldgen/runtime-visual compatibility.
