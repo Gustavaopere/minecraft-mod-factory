@@ -1,0 +1,18 @@
+{
+  "authority": {
+    "providerFamily": "geckolib4",
+    "runtimeVersion": "4.9.2",
+    "runtimeSource": "bernie-g/geckolib",
+    "runtimeRef": "d57fc640de083ae67ec0051a02b2b4fb22f4d02b",
+    "blockbenchPluginId": "geckolib",
+    "blockbenchPluginVersion": "4.2.5",
+    "blockbenchPluginSource": "JannisX11/blockbench-plugins",
+    "blockbenchPluginRef": "96d3b694de7d44077de68181711816153c442a6f"
+  },
+  "classification": "REFERENCE_ONLY",
+  "sourceNativeBbmodel": false,
+  "exporterProduced": false,
+  "runtimeValidated": false,
+  "f4I6Evidence": false,
+  "runtimeEvidence": "UNPROVEN"
+}
