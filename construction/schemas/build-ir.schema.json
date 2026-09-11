@@ -92,7 +92,11 @@
       "additionalProperties": false,
       "required": ["name", "properties"],
       "properties": {
-        "name": {"type": "string", "pattern": "^[a-z0-9_.-]+:[a-z0-9_./-]+$"},
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9_.-]+:[a-z0-9_./-]+$",
+          "not": {"enum": ["minecraft:air", "minecraft:cave_air", "minecraft:void_air"]}
+        },
         "properties": {
           "type": "object",
           "propertyNames": {"pattern": "^[a-z0-9_]+$"},
