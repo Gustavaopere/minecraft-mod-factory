@@ -118,28 +118,49 @@ Within C2, canonicalization is independent of incoming placement order and block
 
 Within C6, the canonical palette order comes from C2, sparse cells are expanded deterministically, NBT compound/list construction order is controlled by Factory code, and the GZip timestamp is fixed to zero. Re-exporting the same valid Build IR plus the same required-mod and BlockEntity inputs must therefore reproduce identical bytes.
 
+Within C7, report fingerprints derive from the exact BuildSpec, C2 Build IR and supplied C4 registry evidence. Occupancy traversal, graph traversal, connected-component ordering, findings and metrics use deterministic ordering and the report contains no timestamps, random identifiers or machine-specific paths. Equivalent authoritative inputs therefore reproduce an equivalent structural QA report.
+
 ## 9. QA layers
 
-C7 and C8 will separate structural correctness from visual quality.
+C7 implements structural Architecture QA while C8 remains the later visual-quality layer.
 
-Structural QA includes bounds, enclosure, circulation, head clearance, floor continuity, vertical access, unsupported placements where meaningful and state validity.
+`construction/core/structural_qa.py` consumes the current BuildSpec, a C2-valid Canonical Build IR and optional C4 runtime-registry evidence. The paired `construction/schemas/structural-qa-report.schema.json` records deterministic fingerprints, metrics, findings and check states.
 
-Visual QA includes silhouette, proportion, material hierarchy, repetition, facade readability, interior density and canonical rendered views.
+C7 currently proves only evidence available from those authorities:
+
+- canonical bounds and C2 Build IR integrity;
+- exact block/state validity against C4 `runtime_confirmed` evidence when supplied;
+- conservative geometric two-block head clearance;
+- deterministic walkable-surface graph topology;
+- connected-component measurements;
+- conservative one-block vertical-step connectivity.
+
+The report distinguishes `PASS`, `FAIL`, `DEFERRED` and `NOT_APPLICABLE`. A required unresolved check contributes `DEFERRED` to the overall result rather than being silently accepted. This is important where current intent/runtime contracts do not contain enough semantics to prove the architectural requirement.
+
+C7 therefore keeps the following concepts explicit but deferred instead of guessing:
+
+- enclosure, because BuildSpec v1 does not map interior volumes, entrances, windows or intentional openings;
+- semantic floor continuity, because named required spaces are not mapped to voxel regions;
+- provider-aware unsupported placement, because C4 does not yet carry authoritative support-face, gravity or attachment metadata.
+
+Disconnected conservative walkable components are measurable, but C7 does not claim which component corresponds to a named room or intended circulation path without a spatial intent mapping. Likewise, ladders, elevators, scaffolding, trapdoors and modded traversal mechanisms are not inferred from block names.
+
+C8 visual QA remains responsible for silhouette, proportion, material hierarchy, repetition, facade readability, interior density and canonical rendered views. Structural evidence is not used as a proxy for those visual properties.
 
 ## 10. MCP boundary
 
 C9 will expose narrow construction operations rather than arbitrary shell/code execution. Intended capabilities include registry search, palette resolution, build generation, bounded edits, preview, validation and export.
 
-Credentials or service-specific configuration are not introduced by C0-C6. Manual setup remains deferred until the first provider that actually needs it.
+Credentials or service-specific configuration are not introduced by C0-C7. Manual setup remains deferred until the first provider that actually needs it.
 
 ## 11. Runtime/worldgen boundary
 
 Construction may produce reusable structure assets, references and canonical voxel data. Runtime placement, structure sets, biome tags, spacing/separation, processor rules, loot and spawn behavior remain owned by the individual mod runtime and its Mod Engineering worldgen gates.
 
-The C4 NeoForge probe is evidence-gathering infrastructure only. Compiling that probe and defining the post-registry export contract does not by itself prove the complete physical modpack can boot, capture the snapshot or place a generated structure. Full runtime acceptance remains C12.
+The C4 NeoForge probe is evidence-gathering infrastructure only. Compiling that probe and defining the post-registry export contract does not by itself prove the complete physical modpack can boot, capture the snapshot or place a generated structure. C7 state evidence likewise does not promote offline structural QA into live-world acceptance. Full runtime acceptance remains C12.
 
 The visual pipeline may consume structures as reference material, including `.nbt` analysis, without turning a complete build into a runtime entity model by default.
 
 ## 12. Current non-goals
 
-C6 does not infer advanced connected/copycat/dynamic-renderer placement semantics, perform structural or visual QA, install MCP servers, request external-provider credentials, or claim in-game/worldgen compatibility. Those claims require later C7, C8, C9/C10 and C12 gates.
+Through C7, Construction now owns canonical Build IR validation, modpack registry evidence, semantic palette resolution, deterministic Sponge v3 serialization and conservative offline structural QA. It still does not infer provider-specific support/traversal semantics without explicit authority, perform C8 visual QA, install C9 MCP servers, request C10 external-provider credentials, or claim C12 full-modpack/in-game/worldgen compatibility.
