@@ -20,6 +20,39 @@ function availableContext() {
   };
 }
 
+function validBlueprint() {
+  return {
+    meta: {
+      format: 'animated-java:format/blueprint',
+      format_version: '1.10.2',
+      uuid: '11111111-1111-4111-8111-111111111111',
+    },
+    blueprint_settings: {
+      blueprint_id: 'factory:cutscene/test',
+      target_minecraft_version: '1.21.1',
+      resource_pack_export_mode: 'folder',
+      data_pack_export_mode: 'folder',
+      enable_plugin_mode: false,
+    },
+    variants: {
+      default: {
+        display_name: 'Default',
+        name: 'default',
+        uuid: '22222222-2222-4222-8222-222222222222',
+        texture_map: {},
+        excluded_nodes: [],
+        is_default: true,
+      },
+      list: [],
+    },
+    elements: [],
+    groups: [],
+    outliner: [],
+    textures: [],
+    animations: [],
+  };
+}
+
 function assertPublicApi(api, surface) {
   const authority = api.ANIMATED_JAVA_AUTHORITY;
   assert.equal(authority?.providerFamily, 'animated_java', `${surface} provider family`);
@@ -32,6 +65,7 @@ function assertPublicApi(api, surface) {
     '81aadc4def796d97dab6642ad05b564b470ecadcaf455c8cc5826c9e24759672',
     `${surface} release asset SHA-256`,
   );
+  assert.equal(authority?.pluginVariant, 'desktop', `${surface} desktop-only catalog variant`);
   assert.equal(authority?.blockbenchVersion, '5.1.6', `${surface} Blockbench baseline`);
   assert.equal(authority?.blockbenchSource, 'JannisX11/blockbench', `${surface} Blockbench source`);
   assert.equal(authority?.blockbenchRef, '794e964e966b6783b4e9b98ecbdda5152c0620cc', `${surface} Blockbench source ref`);
@@ -41,6 +75,7 @@ function assertPublicApi(api, surface) {
   assert.equal(authority?.sourceExtension, '.ajblueprint', `${surface} source extension`);
   assert.deepEqual(authority?.exportModes, ['folder', 'zip', 'none'], `${surface} export modes`);
   assert.equal(typeof api.validateAnimatedJavaBlueprint, 'function', `${surface} Blueprint validator`);
+  assert.equal(typeof api.inspectAnimatedJavaBlueprintFeatures, 'function', `${surface} feature inspector`);
   assert.equal(typeof api.createAnimatedJavaExportPlan, 'function', `${surface} export plan`);
 }
 
@@ -71,36 +106,7 @@ test('PR11 exposes one audited Animated Java authority through core and standalo
 });
 
 test('PR11 Blueprint validator is fail-closed for the audited source format and target', () => {
-  const valid = {
-    meta: {
-      format: 'animated-java:format/blueprint',
-      format_version: '1.10.2',
-      uuid: '11111111-1111-4111-8111-111111111111',
-    },
-    blueprint_settings: {
-      blueprint_id: 'factory:cutscene/test',
-      target_minecraft_version: '1.21.1',
-      resource_pack_export_mode: 'folder',
-      data_pack_export_mode: 'folder',
-      enable_plugin_mode: false,
-    },
-    variants: {
-      default: {
-        display_name: 'Default',
-        name: 'default',
-        uuid: '22222222-2222-4222-8222-222222222222',
-        texture_map: {},
-        excluded_nodes: [],
-        is_default: true,
-      },
-      list: [],
-    },
-    elements: [],
-    groups: [],
-    outliner: [],
-    textures: [],
-    animations: [],
-  };
+  const valid = validBlueprint();
 
   const normalized = core.validateAnimatedJavaBlueprint(valid);
   assert.equal(normalized.meta.format, 'animated-java:format/blueprint');
@@ -124,6 +130,69 @@ test('PR11 Blueprint validator is fail-closed for the audited source format and 
     }),
     error => error?.code === 'INVALID_ANIMATED_JAVA_EXPORT_MODE',
   );
+});
+
+test('PR11 inspects variants, locators, cameras, and function/variant keyframe channels without mutation', () => {
+  const blueprint = validBlueprint();
+  blueprint.variants.list.push({
+    display_name: 'Damaged',
+    name: 'damaged',
+    uuid: '33333333-3333-4333-8333-333333333333',
+    texture_map: {},
+    excluded_nodes: [],
+  });
+  blueprint.elements.push(
+    {
+      name: 'hand_locator',
+      uuid: '44444444-4444-4444-8444-444444444444',
+      type: 'locator',
+      position: [0, 0, 0],
+      rotation: [0, 0, 0],
+      config: {use_entity: false},
+    },
+    {
+      name: 'scene_camera',
+      uuid: '55555555-5555-4555-8555-555555555555',
+      type: 'camera',
+      position: [0, 0, 0],
+      rotation: [0, 0, 0],
+    },
+  );
+  blueprint.animations.push({
+    name: 'scene',
+    uuid: '66666666-6666-4666-8666-666666666666',
+    animators: {
+      '44444444-4444-4444-8444-444444444444': {
+        name: 'hand_locator',
+        type: 'locator',
+        keyframes: [
+          {
+            channel: 'function',
+            time: 0,
+            data_points: [{function: 'say hello', execute_condition: '', repeat: true, repeat_frequency: 1}],
+          },
+        ],
+      },
+      effects: {
+        type: 'effect',
+        keyframes: [
+          {channel: 'variant', time: 0, data_points: [{variant: '33333333-3333-4333-8333-333333333333'}]},
+        ],
+      },
+    },
+  });
+
+  const snapshot = JSON.stringify(blueprint);
+  const features = core.inspectAnimatedJavaBlueprintFeatures(blueprint);
+  assert.deepEqual(features, {
+    variantCount: 2,
+    locatorCount: 1,
+    cameraCount: 1,
+    functionKeyframeCount: 1,
+    variantKeyframeCount: 1,
+  });
+  assert.equal(JSON.stringify(blueprint), snapshot);
+  assert.ok(Object.isFrozen(features));
 });
 
 test('PR11 export plan preserves .ajblueprint and stages only explicit audited roots', () => {
@@ -166,13 +235,27 @@ test('PR11 export plan preserves .ajblueprint and stages only explicit audited r
     }),
     error => error?.code === 'ANIMATED_JAVA_SOURCE_NOT_SAVED',
   );
+
+  assert.throws(
+    () => core.createAnimatedJavaExportPlan({
+      sourcePath: '/workspace/cutscene.ajblueprint',
+      blueprintId: 'factory:cutscene/test',
+      targetMinecraftVersion: '1.21.1',
+      resourcePackExportMode: 'folder',
+      dataPackExportMode: 'folder',
+      resourcePackPath: '/staging/resourcepack',
+      dataPackPath: '/staging/datapack',
+      enablePluginMode: true,
+    }),
+    error => error?.code === 'ANIMATED_JAVA_PLUGIN_MODE_UNAUDITED',
+  );
 });
 
-test('PR11 exposes an explicit Blockbench handoff without installing or executing unreviewed code', () => {
+test('PR11 exposes an explicit desktop Blockbench handoff without installing or executing unreviewed code', () => {
   assert.equal(typeof blockbenchPlugin.createBlockbenchAnimatedJavaAdapter, 'function');
 
   const adapter = blockbenchPlugin.createBlockbenchAnimatedJavaAdapter({
-    Blockbench: {isMobile: false},
+    Blockbench: {isMobile: false, isWeb: false},
     Project: {
       save_path: '/workspace/cutscene.ajblueprint',
       format: {id: 'animated-java:format/blueprint'},
@@ -195,4 +278,9 @@ test('PR11 exposes an explicit Blockbench handoff without installing or executin
   assert.equal(preview.runtimeEvidence, 'UNPROVEN');
   assert.equal(preview.runtimeValidated, false);
   assert.equal(adapter.installExtension, undefined);
+
+  assert.throws(
+    () => blockbenchPlugin.createBlockbenchAnimatedJavaAdapter({Blockbench: {isWeb: true}, Project: {}}),
+    error => error?.code === 'ANIMATED_JAVA_DESKTOP_REQUIRED',
+  );
 });
