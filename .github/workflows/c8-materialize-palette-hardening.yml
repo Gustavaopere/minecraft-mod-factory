@@ -156,7 +156,7 @@ jobs:
               return _sha256_json(value), labels
 
 
-'''
+          '''
           path.write_text(text[:start] + replacement + text[end:], encoding='utf-8')
 
       - name: Run focused C8 palette evidence contract
