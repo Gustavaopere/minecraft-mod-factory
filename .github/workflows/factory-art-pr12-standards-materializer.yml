@@ -1,0 +1,109 @@
+name: Factory Art PR12 Standards Materializer
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - feat/art-pr12-player-profiles
+    paths:
+      - '.github/workflows/factory-art-pr12-standards-materializer.yml'
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Factory source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Patch canonical PR12 standards fail-closed
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one anchor, found {count}')
+              return text.replace(old, new, 1)
+
+          provider_path = Path('art/standards/ASSET-PROVIDER-PROFILES.md')
+          provider = provider_path.read_text()
+
+          profile_insert = '''
+- `cpm_player_model` — Customizable Player Models 0.6.27a player-model runtime with the audited Blockbench `cpm_plugin` path. `.cpmproject` remains source authority. The Blockbench plugin is beta/experimental and classified `HUMAN_ONLY`; Factory automation may preview the preserved-source handoff but does not install the plugin, does not MCP-authorize it, and does not claim an automated lossless import/export round-trip. Human confirmation remains mandatory.
+- `player_animation_library_player` — Player Animation Library `1.1.6+mc.1.21.1` runtime-consumer profile. The proven Factory handoff accepts JSON and stages it only under `assets/<namespace>/player_animations/<file>.json`, preserving source and treating the animation identifier as runtime-owned internal data. No Blockbench plugin is invented for PAL.
+- `player_animator_player` — Player Animator `2.0.4+1.21.1` client animation API profile. The audited public surface is `PlayerAnimationAccess`, `PlayerAnimationFactory` and `PlayerAnimationRegistry`, with layered APIs including `AnimationStack` and `ModifierLayer`. The registry consumes `assets/<namespace>/player_animations/*`, retains legacy `player_animation` loading with warning, and ships default `emotecraft` and `gecko_legacy` JSON codecs. This profile is distinct from PAL and does not imply PAL equivalence or automatic PAL conversion.
+'''
+          provider = replace_once(
+              provider,
+              '\n\n## Easy Model Entities runtime evidence boundary',
+              '\n' + profile_insert + '\n## Easy Model Entities runtime evidence boundary',
+              'provider profile insertion',
+          )
+
+          evidence = '''## Player profile evidence boundary
+
+PR12 pins the physical player-profile providers exactly to CPM `0.6.27a`, Player Animation Library `1.1.6+mc.1.21.1`, and Player Animator `2.0.4+1.21.1`. CPM source provenance is recorded from `tom5454/CustomPlayerModels`; PAL is audited at `PlayerAnimationLibrary/PlayerAnimationLibrary@10e019f89fa25d0cd6f50fb8768586a969106911`; Player Animator is audited at `KosmX/minecraftPlayerAnimator@cb3227efc19ec46065597332ae265076d0f2b495`.
+
+The CPM contract preserves a saved `.cpmproject`, pins Minecraft 1.21.1, requires human confirmation, and explicitly records `automatedLosslessRoundTripProven=false`. The Factory Blockbench bridge only previews this handoff and never installs the CPM plugin. The PAL contract stages JSON only below `assets/<namespace>/player_animations/` and records the runtime key source as the animation's internal identifier. The Player Animator audit records the client-only API surface, `player_animations` registry root, legacy `player_animation` fallback, and its default JSON codecs without treating PAL as an equivalent runtime.
+
+These are contract and handoff proofs, not provider-real runtime proofs. PR12 does not claim that the CPM plugin completed a lossless real project round-trip, that PAL consumed a staged animation in a live target client, that Player Animator played a staged animation, or that the complete physical modpack loaded these paths together. The canonical PR12 APIs therefore retain `runtimeEvidence=UNPROVEN`, `runtimeValidated=false`, `f4I6Evidence=false`; F4 real I6 handoff remains incomplete and I7 remains blocked.
+
+'''
+          provider = replace_once(
+              provider,
+              '## Physical snapshot boundary',
+              evidence + '## Physical snapshot boundary',
+              'player evidence insertion',
+          )
+          provider = replace_once(
+              provider,
+              'The current 2026-09-11 physical snapshot contains GeckoLib 4.9.2, AzureLib 3.1.11, Easy Model Entities 2.3.0 and Entity Model Features 3.3.5.',
+              'The current 2026-09-11 physical snapshot contains GeckoLib 4.9.2, AzureLib 3.1.11, Easy Model Entities 2.3.0, Entity Model Features 3.3.5, Customizable Player Models 0.6.27a, Player Animation Library 1.1.6+mc.1.21.1 and Player Animator 2.0.4+1.21.1.',
+              'physical snapshot expansion',
+          )
+          provider = replace_once(
+              provider,
+              'The source project is never destructively replaced by an inferred conversion.',
+              'The source project is never destructively replaced by an inferred conversion. PAL -> Player Animator, Player Animator -> PAL, CPM -> PAL, CPM -> Player Animator, and the reverse player-profile paths are likewise denied unless a dedicated audited adapter explicitly defines the conversion.',
+              'player conversion boundary',
+          )
+          provider_path.write_text(provider)
+
+          policy_path = Path('art/standards/BLOCKBENCH-EXTENSION-POLICY.md')
+          policy = policy_path.read_text()
+          policy = replace_once(
+              policy,
+              '| `animated_java` | Animated Java | 1.10.2 | OPTIONAL | display-entity/datapack-resource-pack pipeline |\n',
+              '| `animated_java` | Animated Java | 1.10.2 | OPTIONAL | display-entity/datapack-resource-pack pipeline |\n| `cpm_plugin` | Customizable Player Models Plugin | 0.6.27a | HUMAN_ONLY | CPM player-model `.cpmproject` import/export with mandatory human confirmation |\n',
+              'CPM policy table row',
+          )
+          cpm_paragraph = '''
+Customizable Player Models was re-audited for PR12 against runtime `0.6.27a` and the upstream Blockbench integration in `tom5454/CustomPlayerModels`. The Factory records the authoring path as beta/experimental and `HUMAN_ONLY`: `.cpmproject` remains source authority, import/export is never treated as an automated lossless round-trip, and animation-import risk keeps human confirmation mandatory. The Toolkit and MCP never install or automatically authorize `cpm_plugin`; `mcpPolicy=NEVER` remains fail-closed even when the extension is present and version-matched.
+
+'''
+          policy = replace_once(
+              policy,
+              '\n## Classifications',
+              '\n' + cpm_paragraph + '## Classifications',
+              'CPM policy paragraph',
+          )
+          policy_path.write_text(policy)
+          PY
+      - name: Verify documentation scope and whitespace
+        run: |
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' art/standards/ASSET-PROVIDER-PROFILES.md art/standards/BLOCKBENCH-EXTENSION-POLICY.md | sort)"
+          test "$changed" = "$expected"
+      - name: Commit PR12 standards
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add art/standards/ASSET-PROVIDER-PROFILES.md art/standards/BLOCKBENCH-EXTENSION-POLICY.md
+          git diff --cached --quiet && { echo 'Expected standards changes'; exit 1; }
+          git commit -m "docs(art): document PR12 player profiles"
+          git push origin HEAD:feat/art-pr12-player-profiles
