@@ -1,0 +1,42 @@
+name: Factory Art PR9 Easy Model Entities
+
+on:
+  push:
+    branches:
+      - main
+      - feat/art-pr9-easy-model-entities
+  pull_request:
+    paths:
+      - 'art/tooling/blockbench/asset-toolkit/**'
+      - 'art/standards/**'
+      - '.github/workflows/factory-art-pr9-easy-model-entities.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  easy-model-entities:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: PR9 audited provider/exporter contract
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node --test asset_toolkit.easy_model_entities_pr9.test.js
+      - name: Existing provider/profile regressions
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: |
+          node --test \
+            asset_toolkit.provider_expansion.test.js \
+            asset_toolkit.geckolib4_adapter.test.js \
+            asset_toolkit.azurelib3_adapter.test.js \
+            asset_toolkit.neoforge_native_animation_adapter.test.js
+      - name: Standalone bundle reproducibility
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node build_toolkit_bundle.js --check
+      - name: Whitespace
+        run: git diff --check HEAD^ -- art/tooling/blockbench/asset-toolkit art/standards .github/workflows/factory-art-pr9-easy-model-entities.yml
