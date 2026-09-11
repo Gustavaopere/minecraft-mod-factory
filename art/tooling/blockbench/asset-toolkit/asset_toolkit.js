@@ -4256,6 +4256,8 @@
           legacyResourceDirectory: 'player_animation',
           defaultCodecs: Object.freeze(['emotecraft', 'gecko_legacy']),
           runtimeSourceNeoForgeVersion: '21.1.89',
+          runtimeSide: 'BOTH',
+          resourceRegistrySide: 'CLIENT',
         }),
       });
 
@@ -4324,7 +4326,8 @@
       }
 
       const PLAYER_ANIMATOR_API_AUDIT = Object.freeze({
-        clientOnly: true,
+        runtimeSide: PLAYER_PROFILE_AUTHORITIES.playerAnimator.runtimeSide,
+        resourceRegistrySide: PLAYER_PROFILE_AUTHORITIES.playerAnimator.resourceRegistrySide,
         primaryApiClasses: Object.freeze([
           'PlayerAnimationAccess',
           'PlayerAnimationFactory',
