@@ -43,13 +43,7 @@ jobs:
           adapter = Path('art/tooling/blockbench/asset-toolkit/blockbench-plugin/geckolib4_adapter.js')
           text = adapter.read_text(encoding='utf-8')
           anchor = "\nfunction createBlockbenchGeckoLib4Adapter(bb) {\n"
-          helper = """
-function deepFreezeJsonDocument(value) {
-  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
-  for (const child of Object.values(value)) deepFreezeJsonDocument(child);
-  return Object.freeze(value);
-}
-"""
+          helper = "\nfunction deepFreezeJsonDocument(value) {\n  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;\n  for (const child of Object.values(value)) deepFreezeJsonDocument(child);\n  return Object.freeze(value);\n}\n"
           if 'function deepFreezeJsonDocument(value)' not in text:
               if anchor not in text:
                   raise SystemExit('Blockbench adapter helper anchor not found')
