@@ -48,6 +48,23 @@ The C2 contract provides:
 
 C2 deliberately does not claim that a namespaced block exists in the physical modpack, does not carry arbitrary BlockEntity/entity payloads, does not export a schematic format and does not own runtime worldgen placement. Those gates belong to later Construction phases.
 
+## C3 scope
+
+C3 adds the first executable end-to-end Golden Sample across the preserved engine and the canonical C2 boundary.
+
+`construction/fixtures/vanilla-golden/` contains a deterministic vanilla-only 7×5×7 pavilion. The checked-in `BuildSpec` is executed against the exact preserved Schematica pin, converted from the resulting voxel session into sparse placements, normalized by the Factory-owned C2 canonicalizer, and compared byte-for-data against the checked-in expected Build IR.
+
+The Golden intentionally stays narrow:
+
+- 110 occupied blocks with a fixed three-state vanilla palette;
+- no modded namespace or physical modpack-registry claim;
+- no Sponge/Litematica/NBT artifact committed or exported by C3;
+- no BlockEntity/entity payload authority;
+- no structural-quality, visual-quality or runtime/worldgen acceptance claim;
+- deterministic reruns must reproduce the exact canonical Build IR and fingerprints.
+
+C3 therefore proves the integration seam `BuildSpec → preserved Schematica → Canonical Build IR` without stealing responsibilities from C4–C8.
+
 ## Planned pipeline
 
 ```text
@@ -76,12 +93,13 @@ Sponge Schematic v3 validator
 
 - `core/` — Factory-owned canonical Construction runtime contracts, beginning with Build IR
 - `docs/` — architecture and provider decisions
+- `fixtures/` — checked-in deterministic Construction Golden Samples and their generation inputs
 - `schemas/` — machine-readable contracts
 - `upstream/` — pinned provenance and immutable permitted snapshots/references
 - `scripts/` — Factory-owned validators and tooling
 - `tests/` — construction-domain regression tests
 
-Future directories such as `engines/`, `catalog/`, `registry/`, `providers/`, `mcp/`, `qa/` and `fixtures/` are created only when their implementation starts.
+Future directories such as `engines/`, `catalog/`, `registry/`, `providers/`, `mcp/` and `qa/` are created only when their implementation starts.
 
 ## Roadmap
 
