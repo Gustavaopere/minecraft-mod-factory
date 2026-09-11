@@ -14,6 +14,14 @@ function validHandoffInput() {
     blockbenchReferencePath: '/workspace/combat_reference.bbmodel',
     blenderSourcePath: '/workspace/combat_animation.blend',
     targetMinecraftVersion: '1.21.1',
+    boneMapping: [
+      {referenceBone: 'reference_root', blenderRigBone: 'rig_root'},
+      {referenceBone: 'reference_hand', blenderRigBone: 'rig_hand'},
+    ],
+    textureReferences: [
+      '/workspace/combat_reference.png',
+      '/workspace/combat_emissive.png',
+    ],
   };
 }
 
@@ -106,6 +114,27 @@ test('PR13 handoff preserves native Blockbench and Blender sources and forbids f
   assert.equal(handoff.f4I6Evidence, false);
 });
 
+test('PR13 handoff preserves explicit bone-name mapping and texture references without inventing provider data', () => {
+  const input = validHandoffInput();
+  const handoff = core.createEpicFightBlenderHandoff(input);
+
+  assert.deepEqual(handoff.boneMapping, input.boneMapping);
+  assert.deepEqual(handoff.textureReferences, input.textureReferences);
+  assert.notStrictEqual(handoff.boneMapping, input.boneMapping);
+  assert.notStrictEqual(handoff.textureReferences, input.textureReferences);
+});
+
+test('PR13 handoff fails closed when explicit bone mapping or texture references are absent', () => {
+  assert.throws(
+    () => core.createEpicFightBlenderHandoff({...validHandoffInput(), boneMapping: []}),
+    error => error?.code === 'EPIC_FIGHT_BONE_MAPPING_REQUIRED',
+  );
+  assert.throws(
+    () => core.createEpicFightBlenderHandoff({...validHandoffInput(), textureReferences: []}),
+    error => error?.code === 'EPIC_FIGHT_TEXTURE_REFERENCES_REQUIRED',
+  );
+});
+
 test('PR13 handoff fails closed when Blender native source is absent or the target changes', () => {
   assert.throws(
     () => core.createEpicFightBlenderHandoff({...validHandoffInput(), blenderSourcePath: '/workspace/combat_animation.json'}),
@@ -119,6 +148,7 @@ test('PR13 handoff fails closed when Blender native source is absent or the targ
 
 test('PR13 Blockbench surface only previews the external-DCC handoff and cannot export Epic Fight animation directly', () => {
   assert.equal(typeof blockbenchPlugin.createBlockbenchEpicFightHandoffAdapter, 'function');
+  const input = validHandoffInput();
   const adapter = blockbenchPlugin.createBlockbenchEpicFightHandoffAdapter({
     Blockbench: {isWeb: false, isMobile: false},
     Project: {
@@ -126,14 +156,18 @@ test('PR13 Blockbench surface only previews the external-DCC handoff and cannot 
       format: {id: 'free'},
     },
   }, {
-    blenderSourcePath: '/workspace/combat_animation.blend',
-    targetMinecraftVersion: '1.21.1',
+    blenderSourcePath: input.blenderSourcePath,
+    targetMinecraftVersion: input.targetMinecraftVersion,
+    boneMapping: input.boneMapping,
+    textureReferences: input.textureReferences,
   });
 
   const preview = adapter.previewHandoff();
   assert.equal(preview.customCombatAnimationAuthority, 'BLENDER');
   assert.equal(preview.directBlockbenchEpicFightAnimationExport, false);
   assert.equal(preview.runtimeEvidence, 'UNPROVEN');
+  assert.deepEqual(preview.boneMapping, input.boneMapping);
+  assert.deepEqual(preview.textureReferences, input.textureReferences);
   assert.equal(adapter.exportEpicFightAnimation, undefined);
   assert.equal(blockbenchPlugin.exportEpicFightAnimation, undefined);
 });
