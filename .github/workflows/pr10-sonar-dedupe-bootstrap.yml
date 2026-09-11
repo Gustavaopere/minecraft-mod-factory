@@ -1,0 +1,41 @@
+name: PR10 Sonar Dedupe Bootstrap
+
+on:
+  push:
+    branches:
+      - feat/art-pr10-emf-cem
+    paths:
+      - .github/workflows/pr10-sonar-dedupe-bootstrap.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/art-pr10-emf-cem
+          fetch-depth: 0
+      - name: Repair transient Python empty-string arguments
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/pr10-sonar-dedupe-fix.yml')
+          text = p.read_text()
+          old = '          """)'
+          new = '          "")'
+          count = text.count(old)
+          if count != 4:
+              raise SystemExit(f'expected 4 malformed empty-string arguments, found {count}')
+          p.write_text(text.replace(old, new))
+          PY
+          git diff --check
+      - name: Commit harness repair
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .github/workflows/pr10-sonar-dedupe-fix.yml
+          git commit -m 'ci(art): repair PR10 Sonar dedupe harness syntax'
+          git push origin HEAD:feat/art-pr10-emf-cem
