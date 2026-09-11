@@ -2643,11 +2643,130 @@
         createExportPlan,
       };
     },
+    "core/provider-adapter/bedrock_provider_facade.js": function(module, exports, require) {
+      'use strict';
+
+      const bedrock = require('./bedrock_provider_common.js');
+
+      function defaultCodes(prefix) {
+        return Object.freeze({
+          invalidGeoDocument: `INVALID_${prefix}_GEO_DOCUMENT`,
+          unsupportedGeoFormat: `UNSUPPORTED_${prefix}_GEO_FORMAT`,
+          invalidLocator: `INVALID_${prefix}_LOCATOR`,
+          invalidString: `INVALID_${prefix}_STRING`,
+          invalidAnimationDocument: `INVALID_${prefix}_ANIMATION_DOCUMENT`,
+          invalidNumber: `INVALID_${prefix}_NUMBER`,
+          invalidLoop: `INVALID_${prefix}_LOOP`,
+          invalidKeyframe: `INVALID_${prefix}_KEYFRAME`,
+          invalidTimestamp: `INVALID_${prefix}_TIMESTAMP`,
+          invalidEffects: `INVALID_${prefix}_EFFECTS`,
+          unsupportedAnimationFormat: `UNSUPPORTED_${prefix}_ANIMATION_FORMAT`,
+          invalidMarker: `INVALID_${prefix}_EFFECT_MARKER`,
+          unsupportedMarker: `UNSUPPORTED_${prefix}_EFFECT_MARKER`,
+          invalidExportPlan: `INVALID_${prefix}_EXPORT_PLAN`,
+          invalidProfile: `INVALID_${prefix}_PROFILE`,
+          invalidSourcePath: `INVALID_${prefix}_SOURCE_PATH`,
+          sourceMustBeBbmodel: `${prefix}_SOURCE_MUST_BE_BBMODEL`,
+          invalidPath: `INVALID_${prefix}_PATH`,
+          invalidResourceName: `INVALID_${prefix}_RESOURCE_NAME`,
+        });
+      }
+
+      function createBedrockProviderFacade(config) {
+        const baseCodes = defaultCodes(config.codePrefix);
+        const codes = Object.freeze({...baseCodes, ...(config.codeOverrides || {})});
+        const shared = {
+          fail: config.fail,
+          trimStrings: config.trimStrings === true,
+        };
+
+        const geoOptions = Object.freeze({
+          ...shared,
+          invalidDocumentCode: codes.invalidGeoDocument,
+          unsupportedFormatCode: codes.unsupportedGeoFormat,
+          invalidLocatorCode: codes.invalidLocator,
+          invalidStringCode: codes.invalidString,
+          locatorNameCode: codes.locatorName || codes.invalidString,
+          providerLabel: config.geoProviderLabel || config.providerLabel,
+          formatVersions: config.formatVersions,
+          rejectRootMetadata: config.rejectRootMetadata,
+        });
+
+        const animationOptions = Object.freeze({
+          ...shared,
+          invalidDocumentCode: codes.invalidAnimationDocument,
+          invalidStringCode: codes.invalidString,
+          invalidNumberCode: codes.invalidNumber,
+          invalidLoopCode: codes.invalidLoop,
+          invalidKeyframeCode: codes.invalidKeyframe,
+          invalidTimestampCode: codes.invalidTimestamp,
+          invalidEffectsCode: codes.invalidEffects,
+          effectStringCode: codes.effectValidationString || codes.invalidEffects,
+          loopValues: config.loopValues,
+          validateKeyframeLeaf: config.validateKeyframeLeaf,
+          leafIndicatorFields: config.leafIndicatorFields,
+          expectedFormatVersion: config.expectedFormatVersion,
+          unsupportedFormatCode: codes.unsupportedAnimationFormat,
+          rejectRootMetadata: config.rejectRootMetadata,
+          validateIncludes: config.validateIncludes,
+          requireParticleEffect: config.requireParticleEffect,
+          requireNonEmptyTimeline: config.requireNonEmptyTimeline,
+        });
+
+        const markerOptions = Object.freeze({
+          ...shared,
+          invalidMarkerCode: codes.invalidMarker,
+          unsupportedMarkerCode: codes.unsupportedMarker,
+          invalidNumberCode: codes.invalidNumber,
+          stringCode: codes.markerString || codes.invalidMarker,
+          providerLabel: config.providerLabel,
+          requireParticleEffect: config.requireParticleEffect,
+          requireNonEmptyTimeline: config.requireNonEmptyTimeline,
+        });
+
+        const exportOptions = Object.freeze({
+          ...shared,
+          profileIds: config.profileIds,
+          providerFamily: config.providerFamily,
+          providerLabel: config.providerLabel,
+          invalidPlanCode: codes.invalidExportPlan,
+          invalidProfileCode: codes.invalidProfile,
+          invalidSourcePathCode: codes.invalidSourcePath,
+          sourceMustBeBbmodelCode: codes.sourceMustBeBbmodel,
+          invalidPathCode: codes.invalidPath,
+          invalidResourceNameCode: codes.invalidResourceName,
+          invalidStringCode: codes.invalidString,
+        });
+
+        function createExportPlan(input) {
+          if (config.prevalidateExport) config.prevalidateExport(input);
+          return bedrock.createExportPlan(input, exportOptions);
+        }
+
+        return Object.freeze({
+          validateGeoDocument(value) {
+            return bedrock.validateGeoDocument(value, geoOptions);
+          },
+          validateAnimationDocument(value) {
+            return bedrock.validateAnimationDocument(value, animationOptions);
+          },
+          serializeEffectMarker(marker, providerData) {
+            return bedrock.serializeEffectMarker(marker, providerData, markerOptions);
+          },
+          createExportPlan,
+        });
+      }
+
+      module.exports = {
+        createBedrockProviderFacade,
+      };
+    },
     "core/provider-adapter/geckolib4_adapter.js": function(module, exports, require) {
       'use strict';
 
       const {isPlainObject} = require('../common/contract_utils.js');
       const bedrock = require('./bedrock_provider_common.js');
+      const {createBedrockProviderFacade} = require('./bedrock_provider_facade.js');
 
       const GECKOLIB4_AUTHORITY = Object.freeze({
         providerFamily: 'geckolib4',
@@ -2712,69 +2831,30 @@
         }
       }
 
-      function validateGeckoLib4GeoDocument(value) {
-        return bedrock.validateGeoDocument(value, {
-          fail,
-          invalidDocumentCode: 'INVALID_GECKOLIB4_GEO_DOCUMENT',
-          unsupportedFormatCode: 'UNSUPPORTED_GECKOLIB4_GEO_FORMAT',
-          invalidLocatorCode: 'INVALID_GECKOLIB4_LOCATOR',
-          invalidStringCode: 'INVALID_GECKOLIB4_STRING',
-          providerLabel: 'GeckoLib 4.9.2',
-          formatVersions: GEO_FORMAT_VERSIONS,
-        });
-      }
-
-      function validateGeckoLib4AnimationDocument(value) {
-        return bedrock.validateAnimationDocument(value, {
-          fail,
-          invalidDocumentCode: 'INVALID_GECKOLIB4_ANIMATION_DOCUMENT',
-          invalidStringCode: 'INVALID_GECKOLIB4_STRING',
-          invalidNumberCode: 'INVALID_GECKOLIB4_NUMBER',
-          invalidLoopCode: 'INVALID_GECKOLIB4_LOOP',
-          invalidKeyframeCode: 'INVALID_GECKOLIB4_KEYFRAME',
-          invalidTimestampCode: 'INVALID_GECKOLIB4_TIMESTAMP',
-          invalidEffectsCode: 'INVALID_GECKOLIB4_EFFECTS',
-          effectStringCode: 'INVALID_GECKOLIB4_STRING',
-          loopValues: LOOP_VALUES,
-          validateKeyframeLeaf,
-          leafIndicatorFields: ['vector', 'pre', 'post'],
-        });
-      }
-
-      function serializeGeckoLib4EffectMarker(marker, providerData) {
-        return bedrock.serializeEffectMarker(marker, providerData, {
-          fail,
-          invalidMarkerCode: 'INVALID_GECKOLIB4_EFFECT_MARKER',
-          unsupportedMarkerCode: 'UNSUPPORTED_GECKOLIB4_EFFECT_MARKER',
-          invalidNumberCode: 'INVALID_GECKOLIB4_NUMBER',
-          stringCode: 'INVALID_GECKOLIB4_STRING',
-          providerLabel: 'GeckoLib 4',
-        });
-      }
-
-      function createGeckoLib4ExportPlan(input) {
-        return bedrock.createExportPlan(input, {
-          fail,
-          profileIds: GECKOLIB4_PROFILE_IDS,
-          providerFamily: 'geckolib4',
-          providerLabel: 'GeckoLib 4',
-          invalidPlanCode: 'INVALID_GECKOLIB4_EXPORT_PLAN',
-          invalidProfileCode: 'INVALID_GECKOLIB4_PROFILE',
-          invalidSourcePathCode: 'INVALID_GECKOLIB4_SOURCE_PATH',
-          sourceMustBeBbmodelCode: 'GECKOLIB4_SOURCE_MUST_BE_BBMODEL',
-          invalidPathCode: 'INVALID_GECKOLIB4_PATH',
-          invalidResourceNameCode: 'INVALID_GECKOLIB4_RESOURCE_NAME',
-          invalidStringCode: 'INVALID_GECKOLIB4_STRING',
-        });
-      }
+      const provider = createBedrockProviderFacade({
+        fail,
+        codePrefix: 'GECKOLIB4',
+        providerFamily: 'geckolib4',
+        providerLabel: 'GeckoLib 4',
+        geoProviderLabel: 'GeckoLib 4.9.2',
+        profileIds: GECKOLIB4_PROFILE_IDS,
+        formatVersions: GEO_FORMAT_VERSIONS,
+        loopValues: LOOP_VALUES,
+        validateKeyframeLeaf,
+        leafIndicatorFields: ['vector', 'pre', 'post'],
+        codeOverrides: {
+          effectValidationString: 'INVALID_GECKOLIB4_STRING',
+          markerString: 'INVALID_GECKOLIB4_STRING',
+        },
+      });
 
       module.exports = {
         GECKOLIB4_AUTHORITY,
         GeckoLib4ContractError,
-        validateGeckoLib4GeoDocument,
-        validateGeckoLib4AnimationDocument,
-        serializeGeckoLib4EffectMarker,
-        createGeckoLib4ExportPlan,
+        validateGeckoLib4GeoDocument: provider.validateGeoDocument,
+        validateGeckoLib4AnimationDocument: provider.validateAnimationDocument,
+        serializeGeckoLib4EffectMarker: provider.serializeEffectMarker,
+        createGeckoLib4ExportPlan: provider.createExportPlan,
       };
     },
     "core/provider-adapter/azurelib_adapter.js": function(module, exports, require) {
@@ -2782,6 +2862,7 @@
 
       const {isPlainObject, rejectUnknownFields} = require('../common/contract_utils.js');
       const bedrock = require('./bedrock_provider_common.js');
+      const {createBedrockProviderFacade} = require('./bedrock_provider_facade.js');
 
       const AZURELIB_AUTHORITY = Object.freeze({
         providerFamily: 'azurelib',
@@ -2942,60 +3023,7 @@
         return value.length;
       }
 
-      function validateAzureLibGeoDocument(value) {
-        return bedrock.validateGeoDocument(value, {
-          fail,
-          invalidDocumentCode: 'INVALID_AZURELIB_GEO_DOCUMENT',
-          unsupportedFormatCode: 'UNSUPPORTED_AZURELIB_GEO_FORMAT',
-          invalidLocatorCode: 'INVALID_AZURELIB_LOCATOR',
-          invalidStringCode: 'INVALID_AZURELIB_STRING',
-          locatorNameCode: 'INVALID_AZURELIB_LOCATOR',
-          providerLabel: 'AzureLib 3.1.11',
-          formatVersions: GEO_FORMAT_VERSIONS,
-          rejectRootMetadata: rejectAuthoringMetadata,
-          trimStrings: true,
-        });
-      }
-
-      function validateAzureLibAnimationDocument(value) {
-        return bedrock.validateAnimationDocument(value, {
-          fail,
-          invalidDocumentCode: 'INVALID_AZURELIB_ANIMATION_DOCUMENT',
-          invalidStringCode: 'INVALID_AZURELIB_STRING',
-          invalidNumberCode: 'INVALID_AZURELIB_NUMBER',
-          invalidLoopCode: 'UNSUPPORTED_AZURELIB_LOOP',
-          invalidKeyframeCode: 'INVALID_AZURELIB_KEYFRAME',
-          invalidTimestampCode: 'INVALID_AZURELIB_TIMESTAMP',
-          invalidEffectsCode: 'INVALID_AZURELIB_EFFECTS',
-          effectStringCode: 'INVALID_AZURELIB_EFFECTS',
-          loopValues: LOOP_VALUES,
-          validateKeyframeLeaf,
-          leafIndicatorFields: ['vector', 'easing', 'easingArgs', 'pre', 'post', 'lerp_mode'],
-          expectedFormatVersion: AZURELIB_AUTHORITY.animationFormatVersion,
-          unsupportedFormatCode: 'UNSUPPORTED_AZURELIB_ANIMATION_FORMAT',
-          rejectRootMetadata: rejectAuthoringMetadata,
-          validateIncludes,
-          requireParticleEffect: true,
-          requireNonEmptyTimeline: true,
-          trimStrings: true,
-        });
-      }
-
-      function serializeAzureLibEffectMarker(marker, providerData) {
-        return bedrock.serializeEffectMarker(marker, providerData, {
-          fail,
-          invalidMarkerCode: 'INVALID_AZURELIB_EFFECT_MARKER',
-          unsupportedMarkerCode: 'UNSUPPORTED_AZURELIB_EFFECT_MARKER',
-          invalidNumberCode: 'INVALID_AZURELIB_NUMBER',
-          stringCode: 'INVALID_AZURELIB_EFFECT_MARKER',
-          providerLabel: 'AzureLib',
-          requireParticleEffect: true,
-          requireNonEmptyTimeline: true,
-          trimStrings: true,
-        });
-      }
-
-      function createAzureLibExportPlan(input) {
+      function prevalidateExport(input) {
         if (!isPlainObject(input)) fail('INVALID_AZURELIB_EXPORT_PLAN', 'Export plan request must be an object.');
         if (!AZURELIB_PROFILE_IDS.has(input.profileId)) {
           fail('INVALID_AZURELIB_PROFILE', `Profile ${JSON.stringify(input.profileId)} is not an AzureLib profile.`);
@@ -3003,29 +3031,40 @@
         nonEmptyString(input.sourcePath, 'sourcePath', 'INVALID_AZURELIB_SOURCE_PATH');
         nonEmptyString(input.outputDirectory, 'outputDirectory', 'INVALID_AZURELIB_PATH');
         nonEmptyString(input.resourceName, 'resourceName', 'INVALID_AZURELIB_RESOURCE_NAME');
-        return bedrock.createExportPlan(input, {
-          fail,
-          profileIds: AZURELIB_PROFILE_IDS,
-          providerFamily: 'azurelib',
-          providerLabel: 'AzureLib',
-          invalidPlanCode: 'INVALID_AZURELIB_EXPORT_PLAN',
-          invalidProfileCode: 'INVALID_AZURELIB_PROFILE',
-          invalidSourcePathCode: 'INVALID_AZURELIB_SOURCE_PATH',
-          sourceMustBeBbmodelCode: 'AZURELIB_SOURCE_MUST_BE_BBMODEL',
-          invalidPathCode: 'INVALID_AZURELIB_PATH',
-          invalidResourceNameCode: 'INVALID_AZURELIB_RESOURCE_NAME',
-          invalidStringCode: 'INVALID_AZURELIB_STRING',
-          trimStrings: true,
-        });
       }
+
+      const provider = createBedrockProviderFacade({
+        fail,
+        codePrefix: 'AZURELIB',
+        providerFamily: 'azurelib',
+        providerLabel: 'AzureLib',
+        geoProviderLabel: 'AzureLib 3.1.11',
+        profileIds: AZURELIB_PROFILE_IDS,
+        formatVersions: GEO_FORMAT_VERSIONS,
+        loopValues: LOOP_VALUES,
+        validateKeyframeLeaf,
+        leafIndicatorFields: ['vector', 'easing', 'easingArgs', 'pre', 'post', 'lerp_mode'],
+        expectedFormatVersion: AZURELIB_AUTHORITY.animationFormatVersion,
+        rejectRootMetadata: rejectAuthoringMetadata,
+        validateIncludes,
+        requireParticleEffect: true,
+        requireNonEmptyTimeline: true,
+        trimStrings: true,
+        prevalidateExport,
+        codeOverrides: {
+          invalidLoop: 'UNSUPPORTED_AZURELIB_LOOP',
+          locatorName: 'INVALID_AZURELIB_LOCATOR',
+          markerString: 'INVALID_AZURELIB_EFFECT_MARKER',
+        },
+      });
 
       module.exports = {
         AZURELIB_AUTHORITY,
         AzureLibContractError,
-        validateAzureLibGeoDocument,
-        validateAzureLibAnimationDocument,
-        serializeAzureLibEffectMarker,
-        createAzureLibExportPlan,
+        validateAzureLibGeoDocument: provider.validateGeoDocument,
+        validateAzureLibAnimationDocument: provider.validateAnimationDocument,
+        serializeAzureLibEffectMarker: provider.serializeEffectMarker,
+        createAzureLibExportPlan: provider.createExportPlan,
       };
     },
     "core/index.js": function(module, exports, require) {
