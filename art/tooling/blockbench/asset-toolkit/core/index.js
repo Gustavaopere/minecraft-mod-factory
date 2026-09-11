@@ -14,6 +14,7 @@ const providers = require('./provider-profile/provider_profiles.js');
 const physical = require('./provider-profile/physical_provider_snapshot.js');
 const geckolib4 = require('./provider-adapter/geckolib4_adapter.js');
 const azurelib3 = require('./provider-adapter/azurelib3_adapter.js');
+const neoforgeNativeAnimation = require('./provider-adapter/neoforge_native_animation_adapter.js');
 
 module.exports = Object.assign(
   {},
@@ -31,4 +32,5 @@ module.exports = Object.assign(
   physical,
   geckolib4,
   azurelib3,
+  neoforgeNativeAnimation,
 );
