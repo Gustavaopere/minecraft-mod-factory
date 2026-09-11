@@ -63,11 +63,23 @@ function vector3(value, field) {
   return Object.freeze([...value]);
 }
 
-function canonicalResourceLocation(value, field, allowed) {
+function resourceLocation(value, field) {
   const raw = nonEmptyString(value, field).toLowerCase();
-  const canonical = raw.includes(':') ? raw : `minecraft:${raw}`;
+  return raw.includes(':') ? raw : `minecraft:${raw}`;
+}
+
+function canonicalResourceLocation(value, field, allowed) {
+  const canonical = resourceLocation(value, field);
   if (!allowed.has(canonical)) {
     fail('UNPROVEN_NEOFORGE_NATIVE_ANIMATION_TYPE', `${field} ${JSON.stringify(value)} is not a built-in type audited for NeoForge 21.1.248.`);
+  }
+  return canonical;
+}
+
+function serializerInterpolation(value, field) {
+  const canonical = resourceLocation(value, field);
+  if (!INTERPOLATIONS.has(canonical)) {
+    fail('UNSUPPORTED_NEOFORGE_NATIVE_ANIMATION_INTERPOLATION', `${field} ${JSON.stringify(value)} has no audited NeoForge native representation.`);
   }
   return canonical;
 }
@@ -160,7 +172,7 @@ function serializeNeoForgeNativeAnimation(input) {
       if (timestamp < 0 || timestamp > length) {
         fail('INVALID_NEOFORGE_NATIVE_ANIMATION_TIMESTAMP', `${keyframeField}.time must be between 0 and animation.length.`);
       }
-      const interpolation = canonicalResourceLocation(keyframe.easing, `${keyframeField}.easing`, INTERPOLATIONS);
+      const interpolation = serializerInterpolation(keyframe.easing, `${keyframeField}.easing`);
       return Object.freeze({
         timestamp,
         target: vector3(keyframe.value, `${keyframeField}.value`),
