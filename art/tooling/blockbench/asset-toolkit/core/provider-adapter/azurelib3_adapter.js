@@ -124,6 +124,9 @@ function validateAzureLib3GeoDocument(value) {
   if (!isPlainObject(value)) {
     fail('INVALID_AZURELIB3_GEO_DOCUMENT', 'Geo document must be an object.');
   }
+  if (Object.prototype.hasOwnProperty.call(value, 'azureIKChains')) {
+    fail('UNPROVEN_AZURELIB3_RUNTIME_FIELD', 'azureIKChains is Blockbench authoring metadata and must not be serialized into AzureLib runtime geometry.');
+  }
 
   const formatVersion = value.format_version;
   if (!GEO_FORMAT_VERSIONS.has(formatVersion)) {
