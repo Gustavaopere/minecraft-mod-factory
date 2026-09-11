@@ -1,0 +1,42 @@
+name: Factory Art PR5 Generic Animation Core
+
+on:
+  push:
+    branches:
+      - main
+      - feat/art-pr5-generic-animation-core
+  pull_request:
+    paths:
+      - 'art/tooling/blockbench/asset-toolkit/**'
+      - '.github/workflows/factory-art-pr5-generic-animation-core.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  generic-animation-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: PR5 generic animation core contract
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node --test asset_toolkit.animation_core.test.js
+      - name: PR5 Blockbench animation adapter
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node --test asset_toolkit.animation_adapter.test.js
+      - name: PR5 bundle and plugin integration
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node --test asset_toolkit.bundle_live_bridge.test.js
+      - name: Existing Toolkit regression suite
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node --test asset_toolkit.test.js asset_toolkit.mutations.test.js asset_toolkit.uv_pack.test.js asset_toolkit.texture_create_import.test.js asset_toolkit.texture_create_import_adapter.test.js asset_toolkit.texture_paint_region.test.js asset_toolkit.uv_island_masks.test.js asset_toolkit.palette_sampling.test.js asset_toolkit.texture_acceptance.test.js
+      - name: Standalone bundle reproducibility
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node build_toolkit_bundle.js --check
+      - name: Whitespace
+        run: git diff --check HEAD^ -- art/tooling/blockbench/asset-toolkit .github/workflows/factory-art-pr5-generic-animation-core.yml

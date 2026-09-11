@@ -1,12 +1,14 @@
 # Minecraft Mod Factory Asset Toolkit for Blockbench
 
-Internal project plugin: `asset_toolkit.js` (plugin ID matches filename).
+Standalone project plugin: `asset_toolkit.js` (plugin ID `rpg_asset_toolkit`).
 
 ## Scope
 
-Structural/contract QA plus fail-closed provider/extension capability resolution for project-owned Minecraft assets, with narrowly bounded local Blockbench mutations where an audited contract exists. Mutation support is intentionally incremental: it does not authorize arbitrary geometry, UV, texture, pivot or animation rewrites, and it does not install or invoke arbitrary extensions.
+Structural/contract QA plus fail-closed provider/extension capability resolution for project-owned Minecraft assets, with narrowly bounded local Blockbench mutations where an audited contract exists. Mutation support is intentionally incremental: it does not authorize arbitrary geometry, UV, texture, pivot or provider-specific animation rewrites, and it does not install or invoke arbitrary extensions.
 
-The current PR4 slices include deterministic one-texture UV pack preview/apply for per-face cube UVs, bounded internal texture creation and locally approved texture import, deterministic bounded non-uniform texture painting inside an explicit rectangular region, bounded painting through an explicitly selected per-face UV island mask, and deterministic read-only palette sampling paired with bounded palette replacement. These are local desktop operations, not a generic UV/texture rewrite surface and not a Live Bridge/MCP write surface.
+The Toolkit currently includes the bounded PR3 modeling/rig surface, the PR4 UV/texture surface, and the PR5 Generic Animation Core. PR5 adds provider-neutral animation and keyframe CRUD, loop/easing/duration controls, abstract effect-marker contracts, preview, pose inspection, deterministic capture, loop-seam validation, and foot-slide diagnostics when measurable. Provider-specific animation serialization/export remains outside the generic core.
+
+All mutation capabilities are local desktop operations. They do not add a Live Bridge/MCP write surface.
 
 ## Architecture
 
@@ -15,6 +17,8 @@ Canonical source lives in modular CommonJS files under `core/` and `blockbench-p
 Core modules include:
 
 - `project-model` — safe model predicates and bounds;
+- `mutations/mutation_engine` — bounded modeling/rig mutation contract;
+- `animation/animation_engine` — provider-neutral animation contract, diagnostics, preview/pose/capture adapter boundary;
 - `validator` — structural/contract validation;
 - `contract-profile` — profile JSON parsing;
 - `report` — deterministic read-only reports;
@@ -22,7 +26,9 @@ Core modules include:
 - `provider-profile` — physical provider snapshot plus fail-closed profile resolution;
 - `uv-texture/uv_texture_engine` — bounded declarative UV/texture mutation contract and pixel budget;
 - `uv-texture/uv_pack` — bounded revision-bound UV pack preview/apply contract;
+- `blockbench-plugin/modeling_adapter.js` — Blockbench modeling/rig transactional adapter;
 - `blockbench-plugin/uv_texture_adapter.js` — Blockbench UV/texture inspection and bounded transactional mutation adapter;
+- `blockbench-plugin/animation_adapter.js` — desktop-local generic animation/keyframe adapter with provider-bound effect-marker serialization rejected fail-closed;
 - `blockbench-plugin/plugin_adapter.js` — verified UI integration.
 
 Canonical policy documents:
@@ -30,7 +36,9 @@ Canonical policy documents:
 - `../../../standards/BLOCKBENCH-EXTENSION-POLICY.md`;
 - `../../../standards/ASSET-PROVIDER-PROFILES.md`.
 
-## Verified Blockbench API surface
+## Source-audited Blockbench API surface
+
+The Toolkit code and tests are aligned to the following Blockbench surfaces that were verified against upstream source/type declarations during PR5 development:
 
 - `Plugin.register(...)`;
 - `Action`;
@@ -40,9 +48,17 @@ Canonical policy documents:
 - `Blockbench.textPrompt(...)`;
 - `Texture.fromDataURL(...)`;
 - `Texture.fromFile(...)`;
-- `Texture.add(...)`.
+- `Texture.add(...)`;
+- `Animation` construction plus `add`, `remove`, `setLength`, `setLoop`, `select`, `getBoneAnimator`, and playback state;
+- bone animator `addKeyframe(...)` plus keyframe removal;
+- `Animator.preview(...)` and default-pose reset;
+- `Preview.selected.loadAnglePreset(...)` with `DefaultCameraPresets`;
+- `Screencam.screenshotPreview(...)`;
+- Undo aspects for `animations` and `keyframes`.
 
 The bounded UV/texture adapter additionally uses the project texture/cube state, texture canvas `getImageData(...)` / `putImageData(...)`, and Blockbench Undo transaction surface behind the adapter boundary. Tests exercise begin/finish/cancel transaction behavior and bitmap/UV/texture mutation semantics without exposing those mutations through Live Bridge/MCP.
+
+PR5 tests exercise the same transaction boundary for animations/keyframes using a controlled Blockbench test double. This is not a claim that a physical installed Blockbench instance has completed a real animation/edit/capture smoke in this PR.
 
 A separate Toolkit file-picker action is not part of the declarative `texture_import_approved` contract and is not claimed as a current PR4 requirement. Approved local file data remains behind the opaque desktop-adapter approval boundary; declarative payloads do not carry filesystem paths.
 
@@ -53,6 +69,8 @@ References: https://blockbench.net/wiki/docs/plugin/ · https://blockbench.net/w
 Installed is not equivalent to compatible, trusted or MCP-authorized. Required extensions must match the audited exact plugin version, pass the Blockbench compatibility gate and be explicitly session-allowlisted. Blocked/human-only/audit-required paths fail closed. Cross-profile conversion is denied unless a later audited adapter exists.
 
 The executable snapshot follows the current physical modlist authority: GeckoLib 4.9.2, AzureLib 3.1.11 and Entity Model Features 3.3.5 are represented as provider requirements where applicable; current Blockbench catalog pins are maintained separately in the extension registry.
+
+Generic animation is deliberately provider-neutral. GeckoLib, AzureLib, EMF/CEM or another provider adapter is responsible for its own serialization/export contract. PR5 does not silently translate generic animation data into any provider format.
 
 ## Checks
 
@@ -140,11 +158,11 @@ The PR4 UV-island-mask contract adds `texture_paint_uv_island` as a deterministi
 - duplicate face selectors, disconnected selections, texture mismatch, non-pixel-aligned UVs, invalid bounds and layered textures fail during preflight before Undo;
 - dry-run performs validation/preflight without bitmap mutation or Undo;
 - committed apply writes the bounded region once, publishes the changed texture once and remains inside the existing single Undo transaction;
-- Advanced V2 semantic UV masks, palette operations, procedural brushes, arbitrary global painting and remote Live Bridge/MCP writes are outside this slice.
+- Advanced V2 semantic UV masks, procedural brushes, arbitrary global painting and remote Live Bridge/MCP writes are outside this slice.
 
 ## Deterministic palette tools
 
-The PR4 palette-tool boundary pairs the existing bounded `texture_replace_palette` mutation with read-only `texture.sample_palette` behavior exposed by the local UV/texture adapter as `samplePalette(...)`:
+The PR4 palette-tool boundary pairs the bounded `texture_replace_palette` mutation with read-only `texture.sample_palette` behavior exposed by the local UV/texture adapter as `samplePalette(...)`:
 
 - sampling requires one explicit `textureId` and one explicit rectangular `region`;
 - the region must use non-negative integer coordinates, positive integer dimensions and remain entirely inside the target texture;
@@ -159,27 +177,77 @@ The PR4 palette-tool boundary pairs the existing bounded `texture_replace_palett
 - the sampled `projectRevision` can be used by callers as the stale-revision authority before constructing an existing bounded `texture_replace_palette` batch;
 - Live Bridge/MCP remains read-only and this slice adds no remote write method.
 
-With deterministic palette sampling paired with the already-integrated bounded palette replacement, the canonical PR4 `PALETTE_TOOLS` capability is covered. PR4 itself remains incomplete until the final round-trip, visual-diff, Undo and texture-validation/texture-path acceptance gates are proven.
+The committed PR4 acceptance suite preserves round-trip, alpha-aware visual-diff, bitmap-aware Undo, and texture validation/path regressions while PR5 extends the Toolkit.
+
+## Generic Animation Core
+
+PR5 introduces a provider-neutral animation contract under `core/animation/animation_engine.js` and a desktop-local Blockbench adapter under `blockbench-plugin/animation_adapter.js`.
+
+The generic mutation contract is bounded and revision-guarded:
+
+- `animation_create`, `animation_update_settings`, and `animation_delete` manage generic animations;
+- `animation_add_keyframe`, `animation_update_keyframe`, and `animation_delete_keyframe` manage transform keyframes;
+- transform channels are limited to `position`, `rotation`, and `scale`;
+- generic easing/interpolation is limited to the explicit allowlist `linear`, `bezier`, `catmullrom`, and `step`;
+- loop modes are limited to the generic `once`, `loop`, and `hold` contract;
+- operation count, identifiers, labels, duration/time values and vector payloads are bounded and validated before mutation;
+- `expectedRevision` rejects stale batches before preflight/Undo;
+- `dryRun` validates and preflights without opening an Undo transaction;
+- committed batches use one animation/keyframe Undo transaction and roll back adapter failures;
+- the desktop adapter composes its local revision authority from the canonical project snapshot plus deterministic keyframe state, without expanding the read-only Live Bridge protocol;
+- duplicate IDs/names, missing animations/targets/keyframes and keyframes beyond animation duration fail closed during preflight.
+
+### Abstract effect markers and provider boundary
+
+The core contract understands bounded abstract `particle`, `sound`, `timeline`, and `custom` effect markers so provider-neutral specifications can represent semantic timing. The generic Blockbench adapter deliberately rejects effect-marker serialization with `PROVIDER_ADAPTER_REQUIRED` before Undo.
+
+This is intentional: provider adapters such as the later GeckoLib adapter decide how an abstract marker maps to a concrete provider representation. PR5 does not create GeckoLib/AzureLib/EMF codecs, exporter payloads, effect-keyframe serialization or cross-provider conversion.
+
+### Preview, pose inspection and capture
+
+PR5 exposes adapter-bound read operations:
+
+- `playPreview(...)` and `stopPreview(...)` delegate playback to the active editor adapter;
+- `inspectPose(...)` returns a provider-neutral pose snapshot for the requested animation/time;
+- `capturePose(...)` delegates deterministic camera-preset selection and screenshot capture to the adapter;
+- Blockbench capture uses an explicitly named available `DefaultCameraPresets` entry and `Screencam.screenshotPreview(...)`;
+- invalid animation/time/camera inputs fail closed;
+- preview, pose inspection and capture do not mutate the asset revision.
+
+CI tests these contracts with deterministic Blockbench test doubles. A physical editor/runtime capture smoke is not claimed by this PR.
+
+### Animation diagnostics
+
+The core also provides provider-neutral diagnostic primitives:
+
+- `validateLoopSeam(...)` compares sampled start/end poses deterministically against an explicit tolerance and reports per-target/channel deltas;
+- `diagnoseFootSlide(...)` computes contact displacement only when sufficient measurable contact samples are supplied;
+- insufficient contact evidence returns a fail-closed `NOT_MEASURABLE` diagnostic rather than inventing a foot-slide result.
+
+These diagnostics do not make gameplay, provider export or aesthetic approval decisions.
 
 ## Deliberate non-automation
 
 Exact texel density is not guessed from incomplete project data. The Toolkit reports texture dimensions/bounds and validates UV completeness; contract + Visual Style Bible govern density decisions. Screenshot/aesthetic approval remains `minecraft-visual-qa` work.
 
-Mutation capabilities remain explicit and bounded. There is no arbitrary JavaScript/shell execution, provider exporter, automatic plugin installation, gameplay authority, generic animation mutation, arbitrary global UV repack, arbitrary global texture painting or new Live Bridge/MCP write surface in this PR4 slice.
+Mutation capabilities remain explicit and bounded. There is no arbitrary JavaScript/shell execution, provider exporter, automatic plugin installation, gameplay authority, provider-specific animation serialization, arbitrary global UV repack, arbitrary global texture painting or new Live Bridge/MCP write surface. Physical Blockbench runtime health and real runtime handoff remain separate evidence gates.
 
 ## Tests
 
 ```bash
 node --check asset_toolkit.js
+node --test asset_toolkit.animation_core.test.js
+node --test asset_toolkit.animation_adapter.test.js
+node --test asset_toolkit.bundle_live_bridge.test.js
 node --test asset_toolkit.uv_pack.test.js
 node --test asset_toolkit.texture_create_import.test.js
 node --test asset_toolkit.texture_create_import_adapter.test.js
 node --test asset_toolkit.texture_paint_region.test.js
 node --test asset_toolkit.uv_island_masks.test.js
 node --test asset_toolkit.palette_sampling.test.js
-node --test asset_toolkit.bundle_live_bridge.test.js
+node --test asset_toolkit.texture_acceptance.test.js
 node --test asset_toolkit.test.js
 node build_toolkit_bundle.js --check
 ```
 
-Tests use Node's built-in runner and no third-party npm dependency. Coverage includes structural QA, Locator semantics, extension authorization, physical-provider authority, provider resolution, fail-closed conversion, schemas, generated-bundle reproducibility, deterministic UV-pack preview, exact confirmation/revision binding, Blockbench Undo behavior, overlap-safe source-pixel buffering, bounded texture creation, opaque approved import, dry-run approval preservation, collision/budget rejection, deterministic non-uniform bounded paint with exact RGBA/alpha preservation, bounded per-face UV-island mask derivation with gap preservation and fail-closed connectivity/alignment checks, deterministic bounded palette sampling with exact alpha-aware RGBA histograms and truncation metadata, and standalone bundle loading without introducing a remote write surface.
+Tests use Node's built-in runner and no third-party npm dependency. Coverage includes structural QA, Locator semantics, extension authorization, physical-provider authority, provider resolution, fail-closed conversion, schemas, generated-bundle reproducibility, deterministic UV-pack preview, exact confirmation/revision binding, Blockbench Undo behavior, overlap-safe source-pixel buffering, bounded texture creation, opaque approved import, dry-run approval preservation, collision/budget rejection, deterministic non-uniform bounded paint with exact RGBA/alpha preservation, bounded per-face UV-island mask derivation with gap preservation and fail-closed connectivity/alignment checks, deterministic bounded palette sampling with exact alpha-aware RGBA histograms and truncation metadata, PR4 texture acceptance, provider-neutral animation/keyframe contracts, stale-revision and transaction rollback behavior, provider-bound marker rejection, deterministic loop-seam and foot-slide diagnostics, preview/pose/capture adapter delegation, and standalone bundle loading without introducing a remote write surface.
