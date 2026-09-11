@@ -4530,7 +4530,6 @@
     "core/qa-export/unified_qa_export_manifest.js": function(module, exports, require) {
       'use strict';
 
-      const crypto = require('node:crypto');
       const {validateProject} = require('../validator/validator.js');
       const {formatReport} = require('../report/report.js');
       const {getProviderProfile} = require('../provider-profile/provider_profiles.js');
@@ -4580,6 +4579,7 @@
       }
 
       function sha256(value, code = 'ARTIFACT_CONTENT_REQUIRED') {
+        const crypto = require('node:crypto');
         return `sha256:${crypto.createHash('sha256').update(contentBytes(value, code)).digest('hex')}`;
       }
 
