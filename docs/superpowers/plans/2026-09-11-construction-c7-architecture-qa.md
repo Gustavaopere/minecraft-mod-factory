@@ -38,15 +38,15 @@
 
 - [ ] **Step 1: Write the report schema**
 
-Define schema version `1` with exact top-level fields:
+Define schema version `1` with exact top-level fields. SHA fields use JSON Schema pattern `^[0-9a-f]{64}$` and the example uses a valid fixed all-zero SHA:
 
 ```json
 {
   "schema_version": 1,
-  "build_spec_sha256": "<64 lowercase hex>",
-  "build_ir_sha256": "<64 lowercase hex>",
+  "build_spec_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "build_ir_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
   "registry_fingerprint": null,
-  "overall_status": "PASS|FAIL|DEFERRED",
+  "overall_status": "PASS",
   "checks": [],
   "metrics": {}
 }
@@ -297,7 +297,7 @@ git commit -m "feat(construction): add C7 conservative walkability graph"
 
 **Files:**
 - Modify: `construction/tests/test_c7_architecture_qa.py`
-- Modify only if required by failing evidence: `construction/core/structural_qa.py`
+- Modify only when a new failing assertion proves a defect: `construction/core/structural_qa.py`
 
 **Interfaces:**
 - Consumes: `construction/fixtures/vanilla-golden/build-spec.json` and `expected-build-ir.json`.
@@ -342,7 +342,7 @@ git commit -m "test(construction): prove C7 determinism and golden compatibility
 ### Task 6: Validate the dedicated C7 workflow and inherited regressions
 
 **Files:**
-- Modify if contract evidence requires correction: `.github/workflows/factory-construction-c7-architecture-qa.yml`
+- Modify only when the workflow contract test exposes a concrete defect: `.github/workflows/factory-construction-c7-architecture-qa.yml`
 - Test: all Construction suites listed below.
 
 **Interfaces:**
@@ -375,10 +375,10 @@ GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/c7/gradle-home" ./gradlew test b
 - [ ] **Step 3: Run whitespace validation**
 
 ```bash
-git diff --check <base>..HEAD -- .github/workflows/factory-construction-c7-architecture-qa.yml construction docs/superpowers/specs/2026-09-11-construction-c7-architecture-qa-design.md docs/superpowers/plans/2026-09-11-construction-c7-architecture-qa.md
+git diff --check "$(git merge-base origin/main HEAD)"..HEAD -- .github/workflows/factory-construction-c7-architecture-qa.yml construction docs/superpowers/specs/2026-09-11-construction-c7-architecture-qa-design.md docs/superpowers/plans/2026-09-11-construction-c7-architecture-qa.md
 ```
 
-- [ ] **Step 4: Commit workflow corrections only if needed**
+- [ ] **Step 4: Commit workflow correction only if a failing workflow-contract test required one**
 
 ```bash
 git add .github/workflows/factory-construction-c7-architecture-qa.yml
