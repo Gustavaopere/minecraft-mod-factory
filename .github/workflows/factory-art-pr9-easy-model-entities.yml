@@ -26,7 +26,10 @@ jobs:
           node-version: '22'
       - name: PR9 audited provider/exporter contract
         working-directory: art/tooling/blockbench/asset-toolkit
-        run: node --test asset_toolkit.easy_model_entities_pr9.test.js
+        run: |
+          node --test \
+            asset_toolkit.easy_model_entities_pr9.test.js \
+            asset_toolkit.easy_model_entities_api_version.test.js
       - name: Existing provider/profile regressions
         working-directory: art/tooling/blockbench/asset-toolkit
         run: |
