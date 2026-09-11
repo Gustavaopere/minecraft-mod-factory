@@ -59,6 +59,24 @@ jobs:
           grep -Fx 'neoforge_min_version=21.1.0' .factory-ci/pr9/easy-model-entities/gradle.properties
           grep -F 'entitySpawnItemSpawnsHostEntity' .factory-ci/pr9/easy-model-entities/NeoForge/src/main/java/de/markusbordihn/easymodelentities/gametest/HostEntityGameTest.java
           grep -F 'blockSpawnItemPlacesHostBlock' .factory-ci/pr9/easy-model-entities/NeoForge/src/main/java/de/markusbordihn/easymodelentities/gametest/HostEntityGameTest.java
+      - name: Align upstream ASM pins for NeoForge 21.1.248 smoke only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('.factory-ci/pr9/easy-model-entities/build.gradle')
+          text = path.read_text()
+          replacements = {
+              "'org.ow2.asm:asm-analysis:9.7'": "'org.ow2.asm:asm-analysis:9.10.1'",
+              "'org.ow2.asm:asm-util:9.7'": "'org.ow2.asm:asm-util:9.10.1'",
+          }
+          for old, new in replacements.items():
+              if old not in text:
+                  raise SystemExit(f'Expected upstream ASM pin not found: {old}')
+              text = text.replace(old, new, 1)
+          path.write_text(text)
+          PY
+          grep -F "asm-analysis:9.10.1" .factory-ci/pr9/easy-model-entities/build.gradle
+          grep -F "asm-util:9.10.1" .factory-ci/pr9/easy-model-entities/build.gradle
       - name: Run target-exact NeoForge 21.1.248 spawn/place smoke
         working-directory: .factory-ci/pr9/easy-model-entities
         run: |
