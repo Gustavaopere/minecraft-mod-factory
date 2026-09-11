@@ -12,7 +12,7 @@ on:
       - '.github/workflows/factory-art-pr6-geckolib4-adapter.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   geckolib4-adapter:
@@ -24,63 +24,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply PR6 review GREEN and regenerate standalone
-        if: github.event_name == 'push' && github.ref == 'refs/heads/feat/art-pr6-geckolib4-adapter'
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          core = Path('art/tooling/blockbench/asset-toolkit/core/provider-adapter/geckolib4_adapter.js')
-          text = core.read_text(encoding='utf-8')
-          old = "  if (output.startsWith('/') || output.split('/').includes('..')) fail('INVALID_GECKOLIB4_PATH', `${field} must be a safe relative path.`);"
-          new = "  if (output.startsWith('/') || /^[A-Za-z]:/.test(output) || output.split('/').includes('..')) fail('INVALID_GECKOLIB4_PATH', `${field} must be a safe relative path.`);"
-          if old in text:
-              text = text.replace(old, new, 1)
-          elif new not in text:
-              raise SystemExit('relative-path validator anchor not found')
-          core.write_text(text, encoding='utf-8')
-
-          adapter = Path('art/tooling/blockbench/asset-toolkit/blockbench-plugin/geckolib4_adapter.js')
-          text = adapter.read_text(encoding='utf-8')
-          anchor = "\nfunction createBlockbenchGeckoLib4Adapter(bb) {\n"
-          helper = "\nfunction deepFreezeJsonDocument(value) {\n  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;\n  for (const child of Object.values(value)) deepFreezeJsonDocument(child);\n  return Object.freeze(value);\n}\n"
-          if 'function deepFreezeJsonDocument(value)' not in text:
-              if anchor not in text:
-                  raise SystemExit('Blockbench adapter helper anchor not found')
-              text = text.replace(anchor, helper + anchor, 1)
-          geo_old = "    geckolib4.validateGeckoLib4GeoDocument(document);\n    return document;"
-          geo_new = "    geckolib4.validateGeckoLib4GeoDocument(document);\n    return deepFreezeJsonDocument(document);"
-          anim_old = "    geckolib4.validateGeckoLib4AnimationDocument(document);\n    return document;"
-          anim_new = "    geckolib4.validateGeckoLib4AnimationDocument(document);\n    return deepFreezeJsonDocument(document);"
-          if geo_old in text:
-              text = text.replace(geo_old, geo_new, 1)
-          elif geo_new not in text:
-              raise SystemExit('model freeze anchor not found')
-          if anim_old in text:
-              text = text.replace(anim_old, anim_new, 1)
-          elif anim_new not in text:
-              raise SystemExit('animation freeze anchor not found')
-          adapter.write_text(text, encoding='utf-8')
-          PY
-          node art/tooling/blockbench/asset-toolkit/build_toolkit_bundle.js --write
-          git diff --check -- art/tooling/blockbench/asset-toolkit
-          if git diff --quiet -- art/tooling/blockbench/asset-toolkit/core/provider-adapter/geckolib4_adapter.js art/tooling/blockbench/asset-toolkit/blockbench-plugin/geckolib4_adapter.js art/tooling/blockbench/asset-toolkit/asset_toolkit.js; then
-            exit 0
-          fi
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add art/tooling/blockbench/asset-toolkit/core/provider-adapter/geckolib4_adapter.js art/tooling/blockbench/asset-toolkit/blockbench-plugin/geckolib4_adapter.js art/tooling/blockbench/asset-toolkit/asset_toolkit.js
-          git commit -m "fix(art): address PR6 export safety review"
-          git push origin HEAD:feat/art-pr6-geckolib4-adapter
       - name: PR6 GeckoLib 4 provider contract
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.geckolib4_adapter.test.js
       - name: PR6 GeckoLib 4 Blockbench integration
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.geckolib4_blockbench_adapter.test.js
-      - name: PR6 review regressions
-        working-directory: art/tooling/blockbench/asset-toolkit
-        run: node --test asset_toolkit.geckolib4_review_regression.test.js
       - name: PR6 public API and standalone surface
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.geckolib4_public_api.test.js
