@@ -90,15 +90,33 @@ C4 currently classifies registered blocks conservatively as `block_entity` when 
 
 ## 7. Schematic authority
 
-The target canonical exchange artifact is Sponge Schematic v3. The Factory exporter must preserve namespaced block IDs, states, required-mod metadata and controlled BlockEntity payloads. Existing upstream exporters may continue to produce their native formats; the Factory adapter is responsible for canonical conversion and validation.
+The target canonical exchange artifact is Sponge Schematic v3. The Factory exporter preserves namespaced block IDs and states, required-mod provenance and controlled BlockEntity payloads without modifying preserved upstream sources.
 
-C2-C5 do not serialize that artifact. C6 owns the first canonical Sponge v3 exporter/validator gate.
+C6 implements the first canonical exporter/validator in `construction/core/sponge_v3.py`. The adapter consumes only a C2-valid Canonical Build IR and reuses the C2 validator as the input authority, including its canonical content fingerprint check. Invalid or tampered IR therefore fails before any output-format conversion occurs.
+
+The C6 serialization contract is:
+
+- deterministic big-endian NBT wrapped in GZip with a zero timestamp and empty root name;
+- root `Schematic` compound with Sponge `Version=3`;
+- Minecraft 1.21.1 `DataVersion=3955`;
+- C2 `min_corner` coordinates mapped to Sponge `Offset=[0,0,0]`;
+- `Width`, `Height` and `Length` encoded with the unsigned 16-bit Sponge dimension semantics over NBT `Short` bit patterns;
+- explicit `minecraft:air` at local palette id `0`, followed by the C2 canonical palette without state invention;
+- `Blocks.Data` encoded as unsigned VarInts in the Sponge index order `x + z*Width + y*Width*Length`;
+- `Metadata.RequiredMods` retained as a Factory metadata convention, not misrepresented as a Sponge-standard field;
+- controlled BlockEntities represented by namespaced `Id`, in-bounds `Pos` and typed `Data` compounds whose NBT tag types are preserved.
+
+The paired validator independently decompresses and parses the binary artifact and rejects wrong Sponge/data versions, malformed dimensions or offset, non-contiguous palettes, unknown palette references, malformed VarInts, wrong dense-volume cardinality and malformed/out-of-bounds controlled BlockEntities.
+
+Two preserved upstreams informed the implementation but are not silently promoted to canonical authority. MineBench's pinned exporter uses the v3 layout and VarInt/index mechanics, but the audited revision hardcodes an older Minecraft data version and time-dependent metadata. The pinned `mcschematic` library recognizes Minecraft 1.21.1 data version 3955, but its audited serializer emits Sponge version 2. Factory therefore owns the explicit v3 adapter while keeping both upstreams unchanged.
 
 ## 8. Determinism
 
 Any stochastic generation must receive an explicit seed. A repeated run with identical BuildSpec, engine version, upstream pins and modpack registry snapshot should produce identical canonical voxel output unless a provider is explicitly marked nondeterministic.
 
 Within C2, canonicalization is independent of incoming placement order and block-state property-map order. Within C4, physical evidence, static JAR indexes, runtime block/state data and final registry records are normalized before fingerprinting. Canonical content fingerprints therefore change only when semantic content or provenance changes.
+
+Within C6, the canonical palette order comes from C2, sparse cells are expanded deterministically, NBT compound/list construction order is controlled by Factory code, and the GZip timestamp is fixed to zero. Re-exporting the same valid Build IR plus the same required-mod and BlockEntity inputs must therefore reproduce identical bytes.
 
 ## 9. QA layers
 
@@ -112,7 +130,7 @@ Visual QA includes silhouette, proportion, material hierarchy, repetition, facad
 
 C9 will expose narrow construction operations rather than arbitrary shell/code execution. Intended capabilities include registry search, palette resolution, build generation, bounded edits, preview, validation and export.
 
-Credentials or service-specific configuration are not introduced by C0-C4. Manual setup remains deferred until the first provider that actually needs it.
+Credentials or service-specific configuration are not introduced by C0-C6. Manual setup remains deferred until the first provider that actually needs it.
 
 ## 11. Runtime/worldgen boundary
 
@@ -124,4 +142,4 @@ The visual pipeline may consume structures as reference material, including `.nb
 
 ## 12. Current non-goals
 
-C4 does not choose a modded palette, infer advanced provider-specific placement semantics, serialize canonical Sponge v3, install MCP servers, request external-provider credentials, claim structural/visual quality, or claim in-game/worldgen compatibility. Those claims require C5, C6, C7, C8, C9/C10 and C12 respectively.
+C6 does not infer advanced connected/copycat/dynamic-renderer placement semantics, perform structural or visual QA, install MCP servers, request external-provider credentials, or claim in-game/worldgen compatibility. Those claims require later C7, C8, C9/C10 and C12 gates.
