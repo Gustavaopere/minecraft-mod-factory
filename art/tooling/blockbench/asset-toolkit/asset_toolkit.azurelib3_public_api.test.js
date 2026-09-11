@@ -6,22 +6,33 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const core = require('./core/index.js');
+const blockbenchPlugin = require('./blockbench-plugin/plugin_adapter.js');
 const standalone = require('./asset_toolkit.js');
 
 function assertAzureCoreApi(api, surface) {
   assert.equal(api.AZURELIB3_AUTHORITY?.runtimeVersion, '3.1.11', `${surface} runtime authority pin`);
   assert.equal(api.AZURELIB3_AUTHORITY?.blockbenchPluginVersion, '2.1.5', `${surface} authoring plugin authority pin`);
+  assert.equal(typeof api.validateAzureLib3GeoDocument, 'function', `${surface} geo validator`);
   assert.equal(typeof api.validateAzureLib3AnimationDocument, 'function', `${surface} animation validator`);
   assert.equal(typeof api.serializeAzureLib3EffectMarker, 'function', `${surface} effect serializer`);
   assert.equal(typeof api.createAzureLib3ExportPlan, 'function', `${surface} export planner`);
+}
+
+function assertAzureBlockbenchApi(api, surface) {
+  assert.equal(typeof api.createBlockbenchAzureLib3Adapter, 'function', `${surface} Blockbench adapter`);
 }
 
 test('PR7 AzureLib core contract is exported by modular core', () => {
   assertAzureCoreApi(core, 'core');
 });
 
-test('PR7 AzureLib core contract is exported by deterministic standalone bundle', () => {
+test('PR7 AzureLib Blockbench adapter is exported by the modular plugin surface', () => {
+  assertAzureBlockbenchApi(blockbenchPlugin, 'blockbench-plugin');
+});
+
+test('PR7 AzureLib core and Blockbench contracts are exported by deterministic standalone bundle', () => {
   assertAzureCoreApi(standalone, 'standalone');
+  assertAzureBlockbenchApi(standalone, 'standalone');
 });
 
 test('PR7 workflow revalidates AzureLib provider gates after merge to main', () => {
