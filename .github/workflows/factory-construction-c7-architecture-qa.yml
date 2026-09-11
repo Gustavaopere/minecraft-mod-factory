@@ -28,6 +28,7 @@ on:
       - 'construction/runtime/neoforge-registry-probe/**'
       - 'construction/scripts/prepare_neoforge_registry_probe.py'
       - 'construction/tests/test_c7_architecture_qa.py'
+      - 'construction/tests/test_c7_registry_authority.py'
       - 'construction/tests/test_c6_sponge_v3.py'
       - 'construction/tests/test_c5_modded_palette.py'
       - 'construction/tests/test_c4_modpack_registry.py'
@@ -73,7 +74,11 @@ jobs:
           -v
 
       - name: Run C7 architecture QA contract tests
-        run: python3 -m unittest construction/tests/test_c7_architecture_qa.py -v
+        run: >-
+          python3 -m unittest
+          construction/tests/test_c7_architecture_qa.py
+          construction/tests/test_c7_registry_authority.py
+          -v
 
       - name: Run C6 regression
         run: python3 -m unittest construction/tests/test_c6_sponge_v3.py -v
@@ -117,6 +122,7 @@ jobs:
           construction/core/structural_qa.py
           construction/schemas/structural-qa-report.schema.json
           construction/tests/test_c7_architecture_qa.py
+          construction/tests/test_c7_registry_authority.py
           docs/superpowers/specs/2026-09-11-construction-c7-architecture-qa-design.md
           docs/superpowers/plans/2026-09-11-construction-c7-architecture-qa.md
           construction/README.md
