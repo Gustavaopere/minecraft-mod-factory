@@ -98,7 +98,37 @@ def _validate_registry(registry: object) -> tuple[dict[str, Any], str]:
     blocks = value.get("blocks")
     if not isinstance(blocks, list):
         raise PaletteResolutionError("registry.blocks must be an array")
+
+    fingerprint_payload = {key: item for key, item in value.items() if key != "content_sha256"}
+    actual_fingerprint = hashlib.sha256(
+        (_canonical_json(fingerprint_payload) + "\n").encode("utf-8")
+    ).hexdigest()
+    if actual_fingerprint != fingerprint:
+        raise PaletteResolutionError("registry.content_sha256 does not match registry content")
     return value, fingerprint
+
+
+def _validate_target(build_spec: object, registry: dict[str, Any]) -> None:
+    spec = _require_object(build_spec, "build_spec")
+    target = _require_object(spec.get("target"), "build_spec.target")
+    runtime = _require_object(registry.get("runtime"), "registry.runtime")
+    runtime_target = _require_object(runtime.get("target"), "registry.runtime.target")
+
+    minecraft_version = _require_string(
+        target.get("minecraft_version"),
+        "build_spec.target.minecraft_version",
+    )
+    loader = _require_string(target.get("loader"), "build_spec.target.loader")
+    registry_minecraft = _require_string(
+        runtime_target.get("minecraft"),
+        "registry.runtime.target.minecraft",
+    )
+    registry_loader = _require_string(
+        runtime_target.get("loader"),
+        "registry.runtime.target.loader",
+    )
+    if minecraft_version != registry_minecraft or loader != registry_loader:
+        raise PaletteResolutionError("build_spec target must match the C4 runtime target")
 
 
 def _validate_request(request: object) -> list[dict[str, Any]]:
@@ -213,14 +243,8 @@ def _runtime_states(
     by_canonical: dict[str, dict[str, object]] = {}
     for index, raw_state in enumerate(raw_states):
         state = _require_object(raw_state, f"registry block {block_id} state[{index}]")
-        if state.get("block") != block_id:
-            raise PaletteResolutionError(f"registry block {block_id} contains foreign state")
-        properties = _require_object(
-            state.get("properties"),
-            f"registry block {block_id} state[{index}].properties",
-        )
         normalized_properties: dict[str, str] = {}
-        for key, value in properties.items():
+        for key, value in state.items():
             property_name = _require_string(key, f"registry block {block_id} property", PROPERTY_RE)
             property_value = _require_string(
                 value,
@@ -235,7 +259,7 @@ def _runtime_states(
             continue
 
         normalized_state: dict[str, object] = {
-            "block": block_id,
+            "name": block_id,
             "properties": dict(sorted(normalized_properties.items())),
         }
         by_canonical[_canonical_json(normalized_state)] = normalized_state
@@ -252,18 +276,11 @@ def _candidate(
     role: dict[str, Any],
 ) -> dict[str, object] | None:
     block = _require_object(raw_block, "registry block")
-    if block.get("available") is not True or block.get("authority") != "runtime_registry":
+    if block.get("available") is not True or block.get("authority") != "runtime_confirmed":
         return None
 
     block_id = _require_string(block.get("id"), "registry block id", BLOCK_ID_RE)
     namespace, path = block_id.split(":", 1)
-    declared_namespace = _require_string(
-        block.get("namespace"),
-        f"registry block {block_id} namespace",
-        NAMESPACE_RE,
-    )
-    if declared_namespace != namespace:
-        raise PaletteResolutionError(f"registry block {block_id} namespace mismatch")
 
     if not allow_modded and namespace != "minecraft":
         return None
@@ -287,11 +304,10 @@ def _candidate(
     if not states:
         return None
 
-    source_mod = _require_string(block.get("source_mod"), f"registry block {block_id} source_mod")
     return {
         "block": block_id,
         "namespace": namespace,
-        "source_mod": source_mod,
+        "authority": "runtime_confirmed",
         "safety": safety,
         "state_candidates": states,
         "selected_state": states[0] if len(states) == 1 else None,
@@ -326,6 +342,7 @@ def resolve_palette(
 
     allow_modded, allowed_namespaces, forbidden_blocks = _build_spec_policy(build_spec)
     registry_value, fingerprint = _validate_registry(registry)
+    _validate_target(build_spec, registry_value)
     roles = _validate_request(request)
 
     resolved_roles: list[dict[str, object]] = []
