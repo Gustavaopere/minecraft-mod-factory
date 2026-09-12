@@ -1,4 +1,4 @@
-name: C9 Task 6 QA Preview RED
+name: C9 Task 6 QA Preview Verification
 
 on:
   push:
@@ -16,3 +16,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - name: Run C9 Task 6 QA preview contract
         run: python3 -m unittest construction.tests.test_c9_agent_mcp.C9QaPreviewContractTests -v
+      - name: Run C7 Architecture QA regression
+        run: python3 -m unittest construction.tests.test_c7_architecture_qa -v
+      - name: Run C8 Visual QA regression
+        run: python3 -m unittest construction.tests.test_c8_visual_qa -v
