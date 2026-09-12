@@ -48,6 +48,53 @@ jobs:
           test -s .factory-ci/sonar/lcov.info
           grep -F 'validate_real_handoff_evidence.js' .factory-ci/sonar/lcov.info >/dev/null
 
+      - name: Set up Python 3.11 for Python coverage
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+
+      - name: Install hash-pinned Python coverage tool
+        run: >-
+          python3 -m pip install --require-hashes --no-deps
+          -r .github/sonar/python-coverage-lock.txt
+
+      - name: Generate fail-closed Python coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          coverage_started=0
+
+          if [[ -f engineering/tooling/provider-catalog/validate_provider_catalog.py && -f engineering/tests/test_i7_provider_catalog.py ]]; then
+            python3 -m coverage run \
+              --branch \
+              --source=engineering/tooling/provider-catalog \
+              -m unittest engineering/tests/test_i7_provider_catalog.py
+            coverage_started=1
+          fi
+
+          if compgen -G 'construction/tests/test_c10_*.py' >/dev/null && [[ -d construction/providers && -d construction/scripts ]]; then
+            if [[ "$coverage_started" -eq 0 ]]; then
+              python3 -m coverage run \
+                --branch \
+                --source=construction/providers,construction/scripts \
+                -m unittest discover -s construction/tests -p 'test_c10_*.py' -v
+            else
+              python3 -m coverage run \
+                --append \
+                --branch \
+                --source=construction/providers,construction/scripts \
+                -m unittest discover -s construction/tests -p 'test_c10_*.py' -v
+            fi
+            coverage_started=1
+          fi
+
+          if [[ "$coverage_started" -eq 1 ]]; then
+            python3 -m coverage xml -o coverage.xml
+            test -s coverage.xml
+          else
+            echo 'No registered Python coverage targets are present on this revision.'
+          fi
+
       - name: Verify Sonar credential
         shell: bash
         env:
