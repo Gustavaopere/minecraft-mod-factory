@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import importlib
 import importlib.metadata
@@ -248,6 +249,196 @@ class C9ArtifactStoreContractTests(unittest.TestCase):
         self.assertNotIn("traceback", serialized)
         self.assertNotIn(str(ROOT).lower(), serialized)
         self.assertNotIn("environment", serialized)
+
+
+class C9FacadeParityContractTests(unittest.TestCase):
+    def _modules(self):
+        self.assertTrue(FACADE_PATH.is_file(), "C9 facade is not implemented")
+        facade_module = importlib.import_module("construction.mcp.facade")
+        artifacts = importlib.import_module("construction.mcp.artifacts")
+        errors = importlib.import_module("construction.mcp.errors")
+        c2 = _load_module(ROOT / "construction" / "core" / "build_ir.py", "construction_c2_for_c9_facade")
+        c4 = _load_module(ROOT / "construction" / "core" / "modpack_registry.py", "construction_c4_for_c9_facade")
+        c5 = _load_module(ROOT / "construction" / "core" / "modded_palette.py", "construction_c5_for_c9_facade")
+        fixtures = _load_module(
+            ROOT / "construction" / "tests" / "test_c5_modded_palette.py",
+            "construction_c5_fixtures_for_c9_facade",
+        )
+        facade = facade_module.ConstructionFacade(artifacts.ArtifactStore())
+        return facade, errors, c2, c4, c5, fixtures
+
+    def test_registry_search_filters_and_order(self) -> None:
+        facade, errors, _c2, _c4, _c5, fixtures = self._modules()
+        registry = fixtures.registry()
+        expected = [
+            {
+                "id": block["id"],
+                "namespace": block["id"].split(":", 1)[0],
+                "available": block["available"],
+                "authority": block["authority"],
+                "safety": block["safety"],
+                "state_count": len(block["states"]),
+            }
+            for block in sorted(registry["blocks"], key=lambda item: item["id"])
+        ]
+        self.assertEqual(
+            facade.registry_search(
+                registry,
+                query=None,
+                namespace=None,
+                authority=None,
+                safety=None,
+                limit=25,
+            ),
+            expected,
+        )
+        self.assertEqual(
+            facade.registry_search(
+                registry,
+                query="brick",
+                namespace="alpha",
+                authority="runtime_confirmed",
+                safety=["ordinary"],
+                limit=25,
+            ),
+            [item for item in expected if item["id"] == "alpha:cut_granite_bricks"],
+        )
+        self.assertEqual(
+            facade.registry_search(
+                registry,
+                query=None,
+                namespace=None,
+                authority=None,
+                safety=None,
+                limit=2,
+            ),
+            expected[:2],
+        )
+
+        tampered = copy.deepcopy(registry)
+        tampered["blocks"][0]["authority"] = "invented"
+        with self.assertRaises(errors.C9Error) as rejected_registry:
+            facade.registry_search(
+                tampered,
+                query=None,
+                namespace=None,
+                authority=None,
+                safety=None,
+                limit=25,
+            )
+        self.assertEqual(rejected_registry.exception.code, "AUTHORITY_REJECTED")
+        self.assertEqual(rejected_registry.exception.authority, "C4")
+
+        invalid_filters = (
+            {"query": "Brick"},
+            {"namespace": "Alpha"},
+            {"authority": "invented"},
+            {"safety": []},
+            {"safety": ["invented"]},
+            {"limit": 0},
+            {"limit": 101},
+            {"limit": True},
+        )
+        for override in invalid_filters:
+            kwargs = {
+                "query": None,
+                "namespace": None,
+                "authority": None,
+                "safety": None,
+                "limit": 25,
+            }
+            kwargs.update(override)
+            with self.subTest(override=override):
+                with self.assertRaises(errors.C9Error) as rejected_filter:
+                    facade.registry_search(registry, **kwargs)
+                self.assertEqual(rejected_filter.exception.code, "INVALID_INPUT")
+
+    def test_palette_resolve_matches_c5(self) -> None:
+        facade, errors, _c2, _c4, c5, fixtures = self._modules()
+        build_spec = fixtures.build_spec()
+        registry = fixtures.registry()
+        request = fixtures.request(
+            required_terms=["brick"],
+            preferred_namespaces=["alpha", "minecraft"],
+        )
+        expected = c5.resolve_palette(build_spec, registry, request)
+        self.assertEqual(facade.palette_resolve(build_spec, registry, request), expected)
+
+        impossible = fixtures.request(required_terms=["definitely_missing_block"])
+        with self.assertRaises(c5.PaletteResolutionError) as direct:
+            c5.resolve_palette(build_spec, registry, impossible)
+        with self.assertRaises(errors.C9Error) as wrapped:
+            facade.palette_resolve(build_spec, registry, impossible)
+        self.assertEqual(wrapped.exception.code, "AUTHORITY_REJECTED")
+        self.assertEqual(wrapped.exception.authority, "C5")
+        self.assertEqual(wrapped.exception.details, [str(direct.exception)])
+
+    def test_build_canonicalize_matches_c2(self) -> None:
+        facade, errors, c2, _c4, _c5, fixtures = self._modules()
+        build_spec = fixtures.build_spec()
+        placements = [
+            {
+                "x": 2,
+                "y": 0,
+                "z": 0,
+                "block_state": {"name": "minecraft:oak_log", "properties": {"axis": "y"}},
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "block_state": {"name": "minecraft:stone_bricks", "properties": {}},
+            },
+        ]
+        expected = c2.canonicalize_build_ir(
+            build_spec,
+            placements,
+            producer="construction-c9-mcp",
+            producer_version="c9-mcp-v1",
+        )
+        self.assertEqual(facade.build_canonicalize(build_spec, placements), expected)
+
+        invalid = copy.deepcopy(placements)
+        invalid[0]["x"] = 99
+        with self.assertRaises(c2.BuildIRError) as direct:
+            c2.canonicalize_build_ir(
+                build_spec,
+                invalid,
+                producer="construction-c9-mcp",
+                producer_version="c9-mcp-v1",
+            )
+        with self.assertRaises(errors.C9Error) as wrapped:
+            facade.build_canonicalize(build_spec, invalid)
+        self.assertEqual(wrapped.exception.code, "AUTHORITY_REJECTED")
+        self.assertEqual(wrapped.exception.authority, "C2")
+        self.assertEqual(wrapped.exception.details, [str(direct.exception)])
+
+    def test_build_validate_mirrors_c2_errors(self) -> None:
+        facade, _errors, c2, _c4, _c5, fixtures = self._modules()
+        build_spec = fixtures.build_spec()
+        build_ir = c2.canonicalize_build_ir(
+            build_spec,
+            [
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0,
+                    "block_state": {"name": "minecraft:stone_bricks", "properties": {}},
+                }
+            ],
+            producer="construction-c9-mcp",
+            producer_version="c9-mcp-v1",
+        )
+        self.assertEqual(facade.build_validate(build_ir), {"valid": True, "errors": []})
+
+        invalid = copy.deepcopy(build_ir)
+        invalid["target"]["minecraft_version"] = "1.20.1"
+        expected_errors = c2.validate_build_ir(invalid)
+        self.assertTrue(expected_errors)
+        self.assertEqual(
+            facade.build_validate(invalid),
+            {"valid": False, "errors": expected_errors},
+        )
 
 
 if __name__ == "__main__":
