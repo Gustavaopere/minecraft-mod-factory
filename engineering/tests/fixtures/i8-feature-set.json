@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "target": {
+    "minecraft": "1.21.1",
+    "loader": "neoforge",
+    "neoforge": "21.1.248",
+    "java": 21
+  },
+  "project": {
+    "mod_id": "i3_golden_mod",
+    "java_package": "dev.example.i3golden",
+    "main_class": "I3GoldenMod"
+  },
+  "features": [
+    {
+      "kind": "block",
+      "id": "copper_machine",
+      "class_name": "CopperMachineBlock"
+    },
+    {
+      "kind": "item",
+      "id": "copper_gear",
+      "class_name": "CopperGearItem"
+    },
+    {
+      "kind": "block_entity",
+      "id": "copper_machine_entity",
+      "class_name": "CopperMachineBlockEntity",
+      "block_id": "copper_machine"
+    },
+    {
+      "kind": "menu",
+      "id": "copper_machine_menu",
+      "class_name": "CopperMachineMenu"
+    },
+    {
+      "kind": "network_payload",
+      "id": "machine_action",
+      "class_name": "MachineActionPayload"
+    },
+    {
+      "kind": "recipe",
+      "id": "copper_processing",
+      "class_name": "CopperProcessingRecipe"
+    }
+  ]
+}
