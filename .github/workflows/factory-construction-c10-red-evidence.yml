@@ -1,6 +1,12 @@
 name: Factory Construction C10 RED Evidence
 
 on:
+  push:
+    branches:
+      - feat/construction-c10-external-providers
+    paths:
+      - '.github/workflows/factory-construction-c10-red-evidence.yml'
+      - 'construction/tests/test_c10_workflow_contract.py'
   pull_request:
     branches:
       - main
