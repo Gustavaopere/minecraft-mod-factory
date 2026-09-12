@@ -39,6 +39,10 @@ jobs:
         run: node art/native-golden-samples/geckolib4-simple-mob/validate_golden_sample.js
       - name: Run fail-closed Golden Sample tests
         run: node --test art/native-golden-samples/geckolib4-simple-mob/golden_sample.test.js
+      - name: Validate real Blockbench handoff evidence
+        run: node art/native-golden-samples/geckolib4-simple-mob/validate_real_handoff_evidence.js
+      - name: Run fail-closed real handoff tests
+        run: node --test art/native-golden-samples/geckolib4-simple-mob/real_handoff_evidence.test.js
       - name: Preserve existing reference corpus gates
         run: |
           node art/golden-samples/validate_golden_samples.js
