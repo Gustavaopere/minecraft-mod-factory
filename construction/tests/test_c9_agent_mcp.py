@@ -1094,5 +1094,105 @@ class C9ServerSchemaContractTests(unittest.IsolatedAsyncioTestCase):
             )
 
 
+class C9CapabilityBoundaryTests(unittest.TestCase):
+    FORBIDDEN_IMPORT_ROOTS = {
+        "subprocess",
+        "socket",
+        "requests",
+        "httpx",
+        "urllib",
+        "ftplib",
+        "paramiko",
+    }
+    FORBIDDEN_CALL_NAMES = {"exec", "eval", "compile", "__import__"}
+    FORBIDDEN_PARAMETER_NAMES = {
+        "path",
+        "url",
+        "host",
+        "port",
+        "command",
+        "code",
+        "package",
+        "environment",
+    }
+
+    def test_production_c9_has_no_forbidden_capability_imports_or_calls(self) -> None:
+        import ast
+
+        violations: list[str] = []
+        production_files = sorted(MCP_DIR.glob("*.py"))
+        self.assertTrue(production_files)
+
+        for path in production_files:
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        root = alias.name.split(".", 1)[0]
+                        if root in self.FORBIDDEN_IMPORT_ROOTS:
+                            violations.append(f"{path.name}: forbidden import {alias.name}")
+                elif isinstance(node, ast.ImportFrom):
+                    if node.module:
+                        root = node.module.split(".", 1)[0]
+                        if root in self.FORBIDDEN_IMPORT_ROOTS:
+                            violations.append(f"{path.name}: forbidden import {node.module}")
+                elif (
+                    isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Name)
+                    and node.func.id in self.FORBIDDEN_CALL_NAMES
+                ):
+                    violations.append(f"{path.name}: forbidden call {node.func.id}")
+
+        self.assertEqual(violations, [])
+
+    def test_server_tool_signatures_have_no_caller_capability_parameters(self) -> None:
+        import inspect
+
+        server = importlib.import_module("construction.mcp.server")
+        self.assertEqual(len(server.TOOL_NAMES), 9)
+        for tool_name in server.TOOL_NAMES:
+            with self.subTest(tool=tool_name):
+                function = getattr(server, tool_name)
+                parameters = set(inspect.signature(function).parameters)
+                self.assertEqual(
+                    self.FORBIDDEN_PARAMETER_NAMES.intersection(parameters),
+                    set(),
+                )
+
+    def test_c9_workflow_dependency_contract_is_hash_pinned(self) -> None:
+        workflow = WORKFLOW_PATH.read_text(encoding="utf-8")
+        self.assertIn(
+            "python3 -m pip install --require-hashes --no-deps -r "
+            "construction/upstream/harness/schematica-test-lock.txt",
+            workflow,
+        )
+        self.assertIn(
+            "python3 -m pip install --require-hashes --no-deps -r "
+            "construction/upstream/harness/c9-mcp-lock.txt",
+            workflow,
+        )
+        self.assertIn("python3 -m pip check", workflow)
+        self.assertIn(
+            'python3 -c \'from importlib.metadata import version; '
+            'assert version("mcp") == "2.2.0"\'',
+            workflow,
+        )
+        self.assertNotIn("pip install mcp", workflow)
+        self.assertNotIn("pip install -U", workflow)
+        self.assertNotIn("pip install --upgrade", workflow)
+
+        lock_lines = [
+            line.strip()
+            for line in LOCK_PATH.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        ]
+        self.assertTrue(lock_lines)
+        for line in lock_lines:
+            with self.subTest(requirement=line.split()[0]):
+                self.assertIn("==", line)
+                self.assertIn("--hash=sha256:", line)
+
+
+
 if __name__ == "__main__":
     unittest.main()
