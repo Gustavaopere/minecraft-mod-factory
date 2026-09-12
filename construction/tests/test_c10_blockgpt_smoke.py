@@ -20,6 +20,10 @@ PHYSICAL_SHA = "7c0a23d6013101383d196526e4b6ba6940fb54a0fed10eaed5956ab015cfcc00
 REFERENCE_SHA = "48d733bcb320b57417c7c507d514c5470092baf2c9671586d8ea6fd7d448af8e"
 OBJ_INPUT_SHA = "b6101561fb2594ce731ea8ecb02c0d25862ca24abdd776cfe10cac2fe088c4a9"
 OBJ_REQUEST_ID = "4ee4be7e0d3d89b0690aeb2da3794f28689dad61a246be873e7194b140d021de"
+PROMPT = (
+    "Generate a plain solid cube that matches the uploaded reference image, using basic full "
+    "Minecraft blocks only, with no decorations or surrounding terrain."
+)
 MAX_INPUT_BYTES = 16_777_216
 MAX_OUTPUT_BYTES = 67_108_864
 
@@ -100,7 +104,7 @@ class ConstructionC10BlockGPTSmokeTest(unittest.TestCase):
         expected = build_handoff_request(
             profile,
             operation="IMAGE_TO_STRUCTURE",
-            text_input=None,
+            text_input=PROMPT,
             input_artifacts=[descriptor],
             expected_output_kinds=["SCHEMATIC_FILE"],
             physical_modlist_sha256=PHYSICAL_SHA,
@@ -108,16 +112,17 @@ class ConstructionC10BlockGPTSmokeTest(unittest.TestCase):
                 "required": True,
                 "step_id": "submit-reference-image",
                 "instruction": (
-                    "Upload the exact Factory C10 reference.png fixture to BlockGPT and start one "
-                    "image-to-build generation without adding a text prompt."
+                    "Upload the exact Factory C10 reference.png fixture to BlockGPT, paste the exact "
+                    "Factory prompt recorded in text_input, and start one image-to-build generation."
                 ),
                 "expected_result": (
                     "BlockGPT displays a 3D preview of a generated Minecraft structure derived from "
-                    "the uploaded reference image."
+                    "the uploaded reference image and exact Factory prompt."
                 ),
             },
         )
         checked_in = json.loads(REQUEST.read_text(encoding="utf-8"))
+        self.assertEqual(PROMPT, checked_in["text_input"])
         self.assertEqual(expected, checked_in)
         self.assertEqual(
             [],
