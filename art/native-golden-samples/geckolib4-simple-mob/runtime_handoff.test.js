@@ -75,13 +75,32 @@ test('runtime Java fixture binds the physical animation names and GeckoLib 4.9.2
   assert.match(gameTest, /GoldenSampleMob/);
 });
 
-test('runtime proof remains fail-closed until live client validation is recorded', () => {
+test('runtime proof records durable target-exact server and live-client evidence', () => {
   const manifest = readJson('MANIFEST.json');
+  const evidence = manifest.realHandoff.runtimeEvidence;
 
   assert.equal(manifest.realHandoff.reopenValidated, true);
-  assert.equal(manifest.realHandoff.runtimeValidated, false);
-  assert.equal(manifest.realHandoff.f4I6Evidence, false);
-  assert.equal(manifest.state, 'PREPARED_FOR_REAL_HANDOFF');
+  assert.equal(manifest.realHandoff.runtimeValidated, true);
+  assert.equal(manifest.realHandoff.f4I6Evidence, true);
+  assert.equal(manifest.state, 'REAL_HANDOFF_VALIDATED');
+  assert.equal(evidence.classification, 'PASS');
+  assert.equal(evidence.commit, '33f0322fd806d593da4e3063db93b709dbe878da');
+  assert.equal(evidence.workflowRunId, 34710808440);
+  assert.equal(evidence.jobId, 103599143647);
+  assert.deepEqual(evidence.target, {
+    minecraft: '1.21.1',
+    neoforge: '21.1.248',
+    java: 21,
+    geckolib: '4.9.2',
+  });
+  assert.equal(evidence.server.gameTest, 'PASS');
+  assert.equal(evidence.server.player_connected, true);
+  assert.equal(evidence.server.mob_spawned, true);
+  assert.equal(evidence.client.client_joined, true);
+  assert.equal(evidence.client.renderer_invoked, true);
+  assert.equal(evidence.client.baked_model_observed, true);
+  assert.equal(evidence.client.texture_resolved, true);
+  assert.equal(evidence.client.animation_motion_observed, true);
 });
 
 require('./client_runtime_handoff.test.js');

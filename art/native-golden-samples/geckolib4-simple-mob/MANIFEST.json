@@ -1,6 +1,6 @@
 {
   "sampleId": "golden_sample_mob_geckolib4",
-  "state": "PREPARED_FOR_REAL_HANDOFF",
+  "state": "REAL_HANDOFF_VALIDATED",
   "sourceAuthority": {
     "path": "golden-sample-mob.bbmodel",
     "format": "bbmodel",
@@ -92,7 +92,33 @@
     "sourceRoundTripValidated": true,
     "exporterProduced": true,
     "reopenValidated": true,
-    "runtimeValidated": false,
-    "f4I6Evidence": false
+    "runtimeValidated": true,
+    "f4I6Evidence": true,
+    "runtimeEvidence": {
+      "classification": "PASS",
+      "commit": "33f0322fd806d593da4e3063db93b709dbe878da",
+      "workflowRunId": 34710808440,
+      "jobId": 103599143647,
+      "target": {
+        "minecraft": "1.21.1",
+        "neoforge": "21.1.248",
+        "java": 21,
+        "geckolib": "4.9.2"
+      },
+      "server": {
+        "gameTest": "PASS",
+        "player_connected": true,
+        "mob_spawned": true
+      },
+      "client": {
+        "client_joined": true,
+        "renderer_invoked": true,
+        "baked_model_observed": true,
+        "texture_resolved": true,
+        "animation_motion_observed": true,
+        "texture": "i3_golden_mod:textures/entity/golden_sample_mob.png",
+        "head_rotation_y": 0.03228859
+      }
+    }
   }
 }
