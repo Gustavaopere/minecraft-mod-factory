@@ -55,6 +55,8 @@
       "required": [
         "mod_id",
         "physical",
+        "source",
+        "license",
         "dependency_profile",
         "docs",
         "api_surface",
@@ -104,6 +106,139 @@
               "pattern": "^[0-9a-f]{64}$"
             }
           }
+        },
+        "source": {
+          "type": "object",
+          "required": [
+            "state",
+            "evidence"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "state": {
+              "type": "string",
+              "enum": [
+                "CONFIRMED",
+                "UNRESOLVED",
+                "REFERENCE_ONLY"
+              ]
+            },
+            "repository": {
+              "type": "string",
+              "minLength": 1
+            },
+            "commit": {
+              "type": "string",
+              "minLength": 1
+            },
+            "documentation": {
+              "type": "string",
+              "minLength": 1
+            },
+            "artifact": {
+              "type": "string",
+              "minLength": 1
+            },
+            "evidence": {
+              "$ref": "#/$defs/evidence_list"
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "state": {
+                    "enum": [
+                      "CONFIRMED",
+                      "REFERENCE_ONLY"
+                    ]
+                  }
+                },
+                "required": [
+                  "state"
+                ]
+              },
+              "then": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "repository"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "commit"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "documentation"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "artifact"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "license": {
+          "type": "object",
+          "required": [
+            "state",
+            "evidence"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "state": {
+              "type": "string",
+              "enum": [
+                "CONFIRMED",
+                "UNRESOLVED",
+                "REFERENCE_ONLY"
+              ]
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "spdx": {
+              "type": "string",
+              "minLength": 1
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1
+            },
+            "evidence": {
+              "$ref": "#/$defs/evidence_list"
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "state": {
+                    "enum": [
+                      "CONFIRMED",
+                      "REFERENCE_ONLY"
+                    ]
+                  }
+                },
+                "required": [
+                  "state"
+                ]
+              },
+              "then": {
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          ]
         },
         "dependency_profile": {
           "type": "string",
