@@ -1,6 +1,6 @@
 # Minecraft Mod Factory Asset Toolkit for Blockbench
 
-Standalone project plugin: `asset_toolkit.js` (plugin ID `rpg_asset_toolkit`).
+Canonical generated source bundle: `asset_toolkit.js` (plugin ID `rpg_asset_toolkit`). Blockbench 5.1.6 local side-loading uses the generated install artifact `rpg_asset_toolkit.js`; see `COMPATIBILITY.md`.
 
 ## Scope
 
@@ -12,7 +12,7 @@ All mutation capabilities are local desktop operations. They do not add a Live B
 
 ## Architecture
 
-Canonical source lives in modular CommonJS files under `core/` and `blockbench-plugin/`. `build_toolkit_bundle.js` generates the standalone `asset_toolkit.js` consumed by Blockbench. CI requires the committed standalone bundle to match the modular source byte-for-byte.
+Canonical source lives in modular CommonJS files under `core/` and `blockbench-plugin/`. `build_toolkit_bundle.js` generates the canonical standalone source bundle `asset_toolkit.js`; `sync_blockbench_install_artifact.js --write` materializes the byte-identical local side-load artifact `rpg_asset_toolkit.js` required by the Blockbench 5.1.6 loader. CI requires the committed canonical bundle to match modular source and validates the generated install artifact.
 
 Core modules include:
 
@@ -153,7 +153,7 @@ The PR4 UV-island-mask contract adds `texture_paint_uv_island` as a deterministi
 - UV coordinates must map exactly to bitmap pixels using the current project UV dimensions and texture resolution;
 - selected face rectangles must form one connected UV component through positive-area overlap or a shared edge segment; corner-only contact is not connectivity;
 - the declared `region` must exactly equal the bounding rectangle derived from the selected UV mask;
-- `pixels` remains an exact row-major RGBA sequence for the declared region and the conservative pixel budget is charged by the full region area;
+- `pixels` remains an exact row-major sequence of RGBA tuples for the declared region and the conservative pixel budget is charged by the full region area;
 - only pixels covered by the derived face-union mask are changed; holes/gaps inside the bounding rectangle and all pixels outside it are preserved;
 - duplicate face selectors, disconnected selections, texture mismatch, non-pixel-aligned UVs, invalid bounds and layered textures fail during preflight before Undo;
 - dry-run performs validation/preflight without bitmap mutation or Undo;
