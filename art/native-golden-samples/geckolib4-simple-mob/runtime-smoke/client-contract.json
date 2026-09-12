@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "target": {
+    "minecraft": "1.21.1",
+    "neoforge": "21.1.248",
+    "java": 21,
+    "geckolib": "4.9.2"
+  },
+  "connection": {
+    "host": "127.0.0.1",
+    "port": 25565,
+    "quickPlayArgument": "--quickPlayMultiplayer"
+  },
+  "expectedEvidence": [
+    "renderer_invoked",
+    "baked_model_observed",
+    "texture_resolved",
+    "animation_motion_observed"
+  ],
+  "evidenceFile": "client-runtime-proof.json",
+  "proofPolicy": {
+    "renderer": "GeoEntityRenderer.actuallyRender is invoked by the real Minecraft client",
+    "model": "the baked GeckoLib model contains the exported head bone",
+    "texture": "the exact defaulted entity texture ResourceLocation resolves through the client ResourceManager",
+    "animation": "the exported idle animation changes the baked head bone rotation across rendered frames"
+  }
+}
