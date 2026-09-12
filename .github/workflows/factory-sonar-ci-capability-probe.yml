@@ -35,7 +35,7 @@ jobs:
           fetch component 'https://sonarcloud.io/api/components/show?component=Gustavaopere_minecraft-mod-factory'
           fetch gate 'https://sonarcloud.io/api/qualitygates/project_status?projectKey=Gustavaopere_minecraft-mod-factory&branch=main'
           fetch measures 'https://sonarcloud.io/api/measures/component?component=Gustavaopere_minecraft-mod-factory&branch=main&metricKeys=coverage,new_coverage,lines_to_cover,new_lines_to_cover,uncovered_lines,new_uncovered_lines,new_lines&additionalFields=periods'
-          fetch new_code 'https://sonarcloud.io/api/new_code_periods/show?project=Gustavaopere_minecraft-mod-factory&branch=main'
+          fetch analyses 'https://sonarcloud.io/api/project_analyses/search?project=Gustavaopere_minecraft-mod-factory&branch=main&ps=20'
 
           RUNNER_TEMP_PATH="$RUNNER_TEMP" python3 - <<'PY'
           import json
@@ -87,11 +87,15 @@ jobs:
               if metric in allowed:
                   print(f"MEASURE={metric}:value={measure.get('value')}:period={measure.get('period')}:periods={measure.get('periods')}")
 
-          new_code = load("new_code") or {}
-          if new_code:
+          analyses = load("analyses") or {}
+          for analysis in analyses.get("analyses", [])[:20]:
+              version_events = [
+                  event.get("name") for event in analysis.get("events", [])
+                  if event.get("category") == "VERSION"
+              ]
               print(
-                  "NEW_CODE_PERIOD="
-                  f"type={new_code.get('type')}:value={new_code.get('value')}:"
-                  f"effectiveValue={new_code.get('effectiveValue')}:inherited={new_code.get('inherited')}"
+                  "ANALYSIS="
+                  f"date={analysis.get('date')}:revision={analysis.get('revision')}:"
+                  f"version_events={version_events}"
               )
           PY
