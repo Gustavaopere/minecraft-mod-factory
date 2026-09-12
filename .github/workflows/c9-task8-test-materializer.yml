@@ -1,0 +1,40 @@
+name: C9 Task 8 Test Materializer
+
+on:
+  push:
+    branches:
+      - feat/construction-c9-agent-mcp
+
+permissions:
+  contents: write
+
+jobs:
+  materialize-tests:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/construction-c9-agent-mcp
+      - name: Insert Task 8 RED tests
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import base64
+          from pathlib import Path
+          path = Path("construction/tests/test_c9_agent_mcp.py")
+          text = path.read_text(encoding="utf-8")
+          marker = '\n\nif __name__ == "__main__":\n    unittest.main()\n'
+          if text.count(marker) != 1:
+              raise SystemExit(f"expected one unittest main marker, found {text.count(marker)}")
+          if "class C9ServerSchemaContractTests" in text:
+              raise SystemExit("Task 8 tests already present")
+          insert = base64.b64decode("CgpjbGFzcyBDOVNlcnZlclNjaGVtYUNvbnRyYWN0VGVzdHModW5pdHRlc3QuSXNvbGF0ZWRBc3luY2lvVGVzdENhc2UpOgogICAgVE9PTF9OQU1FUyA9ICgKICAgICAgICAicmVnaXN0cnlfc2VhcmNoIiwKICAgICAgICAicGFsZXR0ZV9yZXNvbHZlIiwKICAgICAgICAiYnVpbGRfY2Fub25pY2FsaXplIiwKICAgICAgICAiYnVpbGRfdmFsaWRhdGUiLAogICAgICAgICJidWlsZF9lZGl0IiwKICAgICAgICAicWFfc3RydWN0dXJhbCIsCiAgICAgICAgInByZXZpZXdfcmVuZGVyIiwKICAgICAgICAicWFfdmlzdWFsIiwKICAgICAgICAiZXhwb3J0X3Nwb25nZV92MyIsCiAgICApCiAgICBGT1JCSURERU5fUEFSQU1FVEVSX05BTUVTID0gewogICAgICAgICJwYXRoIiwKICAgICAgICAidXJsIiwKICAgICAgICAiaG9zdCIsCiAgICAgICAgInBvcnQiLAogICAgICAgICJjb21tYW5kIiwKICAgICAgICAiY29kZSIsCiAgICAgICAgInBhY2thZ2UiLAogICAgICAgICJlbnZpcm9ubWVudCIsCiAgICB9CgogICAgZGVmIF9zZXJ2ZXIoc2VsZik6CiAgICAgICAgc2VsZi5hc3NlcnRUcnVlKFNFUlZFUl9QQVRILmlzX2ZpbGUoKSwgIkM5IE1DUCBzZXJ2ZXIgaXMgbm90IGltcGxlbWVudGVkIikKICAgICAgICByZXR1cm4gaW1wb3J0bGliLmltcG9ydF9tb2R1bGUoImNvbnN0cnVjdGlvbi5tY3Auc2VydmVyIikKCiAgICBhc3luYyBkZWYgdGVzdF9leGFjdF9uaW5lX3Rvb2xfY2F0YWxvZyhzZWxmKSAtPiBOb25lOgogICAgICAgIHNlcnZlciA9IHNlbGYuX3NlcnZlcigpCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChzZXJ2ZXIubWNwLm5hbWUsICJNaW5lY3JhZnQgQ29uc3RydWN0aW9uIEZhY3RvcnkiKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwoc2VydmVyLm1jcC52ZXJzaW9uLCAiYzktbWNwLXYxIikKCiAgICAgICAgdG9vbHMgPSBhd2FpdCBzZXJ2ZXIubWNwLmxpc3RfdG9vbHMoKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwodHVwbGUodG9vbC5uYW1lIGZvciB0b29sIGluIHRvb2xzKSwgc2VsZi5UT09MX05BTUVTKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwobGVuKHRvb2xzKSwgOSkKICAgICAgICBzZWxmLmFzc2VydEVxdWFsKGF3YWl0IHNlcnZlci5tY3AubGlzdF9wcm9tcHRzKCksIFtdKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwoYXdhaXQgc2VydmVyLm1jcC5saXN0X3Jlc291cmNlcygpLCBbXSkKCiAgICAgICAgdGVtcGxhdGVzID0gYXdhaXQgc2VydmVyLm1jcC5saXN0X3Jlc291cmNlX3RlbXBsYXRlcygpCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChsZW4odGVtcGxhdGVzKSwgMSkKICAgICAgICBzZWxmLmFzc2VydEVxdWFsKAogICAgICAgICAgICBzdHIodGVtcGxhdGVzWzBdLnVyaV90ZW1wbGF0ZSksCiAgICAgICAgICAgICJjb25zdHJ1Y3Rpb246Ly9hcnRpZmFjdC9zaGEyNTYve2RpZ2VzdH0iLAogICAgICAgICApCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbCh0ZW1wbGF0ZXNbMF0ubWltZV90eXBlLCAiYXBwbGljYXRpb24vb2N0ZXQtc3RyZWFtIikKCiAgICBhc3luYyBkZWYgdGVzdF9ub19mb3JiaWRkZW5fdG9vbF9zdXJmYWNlKHNlbGYpIC0+IE5vbmU6CiAgICAgICAgc2VydmVyID0gc2VsZi5fc2VydmVyKCkKICAgICAgICB0b29scyA9IGF3YWl0IHNlcnZlci5tY3AubGlzdF90b29scygpCiAgICAgICAgZm9yIHRvb2wgaW4gdG9vbHM6CiAgICAgICAgICAgIHdpdGggc2VsZi5zdWJUZXN0KHRvb2w9dG9vbC5uYW1lKToKICAgICAgICAgICAgICAgIHByb3BlcnRpZXMgPSB0b29sLmlucHV0X3NjaGVtYS5nZXQoInByb3BlcnRpZXMiLCB7fSkKICAgICAgICAgICAgICAgIHNlbGYuYXNzZXJ0VHJ1ZShpc2luc3RhbmNlKHByb3BlcnRpZXMsIGRpY3QpKQogICAgICAgICAgICAgICAgc2VsZi5hc3NlcnRFcXVhbCgKICAgICAgICAgICAgICAgICAgICBzZWxmLkZPUkJJRERFTl9QQVJBTUVURVJfTkFNRVMuaW50ZXJzZWN0aW9uKHByb3BlcnRpZXMpLAogICAgICAgICAgICAgICAgICAgIHNldCgpLAogICAgICAgICAgICAgICAgKQoKICAgIGFzeW5jIGRlZiB0ZXN0X3Rvb2xfc2NoZW1hc19hcmVfY2xvc2VkKHNlbGYpIC0+IE5vbmU6CiAgICAgICAgZnJvbSBtY3Auc2VydmVyLm1jcHNlcnZlci5leGNlcHRpb25zIGltcG9ydCBUb29sRXJyb3IKCiAgICAgICAgc2VydmVyID0gc2VsZi5fc2VydmVyKCkKICAgICAgICB0b29scyA9IGF3YWl0IHNlcnZlci5tY3AubGlzdF90b29scygpCiAgICAgICAgYnlfbmFtZSA9IHt0b29sLm5hbWU6IHRvb2wgZm9yIHRvb2wgaW4gdG9vbHN9CiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChzZXQoYnlfbmFtZSksIHNldChzZWxmLlRPT0xfTkFNRVMpKQoKICAgICAgICBmb3IgbmFtZSwgdG9vbCBpbiBieV9uYW1lLml0ZW1zKCk6CiAgICAgICAgICAgIHdpdGggc2VsZi5zdWJUZXN0KHRvb2w9bmFtZSk6CiAgICAgICAgICAgICAgICBzZWxmLmFzc2VydEVxdWFsKHRvb2wuaW5wdXRfc2NoZW1hLmdldCgidHlwZSIpLCAib2JqZWN0IikKICAgICAgICAgICAgICAgIHNlbGYuYXNzZXJ0SXModG9vbC5pbnB1dF9zY2hlbWEuZ2V0KCJhZGRpdGlvbmFsUHJvcGVydGllcyIpLCBGYWxzZSkKCiAgICAgICAgZWRpdF9zY2hlbWEgPSBieV9uYW1lWyJidWlsZF9lZGl0Il0uaW5wdXRfc2NoZW1hCiAgICAgICAgZGVmaW5pdGlvbnMgPSBlZGl0X3NjaGVtYS5nZXQoIiRkZWZzIiwge30pCiAgICAgICAgc2VsZi5hc3NlcnRUcnVlKGlzaW5zdGFuY2UoZGVmaW5pdGlvbnMsIGRpY3QpKQogICAgICAgIGZvciBtb2RlbF9uYW1lIGluICgiU2V0QmxvY2tPcGVyYXRpb24iLCAiUmVtb3ZlQmxvY2tPcGVyYXRpb24iKToKICAgICAgICAgICAgd2l0aCBzZWxmLnN1YlRlc3QobW9kZWw9bW9kZWxfbmFtZSk6CiAgICAgICAgICAgICAgICBzZWxmLmFzc2VydEluKG1vZGVsX25hbWUsIGRlZmluaXRpb25zKQogICAgICAgICAgICAgICAgc2VsZi5hc3NlcnRJcyhkZWZpbml0aW9uc1ttb2RlbF9uYW1lXS5nZXQoImFkZGl0aW9uYWxQcm9wZXJ0aWVzIiksIEZhbHNlKQoKICAgICAgICB3aXRoIHNlbGYuYXNzZXJ0UmFpc2VzKFRvb2xFcnJvcik6CiAgICAgICAgICAgIGF3YWl0IHNlcnZlci5tY3AuY2FsbF90b29sKAogICAgICAgICAgICAgICAgImJ1aWxkX3ZhbGlkYXRlIiwKICAgICAgICAgICAgICAgIHsiYnVpbGRfaXIiOiB7fSwgImV4dHJhIjogIm11c3QtYmUtcmVqZWN0ZWQifSwKICAgICAgICAgICAgKQo=").decode("utf-8")
+          path.write_text(text.replace(marker, insert + marker), encoding="utf-8")
+          PY
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add construction/tests/test_c9_agent_mcp.py
+          git commit -m 'test(construction): add C9 server schema RED contract'
+          git push origin HEAD:feat/construction-c9-agent-mcp
