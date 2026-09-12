@@ -38,6 +38,17 @@ test('fails closed on premature I6 completion claim', () => {
 });
 
 test('fails closed when exporter evidence is claimed without actual outputs', () => {
-  const sample = loadSample(); sample.manifest = clone(sample.manifest); sample.manifest.realHandoff.exporterProduced = true;
+  const sample = loadSample();
+  sample.manifest = clone(sample.manifest);
+  sample.manifest.realHandoff.exporterProduced = true;
+  sample.actualGeo = null;
+  sample.actualAnimation = null;
   assert.throws(() => validateSample(sample), /MISSING_EXPORTER_EVIDENCE/);
+});
+
+test('fails closed when actual outputs exist but exporter evidence is revoked', () => {
+  const sample = loadSample();
+  sample.manifest = clone(sample.manifest);
+  sample.manifest.realHandoff.exporterProduced = false;
+  assert.throws(() => validateSample(sample), /UNCLASSIFIED_ACTUAL_OUTPUT/);
 });
