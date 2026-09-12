@@ -64,6 +64,19 @@ class GovernanceMigrationTests(unittest.TestCase):
             text,
         )
 
+    def test_sonar_excludes_immutable_external_construction_authorities(self):
+        properties = (ROOT / ".sonarcloud.properties").read_text(encoding="utf-8")
+        exclusion_line = next(
+            line for line in properties.splitlines() if line.startswith("sonar.exclusions=")
+        )
+        exclusions = {
+            entry.strip()
+            for entry in exclusion_line.split("=", 1)[1].split(",")
+            if entry.strip()
+        }
+        self.assertIn("construction/upstream/snapshots/schematica/**", exclusions)
+        self.assertIn("construction/upstream/references/minebench/**", exclusions)
+
     def test_validator_passes(self):
         result = subprocess.run(
             [sys.executable, str(ROOT / "engineering/tooling/validate-e1-s1-governance.py")],
