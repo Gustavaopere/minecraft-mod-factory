@@ -13,8 +13,8 @@ const CLIENT_PROOF_SOURCE = path.join(
   'tests',
   'GoldenSampleMobClientRuntimeProof.java',
 );
-const PREPARER = path.join(ROOT, 'runtime-smoke', 'prepare_client_proof.py');
-const RUNNER = path.join(ROOT, 'runtime-smoke', 'run_live_client_proof.sh');
+const PREPARER = path.join(ROOT, 'runtime-smoke', 'tests', 'prepare_client_proof.py');
+const RUNNER = path.join(ROOT, 'runtime-smoke', 'tests', 'run_live_client_proof.sh');
 const WORKFLOW = path.join(
   ROOT,
   '..',
@@ -56,8 +56,8 @@ test('live-client proof contract is target-exact and wired to a real client run'
 
   const workflow = fs.readFileSync(WORKFLOW, 'utf8');
   const runner = fs.readFileSync(RUNNER, 'utf8');
-  assert.match(workflow, /prepare_client_proof\.py/);
-  assert.match(workflow, /run_live_client_proof\.sh/);
+  assert.match(workflow, /runtime-smoke\/tests\/prepare_client_proof\.py/);
+  assert.match(workflow, /runtime-smoke\/tests\/run_live_client_proof\.sh/);
   assert.match(runner, /runClient/);
   assert.match(runner, /--quickPlayMultiplayer/);
 });
