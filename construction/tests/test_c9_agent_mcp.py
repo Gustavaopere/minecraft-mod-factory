@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.metadata
 import importlib.util
 import unittest
+from dataclasses import FrozenInstanceError
 from pathlib import Path
 
 
@@ -46,6 +48,15 @@ REQUIRED_ACCEPTANCE_TEST_NAMES = (
 )
 
 
+def _load_module(path: Path, name: str):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise AssertionError(f"cannot load module spec for {path.relative_to(ROOT)}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 class C9RedContractTests(unittest.TestCase):
     def test_mcp_dependency_is_exact_2_2_0(self) -> None:
         self.assertTrue(LOCK_PATH.is_file())
@@ -63,11 +74,7 @@ class C9RedContractTests(unittest.TestCase):
 
     def test_c4_public_validator_parity(self) -> None:
         path = ROOT / "construction" / "core" / "modpack_registry.py"
-        spec = importlib.util.spec_from_file_location("construction_c4_for_c9_contract", path)
-        self.assertIsNotNone(spec)
-        self.assertIsNotNone(spec.loader)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        module = _load_module(path, "construction_c4_for_c9_contract")
         self.assertTrue(callable(getattr(module, "validate_modpack_registry", None)))
 
     def test_c9_modules_exist(self) -> None:
@@ -80,6 +87,166 @@ class C9RedContractTests(unittest.TestCase):
 
     def test_c9_workflow_exists(self) -> None:
         self.assertTrue(WORKFLOW_PATH.is_file(), "C9 workflow is not implemented")
+
+
+class C9ArtifactStoreContractTests(unittest.TestCase):
+    def _modules(self):
+        self.assertTrue(ARTIFACTS_PATH.is_file(), "C9 ArtifactStore is not implemented")
+        self.assertTrue(ERRORS_PATH.is_file(), "C9 error boundary is not implemented")
+        errors = _load_module(ERRORS_PATH, "construction_c9_errors_contract")
+        artifacts = _load_module(ARTIFACTS_PATH, "construction_c9_artifacts_contract")
+        return artifacts, errors
+
+    def test_artifact_store_deduplicates_and_is_immutable(self) -> None:
+        artifacts, errors = self._modules()
+        store = artifacts.ArtifactStore()
+        data = b"abc"
+        sha256 = hashlib.sha256(data).hexdigest()
+        expected = {
+            "uri": f"construction://artifact/sha256/{sha256}",
+            "media_type": "application/octet-stream",
+            "sha256": sha256,
+            "byte_length": 3,
+            "kind": "sponge_v3",
+        }
+
+        descriptor = store.put(data, media_type="application/octet-stream", kind="sponge_v3")
+        self.assertEqual(descriptor, expected)
+        self.assertEqual(store.put(data, media_type="application/octet-stream", kind="sponge_v3"), expected)
+        self.assertEqual(store.list_descriptors(), [expected])
+
+        record = store.get(expected["uri"])
+        self.assertEqual(record.uri, expected["uri"])
+        self.assertEqual(record.data, data)
+        self.assertEqual(record.media_type, "application/octet-stream")
+        self.assertEqual(record.sha256, sha256)
+        self.assertEqual(record.byte_length, 3)
+        self.assertEqual(record.kind, "sponge_v3")
+        with self.assertRaises(FrozenInstanceError):
+            record.media_type = "text/plain"
+
+        second = store.put(b"def", media_type="application/json", kind="preview_bundle")
+        self.assertEqual(
+            store.list_descriptors(),
+            sorted([expected, second], key=lambda item: item["uri"]),
+        )
+
+        with self.assertRaises(errors.C9Error) as invalid_uri:
+            store.get("file:///tmp/not-an-artifact")
+        self.assertEqual(invalid_uri.exception.code, "INVALID_INPUT")
+
+        unknown_uri = "construction://artifact/sha256/" + ("0" * 64)
+        with self.assertRaises(errors.C9Error) as missing:
+            store.get(unknown_uri)
+        self.assertEqual(missing.exception.code, "ARTIFACT_NOT_FOUND")
+
+        collision_store = artifacts.ArtifactStore(_digest_fn=lambda _data: "a" * 64)
+        collision_store.put(b"left", media_type="application/octet-stream", kind="sponge_v3")
+        with self.assertRaises(errors.C9Error) as collision:
+            collision_store.put(b"right", media_type="application/octet-stream", kind="sponge_v3")
+        self.assertEqual(collision.exception.code, "INTERNAL_ERROR")
+
+    def test_artifact_store_enforces_all_limits(self) -> None:
+        artifacts, errors = self._modules()
+        mib = 1024 * 1024
+
+        single = artifacts.ArtifactStore()
+        at_single_limit = b"x" * (64 * mib)
+        descriptor = single.put(
+            at_single_limit,
+            media_type="application/octet-stream",
+            kind="sponge_v3",
+        )
+        self.assertEqual(descriptor["byte_length"], 64 * mib)
+        before = single.list_descriptors()
+        with self.assertRaises(errors.C9Error) as too_large:
+            single.put(
+                b"y" * ((64 * mib) + 1),
+                media_type="application/octet-stream",
+                kind="sponge_v3",
+            )
+        self.assertEqual(too_large.exception.code, "ARTIFACT_LIMIT")
+        self.assertEqual(single.list_descriptors(), before)
+
+        aggregate = artifacts.ArtifactStore()
+        for value in range(4):
+            aggregate.put(
+                bytes([value]) * (64 * mib),
+                media_type="application/octet-stream",
+                kind="sponge_v3",
+            )
+        self.assertEqual(sum(item["byte_length"] for item in aggregate.list_descriptors()), 256 * mib)
+        before = aggregate.list_descriptors()
+        with self.assertRaises(errors.C9Error) as aggregate_limit:
+            aggregate.put(b"overflow", media_type="application/octet-stream", kind="sponge_v3")
+        self.assertEqual(aggregate_limit.exception.code, "ARTIFACT_LIMIT")
+        self.assertEqual(aggregate.list_descriptors(), before)
+
+        records = artifacts.ArtifactStore()
+        for value in range(512):
+            records.put(
+                value.to_bytes(2, "big"),
+                media_type="application/octet-stream",
+                kind="sponge_v3",
+            )
+        self.assertEqual(len(records.list_descriptors()), 512)
+        before = records.list_descriptors()
+        with self.assertRaises(errors.C9Error) as record_limit:
+            records.put(b"record-513", media_type="application/octet-stream", kind="sponge_v3")
+        self.assertEqual(record_limit.exception.code, "ARTIFACT_LIMIT")
+        self.assertEqual(records.list_descriptors(), before)
+
+        invalid = artifacts.ArtifactStore()
+        for media_type, kind in (
+            ("text/plain", "sponge_v3"),
+            ("application/octet-stream", "unknown"),
+        ):
+            with self.subTest(media_type=media_type, kind=kind):
+                with self.assertRaises(errors.C9Error) as rejected:
+                    invalid.put(b"x", media_type=media_type, kind=kind)
+                self.assertEqual(rejected.exception.code, "INVALID_INPUT")
+                self.assertEqual(invalid.list_descriptors(), [])
+
+    def test_errors_are_stable_and_sanitized(self) -> None:
+        _artifacts, errors = self._modules()
+        error = errors.C9Error(
+            "AUTHORITY_REJECTED",
+            "C4 rejected supplied registry",
+            authority="C4",
+            details=["registry.blocks[0].authority is invalid"],
+        )
+        self.assertEqual(str(error), "C4 rejected supplied registry")
+        self.assertEqual(
+            error.payload(),
+            {
+                "code": "AUTHORITY_REJECTED",
+                "message": "C4 rejected supplied registry",
+                "authority": "C4",
+                "details": ["registry.blocks[0].authority is invalid"],
+            },
+        )
+        self.assertEqual(
+            errors.C9Error("INVALID_INPUT", "request is invalid").payload(),
+            {"code": "INVALID_INPUT", "message": "request is invalid"},
+        )
+
+        for code in ("INVALID_INPUT", "AUTHORITY_REJECTED", "ARTIFACT_NOT_FOUND", "ARTIFACT_LIMIT", "INTERNAL_ERROR"):
+            with self.subTest(code=code):
+                authority = "C2" if code == "AUTHORITY_REJECTED" else None
+                self.assertEqual(errors.C9Error(code, "stable", authority=authority).code, code)
+
+        with self.assertRaises(ValueError):
+            errors.C9Error("UNKNOWN", "must reject unstable codes")
+        with self.assertRaises(ValueError):
+            errors.C9Error("AUTHORITY_REJECTED", "bad authority", authority="C9")
+        with self.assertRaises(ValueError):
+            errors.C9Error("INVALID_INPUT", "authority is not valid here", authority="C2")
+
+        payload = error.payload()
+        serialized = repr(payload).lower()
+        self.assertNotIn("traceback", serialized)
+        self.assertNotIn(str(ROOT).lower(), serialized)
+        self.assertNotIn("environment", serialized)
 
 
 if __name__ == "__main__":
