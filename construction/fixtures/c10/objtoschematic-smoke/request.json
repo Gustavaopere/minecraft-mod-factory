@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "request_id": "4ee4be7e0d3d89b0690aeb2da3794f28689dad61a246be873e7194b140d021de",
+  "provider_id": "objtoschematic",
+  "provider_profile_sha256": "78d1b12ff8c6ec4de8411e87dc447230256e6ad379ab7498267a3c1d09e2612f",
+  "mode": "MANUAL_FILE_HANDOFF",
+  "operation": "MESH_TO_STRUCTURE",
+  "text_input": null,
+  "input_artifacts": [
+    {
+      "kind": "MESH",
+      "sha256": "b6101561fb2594ce731ea8ecb02c0d25862ca24abdd776cfe10cac2fe088c4a9",
+      "byte_length": 233,
+      "media_type": "model/obj",
+      "repo_relpath": "construction/fixtures/c10/objtoschematic-smoke/input.obj"
+    }
+  ],
+  "expected_output_kinds": [
+    "SCHEMATIC_FILE"
+  ],
+  "target": {
+    "minecraft": "1.21.1",
+    "loader": "neoforge",
+    "physical_modlist_sha256": "7c0a23d6013101383d196526e4b6ba6940fb54a0fed10eaed5956ab015cfcc00"
+  },
+  "manual_step": {
+    "required": true,
+    "step_id": "upload-mesh",
+    "instruction": "Upload the exact Factory C10 input.obj fixture to ObjToSchematic using the documented model-upload workflow.",
+    "expected_result": "ObjToSchematic displays a generated block preview derived from the uploaded fixture."
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "request_id": "c3b7eb8c50ef4df484193cbc1c723ee4ca4c26551373bd342b0aed1eb81dd256",
+  "provider_id": "blockgpt",
+  "provider_profile_sha256": "b80322794f12e1fb88d9c56b39979896d6a853f1f683067fd1067a72a8585250",
+  "mode": "MANUAL_FILE_HANDOFF",
+  "operation": "IMAGE_TO_STRUCTURE",
+  "text_input": "Generate a plain solid cube that matches the uploaded reference image, using basic full Minecraft blocks only, with no decorations or surrounding terrain.",
+  "input_artifacts": [
+    {
+      "kind": "IMAGE",
+      "sha256": "48d733bcb320b57417c7c507d514c5470092baf2c9671586d8ea6fd7d448af8e",
+      "byte_length": 564,
+      "media_type": "image/png",
+      "repo_relpath": "construction/fixtures/c10/blockgpt-smoke/reference.png"
+    }
+  ],
+  "expected_output_kinds": [
+    "SCHEMATIC_FILE"
+  ],
+  "target": {
+    "minecraft": "1.21.1",
+    "loader": "neoforge",
+    "physical_modlist_sha256": "7c0a23d6013101383d196526e4b6ba6940fb54a0fed10eaed5956ab015cfcc00"
+  },
+  "manual_step": {
+    "required": true,
+    "step_id": "submit-reference-image",
+    "instruction": "Upload the exact Factory C10 reference.png fixture to BlockGPT, paste the exact Factory prompt recorded in text_input, and start one image-to-build generation.",
+    "expected_result": "BlockGPT displays a 3D preview of a generated Minecraft structure derived from the uploaded reference image and exact Factory prompt."
+  }
+}
