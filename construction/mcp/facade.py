@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from copy import deepcopy
 from typing import Any
@@ -7,6 +8,8 @@ from typing import Any
 from construction.core import build_ir as c2
 from construction.core import modded_palette as c5
 from construction.core import modpack_registry as c4
+from construction.core import structural_qa as c7
+from construction.qa import preview_renderer as c8_renderer
 
 from .artifacts import ArtifactStore
 from .errors import C9Error
@@ -15,6 +18,12 @@ from .errors import C9Error
 _QUERY_RE = re.compile(r"^[a-z0-9_.:/-]+$")
 _NAMESPACE_RE = re.compile(r"^[a-z0-9_.-]+$")
 _AUTHORITIES = frozenset({"runtime_confirmed", "static_only_unconfirmed"})
+
+
+def _canonical_json_bytes(value: object) -> bytes:
+    return (
+        json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n"
+    ).encode("utf-8")
 
 
 class ConstructionFacade:
@@ -263,3 +272,81 @@ class ConstructionFacade:
                 authority="C2",
                 details=[str(exc)],
             ) from None
+
+    def qa_structural(
+        self,
+        build_spec: dict[str, Any],
+        build_ir: dict[str, Any],
+        registry: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        try:
+            return c7.run_structural_qa(build_spec, build_ir, registry)
+        except c7.StructuralQAError as exc:
+            raise C9Error(
+                "AUTHORITY_REJECTED",
+                "C7 rejected structural QA input",
+                authority="C7",
+                details=[str(exc)],
+            ) from None
+
+    def preview_render(self, build_ir: object) -> dict[str, object]:
+        try:
+            views = c8_renderer.render_canonical_views(build_ir)  # type: ignore[arg-type]
+        except c8_renderer.PreviewRenderError as exc:
+            raise C9Error(
+                "AUTHORITY_REJECTED",
+                "C8 rejected preview render input",
+                authority="C8",
+                details=[str(exc)],
+            ) from None
+
+        if tuple(views) != tuple(c8_renderer.VIEW_IDS):
+            raise C9Error("INTERNAL_ERROR", "C8 renderer returned a non-canonical view catalog")
+
+        try:
+            build_ir_sha256 = c2.fingerprint_build_ir(build_ir)  # type: ignore[arg-type]
+        except c2.BuildIRError as exc:
+            raise C9Error(
+                "AUTHORITY_REJECTED",
+                "C2 rejected preview Build IR fingerprinting",
+                authority="C2",
+                details=[str(exc)],
+            ) from None
+
+        descriptors: list[dict[str, object]] = []
+        for view_id in c8_renderer.VIEW_IDS:
+            data = views[view_id]
+            if not isinstance(data, bytes):
+                raise C9Error("INTERNAL_ERROR", "C8 renderer returned non-byte SVG content")
+            stored = self.store.put(
+                data,
+                media_type="image/svg+xml",
+                kind="preview_svg",
+            )
+            descriptors.append(
+                {
+                    "id": view_id,
+                    "uri": stored["uri"],
+                    "media_type": stored["media_type"],
+                    "sha256": stored["sha256"],
+                    "byte_length": stored["byte_length"],
+                }
+            )
+
+        manifest = {
+            "schema_version": 1,
+            "renderer_version": c8_renderer.RENDERER_VERSION,
+            "build_ir_sha256": build_ir_sha256,
+            "views": descriptors,
+        }
+        bundle = self.store.put(
+            _canonical_json_bytes(manifest),
+            media_type="application/json",
+            kind="preview_bundle",
+        )
+        return {
+            "renderer_version": c8_renderer.RENDERER_VERSION,
+            "build_ir_sha256": build_ir_sha256,
+            "bundle_uri": bundle["uri"],
+            "views": descriptors,
+        }
