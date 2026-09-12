@@ -372,6 +372,19 @@ class I7ProviderCatalogContractTest(unittest.TestCase):
                 "source_registry_id": "latest_physical_modlist_2026_09_09",
                 "source_sha256": "0" * 64,
             },
+            "source": {
+                "state": "CONFIRMED",
+                "repository": "example/sample-provider",
+                "commit": "0" * 40,
+                "evidence": ["source audit"],
+            },
+            "license": {
+                "state": "CONFIRMED",
+                "name": "MIT",
+                "spdx": "MIT",
+                "source": "example/sample-provider@0000000000000000000000000000000000000000:LICENSE",
+                "evidence": ["license audit"],
+            },
             "dependency_profile": profile,
             "docs": ["https://example.invalid/provider-docs"],
             "api_surface": [

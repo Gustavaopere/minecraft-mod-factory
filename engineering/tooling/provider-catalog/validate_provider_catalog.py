@@ -36,6 +36,7 @@ STATES = {
     "BLOCKED",
     "SUPERSEDED",
 }
+PROVENANCE_STATES = {"CONFIRMED", "UNRESOLVED", "REFERENCE_ONLY"}
 MOD_ID_RE = re.compile(r"^[a-z][a-z0-9_.-]*$")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 PROFILE_RE = re.compile(r"^engineering/catalog/providers/profiles/[a-z0-9_.-]+\.json$")
@@ -58,6 +59,61 @@ def _nonempty_strings(value) -> bool:
     return isinstance(value, list) and all(isinstance(item, str) and item for item in value)
 
 
+def _validate_source(source, prefix: str) -> tuple[list[str], bool]:
+    errors: list[str] = []
+    if not isinstance(source, dict):
+        return [f"{prefix}.source must be an object"], False
+
+    state = source.get("state")
+    evidence = source.get("evidence")
+    if state not in PROVENANCE_STATES:
+        errors.append(f"{prefix}.source.state is invalid")
+    if not _nonempty_strings(evidence) or not evidence:
+        errors.append(f"{prefix}.source.evidence must contain at least one item")
+
+    if state in {"CONFIRMED", "REFERENCE_ONLY"}:
+        locators = ("repository", "commit", "documentation", "artifact")
+        if not any(isinstance(source.get(field), str) and source.get(field) for field in locators):
+            errors.append(f"{prefix}.source must include a provenance locator")
+
+    confirmed = (
+        state == "CONFIRMED"
+        and isinstance(source.get("repository"), str)
+        and bool(source.get("repository"))
+        and isinstance(source.get("commit"), str)
+        and bool(source.get("commit"))
+        and _nonempty_strings(evidence)
+        and bool(evidence)
+    )
+    return errors, confirmed
+
+
+def _validate_license(license_info, prefix: str) -> tuple[list[str], bool]:
+    errors: list[str] = []
+    if not isinstance(license_info, dict):
+        return [f"{prefix}.license must be an object"], False
+
+    state = license_info.get("state")
+    evidence = license_info.get("evidence")
+    if state not in PROVENANCE_STATES:
+        errors.append(f"{prefix}.license.state is invalid")
+    if not _nonempty_strings(evidence) or not evidence:
+        errors.append(f"{prefix}.license.evidence must contain at least one item")
+    if state in {"CONFIRMED", "REFERENCE_ONLY"} and (
+        not isinstance(license_info.get("name"), str) or not license_info.get("name")
+    ):
+        errors.append(f"{prefix}.license.name must be non-empty when license state is resolved")
+
+    confirmed = (
+        state == "CONFIRMED"
+        and isinstance(license_info.get("name"), str)
+        and bool(license_info.get("name"))
+        and _nonempty_strings(evidence)
+        and bool(evidence)
+    )
+    return errors, confirmed
+
+
 def _validate_provider(provider, index: int, workspace: Path) -> list[str]:
     prefix = f"providers[{index}]"
     errors: list[str] = []
@@ -67,6 +123,8 @@ def _validate_provider(provider, index: int, workspace: Path) -> list[str]:
     required = {
         "mod_id",
         "physical",
+        "source",
+        "license",
         "dependency_profile",
         "docs",
         "api_surface",
@@ -105,6 +163,11 @@ def _validate_provider(provider, index: int, workspace: Path) -> list[str]:
                 errors.append(f"{prefix}.physical.source_registry_id must be non-empty")
             if not isinstance(physical["source_sha256"], str) or SHA256_RE.fullmatch(physical["source_sha256"]) is None:
                 errors.append(f"{prefix}.physical.source_sha256 must be lowercase SHA-256")
+
+    source_errors, source_confirmed = _validate_source(provider["source"], prefix)
+    license_errors, license_confirmed = _validate_license(provider["license"], prefix)
+    errors.extend(source_errors)
+    errors.extend(license_errors)
 
     profile = provider["dependency_profile"]
     if not isinstance(profile, str) or PROFILE_RE.fullmatch(profile) is None:
@@ -169,8 +232,13 @@ def _validate_provider(provider, index: int, workspace: Path) -> list[str]:
         for surface in surfaces
         if isinstance(surface, dict) and surface.get("proof_level") in PROOF_LEVELS[1:]
     ]
-    if provider.get("supported") is True and not proven_surfaces:
-        errors.append(f"{prefix} cannot be supported with only P0 or no API proof")
+    if provider.get("supported") is True:
+        if not proven_surfaces:
+            errors.append(f"{prefix} cannot be supported with only P0 or no API proof")
+        if not source_confirmed:
+            errors.append(f"{prefix} cannot be supported without CONFIRMED source metadata")
+        if not license_confirmed:
+            errors.append(f"{prefix} cannot be supported without CONFIRMED license metadata")
 
     return errors
 
