@@ -24,214 +24,38 @@ jobs:
           python-version: '3.11'
 
       - name: Implement C4 public validator and C7 delegation
+        env:
+          C4_VALIDATOR_B64: CmRlZiBfaXNfaW50KHZhbHVlKToKICAgIHJldHVybiBpc2luc3RhbmNlKHZhbHVlLCBpbnQpIGFuZCBub3QgaXNpbnN0YW5jZSh2YWx1ZSwgYm9vbCkKCgpkZWYgdmFsaWRhdGVfbW9kcGFja19yZWdpc3RyeShyZWdpc3RyeSk6CiAgICAiIiJWYWxpZGF0ZSBhbiBhbHJlYWR5LWNvbXBvc2VkIEM0IHJlZ2lzdHJ5IHdpdGhvdXQgbXV0YXRpbmcgb3IgcmVwYWlyaW5nIGl0LiIiIgoKICAgIGVycm9ycyA9IFtdCiAgICBpZiBub3QgaXNpbnN0YW5jZShyZWdpc3RyeSwgZGljdCk6CiAgICAgICAgcmV0dXJuIFsicmVnaXN0cnkgbXVzdCBiZSBhbiBvYmplY3QiXQoKICAgIGV4cGVjdGVkX3RvcCA9IHsic2NoZW1hX3ZlcnNpb24iLCAicGh5c2ljYWwiLCAicnVudGltZSIsICJzdGF0aWNfaW5kZXgiLCAiYmxvY2tzIiwgImNvbnRlbnRfc2hhMjU2In0KICAgIGlmIHNldChyZWdpc3RyeSkgIT0gZXhwZWN0ZWRfdG9wOgogICAgICAgIGVycm9ycy5hcHBlbmQoInJlZ2lzdHJ5IHRvcC1sZXZlbCBmaWVsZHMgZG8gbm90IG1hdGNoIHRoZSBDNCBjb250cmFjdCIpCiAgICBpZiByZWdpc3RyeS5nZXQoInNjaGVtYV92ZXJzaW9uIikgIT0gU0NIRU1BX1ZFUlNJT046CiAgICAgICAgZXJyb3JzLmFwcGVuZCgicmVnaXN0cnkgc2NoZW1hX3ZlcnNpb24gbXVzdCBiZSAxIikKCiAgICBwaHlzaWNhbCA9IHJlZ2lzdHJ5LmdldCgicGh5c2ljYWwiKQogICAgcGh5c2ljYWxfc2hhID0gTm9uZQogICAgcGh5c2ljYWxfbG9hZGVyID0gTm9uZQogICAgaWYgbm90IGlzaW5zdGFuY2UocGh5c2ljYWwsIGRpY3QpOgogICAgICAgIGVycm9ycy5hcHBlbmQoInJlZ2lzdHJ5LnBoeXNpY2FsIG11c3QgYmUgYW4gb2JqZWN0IikKICAgIGVsc2U6CiAgICAgICAgZXhwZWN0ZWRfcGh5c2ljYWwgPSB7CiAgICAgICAgICAgICJjYXB0dXJlZF9hdCIsICJzb3VyY2VfbmFtZSIsICJzb3VyY2Vfc2hhMjU2IiwgImxvYWRlcl92ZXJzaW9uIiwKICAgICAgICAgICAgInRvcF9sZXZlbF9tb2RzIiwgIm5lc3RlZF9tb2RzIiwgInRvdGFsX2VudHJpZXMiLCAicHJvdmlkZXJfY291bnQiLAogICAgICAgICAgICAidW5pZGVudGlmaWVkX2VudHJpZXMiLAogICAgICAgIH0KICAgICAgICBpZiBzZXQocGh5c2ljYWwpICE9IGV4cGVjdGVkX3BoeXNpY2FsOgogICAgICAgICAgICBlcnJvcnMuYXBwZW5kKCJyZWdpc3RyeS5waHlzaWNhbCBmaWVsZHMgZG8gbm90IG1hdGNoIHRoZSBDNCBjb250cmFjdCIpCiAgICAgICAgZm9yIGZpZWxkIGluICgiY2FwdHVyZWRfYXQiLCAic291cmNlX25hbWUiLCAibG9hZGVyX3ZlcnNpb24iKToKICAgICAgICAgICAgaWYgbm90IGlzaW5zdGFuY2UocGh5c2ljYWwuZ2V0KGZpZWxkKSwgc3RyKSBvciBub3QgcGh5c2ljYWwuZ2V0KGZpZWxkKToKICAgICAgICAgICAgICAgIGVycm9ycy5hcHBlbmQoZiJyZWdpc3RyeS5waHlzaWNhbC57ZmllbGR9IG11c3QgYmUgYSBub24tZW1wdHkgc3RyaW5nIikKICAgICAgICBwaHlzaWNhbF9zaGEgPSBwaHlzaWNhbC5nZXQoInNvdXJjZV9zaGEyNTYiKQogICAgICAgIGlmIG5vdCBpc2luc3RhbmNlKHBoeXNpY2FsX3NoYSwgc3RyKSBvciBTSEEyNTZfUkUuZnVsbG1hdGNoKHBoeXNpY2FsX3NoYSkgaXMgTm9uZToKICAgICAgICAgICAgZXJyb3JzLmFwcGVuZCgicmVnaXN0cnkucGh5c2ljYWwuc291cmNlX3NoYTI1NiBtdXN0IGJlIGEgbG93ZXJjYXNlIFNIQS0yNTYiKQogICAgICAgIHBoeXNpY2FsX2xvYWRlciA9IHBoeXNpY2FsLmdldCgibG9hZGVyX3ZlcnNpb24iKQogICAgICAgIGZvciBmaWVsZCBpbiAoCiAgICAgICAgICAgICJ0b3BfbGV2ZWxfbW9kcyIsICJuZXN0ZWRfbW9kcyIsICJ0b3RhbF9lbnRyaWVzIiwgInByb3ZpZGVyX2NvdW50IiwKICAgICAgICAgICAgInVuaWRlbnRpZmllZF9lbnRyaWVzIiwKICAgICAgICApOgogICAgICAgICAgICB2YWx1ZSA9IHBoeXNpY2FsLmdldChmaWVsZCkKICAgICAgICAgICAgaWYgbm90IF9pc19pbnQodmFsdWUpIG9yIHZhbHVlIDwgMDoKICAgICAgICAgICAgICAgIGVycm9ycy5hcHBlbmQoZiJyZWdpc3RyeS5waHlzaWNhbC57ZmllbGR9IG11c3QgYmUgYSBub24tbmVnYXRpdmUgaW50ZWdlciIpCgogICAgcnVudGltZSA9IHJlZ2lzdHJ5LmdldCgicnVudGltZSIpCiAgICBpZiBub3QgaXNpbnN0YW5jZShydW50aW1lLCBkaWN0KToKICAgICAgICBlcnJvcnMuYXBwZW5kKCJyZWdpc3RyeS5ydW50aW1lIG11c3QgYmUgYW4gb2JqZWN0IikKICAgIGVsc2U6CiAgICAgICAgaWYgc2V0KHJ1bnRpbWUpICE9IHsiY2FwdHVyZWRfYXQiLCAicGh5c2ljYWxfc25hcHNob3Rfc2hhMjU2IiwgInRhcmdldCJ9OgogICAgICAgICAgICBlcnJvcnMuYXBwZW5kKCJyZWdpc3RyeS5ydW50aW1lIGZpZWxkcyBkbyBub3QgbWF0Y2ggdGhlIEM0IGNvbnRyYWN0IikKICAgICAgICBpZiBub3QgaXNpbnN0YW5jZShydW50aW1lLmdldCgiY2FwdHVyZWRfYXQiKSwgc3RyKSBvciBub3QgcnVudGltZS5nZXQoImNhcHR1cmVkX2F0Iik6CiAgICAgICAgICAgIGVycm9ycy5hcHBlbmQoInJlZ2lzdHJ5LnJ1bnRpbWUuY2FwdHVyZWRfYXQgbXVzdCBiZSBhIG5vbi1lbXB0eSBzdHJpbmciKQogICAgICAgIHJ1bnRpbWVfc2hhID0gcnVudGltZS5nZXQoInBoeXNpY2FsX3NuYXBzaG90X3NoYTI1NiIpCiAgICAgICAgaWYgbm90IGlzaW5zdGFuY2UocnVudGltZV9zaGEsIHN0cikgb3IgU0hBMjU2X1JFLmZ1bGxtYXRjaChydW50aW1lX3NoYSkgaXMgTm9uZToKICAgICAgICAgICAgZXJyb3JzLmFwcGVuZCgicmVnaXN0cnkucnVudGltZS5waHlzaWNhbF9zbmFwc2hvdF9zaGEyNTYgbXVzdCBiZSBhIGxvd2VyY2FzZSBTSEEtMjU2IikKICAgICAgICBpZiBwaHlzaWNhbF9zaGEgaXMgbm90IE5vbmUgYW5kIHJ1bnRpbWVfc2hhICE9IHBoeXNpY2FsX3NoYToKICAgICAgICAgICAgZXJyb3JzLmFwcGVuZCgicmVnaXN0cnkucnVudGltZSBtdXN0IHJlZmVyZW5jZSB0aGUgZXhhY3QgcGh5c2ljYWwgc25hcHNob3QgU0hBLTI1NiIpCiAgICAgICAgdGFyZ2V0ID0gcnVudGltZS5nZXQoInRhcmdldCIpCiAgICAgICAgaWYgbm90IGlzaW5zdGFuY2UodGFyZ2V0LCBkaWN0KToKICAgICAgICAgICAgZXJyb3JzLmFwcGVuZCgicmVnaXN0cnkucnVudGltZS50YXJnZXQgbXVzdCBiZSBhbiBvYmplY3QiKQogICAgICAgIGVsc2U6CiAgICAgICAgICAgIGlmIHNldCh0YXJnZXQpICE9IHsibWluZWNyYWZ0IiwgImxvYWRlciIsICJsb2FkZXJfdmVyc2lvbiJ9OgogICAgICAgICAgICAgICAgZXJyb3JzLmFwcGVuZCgicmVnaXN0cnkucnVudGltZS50YXJnZXQgZmllbGRzIGRvIG5vdCBtYXRjaCB0aGUgQzQgY29udHJhY3QiKQogICAgICAgICAgICBpZiB0YXJnZXQuZ2V0KCJtaW5lY3JhZnQiKSAhPSBNSU5FQ1JBRlRfVkVSU0lPTiBvciB0YXJnZXQuZ2V0KCJsb2FkZXIiKSAhPSBMT0FERVI6CiAgICAgICAgICAgICAgICBlcnJvcnMuYXBwZW5kKCJyZWdpc3RyeS5ydW50aW1lIHRhcmdldCBtdXN0IGJlIE1pbmVjcmFmdCAxLjIxLjEgLyBOZW9Gb3JnZSIpCiAgICAgICAgICAgIGxvYWRlcl92ZXJzaW9uID0gdGFyZ2V0LmdldCgibG9hZGVyX3ZlcnNpb24iKQogICAgICAgICAgICBpZiBub3QgaXNpbnN0YW5jZShsb2FkZXJfdmVyc2lvbiwgc3RyKSBvciBub3QgbG9hZGVyX3ZlcnNpb246CiAgICAgICAgICAgICAgICBlcnJvcnMuYXBwZW5kKCJyZWdpc3RyeS5ydW50aW1lLnRhcmdldC5sb2FkZXJfdmVyc2lvbiBtdXN0IGJlIGEgbm9uLWVtcHR5IHN0cmluZyIpCiAgICAgICAgICAgIGlmIHBoeXNpY2FsX2xvYWRlciBpcyBub3QgTm9uZSBhbmQgbG9hZGVyX3ZlcnNpb24gIT0gcGh5c2ljYWxfbG9hZGVyOgogICAgICAgICAgICAgICAgZXJyb3JzLmFwcGVuZCgicmVnaXN0cnkucnVudGltZSBsb2FkZXIgdmVyc2lvbiBtdXN0IG1hdGNoIHRoZSBwaHlzaWNhbCBzbmFwc2hvdCIpCgogICAgc3RhdGljX2luZGV4ID0gcmVnaXN0cnkuZ2V0KCJzdGF0aWNfaW5kZXgiKQogICAgaWYgbm90IGlzaW5zdGFuY2Uoc3RhdGljX2luZGV4LCBkaWN0KToKICAgICAgICBlcnJvcnMuYXBwZW5kKCJyZWdpc3RyeS5zdGF0aWNfaW5kZXggbXVzdCBiZSBhbiBvYmplY3QiKQogICAgZWxzZToKICAgICAgICBpZiBzZXQoc3RhdGljX2luZGV4KSAhPSB7Imphcl9jb3VudCIsICJuZXN0ZWRfamFyX2NvdW50IiwgImRpc2NvdmVyZWRfYmxvY2tfY291bnQifToKICAgICAgICAgICAgZXJyb3JzLmFwcGVuZCgicmVnaXN0cnkuc3RhdGljX2luZGV4IGZpZWxkcyBkbyBub3QgbWF0Y2ggdGhlIEM0IGNvbnRyYWN0IikKICAgICAgICBmb3IgZmllbGQgaW4gKCJqYXJfY291bnQiLCAibmVzdGVkX2phcl9jb3VudCIsICJkaXNjb3ZlcmVkX2Jsb2NrX2NvdW50Iik6CiAgICAgICAgICAgIHZhbHVlID0gc3RhdGljX2luZGV4LmdldChmaWVsZCkKICAgICAgICAgICAgaWYgbm90IF9pc19pbnQodmFsdWUpIG9yIHZhbHVlIDwgMDoKICAgICAgICAgICAgICAgIGVycm9ycy5hcHBlbmQoZiJyZWdpc3RyeS5zdGF0aWNfaW5kZXgue2ZpZWxkfSBtdXN0IGJlIGEgbm9uLW5lZ2F0aXZlIGludGVnZXIiKQoKICAgIGJsb2NrcyA9IHJlZ2lzdHJ5LmdldCgiYmxvY2tzIikKICAgIGJsb2NrX2lkcyA9IFtdCiAgICBpZiBub3QgaXNpbnN0YW5jZShibG9ja3MsIGxpc3QpOgogICAgICAgIGVycm9ycy5hcHBlbmQoInJlZ2lzdHJ5LmJsb2NrcyBtdXN0IGJlIGFuIGFycmF5IikKICAgIGVsc2U6CiAgICAgICAgZm9yIGluZGV4LCBibG9jayBpbiBlbnVtZXJhdGUoYmxvY2tzKToKICAgICAgICAgICAgbGFiZWwgPSBmInJlZ2lzdHJ5LmJsb2Nrc1t7aW5kZXh9XSIKICAgICAgICAgICAgaWYgbm90IGlzaW5zdGFuY2UoYmxvY2ssIGRpY3QpOgogICAgICAgICAgICAgICAgZXJyb3JzLmFwcGVuZChmIntsYWJlbH0gbXVzdCBiZSBhbiBvYmplY3QiKQogICAgICAgICAgICAgICAgY29udGludWUKICAgICAgICAgICAgZXhwZWN0ZWRfYmxvY2sgPSB7ImlkIiwgImF2YWlsYWJsZSIsICJhdXRob3JpdHkiLCAic3RhdGljX2Rpc2NvdmVyZWQiLCAic3RhdGVzIiwgInNhZmV0eSJ9CiAgICAgICAgICAgIGlmIHNldChibG9jaykgIT0gZXhwZWN0ZWRfYmxvY2s6CiAgICAgICAgICAgICAgICBlcnJvcnMuYXBwZW5kKGYie2xhYmVsfSBmaWVsZHMgZG8gbm90IG1hdGNoIHRoZSBDNCBjb250cmFjdCIpCgogICAgICAgICAgICBibG9ja19pZCA9IGJsb2NrLmdldCgiaWQiKQogICAgICAgICAgICBpZiBub3QgaXNpbnN0YW5jZShibG9ja19pZCwgc3RyKSBvciBSRVNPVVJDRV9MT0NBVElPTl9SRS5mdWxsbWF0Y2goYmxvY2tfaWQpIGlzIE5vbmU6CiAgICAgICAgICAgICAgICBlcnJvcnMuYXBwZW5kKGYie2xhYmVsfS5pZCBpcyBpbnZhbGlkIikKICAgICAgICAgICAgZWxzZToKICAgICAgICAgICAgICAgIGJsb2NrX2lkcy5hcHBlbmQoYmxvY2tfaWQpCgogICAgICAgICAgICBhdmFpbGFibGUgPSBibG9jay5nZXQoImF2YWlsYWJsZSIpCiAgICAgICAgICAgIHN0YXRpY19kaXNjb3ZlcmVkID0gYmxvY2suZ2V0KCJzdGF0aWNfZGlzY292ZXJlZCIpCiAgICAgICAgICAgIGlmIG5vdCBpc2luc3RhbmNlKGF2YWlsYWJsZSwgYm9vbCk6CiAgICAgICAgICAgICAgICBlcnJvcnMuYXBwZW5kKGYie2xhYmVsfS5hdmFpbGFibGUgbXVzdCBiZSBib29sZWFuIikKICAgICAgICAgICAgaWYgbm90IGlzaW5zdGFuY2Uoc3RhdGljX2Rpc2NvdmVyZWQsIGJvb2wpOgogICAgICAgICAgICAgICAgZXJyb3JzLmFwcGVuZChmIntsYWJlbH0uc3RhdGljX2Rpc2NvdmVyZWQgbXVzdCBiZSBib29sZWFuIikKCiAgICAgICAgICAgIGF1dGhvcml0eSA9IGJsb2NrLmdldCgiYXV0aG9yaXR5IikKICAgICAgICAgICAgaWYgYXV0aG9yaXR5IG5vdCBpbiB7InJ1bnRpbWVfY29uZmlybWVkIiwgInN0YXRpY19vbmx5X3VuY29uZmlybWVkIn06CiAgICAgICAgICAgICAgICBlcnJvcnMuYXBwZW5kKGYie2xhYmVsfS5hdXRob3JpdHkgaXMgaW52YWxpZCIpCgogICAgICAgICAgICBzYWZldHkgPSBibG9jay5nZXQoInNhZmV0eSIpCiAgICAgICAgICAgIGlmIHNhZmV0eSBub3QgaW4gU0FGRVRZX0NMQVNTRVM6CiAgICAgICAgICAgICAgICBlcnJvcnMuYXBwZW5kKGYie2xhYmVsfS5zYWZldHkgaXMgaW52YWxpZCIpCgogICAgICAgICAgICBzdGF0ZXMgPSBibG9jay5nZXQoInN0YXRlcyIpCiAgICAgICAgICAgIHN0YXRlX2tleXMgPSBbXQogICAgICAgICAgICBpZiBub3QgaXNpbnN0YW5jZShzdGF0ZXMsIGxpc3QpOgogICAgICAgICAgICAgICAgZXJyb3JzLmFwcGVuZChmIntsYWJlbH0uc3RhdGVzIG11c3QgYmUgYW4gYXJyYXkiKQogICAgICAgICAgICBlbHNlOgogICAgICAgICAgICAgICAgZm9yIHN0YXRlX2luZGV4LCBzdGF0ZSBpbiBlbnVtZXJhdGUoc3RhdGVzKToKICAgICAgICAgICAgICAgICAgICBzdGF0ZV9sYWJlbCA9IGYie2xhYmVsfS5zdGF0ZXNbe3N0YXRlX2luZGV4fV0iCiAgICAgICAgICAgICAgICAgICAgaWYgbm90IGlzaW5zdGFuY2Uoc3RhdGUsIGRpY3QpOgogICAgICAgICAgICAgICAgICAgICAgICBlcnJvcnMuYXBwZW5kKGYie3N0YXRlX2xhYmVsfSBtdXN0IGJlIGFuIG9iamVjdCIpCiAgICAgICAgICAgICAgICAgICAgICAgIGNvbnRpbnVlCiAgICAgICAgICAgICAgICAgICAgc3RhdGVfdmFsaWQgPSBUcnVlCiAgICAgICAgICAgICAgICAgICAgY2Fub25pY2FsID0ge30KICAgICAgICAgICAgICAgICAgICBmb3Iga2V5LCB2YWx1ZSBpbiBzdGF0ZS5pdGVtcygpOgogICAgICAgICAgICAgICAgICAgICAgICBpZiBub3QgaXNpbnN0YW5jZShrZXksIHN0cikgb3IgUFJPUEVSVFlfTkFNRV9SRS5mdWxsbWF0Y2goa2V5KSBpcyBOb25lOgogICAgICAgICAgICAgICAgICAgICAgICAgICAgZXJyb3JzLmFwcGVuZChmIntzdGF0ZV9sYWJlbH0gY29udGFpbnMgYW4gaW52YWxpZCBwcm9wZXJ0eSBuYW1lIikKICAgICAgICAgICAgICAgICAgICAgICAgICAgIHN0YXRlX3ZhbGlkID0gRmFsc2UKICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNvbnRpbnVlCiAgICAgICAgICAgICAgICAgICAgICAgIGlmIG5vdCBpc2luc3RhbmNlKHZhbHVlLCBzdHIpIG9yIG5vdCB2YWx1ZToKICAgICAgICAgICAgICAgICAgICAgICAgICAgIGVycm9ycy5hcHBlbmQoZiJ7c3RhdGVfbGFiZWx9LntrZXl9IG11c3QgYmUgYSBub24tZW1wdHkgc3RyaW5nIikKICAgICAgICAgICAgICAgICAgICAgICAgICAgIHN0YXRlX3ZhbGlkID0gRmFsc2UKICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNvbnRpbnVlCiAgICAgICAgICAgICAgICAgICAgICAgIGNhbm9uaWNhbFtrZXldID0gdmFsdWUKICAgICAgICAgICAgICAgICAgICBpZiBzdGF0ZV92YWxpZDoKICAgICAgICAgICAgICAgICAgICAgICAgc3RhdGVfa2V5cy5hcHBlbmQoY2Fub25pY2FsX2pzb25fYnl0ZXMoY2Fub25pY2FsKSkKICAgICAgICAgICAgICAgIGlmIGxlbihzdGF0ZV9rZXlzKSAhPSBsZW4oc2V0KHN0YXRlX2tleXMpKToKICAgICAgICAgICAgICAgICAgICBlcnJvcnMuYXBwZW5kKGYie2xhYmVsfS5zdGF0ZXMgY29udGFpbnMgZHVwbGljYXRlIHN0YXRlcyIpCiAgICAgICAgICAgICAgICBpZiBzdGF0ZV9rZXlzICE9IHNvcnRlZChzdGF0ZV9rZXlzKToKICAgICAgICAgICAgICAgICAgICBlcnJvcnMuYXBwZW5kKGYie2xhYmVsfS5zdGF0ZXMgbXVzdCBiZSBpbiBjYW5vbmljYWwgb3JkZXIiKQoKICAgICAgICAgICAgaWYgYXV0aG9yaXR5ID09ICJydW50aW1lX2NvbmZpcm1lZCI6CiAgICAgICAgICAgICAgICBpZiBhdmFpbGFibGUgaXMgbm90IFRydWU6CiAgICAgICAgICAgICAgICAgICAgZXJyb3JzLmFwcGVuZChmIntsYWJlbH0gcnVudGltZV9jb25maXJtZWQgYmxvY2sgbXVzdCBiZSBhdmFpbGFibGUiKQogICAgICAgICAgICAgICAgaWYgaXNpbnN0YW5jZShzdGF0ZXMsIGxpc3QpIGFuZCBub3Qgc3RhdGVzOgogICAgICAgICAgICAgICAgICAgIGVycm9ycy5hcHBlbmQoZiJ7bGFiZWx9IHJ1bnRpbWVfY29uZmlybWVkIGJsb2NrIG11c3QgaGF2ZSBydW50aW1lIHN0YXRlcyIpCiAgICAgICAgICAgIGVsaWYgYXV0aG9yaXR5ID09ICJzdGF0aWNfb25seV91bmNvbmZpcm1lZCI6CiAgICAgICAgICAgICAgICBpZiBhdmFpbGFibGUgaXMgbm90IEZhbHNlOgogICAgICAgICAgICAgICAgICAgIGVycm9ycy5hcHBlbmQoZiJ7bGFiZWx9IHN0YXRpY19vbmx5X3VuY29uZmlybWVkIGJsb2NrIG11c3QgYmUgdW5hdmFpbGFibGUiKQogICAgICAgICAgICAgICAgaWYgc3RhdGljX2Rpc2NvdmVyZWQgaXMgbm90IFRydWU6CiAgICAgICAgICAgICAgICAgICAgZXJyb3JzLmFwcGVuZChmIntsYWJlbH0gc3RhdGljX29ubHlfdW5jb25maXJtZWQgYmxvY2sgbXVzdCBiZSBzdGF0aWNhbGx5IGRpc2NvdmVyZWQiKQogICAgICAgICAgICAgICAgaWYgaXNpbnN0YW5jZShzdGF0ZXMsIGxpc3QpIGFuZCBzdGF0ZXM6CiAgICAgICAgICAgICAgICAgICAgZXJyb3JzLmFwcGVuZChmIntsYWJlbH0gc3RhdGljX29ubHlfdW5jb25maXJtZWQgYmxvY2sgbXVzdCBub3QgY2FycnkgcnVudGltZSBzdGF0ZXMiKQogICAgICAgICAgICAgICAgaWYgc2FmZXR5ICE9ICJ1bmtub3duIjoKICAgICAgICAgICAgICAgICAgICBlcnJvcnMuYXBwZW5kKGYie2xhYmVsfSBzdGF0aWNfb25seV91bmNvbmZpcm1lZCBibG9jayBzYWZldHkgbXVzdCBiZSB1bmtub3duIikKCiAgICAgICAgaWYgbGVuKGJsb2NrX2lkcykgIT0gbGVuKHNldChibG9ja19pZHMpKToKICAgICAgICAgICAgZXJyb3JzLmFwcGVuZCgicmVnaXN0cnkuYmxvY2tzIGNvbnRhaW5zIGR1cGxpY2F0ZSBibG9jayBpZHMiKQogICAgICAgIGlmIGJsb2NrX2lkcyAhPSBzb3J0ZWQoYmxvY2tfaWRzKToKICAgICAgICAgICAgZXJyb3JzLmFwcGVuZCgicmVnaXN0cnkuYmxvY2tzIG11c3QgYmUgaW4gY2Fub25pY2FsIGJsb2NrLWlkIG9yZGVyIikKCiAgICBjbGFpbWVkID0gcmVnaXN0cnkuZ2V0KCJjb250ZW50X3NoYTI1NiIpCiAgICBpZiBub3QgaXNpbnN0YW5jZShjbGFpbWVkLCBzdHIpIG9yIFNIQTI1Nl9SRS5mdWxsbWF0Y2goY2xhaW1lZCkgaXMgTm9uZToKICAgICAgICBlcnJvcnMuYXBwZW5kKCJyZWdpc3RyeS5jb250ZW50X3NoYTI1NiBtdXN0IGJlIGEgbG93ZXJjYXNlIFNIQS0yNTYiKQogICAgZWxzZToKICAgICAgICBwYXlsb2FkID0gZGljdChyZWdpc3RyeSkKICAgICAgICBwYXlsb2FkLnBvcCgiY29udGVudF9zaGEyNTYiLCBOb25lKQogICAgICAgIGV4cGVjdGVkID0gaGFzaGxpYi5zaGEyNTYoY2Fub25pY2FsX2pzb25fYnl0ZXMocGF5bG9hZCkpLmhleGRpZ2VzdCgpCiAgICAgICAgaWYgY2xhaW1lZCAhPSBleHBlY3RlZDoKICAgICAgICAgICAgZXJyb3JzLmFwcGVuZCgicmVnaXN0cnkuY29udGVudF9zaGEyNTYgZG9lcyBub3QgbWF0Y2ggY2Fub25pY2FsIGNvbnRlbnQiKQoKICAgIHJldHVybiBlcnJvcnMK
+          C7_REPLACEMENT_B64: ZGVmIF9jNF9tb2R1bGUoKToKICAgIHBhdGggPSBQYXRoKF9fZmlsZV9fKS53aXRoX25hbWUoIm1vZHBhY2tfcmVnaXN0cnkucHkiKQogICAgc3BlYyA9IGltcG9ydGxpYi51dGlsLnNwZWNfZnJvbV9maWxlX2xvY2F0aW9uKCJjb25zdHJ1Y3Rpb25fYzRfbW9kcGFja19yZWdpc3RyeV9mb3JfYzciLCBwYXRoKQogICAgaWYgc3BlYyBpcyBOb25lIG9yIHNwZWMubG9hZGVyIGlzIE5vbmU6CiAgICAgICAgcmFpc2UgU3RydWN0dXJhbFFBRXJyb3IoZiJjYW5ub3QgbG9hZCBDNCByZWdpc3RyeSBhdXRob3JpdHk6IHtwYXRofSIpCiAgICBtb2R1bGUgPSBpbXBvcnRsaWIudXRpbC5tb2R1bGVfZnJvbV9zcGVjKHNwZWMpCiAgICBzcGVjLmxvYWRlci5leGVjX21vZHVsZShtb2R1bGUpCiAgICByZXR1cm4gbW9kdWxlCgoKZGVmIF92YWxpZGF0ZV9yZWdpc3RyeShyZWdpc3RyeTogQW55KSAtPiBkaWN0W3N0ciwgQW55XToKICAgIGRvY3VtZW50ID0gX3JlcXVpcmVfb2JqZWN0KHJlZ2lzdHJ5LCAiQzQgcmVnaXN0cnkiKQogICAgYzQgPSBfYzRfbW9kdWxlKCkKICAgIHRyeToKICAgICAgICBlcnJvcnMgPSBjNC52YWxpZGF0ZV9tb2RwYWNrX3JlZ2lzdHJ5KGRvY3VtZW50KQogICAgZXhjZXB0IEV4Y2VwdGlvbiBhcyBleGM6CiAgICAgICAgcmFpc2UgU3RydWN0dXJhbFFBRXJyb3IoIkM0IHJlZ2lzdHJ5IHZhbGlkYXRvciBmYWlsZWQiKSBmcm9tIGV4YwogICAgaWYgZXJyb3JzOgogICAgICAgIHJhaXNlIFN0cnVjdHVyYWxRQUVycm9yKCJpbnZhbGlkIEM0IHJlZ2lzdHJ5OiAiICsgIjsgIi5qb2luKGVycm9ycykpCiAgICByZXR1cm4gZG9jdW1lbnQKCg==
         run: |
           python3 - <<'PY'
+          import base64
           from pathlib import Path
 
-          c4_path = Path('construction/core/modpack_registry.py')
-          text = c4_path.read_text(encoding='utf-8')
-          if 'PROPERTY_NAME_RE = ' not in text:
+          c4_path = Path("construction/core/modpack_registry.py")
+          text = c4_path.read_text(encoding="utf-8")
+          if "PROPERTY_NAME_RE = " not in text:
               text = text.replace(
                   'MOD_ID_RE = re.compile(r"^[a-z][a-z0-9_.-]*$")\n',
                   'MOD_ID_RE = re.compile(r"^[a-z][a-z0-9_.-]*$")\nPROPERTY_NAME_RE = re.compile(r"^[a-z0-9_]+$")\nSHA256_RE = re.compile(r"^[0-9a-f]{64}$")\n',
                   1,
               )
-          marker = '\ndef build_modpack_registry(physical_snapshot, static_indexes, runtime_snapshot):\n'
+          marker = "\ndef build_modpack_registry(physical_snapshot, static_indexes, runtime_snapshot):\n"
           if marker not in text:
-              raise SystemExit('C4 build_modpack_registry marker missing')
-          if 'def validate_modpack_registry(' in text:
-              raise SystemExit('C4 public validator already exists')
-          validator = r'''
-
-def _is_int(value):
-    return isinstance(value, int) and not isinstance(value, bool)
-
-
-def validate_modpack_registry(registry):
-    """Validate an already-composed C4 registry without mutating or repairing it."""
-
-    errors = []
-    if not isinstance(registry, dict):
-        return ["registry must be an object"]
-
-    expected_top = {"schema_version", "physical", "runtime", "static_index", "blocks", "content_sha256"}
-    if set(registry) != expected_top:
-        errors.append("registry top-level fields do not match the C4 contract")
-    if registry.get("schema_version") != SCHEMA_VERSION:
-        errors.append("registry schema_version must be 1")
-
-    physical = registry.get("physical")
-    physical_sha = None
-    physical_loader = None
-    if not isinstance(physical, dict):
-        errors.append("registry.physical must be an object")
-    else:
-        expected_physical = {
-            "captured_at", "source_name", "source_sha256", "loader_version",
-            "top_level_mods", "nested_mods", "total_entries", "provider_count",
-            "unidentified_entries",
-        }
-        if set(physical) != expected_physical:
-            errors.append("registry.physical fields do not match the C4 contract")
-        for field in ("captured_at", "source_name", "loader_version"):
-            if not isinstance(physical.get(field), str) or not physical.get(field):
-                errors.append(f"registry.physical.{field} must be a non-empty string")
-        physical_sha = physical.get("source_sha256")
-        if not isinstance(physical_sha, str) or SHA256_RE.fullmatch(physical_sha) is None:
-            errors.append("registry.physical.source_sha256 must be a lowercase SHA-256")
-        physical_loader = physical.get("loader_version")
-        for field in (
-            "top_level_mods", "nested_mods", "total_entries", "provider_count",
-            "unidentified_entries",
-        ):
-            value = physical.get(field)
-            if not _is_int(value) or value < 0:
-                errors.append(f"registry.physical.{field} must be a non-negative integer")
-
-    runtime = registry.get("runtime")
-    if not isinstance(runtime, dict):
-        errors.append("registry.runtime must be an object")
-    else:
-        if set(runtime) != {"captured_at", "physical_snapshot_sha256", "target"}:
-            errors.append("registry.runtime fields do not match the C4 contract")
-        if not isinstance(runtime.get("captured_at"), str) or not runtime.get("captured_at"):
-            errors.append("registry.runtime.captured_at must be a non-empty string")
-        runtime_sha = runtime.get("physical_snapshot_sha256")
-        if not isinstance(runtime_sha, str) or SHA256_RE.fullmatch(runtime_sha) is None:
-            errors.append("registry.runtime.physical_snapshot_sha256 must be a lowercase SHA-256")
-        if physical_sha is not None and runtime_sha != physical_sha:
-            errors.append("registry.runtime must reference the exact physical snapshot SHA-256")
-        target = runtime.get("target")
-        if not isinstance(target, dict):
-            errors.append("registry.runtime.target must be an object")
-        else:
-            if set(target) != {"minecraft", "loader", "loader_version"}:
-                errors.append("registry.runtime.target fields do not match the C4 contract")
-            if target.get("minecraft") != MINECRAFT_VERSION or target.get("loader") != LOADER:
-                errors.append("registry.runtime target must be Minecraft 1.21.1 / NeoForge")
-            loader_version = target.get("loader_version")
-            if not isinstance(loader_version, str) or not loader_version:
-                errors.append("registry.runtime.target.loader_version must be a non-empty string")
-            if physical_loader is not None and loader_version != physical_loader:
-                errors.append("registry.runtime loader version must match the physical snapshot")
-
-    static_index = registry.get("static_index")
-    if not isinstance(static_index, dict):
-        errors.append("registry.static_index must be an object")
-    else:
-        if set(static_index) != {"jar_count", "nested_jar_count", "discovered_block_count"}:
-            errors.append("registry.static_index fields do not match the C4 contract")
-        for field in ("jar_count", "nested_jar_count", "discovered_block_count"):
-            value = static_index.get(field)
-            if not _is_int(value) or value < 0:
-                errors.append(f"registry.static_index.{field} must be a non-negative integer")
-
-    blocks = registry.get("blocks")
-    block_ids = []
-    if not isinstance(blocks, list):
-        errors.append("registry.blocks must be an array")
-    else:
-        for index, block in enumerate(blocks):
-            label = f"registry.blocks[{index}]"
-            if not isinstance(block, dict):
-                errors.append(f"{label} must be an object")
-                continue
-            expected_block = {"id", "available", "authority", "static_discovered", "states", "safety"}
-            if set(block) != expected_block:
-                errors.append(f"{label} fields do not match the C4 contract")
-
-            block_id = block.get("id")
-            if not isinstance(block_id, str) or RESOURCE_LOCATION_RE.fullmatch(block_id) is None:
-                errors.append(f"{label}.id is invalid")
-            else:
-                block_ids.append(block_id)
-
-            available = block.get("available")
-            static_discovered = block.get("static_discovered")
-            if not isinstance(available, bool):
-                errors.append(f"{label}.available must be boolean")
-            if not isinstance(static_discovered, bool):
-                errors.append(f"{label}.static_discovered must be boolean")
-
-            authority = block.get("authority")
-            if authority not in {"runtime_confirmed", "static_only_unconfirmed"}:
-                errors.append(f"{label}.authority is invalid")
-
-            safety = block.get("safety")
-            if safety not in SAFETY_CLASSES:
-                errors.append(f"{label}.safety is invalid")
-
-            states = block.get("states")
-            state_keys = []
-            if not isinstance(states, list):
-                errors.append(f"{label}.states must be an array")
-            else:
-                for state_index, state in enumerate(states):
-                    state_label = f"{label}.states[{state_index}]"
-                    if not isinstance(state, dict):
-                        errors.append(f"{state_label} must be an object")
-                        continue
-                    state_valid = True
-                    canonical = {}
-                    for key, value in state.items():
-                        if not isinstance(key, str) or PROPERTY_NAME_RE.fullmatch(key) is None:
-                            errors.append(f"{state_label} contains an invalid property name")
-                            state_valid = False
-                            continue
-                        if not isinstance(value, str) or not value:
-                            errors.append(f"{state_label}.{key} must be a non-empty string")
-                            state_valid = False
-                            continue
-                        canonical[key] = value
-                    if state_valid:
-                        state_keys.append(canonical_json_bytes(canonical))
-                if len(state_keys) != len(set(state_keys)):
-                    errors.append(f"{label}.states contains duplicate states")
-                if state_keys != sorted(state_keys):
-                    errors.append(f"{label}.states must be in canonical order")
-
-            if authority == "runtime_confirmed":
-                if available is not True:
-                    errors.append(f"{label} runtime_confirmed block must be available")
-                if isinstance(states, list) and not states:
-                    errors.append(f"{label} runtime_confirmed block must have runtime states")
-            elif authority == "static_only_unconfirmed":
-                if available is not False:
-                    errors.append(f"{label} static_only_unconfirmed block must be unavailable")
-                if static_discovered is not True:
-                    errors.append(f"{label} static_only_unconfirmed block must be statically discovered")
-                if isinstance(states, list) and states:
-                    errors.append(f"{label} static_only_unconfirmed block must not carry runtime states")
-                if safety != "unknown":
-                    errors.append(f"{label} static_only_unconfirmed block safety must be unknown")
-
-        if len(block_ids) != len(set(block_ids)):
-            errors.append("registry.blocks contains duplicate block ids")
-        if block_ids != sorted(block_ids):
-            errors.append("registry.blocks must be in canonical block-id order")
-
-    claimed = registry.get("content_sha256")
-    if not isinstance(claimed, str) or SHA256_RE.fullmatch(claimed) is None:
-        errors.append("registry.content_sha256 must be a lowercase SHA-256")
-    else:
-        payload = dict(registry)
-        payload.pop("content_sha256", None)
-        expected = hashlib.sha256(canonical_json_bytes(payload)).hexdigest()
-        if claimed != expected:
-            errors.append("registry.content_sha256 does not match canonical content")
-
-    return errors
-'''
+              raise SystemExit("C4 build_modpack_registry marker missing")
+          if "def validate_modpack_registry(" in text:
+              raise SystemExit("C4 public validator already exists")
+          validator = base64.b64decode(__import__("os").environ["C4_VALIDATOR_B64"]).decode("utf-8")
           text = text.replace(marker, validator + marker, 1)
-          c4_path.write_text(text, encoding='utf-8')
+          c4_path.write_text(text, encoding="utf-8")
 
-          c7_path = Path('construction/core/structural_qa.py')
-          text = c7_path.read_text(encoding='utf-8')
-          start = text.index('def _validate_registry(registry: Any) -> dict[str, Any]:\n')
-          end = text.index('\ndef _position_key(', start)
-          replacement = '''def _c4_module():\n    path = Path(__file__).with_name("modpack_registry.py")\n    spec = importlib.util.spec_from_file_location("construction_c4_modpack_registry_for_c7", path)\n    if spec is None or spec.loader is None:\n        raise StructuralQAError(f"cannot load C4 registry authority: {path}")\n    module = importlib.util.module_from_spec(spec)\n    spec.loader.exec_module(module)\n    return module\n\n\ndef _validate_registry(registry: Any) -> dict[str, Any]:\n    document = _require_object(registry, "C4 registry")\n    c4 = _c4_module()\n    try:\n        errors = c4.validate_modpack_registry(document)\n    except Exception as exc:\n        raise StructuralQAError("C4 registry validator failed") from exc\n    if errors:\n        raise StructuralQAError("invalid C4 registry: " + "; ".join(errors))\n    return document\n\n'''
+          c7_path = Path("construction/core/structural_qa.py")
+          text = c7_path.read_text(encoding="utf-8")
+          start = text.index("def _validate_registry(registry: Any) -> dict[str, Any]:\n")
+          end = text.index("\ndef _position_key(", start)
+          replacement = base64.b64decode(__import__("os").environ["C7_REPLACEMENT_B64"]).decode("utf-8")
           text = text[:start] + replacement + text[end + 1:]
-          c7_path.write_text(text, encoding='utf-8')
+          c7_path.write_text(text, encoding="utf-8")
           PY
 
       - name: Run focused C4 C7 GREEN
