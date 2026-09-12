@@ -2,9 +2,9 @@
 
 ## Preferred — Minecraft Mod Factory Asset Toolkit
 
-Use `asset-toolkit/asset_toolkit.js` for new project-owned model work. It adds parent-cycle detection, face/UV validation and optional asset-contract profiles (`requiredBones`, `requiredAnimations`, `maxSpan`) while remaining read-only. Its pure validation logic has Node regression tests executed by the repository skill validator.
+The canonical generated source bundle is `asset-toolkit/asset_toolkit.js`. For Blockbench 5.1.6 local side-loading, first generate the filename-compatible install artifact with `node asset-toolkit/sync_blockbench_install_artifact.js --write`, then use `asset-toolkit/rpg_asset_toolkit.js`. The install artifact is byte-for-byte identical to the canonical bundle and is intentionally not committed. The Toolkit provides structural/provider-aware QA plus bounded local modeling, rig, UV, texture and animation operations; its Live Bridge/MCP surface remains read-only.
 
-See `asset-toolkit/README.md`.
+See `asset-toolkit/README.md` and `asset-toolkit/COMPATIBILITY.md`.
 
 ## Legacy — Minecraft Asset Validator
 
