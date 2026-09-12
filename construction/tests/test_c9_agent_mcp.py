@@ -1008,5 +1008,91 @@ class C9VisualExportContractTests(unittest.TestCase):
         )
 
 
+class C9ServerSchemaContractTests(unittest.IsolatedAsyncioTestCase):
+    TOOL_NAMES = (
+        "registry_search",
+        "palette_resolve",
+        "build_canonicalize",
+        "build_validate",
+        "build_edit",
+        "qa_structural",
+        "preview_render",
+        "qa_visual",
+        "export_sponge_v3",
+    )
+    FORBIDDEN_PARAMETER_NAMES = {
+        "path",
+        "url",
+        "host",
+        "port",
+        "command",
+        "code",
+        "package",
+        "environment",
+    }
+
+    def _server(self):
+        self.assertTrue(SERVER_PATH.is_file(), "C9 MCP server is not implemented")
+        return importlib.import_module("construction.mcp.server")
+
+    async def test_exact_nine_tool_catalog(self) -> None:
+        server = self._server()
+        self.assertEqual(server.mcp.name, "Minecraft Construction Factory")
+        self.assertEqual(server.mcp.version, "c9-mcp-v1")
+
+        tools = await server.mcp.list_tools()
+        self.assertEqual(tuple(tool.name for tool in tools), self.TOOL_NAMES)
+        self.assertEqual(len(tools), 9)
+        self.assertEqual(await server.mcp.list_prompts(), [])
+        self.assertEqual(await server.mcp.list_resources(), [])
+
+        templates = await server.mcp.list_resource_templates()
+        self.assertEqual(len(templates), 1)
+        self.assertEqual(
+            str(templates[0].uri_template),
+            "construction://artifact/sha256/{digest}",
+         )
+        self.assertEqual(templates[0].mime_type, "application/octet-stream")
+
+    async def test_no_forbidden_tool_surface(self) -> None:
+        server = self._server()
+        tools = await server.mcp.list_tools()
+        for tool in tools:
+            with self.subTest(tool=tool.name):
+                properties = tool.input_schema.get("properties", {})
+                self.assertTrue(isinstance(properties, dict))
+                self.assertEqual(
+                    self.FORBIDDEN_PARAMETER_NAMES.intersection(properties),
+                    set(),
+                )
+
+    async def test_tool_schemas_are_closed(self) -> None:
+        from mcp.server.mcpserver.exceptions import ToolError
+
+        server = self._server()
+        tools = await server.mcp.list_tools()
+        by_name = {tool.name: tool for tool in tools}
+        self.assertEqual(set(by_name), set(self.TOOL_NAMES))
+
+        for name, tool in by_name.items():
+            with self.subTest(tool=name):
+                self.assertEqual(tool.input_schema.get("type"), "object")
+                self.assertIs(tool.input_schema.get("additionalProperties"), False)
+
+        edit_schema = by_name["build_edit"].input_schema
+        definitions = edit_schema.get("$defs", {})
+        self.assertTrue(isinstance(definitions, dict))
+        for model_name in ("SetBlockOperation", "RemoveBlockOperation"):
+            with self.subTest(model=model_name):
+                self.assertIn(model_name, definitions)
+                self.assertIs(definitions[model_name].get("additionalProperties"), False)
+
+        with self.assertRaises(ToolError):
+            await server.mcp.call_tool(
+                "build_validate",
+                {"build_ir": {}, "extra": "must-be-rejected"},
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
