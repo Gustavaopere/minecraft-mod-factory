@@ -74,8 +74,8 @@ class GovernanceMigrationTests(unittest.TestCase):
             for entry in exclusion_line.split("=", 1)[1].split(",")
             if entry.strip()
         }
-        self.assertIn("construction/upstream/snapshots/schematica/**", exclusions)
-        self.assertIn("construction/upstream/references/minebench/**", exclusions)
+        self.assertIn("construction/upstream/snapshots/schematica", exclusions)
+        self.assertIn("construction/upstream/references/minebench", exclusions)
 
     def test_validator_passes(self):
         result = subprocess.run(
