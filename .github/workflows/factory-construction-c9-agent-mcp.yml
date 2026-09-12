@@ -85,15 +85,20 @@ jobs:
           engineering/tests/test_i2_security_review.py
           -v
 
-      - name: Run C9 agent MCP contract tests
-        id: c9
+      - name: Run C9 direct contract tests
+        id: c9-direct
         continue-on-error: true
         run: python3 -m unittest construction/tests/test_c9_agent_mcp.py -v
+
+      - name: Run C9 real stdio protocol tests
+        id: c9-stdio
+        continue-on-error: true
+        run: python3 -m unittest construction/tests/test_c9_mcp_stdio.py -v
 
       - name: Record C9 contract result
         if: always()
         run: |
-          if [ "${{ steps.c9.outcome }}" != "success" ]; then
+          if [ "${{ steps.c9-direct.outcome }}" != "success" ] || [ "${{ steps.c9-stdio.outcome }}" != "success" ]; then
             echo "C9_RESULT=FAIL" >> "$GITHUB_ENV"
           else
             echo "C9_RESULT=PASS" >> "$GITHUB_ENV"
