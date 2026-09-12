@@ -1,3 +1,4 @@
+import copy
 import hashlib
 import importlib.util
 import io
@@ -184,6 +185,123 @@ class ConstructionC4ModpackRegistryTest(unittest.TestCase):
         digest = without_hash.pop("content_sha256")
         expected = hashlib.sha256(registry.canonical_json_bytes(without_hash)).hexdigest()
         self.assertEqual(expected, digest)
+
+    def canonical_composed_registry(self):
+        registry = self.require_registry()
+        physical = self.physical_snapshot()
+        static_indexes = [{
+            "jar": "alpha-1.0.0.jar",
+            "sha256": "0" * 64,
+            "mod_ids": ["alpha"],
+            "blockstates": ["alpha:ghost", "alpha:machine"],
+            "block_models": [],
+            "block_textures": [],
+            "nested_jars": [],
+        }]
+        runtime = self.runtime_snapshot(physical["source_sha256"])
+        return registry, registry.build_modpack_registry(physical, static_indexes, runtime)
+
+    def rehash_composed_registry(self, registry, document):
+        payload = copy.deepcopy(document)
+        payload.pop("content_sha256", None)
+        document["content_sha256"] = hashlib.sha256(registry.canonical_json_bytes(payload)).hexdigest()
+
+    def test_public_validator_accepts_canonical_composed_registry(self):
+        registry, document = self.canonical_composed_registry()
+        self.assertEqual([], registry.validate_modpack_registry(document))
+
+    def test_public_validator_rejects_composed_contract_mutations(self):
+        registry, canonical = self.canonical_composed_registry()
+
+        def extra_top_level(document):
+            document["unexpected"] = True
+
+        def malformed_physical_sha(document):
+            document["physical"]["source_sha256"] = "bad"
+            document["runtime"]["physical_snapshot_sha256"] = "bad"
+
+        def runtime_link_mismatch(document):
+            document["runtime"]["physical_snapshot_sha256"] = "f" * 64
+
+        def runtime_target_mismatch(document):
+            document["runtime"]["target"]["minecraft"] = "1.21"
+
+        def runtime_loader_version_mismatch(document):
+            document["runtime"]["target"]["loader_version"] = "21.1.999"
+
+        def negative_static_counter(document):
+            document["static_index"]["jar_count"] = -1
+
+        def noncanonical_block_order(document):
+            document["blocks"] = list(reversed(document["blocks"]))
+
+        def duplicate_block_id(document):
+            document["blocks"].append(copy.deepcopy(document["blocks"][0]))
+
+        def invalid_block_id(document):
+            document["blocks"][0]["id"] = "INVALID"
+
+        def invalid_authority(document):
+            document["blocks"][1]["authority"] = "invented"
+
+        def runtime_confirmed_unavailable(document):
+            block = next(item for item in document["blocks"] if item["authority"] == "runtime_confirmed")
+            block["available"] = False
+
+        def static_only_available(document):
+            block = next(item for item in document["blocks"] if item["authority"] == "static_only_unconfirmed")
+            block["available"] = True
+
+        def static_only_has_states(document):
+            block = next(item for item in document["blocks"] if item["authority"] == "static_only_unconfirmed")
+            block["states"] = [{}]
+
+        def invalid_safety(document):
+            document["blocks"][0]["safety"] = "invented"
+
+        def empty_state_value(document):
+            block = next(item for item in document["blocks"] if len(item["states"]) > 1)
+            block["states"][0]["facing"] = ""
+
+        def duplicate_state(document):
+            block = next(item for item in document["blocks"] if len(item["states"]) > 1)
+            block["states"].append(copy.deepcopy(block["states"][0]))
+
+        def noncanonical_state_order(document):
+            block = next(item for item in document["blocks"] if len(item["states"]) > 1)
+            block["states"] = list(reversed(block["states"]))
+
+        mutations = {
+            "extra top-level field": extra_top_level,
+            "malformed physical SHA": malformed_physical_sha,
+            "runtime physical linkage": runtime_link_mismatch,
+            "runtime Minecraft target": runtime_target_mismatch,
+            "runtime loader version linkage": runtime_loader_version_mismatch,
+            "negative static counter": negative_static_counter,
+            "canonical block order": noncanonical_block_order,
+            "duplicate block id": duplicate_block_id,
+            "invalid block id": invalid_block_id,
+            "invalid authority": invalid_authority,
+            "runtime-confirmed availability": runtime_confirmed_unavailable,
+            "static-only availability": static_only_available,
+            "static-only states": static_only_has_states,
+            "invalid safety": invalid_safety,
+            "empty state value": empty_state_value,
+            "duplicate state": duplicate_state,
+            "canonical state order": noncanonical_state_order,
+        }
+        for label, mutate in mutations.items():
+            with self.subTest(label=label):
+                document = copy.deepcopy(canonical)
+                mutate(document)
+                self.rehash_composed_registry(registry, document)
+                errors = registry.validate_modpack_registry(document)
+                self.assertTrue(errors, f"mutation should fail closed: {label}")
+
+    def test_public_validator_rejects_content_hash_tampering(self):
+        registry, document = self.canonical_composed_registry()
+        document["content_sha256"] = "f" * 64
+        self.assertTrue(registry.validate_modpack_registry(document))
 
     def test_schema_and_workflow_encode_c4_boundary(self):
         self.require_registry()

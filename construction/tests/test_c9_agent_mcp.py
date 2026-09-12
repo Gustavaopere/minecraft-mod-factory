@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.metadata
+import importlib.util
 import unittest
 from pathlib import Path
 
@@ -59,6 +60,15 @@ class C9RedContractTests(unittest.TestCase):
         self.assertTrue(PLAN_PATH.is_file())
         self.assertEqual(len(REQUIRED_ACCEPTANCE_TEST_NAMES), 25)
         self.assertEqual(len(REQUIRED_ACCEPTANCE_TEST_NAMES), len(set(REQUIRED_ACCEPTANCE_TEST_NAMES)))
+
+    def test_c4_public_validator_parity(self) -> None:
+        path = ROOT / "construction" / "core" / "modpack_registry.py"
+        spec = importlib.util.spec_from_file_location("construction_c4_for_c9_contract", path)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        self.assertTrue(callable(getattr(module, "validate_modpack_registry", None)))
 
     def test_c9_modules_exist(self) -> None:
         missing = [
