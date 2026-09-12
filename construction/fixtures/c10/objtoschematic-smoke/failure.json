@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "provider_id": "objtoschematic",
+  "request_id": "4ee4be7e0d3d89b0690aeb2da3794f28689dad61a246be873e7194b140d021de",
+  "observed_at": "2026-09-12",
+  "input_sha256": "b6101561fb2594ce731ea8ecb02c0d25862ca24abdd776cfe10cac2fe088c4a9",
+  "stage": "UPLOAD_PREVIEW",
+  "outcome": "FAIL",
+  "observation": "The exact input.obj was selected in the official ObjToSchematic editor, but the Import control remained disabled and no block preview appeared."
+}

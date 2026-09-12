@@ -3,9 +3,10 @@
   "provider_id": "blockgpt",
   "display_name": "BlockGPT",
   "integration_policy": "EXTERNAL_PROVIDER",
-  "proof_level": "EP0_DISCOVERED",
-  "integration_mode": "RESEARCH_ONLY",
+  "proof_level": "EP1_HANDOFF_VERIFIED",
+  "integration_mode": "MANUAL_FILE_HANDOFF",
   "capabilities": [
+    "IMAGE_TO_STRUCTURE",
     "LITEMATIC_EXPORT",
     "PROMPT_TO_STRUCTURE",
     "SCHEMATIC_EXPORT",
@@ -36,6 +37,30 @@
           "capability:VANILLA_STRUCTURE_EXPORT"
         ],
         "sha256": null
+      },
+      {
+        "kind": "OFFICIAL_DOCS",
+        "locator": "https://blockgpt.ai/blog/getting-started-with-blockgpt",
+        "observed_at": "2026-09-12",
+        "supports": [
+          "capability:SCHEMATIC_EXPORT",
+          "handoff:SCHEMATIC_FILE",
+          "proof:EP1_HANDOFF_VERIFIED"
+        ],
+        "sha256": null
+      },
+      {
+        "kind": "OFFICIAL_DOCS",
+        "locator": "https://blockgpt.ai/blog/best-ai-generated-minecraft-builds",
+        "observed_at": "2026-09-12",
+        "supports": [
+          "capability:IMAGE_TO_STRUCTURE",
+          "capability:SCHEMATIC_EXPORT",
+          "handoff:IMAGE",
+          "handoff:SCHEMATIC_FILE",
+          "proof:EP1_HANDOFF_VERIFIED"
+        ],
+        "sha256": null
       }
     ]
   },
@@ -45,15 +70,19 @@
     "official_contract": null
   },
   "handoff": {
-    "accepted_input_kinds": [],
-    "output_artifact_kinds": [],
+    "accepted_input_kinds": [
+      "IMAGE"
+    ],
+    "output_artifact_kinds": [
+      "SCHEMATIC_FILE"
+    ],
     "manual_action_required": true,
     "determinism": "UNKNOWN"
   },
   "limits": {
-    "max_input_bytes": null,
-    "max_output_bytes": null,
+    "max_input_bytes": 16777216,
+    "max_output_bytes": 67108864,
     "timeout_seconds": null
   },
-  "profile_sha256": "88916db4d27f237c533667fede44fbf8c404d83f677d9b45f938ffa1c59bd899"
+  "profile_sha256": "b80322794f12e1fb88d9c56b39979896d6a853f1f683067fd1067a72a8585250"
 }
