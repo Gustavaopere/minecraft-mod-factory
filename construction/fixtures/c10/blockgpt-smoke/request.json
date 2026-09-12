@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "request_id": "9e8fb02887375c797603219f4a75abd1713729af176c25f5d76d6d061a36d2a6",
+  "request_id": "c3b7eb8c50ef4df484193cbc1c723ee4ca4c26551373bd342b0aed1eb81dd256",
   "provider_id": "blockgpt",
   "provider_profile_sha256": "b80322794f12e1fb88d9c56b39979896d6a853f1f683067fd1067a72a8585250",
   "mode": "MANUAL_FILE_HANDOFF",
   "operation": "IMAGE_TO_STRUCTURE",
-  "text_input": null,
+  "text_input": "Generate a plain solid cube that matches the uploaded reference image, using basic full Minecraft blocks only, with no decorations or surrounding terrain.",
   "input_artifacts": [
     {
       "kind": "IMAGE",
@@ -26,7 +26,7 @@
   "manual_step": {
     "required": true,
     "step_id": "submit-reference-image",
-    "instruction": "Upload the exact Factory C10 reference.png fixture to BlockGPT and start one image-to-build generation without adding a text prompt.",
-    "expected_result": "BlockGPT displays a 3D preview of a generated Minecraft structure derived from the uploaded reference image."
+    "instruction": "Upload the exact Factory C10 reference.png fixture to BlockGPT, paste the exact Factory prompt recorded in text_input, and start one image-to-build generation.",
+    "expected_result": "BlockGPT displays a 3D preview of a generated Minecraft structure derived from the uploaded reference image and exact Factory prompt."
   }
 }
