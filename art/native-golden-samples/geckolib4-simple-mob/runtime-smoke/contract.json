@@ -1,0 +1,31 @@
+{
+  "target": {
+    "minecraft": "1.21.1",
+    "neoforge": "21.1.248",
+    "java": 21
+  },
+  "geckolib": {
+    "version": "4.9.2",
+    "source": "bernie-g/geckolib",
+    "ref": "d57fc640de083ae67ec0051a02b2b4fb22f4d02b",
+    "mavenRepository": "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/",
+    "coordinate": "software.bernie.geckolib:geckolib-neoforge-1.21.1:4.9.2"
+  },
+  "resources": {
+    "model": {
+      "source": "../actual/golden_sample_mob.geo.json",
+      "target": "assets/i3_golden_mod/geo/entity/golden_sample_mob.geo.json",
+      "sha256": "e3627d896e3bc8c30f7b10c930ba5c70dc4f931191c9cc13e0449404e541e889"
+    },
+    "animation": {
+      "source": "../actual/golden_sample_mob.animation.json",
+      "target": "assets/i3_golden_mod/animations/entity/golden_sample_mob.animation.json",
+      "sha256": "da77cb8c6d8b44610eab3bc135a0b6f645b2b29783dd552f1a471e05c1a262aa"
+    },
+    "texture": {
+      "source": "../golden-sample-mob.png",
+      "target": "assets/i3_golden_mod/textures/entity/golden_sample_mob.png",
+      "sha256": "c93b4a2d460bf10a5a127f8f76238e054e1e3a7c2ad84128a07bb21e6ee0f19b"
+    }
+  }
+}

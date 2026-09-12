@@ -34,13 +34,16 @@ const cloneEvidence = () => {
   };
 };
 
-test('real GeckoLib exporter and reopen evidence satisfies the partial handoff contract', () => {
+test('real GeckoLib handoff satisfies the completed authoring/export/reopen/runtime contract', () => {
   const result = validateRealHandoffEvidence();
   assert.equal(result.ok, true);
   assert.equal(result.exporterProduced, true);
   assert.equal(result.reopenValidated, true);
-  assert.equal(result.runtimeValidated, false);
-  assert.equal(result.f4I6Evidence, false);
+  assert.equal(result.runtimeValidated, true);
+  assert.equal(result.f4I6Evidence, true);
+  assert.equal(result.runtimeEvidence.classification, 'PASS');
+  assert.equal(result.runtimeEvidence.workflowRunId, 34710808440);
+  assert.equal(result.runtimeEvidence.jobId, 103599143647);
 });
 
 test('fails closed when a raw exporter hash drifts', () => {
@@ -73,10 +76,28 @@ test('fails closed when reopen evidence is revoked after being physically proven
   assert.throws(() => validateRealHandoffEvidence(evidence), /INVALID_REAL_HANDOFF_FLAGS/);
 });
 
-test('fails closed on premature runtime or I6 claim', () => {
+test('fails closed when F4/I6 is claimed without runtime validation', () => {
   const evidence = cloneEvidence();
-  evidence.manifest.realHandoff.runtimeValidated = true;
+  evidence.manifest.realHandoff.runtimeValidated = false;
   assert.throws(() => validateRealHandoffEvidence(evidence), /INVALID_REAL_HANDOFF_FLAGS/);
+});
+
+test('fails closed when durable runtime provenance drifts', () => {
+  const evidence = cloneEvidence();
+  evidence.manifest.realHandoff.runtimeEvidence.workflowRunId = 1;
+  assert.throws(() => validateRealHandoffEvidence(evidence), /INVALID_RUNTIME_PROVENANCE/);
+});
+
+test('fails closed when target-exact runtime evidence drifts', () => {
+  const evidence = cloneEvidence();
+  evidence.manifest.realHandoff.runtimeEvidence.target.neoforge = '21.1.249';
+  assert.throws(() => validateRealHandoffEvidence(evidence), /INVALID_RUNTIME_TARGET/);
+});
+
+test('fails closed when live-client animation proof is revoked', () => {
+  const evidence = cloneEvidence();
+  evidence.manifest.realHandoff.runtimeEvidence.client.animation_motion_observed = false;
+  assert.throws(() => validateRealHandoffEvidence(evidence), /INVALID_RUNTIME_CLIENT_EVIDENCE/);
 });
 
 test('fails closed when the observed GeckoLib coordinate transform drifts', () => {
