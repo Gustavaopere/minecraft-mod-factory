@@ -1,4 +1,4 @@
-name: C9 Task 7 Visual Export RED
+name: C9 Task 7 Visual Export Verification
 
 on:
   push:
@@ -21,3 +21,7 @@ jobs:
         run: python3 -m pip install --require-hashes --no-deps -r construction/upstream/harness/schematica-test-lock.txt
       - name: Run C9 Task 7 visual export contract
         run: python3 -m unittest construction.tests.test_c9_agent_mcp.C9VisualExportContractTests -v
+      - name: Run C8 Visual QA regression
+        run: python3 -m unittest construction.tests.test_c8_visual_qa -v
+      - name: Run C6 Sponge v3 regression
+        run: python3 -m unittest construction.tests.test_c6_sponge_v3 -v
