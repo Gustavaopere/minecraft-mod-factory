@@ -1,0 +1,47 @@
+name: Factory Art GeckoLib4 Native Golden Sample
+
+on:
+  pull_request:
+    paths:
+      - 'art/native-golden-samples/geckolib4-simple-mob/**'
+      - 'art/native-golden-samples/README.md'
+      - 'art/golden-samples/README.md'
+      - 'art/golden-samples/validate_golden_samples.js'
+      - 'art/golden-samples/validate_reference_evidence.js'
+      - 'art/tooling/blockbench/asset-toolkit/core/provider-adapter/geckolib4_adapter.js'
+      - 'art/tooling/blockbench/asset-toolkit/core/extension-registry/**'
+      - '.github/workflows/factory-art-geckolib4-native-golden.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'art/native-golden-samples/geckolib4-simple-mob/**'
+      - 'art/native-golden-samples/README.md'
+      - 'art/golden-samples/README.md'
+      - 'art/golden-samples/validate_golden_samples.js'
+      - 'art/golden-samples/validate_reference_evidence.js'
+      - 'art/tooling/blockbench/asset-toolkit/core/provider-adapter/geckolib4_adapter.js'
+      - 'art/tooling/blockbench/asset-toolkit/core/extension-registry/**'
+      - '.github/workflows/factory-art-geckolib4-native-golden.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  geckolib4-native-golden:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validate native Golden Sample
+        run: node art/native-golden-samples/geckolib4-simple-mob/validate_golden_sample.js
+      - name: Run fail-closed Golden Sample tests
+        run: node --test art/native-golden-samples/geckolib4-simple-mob/golden_sample.test.js
+      - name: Preserve existing reference corpus gates
+        run: |
+          node art/golden-samples/validate_golden_samples.js
+          node art/golden-samples/validate_reference_evidence.js
+      - name: Validate whitespace
+        run: git diff --check

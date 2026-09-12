@@ -1,6 +1,6 @@
 # Minecraft Mod Factory Asset Toolkit for Blockbench
 
-Standalone project plugin: `asset_toolkit.js` (plugin ID `rpg_asset_toolkit`).
+Canonical generated source bundle: `asset_toolkit.js` (plugin ID `rpg_asset_toolkit`). Blockbench 5.1.6 local side-loading uses the generated install artifact `rpg_asset_toolkit.js`; see `COMPATIBILITY.md`.
 
 ## Scope
 
@@ -12,7 +12,7 @@ All mutation capabilities are local desktop operations. They do not add a Live B
 
 ## Architecture
 
-Canonical source lives in modular CommonJS files under `core/` and `blockbench-plugin/`. `build_toolkit_bundle.js` generates the standalone `asset_toolkit.js` consumed by Blockbench. CI requires the committed standalone bundle to match the modular source byte-for-byte.
+Canonical source lives in modular CommonJS files under `core/` and `blockbench-plugin/`. `build_toolkit_bundle.js` generates the canonical standalone source bundle `asset_toolkit.js`; `sync_blockbench_install_artifact.js --write` materializes the byte-identical local side-load artifact `rpg_asset_toolkit.js` required by the Blockbench 5.1.6 loader. CI requires the committed canonical bundle to match modular source and validates the generated install artifact.
 
 Core modules include:
 
