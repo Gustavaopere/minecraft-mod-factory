@@ -9,6 +9,7 @@ on:
       - '.github/workflows/factory-engineering-i7-provider-catalog.yml'
       - 'engineering/tests/test_i7_provider_catalog.py'
       - 'engineering/tests/test_i7_provider_catalog_content.py'
+      - 'engineering/tests/test_i7_provider_catalog_supported_semantics.py'
       - 'engineering/catalog/providers/**'
       - 'engineering/schemas/provider-catalog.schema.json'
       - 'engineering/tooling/provider-catalog/**'
@@ -23,6 +24,7 @@ on:
       - '.github/workflows/factory-engineering-i7-provider-catalog.yml'
       - 'engineering/tests/test_i7_provider_catalog.py'
       - 'engineering/tests/test_i7_provider_catalog_content.py'
+      - 'engineering/tests/test_i7_provider_catalog_supported_semantics.py'
       - 'engineering/catalog/providers/**'
       - 'engineering/schemas/provider-catalog.schema.json'
       - 'engineering/tooling/provider-catalog/**'
@@ -53,6 +55,7 @@ jobs:
           python3 -m unittest
           engineering/tests/test_i7_provider_catalog.py
           engineering/tests/test_i7_provider_catalog_content.py
+          engineering/tests/test_i7_provider_catalog_supported_semantics.py
 
       - name: Check I7 whitespace
         run: >-
@@ -60,6 +63,7 @@ jobs:
           .github/workflows/factory-engineering-i7-provider-catalog.yml
           engineering/tests/test_i7_provider_catalog.py
           engineering/tests/test_i7_provider_catalog_content.py
+          engineering/tests/test_i7_provider_catalog_supported_semantics.py
           engineering/catalog/providers
           engineering/schemas/provider-catalog.schema.json
           engineering/tooling/provider-catalog
