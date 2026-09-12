@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "provider_id": "schematic-helper",
+  "display_name": "Schematic Helper",
+  "integration_policy": "EXTERNAL_PROVIDER",
+  "proof_level": "EP0_DISCOVERED",
+  "integration_mode": "RESEARCH_ONLY",
+  "capabilities": [
+    "IMAGE_TO_STRUCTURE",
+    "PROMPT_TO_STRUCTURE",
+    "SCHEMATIC_EXPORT"
+  ],
+  "audit": {
+    "audited_at": "2026-09-12",
+    "evidence": [
+      {
+        "kind": "OFFICIAL_SITE",
+        "locator": "https://schematichelper.com/",
+        "observed_at": "2026-09-12",
+        "supports": [
+          "capability:IMAGE_TO_STRUCTURE",
+          "capability:PROMPT_TO_STRUCTURE",
+          "capability:SCHEMATIC_EXPORT",
+          "provider:schematic-helper"
+        ],
+        "sha256": null
+      },
+      {
+        "kind": "OFFICIAL_SITE",
+        "locator": "https://schematichelper.com/about/",
+        "observed_at": "2026-09-12",
+        "supports": [
+          "capability:IMAGE_TO_STRUCTURE",
+          "capability:PROMPT_TO_STRUCTURE",
+          "capability:SCHEMATIC_EXPORT"
+        ],
+        "sha256": null
+      }
+    ]
+  },
+  "api": {
+    "state": "UNVERIFIED_API",
+    "auth": "UNKNOWN",
+    "official_contract": null
+  },
+  "handoff": {
+    "accepted_input_kinds": [],
+    "output_artifact_kinds": [],
+    "manual_action_required": true,
+    "determinism": "UNKNOWN"
+  },
+  "limits": {
+    "max_input_bytes": null,
+    "max_output_bytes": null,
+    "timeout_seconds": null
+  },
+  "profile_sha256": "2255ab761e9ade46baca54c3a105ab770d86888949d38e7a454a8e3607a1ffa4"
+}

@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "provider_id": "objtoschematic",
+  "display_name": "ObjToSchematic",
+  "integration_policy": "EXTERNAL_PROVIDER",
+  "proof_level": "EP0_DISCOVERED",
+  "integration_mode": "RESEARCH_ONLY",
+  "capabilities": [
+    "LITEMATIC_EXPORT",
+    "MESH_TO_STRUCTURE",
+    "SCHEMATIC_EXPORT"
+  ],
+  "audit": {
+    "audited_at": "2026-09-12",
+    "evidence": [
+      {
+        "kind": "OFFICIAL_SITE",
+        "locator": "https://objtoschematic.com/",
+        "observed_at": "2026-09-12",
+        "supports": [
+          "capability:MESH_TO_STRUCTURE",
+          "provider:objtoschematic"
+        ],
+        "sha256": null
+      },
+      {
+        "kind": "OFFICIAL_DOCS",
+        "locator": "https://objtoschematic.com/wiki",
+        "observed_at": "2026-09-12",
+        "supports": [
+          "capability:LITEMATIC_EXPORT",
+          "capability:MESH_TO_STRUCTURE",
+          "capability:SCHEMATIC_EXPORT"
+        ],
+        "sha256": null
+      }
+    ]
+  },
+  "api": {
+    "state": "UNVERIFIED_API",
+    "auth": "UNKNOWN",
+    "official_contract": null
+  },
+  "handoff": {
+    "accepted_input_kinds": [],
+    "output_artifact_kinds": [],
+    "manual_action_required": true,
+    "determinism": "UNKNOWN"
+  },
+  "limits": {
+    "max_input_bytes": null,
+    "max_output_bytes": null,
+    "timeout_seconds": null
+  },
+  "profile_sha256": "686b8086793c2d89b1fd48124a05513e5166cc7377d0edabff1d9eea62b3a7a4"
+}

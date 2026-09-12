@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gustavaopere.github.io/minecraft-mod-factory/construction/schemas/external-provider-profile.schema.json",
+  "title": "Construction C10 External Provider Profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "provider_id",
+    "display_name",
+    "integration_policy",
+    "proof_level",
+    "integration_mode",
+    "capabilities",
+    "audit",
+    "api",
+    "handoff",
+    "limits",
+    "profile_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "provider_id": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+    "display_name": {"type": "string", "minLength": 1},
+    "integration_policy": {"const": "EXTERNAL_PROVIDER"},
+    "proof_level": {
+      "enum": [
+        "EP0_DISCOVERED",
+        "EP1_HANDOFF_VERIFIED",
+        "EP2_EXECUTION_PROVEN",
+        "EP3_FORMAT_VALIDATED",
+        "EP4_FACTORY_INTEGRATION_VALIDATED",
+        "EP5_GOLDEN_VALIDATED"
+      ]
+    },
+    "integration_mode": {"enum": ["RESEARCH_ONLY", "MANUAL_FILE_HANDOFF", "API_ADAPTER"]},
+    "capabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "IMAGE_TO_STRUCTURE",
+          "LITEMATIC_EXPORT",
+          "LITEMATIC_IMPORT",
+          "MESH_TO_STRUCTURE",
+          "PROMPT_TO_STRUCTURE",
+          "SCHEMATIC_EXPORT",
+          "SCHEMATIC_IMPORT",
+          "STRUCTURE_EDITING",
+          "VANILLA_STRUCTURE_EXPORT",
+          "VANILLA_STRUCTURE_IMPORT"
+        ]
+      }
+    },
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["audited_at", "evidence"],
+      "properties": {
+        "audited_at": {"type": "string", "minLength": 10},
+        "evidence": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/evidence"}
+        }
+      }
+    },
+    "api": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "auth", "official_contract"],
+      "properties": {
+        "state": {"enum": ["UNVERIFIED_API", "VERIFIED_API", "CONTRACT_PROVEN_API", "SMOKE_PROVEN_API"]},
+        "auth": {"enum": ["API_KEY", "NONE", "OAUTH", "SESSION", "UNKNOWN"]},
+        "official_contract": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/officialContract"}
+          ]
+        }
+      }
+    },
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accepted_input_kinds", "output_artifact_kinds", "manual_action_required", "determinism"],
+      "properties": {
+        "accepted_input_kinds": {"$ref": "#/$defs/artifactKindArray"},
+        "output_artifact_kinds": {"$ref": "#/$defs/artifactKindArray"},
+        "manual_action_required": {"type": "boolean"},
+        "determinism": {"enum": ["NO", "UNKNOWN", "YES"]}
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_input_bytes", "max_output_bytes", "timeout_seconds"],
+      "properties": {
+        "max_input_bytes": {"oneOf": [{"type": "null"}, {"type": "integer", "minimum": 1}]},
+        "max_output_bytes": {"oneOf": [{"type": "null"}, {"type": "integer", "minimum": 1}]},
+        "timeout_seconds": {"oneOf": [{"type": "null"}, {"type": "integer", "minimum": 1}]}
+      }
+    },
+    "profile_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "$defs": {
+    "artifactKindArray": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "BEDROCK_MCSTRUCTURE",
+          "IMAGE",
+          "LITEMATIC_FILE",
+          "MESH",
+          "SCHEMATIC_FILE",
+          "VANILLA_STRUCTURE_NBT",
+          "WORLD_ZIP"
+        ]
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "locator", "observed_at", "supports", "sha256"],
+      "properties": {
+        "kind": {"enum": ["FACTORY_TEST", "MANUAL_SMOKE", "OFFICIAL_DOCS", "OFFICIAL_SITE", "OFFICIAL_SOURCE"]},
+        "locator": {"type": "string", "minLength": 1},
+        "observed_at": {"type": "string", "minLength": 10},
+        "supports": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "sha256": {"oneOf": [{"type": "null"}, {"type": "string", "pattern": "^[0-9a-f]{64}$"}]}
+      }
+    },
+    "officialContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "locator", "version", "origin", "protocol"],
+      "properties": {
+        "kind": {"enum": ["GRAPHQL", "OTHER", "REST", "SDK"]},
+        "locator": {"type": "string", "pattern": "^https://"},
+        "version": {"type": "string", "minLength": 1},
+        "origin": {"type": "string", "pattern": "^https://"},
+        "protocol": {"const": "HTTPS"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"proof_level": {"const": "EP0_DISCOVERED"}}, "required": ["proof_level"]},
+      "then": {"properties": {"integration_mode": {"const": "RESEARCH_ONLY"}}}
+    },
+    {
+      "if": {"properties": {"api": {"properties": {"state": {"const": "UNVERIFIED_API"}}, "required": ["state"]}}, "required": ["api"]},
+      "then": {"properties": {"api": {"properties": {"official_contract": {"type": "null"}}}}}
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "provider_id": "blockgpt",
+  "display_name": "BlockGPT",
+  "integration_policy": "EXTERNAL_PROVIDER",
+  "proof_level": "EP0_DISCOVERED",
+  "integration_mode": "RESEARCH_ONLY",
+  "capabilities": [
+    "LITEMATIC_EXPORT",
+    "PROMPT_TO_STRUCTURE",
+    "SCHEMATIC_EXPORT",
+    "VANILLA_STRUCTURE_EXPORT"
+  ],
+  "audit": {
+    "audited_at": "2026-09-12",
+    "evidence": [
+      {
+        "kind": "OFFICIAL_SITE",
+        "locator": "https://blockgpt.ai/",
+        "observed_at": "2026-09-12",
+        "supports": [
+          "capability:PROMPT_TO_STRUCTURE",
+          "capability:SCHEMATIC_EXPORT",
+          "provider:blockgpt"
+        ],
+        "sha256": null
+      },
+      {
+        "kind": "OFFICIAL_SITE",
+        "locator": "https://blockgpt.ai/blog/how-to-generate-minecraft-schematics-using-ai",
+        "observed_at": "2026-09-12",
+        "supports": [
+          "capability:LITEMATIC_EXPORT",
+          "capability:PROMPT_TO_STRUCTURE",
+          "capability:SCHEMATIC_EXPORT",
+          "capability:VANILLA_STRUCTURE_EXPORT"
+        ],
+        "sha256": null
+      }
+    ]
+  },
+  "api": {
+    "state": "UNVERIFIED_API",
+    "auth": "UNKNOWN",
+    "official_contract": null
+  },
+  "handoff": {
+    "accepted_input_kinds": [],
+    "output_artifact_kinds": [],
+    "manual_action_required": true,
+    "determinism": "UNKNOWN"
+  },
+  "limits": {
+    "max_input_bytes": null,
+    "max_output_bytes": null,
+    "timeout_seconds": null
+  },
+  "profile_sha256": "88916db4d27f237c533667fede44fbf8c404d83f677d9b45f938ffa1c59bd899"
+}

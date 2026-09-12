@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "provider_id": "structmatic",
+  "display_name": "Structmatic",
+  "integration_policy": "EXTERNAL_PROVIDER",
+  "proof_level": "EP0_DISCOVERED",
+  "integration_mode": "RESEARCH_ONLY",
+  "capabilities": [
+    "IMAGE_TO_STRUCTURE",
+    "LITEMATIC_EXPORT",
+    "LITEMATIC_IMPORT",
+    "PROMPT_TO_STRUCTURE",
+    "SCHEMATIC_EXPORT",
+    "SCHEMATIC_IMPORT",
+    "STRUCTURE_EDITING",
+    "VANILLA_STRUCTURE_EXPORT"
+  ],
+  "audit": {
+    "audited_at": "2026-09-12",
+    "evidence": [
+      {
+        "kind": "OFFICIAL_SITE",
+        "locator": "https://structmatic.com/",
+        "observed_at": "2026-09-12",
+        "supports": [
+          "capability:IMAGE_TO_STRUCTURE",
+          "capability:LITEMATIC_EXPORT",
+          "capability:LITEMATIC_IMPORT",
+          "capability:PROMPT_TO_STRUCTURE",
+          "capability:SCHEMATIC_EXPORT",
+          "capability:SCHEMATIC_IMPORT",
+          "capability:STRUCTURE_EDITING",
+          "capability:VANILLA_STRUCTURE_EXPORT",
+          "provider:structmatic"
+        ],
+        "sha256": null
+      }
+    ]
+  },
+  "api": {
+    "state": "UNVERIFIED_API",
+    "auth": "UNKNOWN",
+    "official_contract": null
+  },
+  "handoff": {
+    "accepted_input_kinds": [],
+    "output_artifact_kinds": [],
+    "manual_action_required": true,
+    "determinism": "UNKNOWN"
+  },
+  "limits": {
+    "max_input_bytes": null,
+    "max_output_bytes": null,
+    "timeout_seconds": null
+  },
+  "profile_sha256": "8cf56eb82d33fbb1cd6e455844fe38c431f3753250d6b20875cc3f52a20191f1"
+}
