@@ -67,6 +67,12 @@ cleanup() {
   stop_group "$client_pid"
   stop_group "$server_pid"
 }
+print_proof_markers() {
+  echo "--- live-client proof server markers ---"
+  grep -F '[GECKOLIB_CLIENT_PROOF]' "$server_log" || true
+  echo "--- live-client proof client markers ---"
+  grep -F '[GECKOLIB_CLIENT_PROOF]' "$client_log" || true
+}
 trap cleanup EXIT
 
 setsid bash -c 'cd "$1" && exec env GRADLE_USER_HOME="$2" ./gradlew runServer --no-daemon' \
@@ -105,6 +111,7 @@ for _ in $(seq 1 180); do
   fi
   if ! kill -0 "$client_pid" 2>/dev/null; then
     cat "$client_log"
+    print_proof_markers
     echo "live client exited before producing runtime proof" >&2
     exit 1
   fi
@@ -112,6 +119,7 @@ for _ in $(seq 1 180); do
 done
 if [[ "$evidence_ready" -ne 1 ]]; then
   cat "$client_log"
+  print_proof_markers
   echo "live client did not produce runtime proof" >&2
   exit 1
 fi
@@ -141,4 +149,5 @@ print(json.dumps(evidence, sort_keys=True))
 PY
 
 cp "$evidence" "$project/run/client-runtime-proof.json"
+print_proof_markers
 cat "$project/run/client-runtime-proof.json"

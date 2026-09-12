@@ -41,6 +41,10 @@ public final class GoldenSampleMobClientRuntimeProof {
         private boolean bakedModelObserved;
         private boolean textureResolved;
         private boolean animationMotionObserved;
+        private boolean rendererLogged;
+        private boolean bakedModelLogged;
+        private boolean textureLogged;
+        private boolean animationLogged;
         private boolean evidenceWritten;
 
         private ProofRenderer(EntityRendererProvider.Context context) {
@@ -78,12 +82,25 @@ public final class GoldenSampleMobClientRuntimeProof {
             }
 
             this.rendererInvoked = true;
+            if (!this.rendererLogged) {
+                System.out.println("[GECKOLIB_CLIENT_PROOF] renderer_invoked=true");
+                this.rendererLogged = true;
+            }
+
             var head = model.getBone("head");
             this.bakedModelObserved |= head.isPresent();
+            if (this.bakedModelObserved && !this.bakedModelLogged) {
+                System.out.println("[GECKOLIB_CLIENT_PROOF] baked_model_observed=true");
+                this.bakedModelLogged = true;
+            }
 
             ResourceLocation texture = getTextureLocation(animatable);
             this.textureResolved |= EXPECTED_TEXTURE.equals(texture)
                     && Minecraft.getInstance().getResourceManager().getResource(texture).isPresent();
+            if (this.textureResolved && !this.textureLogged) {
+                System.out.println("[GECKOLIB_CLIENT_PROOF] texture_resolved=true");
+                this.textureLogged = true;
+            }
 
             if (head.isPresent()) {
                 float currentRotationY = head.get().getRotY();
@@ -92,6 +109,10 @@ public final class GoldenSampleMobClientRuntimeProof {
                 } else if (Math.abs(currentRotationY - this.firstHeadRotationY) > MOTION_EPSILON) {
                     this.animationMotionObserved = true;
                 }
+            }
+            if (this.animationMotionObserved && !this.animationLogged) {
+                System.out.println("[GECKOLIB_CLIENT_PROOF] animation_motion_observed=true");
+                this.animationLogged = true;
             }
 
             if (this.rendererInvoked
