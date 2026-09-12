@@ -4,6 +4,8 @@ import importlib.util
 import io
 import json
 import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -50,6 +52,17 @@ class ConstructionC10ValidatorCoverageTest(unittest.TestCase):
             result = module.main()
         self.assertEqual(0, result)
         self.assertEqual("CONSTRUCTION C10: PASS\n", stdout.getvalue())
+
+    def test_validator_cli_runs_from_repository_root(self):
+        result = subprocess.run(
+            [sys.executable, "construction/scripts/validate_c10.py"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual("CONSTRUCTION C10: PASS\n", result.stdout)
 
     def test_validator_reports_schema_and_secret_failures_without_secret_values(self):
         module = load_validator()
