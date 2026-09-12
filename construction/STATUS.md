@@ -1,7 +1,7 @@
 # STATUS — Construction
 
-UPDATED_AT=2026-09-11
-PHASE=C8_COMPLETE_POSTMERGE_VALIDATED
+UPDATED_AT=2026-09-12
+PHASE=C9_COMPLETE_POSTMERGE_VALIDATED
 REPOSITORY=Gustavaopere/minecraft-mod-factory
 BRANCH=main
 C0_PR=19
@@ -418,6 +418,55 @@ C8_POSTMERGE_C0_RUN=34657707565
 C8_POSTMERGE_GOVERNANCE_RUN=34657707397
 C8_IMPLEMENTATION_MAIN_SHA=76c2540bbaeed4e76c1d372400bbfadf89c3e3be
 C8_CLOSEOUT_BASE_MAIN_SHA=76c2540bbaeed4e76c1d372400bbfadf89c3e3be
+C9_PR=82
+C9_FINAL_PR_HEAD=4ec3de291075e59751c2b718574f4ea223d3e795
+C9_MERGE_SHA=78c0f306b3027a94087d3f92ac4d788d6b9edddb
+C9_INITIAL_POSTMERGE_C0_RUN=34673667949
+C9_INITIAL_POSTMERGE_C1A_RUN=34673667971
+C9_INITIAL_POSTMERGE_C1B_RUN=34673667879
+C9_INITIAL_POSTMERGE_C2_RUN=34673668085
+C9_INITIAL_POSTMERGE_C3_RUN=34673667921
+C9_INITIAL_POSTMERGE_C4_RUN=34673667996
+C9_INITIAL_POSTMERGE_C5_RUN=34673667958
+C9_INITIAL_POSTMERGE_C6_RUN=34673667953
+C9_INITIAL_POSTMERGE_C7_RUN=34673667910
+C9_INITIAL_POSTMERGE_C8_RUN=34673667969
+C9_INITIAL_POSTMERGE_C9_RUN=34673667930
+C9_INITIAL_POSTMERGE_GOVERNANCE_RUN=34673667963
+C9_INITIAL_POSTMERGE_SONAR_AUTOMATIC_CHECK=103500029919
+C9_INITIAL_POSTMERGE_SONAR_AUTOMATIC=FAILED_EXTERNAL_AUTOMATIC_ANALYSIS
+C9_SONAR_SCOPE_REMEDIATION_PR=83
+C9_SONAR_SCOPE_REMEDIATION_MERGE_SHA=fbd7354697eb4b4407585b6bb0a0fca64dde9369
+C9_SONAR_SCOPE_REMEDIATION_C9_RUN=34674722460
+C9_SONAR_CI_MIGRATION_PR=85
+C9_SONAR_CI_MIGRATION_MERGE_SHA=b16338e0d18f30e310a4bf8ca7a45bff991236b0
+C9_SONAR_CI_MIGRATION_POSTMERGE_C9_RUN=34688789025
+C9_SONAR_BASELINE_PR=87
+C9_SONAR_BASELINE_MERGE_SHA=2b955579b2e7a0151692b3153d6907634c2c98b4
+C9_FINAL_VALIDATED_MAIN_SHA=2b955579b2e7a0151692b3153d6907634c2c98b4
+C9_FINAL_C0_RUN=34689347229
+C9_FINAL_C1A_RUN=34689347330
+C9_FINAL_C1B_RUN=34689347164
+C9_FINAL_C2_RUN=34689347498
+C9_FINAL_C3_RUN=34689347438
+C9_FINAL_C4_RUN=34689347470
+C9_FINAL_C5_RUN=34689347461
+C9_FINAL_C6_RUN=34689347261
+C9_FINAL_C7_RUN=34689347472
+C9_FINAL_C8_RUN=34689347181
+C9_FINAL_C9_RUN=34689347192
+C9_FINAL_GOVERNANCE_RUN=34689347484
+C9_FINAL_FULL_SKILL_MIGRATION_RUN=34689347482
+C9_FINAL_SONAR_RUN=34689347171
+C9_FINAL_SONAR_INITIAL_JOB=103541763390_FAILURE_WHILE_ESTABLISHING_VERSION_BASELINE
+C9_FINAL_SONAR_RERUN_JOB=103579982652_SUCCESS
+C9_FINAL_SONAR_QUALITY_GATE=PASS
+C9_FINAL_SONAR_PROBE_JOB=103580383950
+C9_FINAL_SONAR_API=QUALITY_GATE_OK
+C9_FINAL_SONAR_NEW_LINES=11
+C9_FINAL_SONAR_NEW_LINES_TO_COVER=0
+C9_FINAL_SONAR_NEW_UNCOVERED_LINES=0
+C9_CLOSEOUT_BASE_MAIN_SHA=2b955579b2e7a0151692b3153d6907634c2c98b4
 HEAD_SHA=RESOLVE_FROM_GIT
 OPEN_CONSTRUCTION_IMPLEMENTATION_PR=NONE
 TARGET_MINECRAFT=1.21.1
@@ -427,7 +476,7 @@ CANONICAL_OUTPUT=SPONGE_SCHEMATIC_V3
 LATEST_MODLIST_SNAPSHOT=2026-09-09_595_TOP_LEVEL
 MANUAL_ACTION_REQUIRED=NO
 BLOCKERS=NONE_IN_CONSTRUCTION
-NEXT_ACTION=BEGIN_C9_AGENT_MCP
+NEXT_ACTION=BEGIN_C10_EXTERNAL_PROVIDERS
 
 ## C1A — Schematica preservation
 
@@ -905,3 +954,54 @@ The resulting `main` push fully revalidated C8. Run `34657707412` checked out ex
 - [ ] live runtime visual fidelity remains C12
 
 C8 is complete and post-merge validated. The next Construction slice is C9 — Agent/MCP.
+
+## C9 — Agent/MCP
+
+C9 adds the Factory-owned capability-limited MCP façade over the existing Construction authorities. It does not replace C2/C4/C5/C6/C7/C8, does not create a second build or asset authority, and does not expose arbitrary filesystem, network, process, shell, package-manager or runtime execution capabilities. The MCP surface is intentionally narrow: nine tools, zero prompts, one immutable SHA-256 artifact resource template, closed schemas and sanitized canonical errors.
+
+C9_SERVER=construction/mcp/server.py
+C9_FACADE=construction/mcp/facade.py
+C9_ARTIFACT_STORE=construction/mcp/artifacts.py
+C9_LOCK=construction/upstream/harness/c9-mcp-lock.txt
+C9_WORKFLOW=.github/workflows/factory-construction-c9-agent-mcp.yml
+C9_MCP_VERSION=2.2.0
+C9_SERVER_VERSION=c9-mcp-v1
+C9_TOOLS=registry_search_palette_resolve_build_canonicalize_build_validate_build_edit_qa_structural_preview_render_qa_visual_export_sponge_v3
+C9_PROMPTS=NONE
+C9_RESOURCE_TEMPLATE=construction://artifact/sha256/{digest}
+C9_RESOURCE_MIME=application/octet-stream
+C9_AUTHORITIES=C2_C4_C5_C6_C7_C8
+C9_BOUNDARY=NO_ARBITRARY_PATH_NETWORK_PROCESS_SHELL_PACKAGE_OR_RUNTIME_CAPABILITY
+
+The implementation passed the dedicated RED/GREEN sequence for artifact storage/errors, façade parity, server/protocol shape, real stdio transport, authority delegation and capability hardening. The final implementation PR #82 used head `4ec3de291075e59751c2b718574f4ea223d3e795` and merged as `78c0f306b3027a94087d3f92ac4d788d6b9edddb`. On that exact merge, C0 through C9, both C1 upstream gates and Governance all passed. The remaining blocker was the repository-global Sonar Automatic Analysis main-branch failure, not a C9 runtime or contract defect.
+
+The Sonar closure preserved quality policy instead of suppressing it. PR #83 reconciled immutable MineBench scope but proved that Automatic Analysis was still unsuitable for this multi-authority repository. After the required repository credential was configured and Automatic Analysis was disabled, PR #85 migrated the project to pinned CI-based Sonar analysis, explicitly classified tests, retained production scope and introduced no `sonar.coverage.exclusions`. PR #87 then established stable `sonar.projectVersion=ci-baseline-v1` for Sonar's `Previous version` new-code mode without lowering the 80% new-code coverage gate.
+
+Canonical final validation is `main@2b955579b2e7a0151692b3153d6907634c2c98b4`. On that exact SHA, standalone C0, C1A, C1B, C2, C3, C4, C5, C6, C7, C8, C9, Governance and Full Skill Migration all completed successfully. The first Sonar CI attempt registered the new version baseline and still evaluated the inherited historical period; a rerun on the exact same SHA, with no code/config change, completed successfully and reported `QUALITY GATE STATUS: PASSED`. Authenticated API probe job `103580383950` then independently confirmed `QUALITY_GATE_STATUS=OK`, all active New Code conditions green, 11 new lines, 0 new lines to cover and 0 uncovered new lines. No Quality Gate threshold was reduced and no production coverage exclusion was added.
+
+### C9 acceptance
+
+- [x] exact MCP server identity and version are fixed
+- [x] exactly nine Construction tools are exposed
+- [x] zero prompts and no arbitrary static-resource surface are exposed
+- [x] immutable SHA-256 artifact resource template uses `application/octet-stream`
+- [x] ArtifactStore limits are enforced without eviction
+- [x] closed Pydantic schemas include nested edit operations
+- [x] C9 errors are sanitized into canonical tool errors and unexpected failures become generic internal errors
+- [x] façade delegates to C2/C4/C5/C6/C7/C8 rather than reimplementing their authorities
+- [x] exact MCP 2.2.0 dependency set is hash-pinned and installed with `--require-hashes --no-deps`
+- [x] real stdio protocol tests pass
+- [x] capability hardening rejects arbitrary path/network/process/shell/package/runtime access
+- [x] aggregate C0 discovers C9 with the canonical hashed environment
+- [x] final implementation PR #82 passed C0-C9, C1A/C1B, Governance and Sonar PR analysis
+- [x] PR #82 merged with frozen head
+- [x] initial exact-main C0-C9, C1A/C1B and Governance post-merge validation passed
+- [x] repository-global Sonar blocker was remediated through CI analysis rather than weakened policy
+- [x] Automatic Analysis was disabled before CI analysis became authoritative
+- [x] test classification is explicit and no production coverage exclusion was introduced
+- [x] stable Sonar `ci-baseline-v1` is recorded for `Previous version` mode
+- [x] canonical `main@2b955579b2e7a0151692b3153d6907634c2c98b4` passes C0-C9, C1A/C1B, Governance and Full Skill Migration
+- [x] Sonar rerun on the same canonical SHA passes the Quality Gate
+- [x] authenticated Sonar API independently reports `QUALITY_GATE_STATUS=OK`
+
+C9 is complete and post-merge validated. The next Construction slice is C10 — External Providers.
