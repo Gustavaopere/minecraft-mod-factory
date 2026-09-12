@@ -1,0 +1,95 @@
+name: C9 C4 Validator Test Materializer V2
+
+on:
+  push:
+    branches:
+      - feat/construction-c9-agent-mcp
+
+permissions:
+  contents: write
+
+jobs:
+  materialize-tests:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/construction-c9-agent-mcp
+          fetch-depth: 0
+          submodules: recursive
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+
+      - name: Capture pre-refactor C7 report digest and add RED tests
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          import importlib.util
+
+          root = Path.cwd()
+          base_path = root / 'construction/tests/test_c7_architecture_qa.py'
+          spec = importlib.util.spec_from_file_location('c9_c7_baseline', base_path)
+          module = importlib.util.module_from_spec(spec)
+          assert spec.loader is not None
+          spec.loader.exec_module(module)
+          c7 = module.load_module()
+          build_spec = module.make_build_spec(loader='neoforge', allow_modded=True, require_walkability=True)
+          build_ir = module.make_ir(build_spec, [
+              module.placement(0, 0, 0, 'test:bricks', {'facing': 'north'}),
+              module.placement(1, 0, 0, 'test:bricks', {'facing': 'north'}),
+          ])
+          registry = module.matching_registry(build_ir)
+          report = c7.run_structural_qa(build_spec, build_ir, registry)
+          baseline_digest = hashlib.sha256(module.canonical_json_bytes(report)).hexdigest()
+          print('C7 baseline canonical report SHA-256:', baseline_digest)
+
+          c4_path = root / 'construction/tests/test_c4_modpack_registry.py'
+          text = c4_path.read_text(encoding='utf-8')
+          if 'import copy\n' not in text:
+              text = text.replace('import hashlib\n', 'import copy\nimport hashlib\n', 1)
+          marker = '    def test_schema_and_workflow_encode_c4_boundary(self):\n'
+          if marker not in text:
+              raise SystemExit('C4 insertion marker missing')
+          block = '''    def canonical_composed_registry(self):\n        registry = self.require_registry()\n        physical = self.physical_snapshot()\n        static_indexes = [{\n            "jar": "alpha-1.0.0.jar",\n            "sha256": "0" * 64,\n            "mod_ids": ["alpha"],\n            "blockstates": ["alpha:ghost", "alpha:machine"],\n            "block_models": [],\n            "block_textures": [],\n            "nested_jars": [],\n        }]\n        runtime = self.runtime_snapshot(physical["source_sha256"])\n        return registry, registry.build_modpack_registry(physical, static_indexes, runtime)\n\n    def rehash_composed_registry(self, registry, document):\n        payload = copy.deepcopy(document)\n        payload.pop("content_sha256", None)\n        document["content_sha256"] = hashlib.sha256(registry.canonical_json_bytes(payload)).hexdigest()\n\n    def test_public_validator_accepts_canonical_composed_registry(self):\n        registry, document = self.canonical_composed_registry()\n        self.assertEqual([], registry.validate_modpack_registry(document))\n\n    def test_public_validator_rejects_composed_contract_mutations(self):\n        registry, canonical = self.canonical_composed_registry()\n\n        def extra_top_level(document):\n            document["unexpected"] = True\n\n        def malformed_physical_sha(document):\n            document["physical"]["source_sha256"] = "bad"\n            document["runtime"]["physical_snapshot_sha256"] = "bad"\n\n        def runtime_link_mismatch(document):\n            document["runtime"]["physical_snapshot_sha256"] = "f" * 64\n\n        def runtime_target_mismatch(document):\n            document["runtime"]["target"]["minecraft"] = "1.21"\n\n        def runtime_loader_version_mismatch(document):\n            document["runtime"]["target"]["loader_version"] = "21.1.999"\n\n        def negative_static_counter(document):\n            document["static_index"]["jar_count"] = -1\n\n        def noncanonical_block_order(document):\n            document["blocks"] = list(reversed(document["blocks"]))\n\n        def duplicate_block_id(document):\n            document["blocks"].append(copy.deepcopy(document["blocks"][0]))\n\n        def invalid_block_id(document):\n            document["blocks"][0]["id"] = "INVALID"\n\n        def invalid_authority(document):\n            document["blocks"][1]["authority"] = "invented"\n\n        def runtime_confirmed_unavailable(document):\n            block = next(item for item in document["blocks"] if item["authority"] == "runtime_confirmed")\n            block["available"] = False\n\n        def static_only_available(document):\n            block = next(item for item in document["blocks"] if item["authority"] == "static_only_unconfirmed")\n            block["available"] = True\n\n        def static_only_has_states(document):\n            block = next(item for item in document["blocks"] if item["authority"] == "static_only_unconfirmed")\n            block["states"] = [{}]\n\n        def invalid_safety(document):\n            document["blocks"][0]["safety"] = "invented"\n\n        def empty_state_value(document):\n            block = next(item for item in document["blocks"] if len(item["states"]) > 1)\n            block["states"][0]["facing"] = ""\n\n        def duplicate_state(document):\n            block = next(item for item in document["blocks"] if len(item["states"]) > 1)\n            block["states"].append(copy.deepcopy(block["states"][0]))\n\n        def noncanonical_state_order(document):\n            block = next(item for item in document["blocks"] if len(item["states"]) > 1)\n            block["states"] = list(reversed(block["states"]))\n\n        mutations = {\n            "extra top-level field": extra_top_level,\n            "malformed physical SHA": malformed_physical_sha,\n            "runtime physical linkage": runtime_link_mismatch,\n            "runtime Minecraft target": runtime_target_mismatch,\n            "runtime loader version linkage": runtime_loader_version_mismatch,\n            "negative static counter": negative_static_counter,\n            "canonical block order": noncanonical_block_order,\n            "duplicate block id": duplicate_block_id,\n            "invalid block id": invalid_block_id,\n            "invalid authority": invalid_authority,\n            "runtime-confirmed availability": runtime_confirmed_unavailable,\n            "static-only availability": static_only_available,\n            "static-only states": static_only_has_states,\n            "invalid safety": invalid_safety,\n            "empty state value": empty_state_value,\n            "duplicate state": duplicate_state,\n            "canonical state order": noncanonical_state_order,\n        }\n        for label, mutate in mutations.items():\n            with self.subTest(label=label):\n                document = copy.deepcopy(canonical)\n                mutate(document)\n                self.rehash_composed_registry(registry, document)\n                errors = registry.validate_modpack_registry(document)\n                self.assertTrue(errors, f"mutation should fail closed: {label}")\n\n    def test_public_validator_rejects_content_hash_tampering(self):\n        registry, document = self.canonical_composed_registry()\n        document["content_sha256"] = "f" * 64\n        self.assertTrue(registry.validate_modpack_registry(document))\n\n'''
+          if 'test_public_validator_accepts_canonical_composed_registry' in text:
+              raise SystemExit('C4 RED tests already present')
+          text = text.replace(marker, block + marker, 1)
+          c4_path.write_text(text, encoding='utf-8')
+
+          c7_path = root / 'construction/tests/test_c7_registry_authority.py'
+          text = c7_path.read_text(encoding='utf-8')
+          marker = '    def test_c4_cross_authority_mismatches_fail_closed(self) -> None:\n'
+          if marker not in text:
+              raise SystemExit('C7 insertion marker missing')
+          block = f'''    def test_c4_public_validator_preserves_valid_report_bytes(self) -> None:\n        spec = BASE.make_build_spec(loader="neoforge", allow_modded=True, require_walkability=True)\n        ir = BASE.make_ir(\n            spec,\n            [\n                BASE.placement(0, 0, 0, "test:bricks", {{"facing": "north"}}),\n                BASE.placement(1, 0, 0, "test:bricks", {{"facing": "north"}}),\n            ],\n        )\n        registry = BASE.matching_registry(ir)\n        report = MODULE.run_structural_qa(spec, ir, registry)\n        digest = hashlib.sha256(BASE.canonical_json_bytes(report)).hexdigest()\n        self.assertEqual("{baseline_digest}", digest)\n\n'''
+          if 'test_c4_public_validator_preserves_valid_report_bytes' in text:
+              raise SystemExit('C7 parity test already present')
+          text = text.replace(marker, block + marker, 1)
+          c7_path.write_text(text, encoding='utf-8')
+
+          c9_path = root / 'construction/tests/test_c9_agent_mcp.py'
+          text = c9_path.read_text(encoding='utf-8')
+          if 'import importlib.util\n' not in text:
+              text = text.replace('import importlib.metadata\n', 'import importlib.metadata\nimport importlib.util\n', 1)
+          marker = '    def test_c9_modules_exist(self) -> None:\n'
+          if marker not in text:
+              raise SystemExit('C9 insertion marker missing')
+          block = '''    def test_c4_public_validator_parity(self) -> None:\n        path = ROOT / "construction" / "core" / "modpack_registry.py"\n        spec = importlib.util.spec_from_file_location("construction_c4_for_c9_contract", path)\n        self.assertIsNotNone(spec)\n        self.assertIsNotNone(spec.loader)\n        module = importlib.util.module_from_spec(spec)\n        spec.loader.exec_module(module)\n        self.assertTrue(callable(getattr(module, "validate_modpack_registry", None)))\n\n'''
+          if '    def test_c4_public_validator_parity(self)' in text:
+              raise SystemExit('C9 C4 parity test already present')
+          text = text.replace(marker, block + marker, 1)
+          c9_path.write_text(text, encoding='utf-8')
+          PY
+
+          rm .github/workflows/c9-c4-validator-test-materializer.yml
+          rm .github/workflows/c9-c4-validator-test-materializer-v2.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add construction/tests/test_c4_modpack_registry.py construction/tests/test_c7_registry_authority.py construction/tests/test_c9_agent_mcp.py .github/workflows/c9-c4-validator-test-materializer.yml .github/workflows/c9-c4-validator-test-materializer-v2.yml
+          git diff --cached --check
+          git commit -m "test(construction): define C4 validator parity for C9"
+          git push origin HEAD:feat/construction-c9-agent-mcp
