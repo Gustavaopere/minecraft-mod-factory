@@ -24,6 +24,8 @@ C9 must preserve the existing Construction authorities:
 - The physical modlist and Engineering I2 remain authoritative for physical mod presence/version.
 - `construction/upstream/registry.json` keeps `minecraft-builder-mcp` as an `ENGINE_REFERENCE`; C9 may study it but does not promote it to Factory runtime authority.
 
+C4 currently produces the composed registry but does not expose a public validator for an already-composed registry document. C7 contains stricter private validation of that C4 document. C9 must not duplicate that private logic. Therefore C9 includes a prerequisite authority hardening: C4 gains a public `validate_modpack_registry(...)` contract for the existing composed-registry format, and C7 is refactored to consume that C4 validator while preserving byte-for-byte report behavior for valid inputs and equivalent rejection behavior for invalid registry evidence. This is an authority/API consolidation, not a new registry format or semantic rule.
+
 The official MCP Python SDK is the implementation dependency. The implementation baseline is `mcp==2.2.0`, verified against the official `modelcontextprotocol/python-sdk` stable GitHub release published 2026-09-07. C9 uses the SDK v2 line and MCP revision support supplied by that exact release. The implementation must pin the exact package and all required transitive packages with hashes in a C9-specific hash-pinned additions lock. Existing C0-C8 dependency locks must not be widened merely to support C9.
 
 ## 3. Scope
@@ -35,9 +37,10 @@ C9 owns:
 3. a thin Factory-owned façade over C2-C8 authorities;
 4. a process-scoped, in-memory, content-addressed artifact store for binary/large outputs;
 5. MCP resource reads for artifacts produced by the current process;
-6. deterministic bounded Build IR edits as the only new domain behavior introduced by C9;
-7. normalized fail-closed tool errors that preserve the underlying authority result;
-8. direct and real stdio integration tests proving parity with C2-C8.
+6. deterministic bounded Build IR edits as the only new Construction-domain behavior introduced by C9;
+7. the C4 public-validator consolidation required to consume C4 safely without copying its authority into C9;
+8. normalized fail-closed tool errors that preserve the underlying authority result;
+9. direct and real stdio integration tests proving parity with C2-C8.
 
 ## 4. Explicit non-goals
 
@@ -78,7 +81,7 @@ Construction C9 MCP Server
       |
       +--> C9 facade
       |      +--> C2 Build IR
-      |      +--> C4 registry evidence
+      |      +--> C4 registry evidence + public validator
       |      +--> C5 palette resolver
       |      +--> C6 Sponge v3
       |      +--> C7 structural QA
@@ -103,7 +106,7 @@ The package is split by responsibility:
 - `artifacts.py`: in-memory content-addressed artifact store;
 - `errors.py`: normalized internal error type and MCP error conversion.
 
-No C2-C8 module may import `construction/mcp/`; dependency direction is one-way from C9 into established Construction authorities.
+No C2-C8 module may import `construction/mcp/`; dependency direction is one-way from C9 into established Construction authorities. The C4 validator consolidation stays in C4, and C7 consumes C4 directly rather than importing C9.
 
 The C9 server semantic version constant is `c9-mcp-v1`. It is independent from the MCP SDK package version and appears in server metadata, bounded-edit producer metadata and tests.
 
@@ -119,7 +122,7 @@ The only supported C9 transport is stdio.
 - The only mutable process state is the artifact store.
 - Tool behavior does not depend on wall-clock time, random values, machine paths, environment-specific identifiers or network state.
 
-A C9 process is single logical artifact namespace. Concurrent requests may be served only if the implementation preserves deterministic artifact insertion and immutable resource reads.
+A C9 process is one logical artifact namespace. Concurrent requests may be served only if the implementation preserves deterministic artifact insertion and immutable resource reads.
 
 ## 8. Exact MCP tool catalog
 
@@ -154,7 +157,7 @@ Input:
 
 Behavior:
 
-- validate the complete C4 registry using the C4 contract before search;
+- call C4 `validate_modpack_registry` and reject any returned validation errors before search;
 - no fuzzy search, embeddings, semantic ranking or inferred tags;
 - filters are conjunctive;
 - results sort by canonical block ID ascending;
@@ -256,7 +259,7 @@ Input:
 - `build_ir`;
 - optional `registry`.
 
-Behavior: call C7 `run_structural_qa` directly.
+Behavior: call C7 `run_structural_qa` directly. When a registry is supplied, C7 reaches C4 validation through the consolidated public C4 validator.
 
 Output: exact C7 report. `DEFERRED` remains `DEFERRED`; C9 cannot promote unresolved structural evidence.
 
@@ -271,17 +274,39 @@ Behavior:
 1. call C8 `render_canonical_views`;
 2. require exactly the seven canonical view IDs and canonical order;
 3. store each SVG byte sequence in ArtifactStore;
-4. create a canonical JSON preview-bundle manifest containing renderer version, Build IR SHA-256 and the seven artifact descriptors;
-5. store that manifest as an ArtifactStore resource.
+4. create the preview-bundle manifest shown below;
+5. encode the manifest as UTF-8 canonical JSON using `sort_keys=True`, compact separators, `ensure_ascii=False` and exactly one final newline;
+6. store those exact manifest bytes as an ArtifactStore resource.
 
-Output:
+Preview bundle manifest fields are exactly:
+
+```json
+{
+  "schema_version": 1,
+  "renderer_version": "c8-svg-v1",
+  "build_ir_sha256": "<64 lowercase hex>",
+  "views": [
+    {
+      "id": "front",
+      "uri": "construction://artifact/sha256/<64 lowercase hex>",
+      "media_type": "image/svg+xml",
+      "sha256": "<64 lowercase hex>",
+      "byte_length": 123
+    }
+  ]
+}
+```
+
+The `views` array contains all seven C8 IDs in canonical C8 order: `front`, `back`, `left`, `right`, `top`, `isometric`, `layers`.
+
+Tool output contains:
 
 - `renderer_version`;
 - `build_ir_sha256`;
 - `bundle_uri`;
-- seven ordered view descriptors containing `id`, `uri`, `media_type`, `sha256`, `byte_length`.
+- the same seven ordered view descriptors.
 
-The SVG bytes are read through MCP resources using the returned URI.
+The SVG and manifest bytes are read through MCP resources using returned URIs.
 
 ### 8.8 `qa_visual`
 
@@ -299,7 +324,9 @@ Input:
 Behavior:
 
 - `preview_bundle_uri` must resolve to a C9-created preview manifest currently present in ArtifactStore;
+- manifest bytes must parse as the exact closed preview-bundle schema above;
 - the manifest must reference exactly seven current C9 artifacts in canonical view order;
+- every descriptor SHA-256 and byte length must match the currently stored bytes;
 - manifest Build IR SHA-256 must equal the current Build IR fingerprint;
 - retrieve exact SVG bytes from ArtifactStore;
 - call C8 `run_visual_qa` with those bytes and supplied optional provenance/review documents.
@@ -324,9 +351,31 @@ Behavior:
 3. fail closed if the validator returns any error;
 4. store the exact `.schem` bytes in ArtifactStore.
 
-Output contains `uri`, media type `application/x-sponge-schematic`, SHA-256 and byte length.
+Output contains `uri`, `artifact_kind: "sponge_v3"`, media type `application/octet-stream`, SHA-256 and byte length. C9 does not claim a registered Sponge-specific Internet media type.
 
-## 9. ArtifactStore contract
+## 9. C4 public-validator consolidation
+
+C9 implementation adds `validate_modpack_registry(registry) -> list[str]` to `construction/core/modpack_registry.py`.
+
+The validator covers the existing C4 composed-document contract only:
+
+- exact top-level fields;
+- schema version;
+- physical evidence fields and types;
+- runtime evidence fields and exact physical snapshot SHA linkage;
+- Minecraft `1.21.1` / loader `neoforge` target and loader-version linkage;
+- static-index counters;
+- composed block record fields;
+- unique valid block IDs;
+- availability/authority consistency;
+- valid C4 safety class;
+- state array/property shape and deterministic state uniqueness;
+- canonical block ordering;
+- `content_sha256` equality with C4 canonical JSON bytes excluding the fingerprint field itself.
+
+Valid documents currently accepted by C7 must remain accepted. Invalid registry cases currently rejected by C7 must remain rejected after C7 delegates to C4. C7 report bytes/hashes for all existing valid fixtures must remain unchanged. C9 must not introduce a C4 schema version bump.
+
+## 10. ArtifactStore contract
 
 ArtifactStore is process-scoped and immutable.
 
@@ -355,7 +404,7 @@ C9 v1 limits:
 
 MCP resource reads accept only exact ArtifactStore URIs. No file path, `file://`, HTTP(S), relative path or caller-selected URI is resolved. Resource listing, when requested, returns current artifact descriptors sorted by URI and never reads the filesystem.
 
-## 10. Error contract
+## 11. Error contract
 
 C9 normalizes errors at the MCP boundary but does not reinterpret authority semantics.
 
@@ -376,7 +425,7 @@ Error payload fields are exactly:
 
 C9 errors never include Python tracebacks, local absolute paths, environment variables, credentials or arbitrary exception representations. Unexpected exceptions are logged only to stderr in a sanitized form and surface to the MCP caller as `INTERNAL_ERROR`.
 
-## 11. Determinism
+## 12. Determinism
 
 C9 must preserve the deterministic properties of its authorities.
 
@@ -385,11 +434,12 @@ C9 must preserve the deterministic properties of its authorities.
 - `build_canonicalize` and `build_edit` delegate canonical ordering/fingerprints to C2.
 - C7/C8 reports remain their authority outputs.
 - C8 SVG bytes remain byte-identical for identical Build IR.
+- Preview bundle manifest bytes follow one fixed canonical JSON encoding.
 - C6 `.schem` bytes remain byte-identical for identical valid input and canonical `required_mods` order.
 - Artifact URIs derive only from exact artifact bytes.
 - No timestamp, random UUID, machine path or process identifier appears in tool result identity.
 
-## 12. Security boundary
+## 13. Security boundary
 
 C9 is intentionally capability-limited.
 
@@ -401,7 +451,7 @@ The stdio server may write protocol traffic to stdout only as required by the SD
 
 Tests may spawn the server subprocess to exercise the real stdio transport; this test harness behavior is not a server capability.
 
-## 13. C9 dependency policy
+## 14. C9 dependency policy
 
 C9 must not mutate the existing `construction/upstream/harness/schematica-test-lock.txt` solely to add MCP.
 
@@ -409,30 +459,32 @@ Implementation creates a dedicated hash-pinned MCP additions lock under `constru
 
 Before freezing that delta lock, implementation must test it together with the existing Schematica lock and resolve any version conflict explicitly. C9 CI installs the established lock first and the C9 additions lock second; dependency resolution is never left to an unpinned online solve.
 
-## 14. Test architecture
+## 15. Test architecture
 
 C9 is implemented TDD-first.
 
-### 14.1 Contract/unit tests
+### 15.1 Contract/unit tests
 
 Tests must prove:
 
 - exact nine-tool catalog and no extra tools;
 - closed schemas reject unknown fields;
-- `registry_search` validates C4 and sorts/filter deterministically;
+- C4 public validator accepts existing valid C4 fixtures and preserves C7 behavior;
+- `registry_search` validates C4 and sorts/filters deterministically;
 - `palette_resolve` equals direct C5 output;
 - `build_canonicalize` equals direct C2 canonicalization with C9 producer metadata;
 - `build_validate` mirrors ordered C2 errors exactly;
 - `build_edit` add/replace/remove behavior, duplicate-touch rejection, absent-remove rejection, out-of-bounds rejection and BuildSpec fingerprint linkage;
 - `qa_structural` equals direct C7 output;
 - `preview_render` bytes equal direct C8 renderer output and ArtifactStore hashes;
+- preview-bundle bytes and URI are deterministic;
 - `qa_visual` equals direct C8 output and rejects forged/stale/wrong-Build-IR bundles;
 - `export_sponge_v3` bytes equal direct C6 output and pass C6 validation;
 - ArtifactStore deduplication and all capacity limits;
 - stable sanitized error codes;
 - no arbitrary filesystem/network/shell tool surface.
 
-### 14.2 Real MCP stdio integration
+### 15.2 Real MCP stdio integration
 
 A test client using the same pinned official MCP SDK must start the actual C9 server over stdio and prove:
 
@@ -443,7 +495,7 @@ A test client using the same pinned official MCP SDK must start the actual C9 se
 - malformed tool input fails at the MCP boundary;
 - the server terminates cleanly when stdio closes.
 
-### 14.3 Golden acceptance
+### 15.3 Golden acceptance
 
 The existing C3/C8 vanilla pavilion is reused; C9 does not create a new architectural Golden.
 
@@ -451,13 +503,13 @@ The C9 Golden acceptance path is:
 
 1. `build_validate` accepts the checked-in C3 expected Build IR;
 2. `preview_render` reproduces the seven checked-in C8 SVG bytes/hashes;
-3. `qa_visual`, supplied with the checked-in BuildSpec, C7/C5 context when required by the fixture, and checked-in C8 review evidence, reproduces the expected C8 report;
+3. `qa_visual`, supplied with the checked-in BuildSpec, checked-in C8 review evidence and any matching checked-in C7/C5 context used by the existing C8 fixture, reproduces the expected C8 report;
 4. `export_sponge_v3` produces a C6-valid deterministic schematic from the same Build IR;
 5. resource reads reproduce exact generated bytes.
 
 `build_canonicalize` parity is tested separately against a direct C2 call using the same C9 producer metadata, because producer metadata is part of the C2 fingerprint and therefore is intentionally different from the historical C3 producer metadata.
 
-## 15. CI gate
+## 16. CI gate
 
 Implementation adds `.github/workflows/factory-construction-c9-agent-mcp.yml` using the repository's existing pinned Actions identities, Python 3.11 and Java 21 where inherited runtime-registry regression requires it.
 
@@ -466,21 +518,22 @@ The workflow must run, in this order:
 1. install existing hash-pinned Construction environment;
 2. install the C9 hash-pinned MCP additions;
 3. Engineering I2 regression;
-4. C9 contract/unit tests;
-5. C9 real stdio integration tests;
-6. C8 regression;
-7. C7 regression;
-8. C6 regression;
-9. C5 regression;
-10. C4 regression plus materialized NeoForge runtime probe build;
-11. C3 regression;
-12. C2 regression;
-13. C0 regression + validator;
-14. `git diff --check` over C9 and documentation paths.
+4. C4 public-validator/C7 parity tests required by the consolidation;
+5. C9 contract/unit tests;
+6. C9 real stdio integration tests;
+7. C8 regression;
+8. C7 regression;
+9. C6 regression;
+10. C5 regression;
+11. C4 regression plus materialized NeoForge runtime probe build;
+12. C3 regression;
+13. C2 regression;
+14. C0 regression + validator;
+15. `git diff --check` over C9 and documentation paths.
 
 C1A/C1B and Governance remain independent repository workflows and must also be green in PR and post-merge validation when triggered.
 
-## 16. Documentation and status policy
+## 17. Documentation and status policy
 
 The implementation PR updates `construction/README.md` and `construction/docs/ARCHITECTURE.md` only after the C9 implementation is green, documenting the exact supported tool/resource boundary and non-goals.
 
@@ -491,7 +544,7 @@ The implementation PR updates `construction/README.md` and `construction/docs/AR
 3. post-merge C9 and inherited gates are green on the exact merge SHA;
 4. a separate status-only closeout PR records the evidence and advances `NEXT_ACTION` to C10.
 
-## 17. C9/C10/C12/C13 boundaries
+## 18. C9/C10/C12/C13 boundaries
 
 ### C10 External Providers
 
@@ -505,7 +558,7 @@ C12 owns full-modpack boot, live-world placement, worldgen compatibility and run
 
 C13 owns natural-language routing/orchestration and decides how an agent turns a user brief into a sequence of C9 operations. C9 deliberately contains no free-form planner or prompt-to-build tool.
 
-## 18. Acceptance criteria
+## 19. Acceptance criteria
 
 C9 is acceptable only when all of the following are proven:
 
@@ -514,6 +567,7 @@ C9 is acceptable only when all of the following are proven:
 - exact nine-tool catalog is exposed;
 - no arbitrary shell, filesystem, code-execution, network or provider capability is exposed;
 - all tool schemas are closed and fail closed;
+- C4 composed-registry validation has one public authority consumed by C9 and C7 without C7 valid-fixture/report drift;
 - direct façade results are equivalent to their C2-C8 authorities;
 - bounded edits always return a C2-valid, re-fingerprinted Build IR;
 - ArtifactStore resources are immutable, content-addressed and process-scoped;
