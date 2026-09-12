@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+env:
+  EVIDENCE_B64: QzlfUFI9ODIKQzlfRklOQUxfUFJfSEVBRD00ZWMzZGUyOTEwNzVlNTk3NTFjMmI3MTg1NzRmNGVhMjIzZDNlNzk1CkM5X01FUkdFX1NIQT03OGMwZjMwNmIzMDI3YTk0MDg3ZDNmOTJhYzRkNzg4ZDZiOWVkZGRiCkM5X0lOSVRJQUxfUE9TVE1FUkdFX0MwX1JVTj0zNDY3MzY2Nzk0OQpDOV9JTklUSUFMX1BPU1RNRVJHRV9DMUFfUlVOPTM0NjczNjY3OTcxCkM5X0lOSVRJQUxfUE9TVE1FUkdFX0MxQl9SVU49MzQ2NzM2Njc4NzkKQzlfSU5JVElBTF9QT1NUTUVSR0VfQzJfUlVOPTM0NjczNjY4MDg1CkM5X0lOSVRJQUxfUE9TVE1FUkdFX0MzX1JVTj0zNDY3MzY2NzkyMQpDOV9JTklUSUFMX1BPU1RNRVJHRV9DNF9SVU49MzQ2NzM2Njc5OTYKQzlfSU5JVElBTF9QT1NUTUVSR0VfQzVfUlVOPTM0NjczNjY3OTU4CkM5X0lOSVRJQUxfUE9TVE1FUkdFX0M2X1JVTj0zNDY3MzY2Nzk1MwpDOV9JTklUSUFMX1BPU1RNRVJHRV9DN19SVU49MzQ2NzM2Njc5MTAKQzlfSU5JVElBTF9QT1NUTUVSR0VfQzhfUlVOPTM0NjczNjY3OTY5CkM5X0lOSVRJQUxfUE9TVE1FUkdFX0M5X1JVTj0zNDY3MzY2NzkzMApDOV9JTklUSUFMX1BPU1RNRVJHRV9HT1ZFUk5BTkNFX1JVTj0zNDY3MzY2Nzk2MwpDOV9JTklUSUFMX1BPU1RNRVJHRV9TT05BUl9BVVRPTUFUSUNfQ0hFQ0s9MTAzNTAwMDI5OTE5CkM5X0lOSVRJQUxfUE9TVE1FUkdFX1NPTkFSX0FVVE9NQVRJQz1GQUlMRURfRVhURVJOQUxfQVVUT01BVElDX0FOQUxZU0lTCkM5X1NPTkFSX1NDT1BFX1JFTUVESUFUSU9OX1BSPTgzCkM5X1NPTkFSX1NDT1BFX1JFTUVESUFUSU9OX01FUkdFX1NIQT1mYmQ3MzU0Njk3ZWI0YjQ0MDc1ODViNmJiMGEwZmNhNjRkZGU5MzY5CkM5X1NPTkFSX1NDT1BFX1JFTUVESUFUSU9OX0M5X1JVTj0zNDY3NDcyMjQ2MApDOV9TT05BUl9DSV9NSUdSQVRJT05fUFI9ODUKQzlfU09OQVJfQ0lfTUlHUkFUSU9OX01FUkdFX1NIQT1iMTYzMzhlMGQxOGYzMGUzMTBhNGJmOGNhN2E0NWJmZjk5MTIzNmIwCkM5X1NPTkFSX0NJX01JR1JBVElPTl9QT1NUTUVSR0VfQzlfUlVOPTM0Njg4Nzg5MDI1CkM5X1NPTkFSX0JBU0VMSU5FX1BSPTg3CkM5X1NPTkFSX0JBU0VMSU5FX01FUkdFX1NIQT0yYjk1NTU3OWIyZTdhMDE1MTY5MmIzMTUzZDY5MDc2MzRjMmM5OGI0CkM5X0ZJTkFMX1ZBTElEQVRFRF9NQUlOX1NIQT0yYjk1NTU3OWIyZTdhMDE1MTY5MmIzMTUzZDY5MDc2MzRjMmM5OGI0CkM5X0ZJTkFMX0MwX1JVTj0zNDY4OTM0NzIyOQpDOV9GSU5BTF9DMUFfUlVOPTM0Njg5MzQ3MzMwCkM5X0ZJTkFMX0MxQl9SVU49MzQ2ODkzNDcxNjQKQzlfRklOQUxfQzJfUlVOPTM0Njg5MzQ3NDk4CkM5X0ZJTkFMX0MzX1JVTj0zNDY4OTM0NzQzOApDOV9GSU5BTF9DNF9SVU49MzQ2ODkzNDc0NzAKQzlfRklOQUxfQzVfUlVOPTM0Njg5MzQ3NDYxCkM5X0ZJTkFMX0M2X1JVTj0zNDY4OTM0NzI2MQpDOV9GSU5BTF9DN19SVU49MzQ2ODkzNDc0NzIKQzlfRklOQUxfQzhfUlVOPTM0Njg5MzQ3MTgxCkM5X0ZJTkFMX0M5X1JVTj0zNDY4OTM0NzE5MgpDOV9GSU5BTF9HT1ZFUk5BTkNFX1JVTj0zNDY4OTM0NzQ4NApDOV9GSU5BTF9GVUxMX1NLSUxMX01JR1JBVElPTl9SVU49MzQ2ODkzNDc0ODIKQzlfRklOQUxfU09OQVJfUlVOPTM0Njg5MzQ3MTcxCkM5X0ZJTkFMX1NPTkFSX0lOSVRJQUxfSk9CPTEwMzU0MTc2MzM5MF9GQUlMVVJFX1dISUxFX0VTVEFCTElTSElOR19WRVJTSU9OX0JBU0VMSU5FCkM5X0ZJTkFMX1NPTkFSX1JFUlVOX0pPQj0xMDM1Nzk5ODI2NTJfU1VDQ0VTUwpDOV9GSU5BTF9TT05BUl9RVUFMSVRZX0dBVEU9UEFTUwpDOV9GSU5BTF9TT05BUl9QUk9CRV9KT0I9MTAzNTgwMzgzOTUwCkM5X0ZJTkFMX1NPTkFSX0FQST1RVUFMSVRZX0dBVEVfT0sKQzlfRklOQUxfU09OQVJfTkVXX0xJTkVTPTExCkM5X0ZJTkFMX1NPTkFSX05FV19MSU5FU19UT19DT1ZFUj0wCkM5X0ZJTkFMX1NPTkFSX05FV19VTkNPVkVSRURfTElORVM9MApDOV9DTE9TRU9VVF9CQVNFX01BSU5fU0hBPTJiOTU1NTc5YjJlN2EwMTUxNjkyYjMxNTNkNjkwNzYzNGMyYzk4YjQK
+  SECTION_B64: IyMgQzkg4oCUIEFnZW50L01DUAoKQzkgYWRkcyB0aGUgRmFjdG9yeS1vd25lZCBjYXBhYmlsaXR5LWxpbWl0ZWQgTUNQIGZhw6dhZGUgb3ZlciB0aGUgZXhpc3RpbmcgQ29uc3RydWN0aW9uIGF1dGhvcml0aWVzLiBJdCBkb2VzIG5vdCByZXBsYWNlIEMyL0M0L0M1L0M2L0M3L0M4LCBkb2VzIG5vdCBjcmVhdGUgYSBzZWNvbmQgYnVpbGQgb3IgYXNzZXQgYXV0aG9yaXR5LCBhbmQgZG9lcyBub3QgZXhwb3NlIGFyYml0cmFyeSBmaWxlc3lzdGVtLCBuZXR3b3JrLCBwcm9jZXNzLCBzaGVsbCwgcGFja2FnZS1tYW5hZ2VyIG9yIHJ1bnRpbWUgZXhlY3V0aW9uIGNhcGFiaWxpdGllcy4gVGhlIE1DUCBzdXJmYWNlIGlzIGludGVudGlvbmFsbHkgbmFycm93OiBuaW5lIHRvb2xzLCB6ZXJvIHByb21wdHMsIG9uZSBpbW11dGFibGUgU0hBLTI1NiBhcnRpZmFjdCByZXNvdXJjZSB0ZW1wbGF0ZSwgY2xvc2VkIHNjaGVtYXMgYW5kIHNhbml0aXplZCBjYW5vbmljYWwgZXJyb3JzLgoKQzlfU0VSVkVSPWNvbnN0cnVjdGlvbi9tY3Avc2VydmVyLnB5CkM5X0ZBQ0FERT1jb25zdHJ1Y3Rpb24vbWNwL2ZhY2FkZS5weQpDOV9BUlRJRkFDVF9TVE9SRT1jb25zdHJ1Y3Rpb24vbWNwL2FydGlmYWN0cy5weQpDOV9MT0NLPWNvbnN0cnVjdGlvbi91cHN0cmVhbS9oYXJuZXNzL2M5LW1jcC1sb2NrLnR4dApDOV9XT1JLRkxPVz0uZ2l0aHViL3dvcmtmbG93cy9mYWN0b3J5LWNvbnN0cnVjdGlvbi1jOS1hZ2VudC1tY3AueW1sCkM5X01DUF9WRVJTSU9OPTIuMi4wCkM5X1NFUlZFUl9WRVJTSU9OPWM5LW1jcC12MQpDOV9UT09MUz1yZWdpc3RyeV9zZWFyY2hfcGFsZXR0ZV9yZXNvbHZlX2J1aWxkX2Nhbm9uaWNhbGl6ZV9idWlsZF92YWxpZGF0ZV9idWlsZF9lZGl0X3FhX3N0cnVjdHVyYWxfcHJldmlld19yZW5kZXJfcWFfdmlzdWFsX2V4cG9ydF9zcG9uZ2VfdjMKQzlfUFJPTVBUUz1OT05FCkM5X1JFU09VUkNFX1RFTVBMQVRFPWNvbnN0cnVjdGlvbjovL2FydGlmYWN0L3NoYTI1Ni97ZGlnZXN0fQpDOV9SRVNPVVJDRV9NSU1FPWFwcGxpY2F0aW9uL29jdGV0LXN0cmVhbQpDOV9BVVRIT1JJVElFUz1DMl9DNF9DNV9DNl9DN19DOApDOV9CT1VOREFSWT1OT19BUkJJVFJBUllfUEFUSF9ORVRXT1JLX1BST0NFU1NfU0hFTExfUEFDS0FHRV9PUl9SVU5USU1FX0NBUEFCSUxJVFkKClRoZSBpbXBsZW1lbnRhdGlvbiBwYXNzZWQgdGhlIGRlZGljYXRlZCBSRUQvR1JFRU4gc2VxdWVuY2UgZm9yIGFydGlmYWN0IHN0b3JhZ2UvZXJyb3JzLCBmYcOnYWRlIHBhcml0eSwgc2VydmVyL3Byb3RvY29sIHNoYXBlLCByZWFsIHN0ZGlvIHRyYW5zcG9ydCwgYXV0aG9yaXR5IGRlbGVnYXRpb24gYW5kIGNhcGFiaWxpdHkgaGFyZGVuaW5nLiBUaGUgZmluYWwgaW1wbGVtZW50YXRpb24gUFIgIzgyIHVzZWQgaGVhZCBgNGVjM2RlMjkxMDc1ZTU5NzUxYzJiNzE4NTc0ZjRlYTIyM2QzZTc5NWAgYW5kIG1lcmdlZCBhcyBgNzhjMGYzMDZiMzAyN2E5NDA4N2QzZjkyYWM0ZDc4OGQ2YjllZGRkYmAuIE9uIHRoYXQgZXhhY3QgbWVyZ2UsIEMwIHRocm91Z2ggQzksIGJvdGggQzEgdXBzdHJlYW0gZ2F0ZXMgYW5kIEdvdmVybmFuY2UgYWxsIHBhc3NlZC4gVGhlIHJlbWFpbmluZyBibG9ja2VyIHdhcyB0aGUgcmVwb3NpdG9yeS1nbG9iYWwgU29uYXIgQXV0b21hdGljIEFuYWx5c2lzIG1haW4tYnJhbmNoIGZhaWx1cmUsIG5vdCBhIEM5IHJ1bnRpbWUgb3IgY29udHJhY3QgZGVmZWN0LgoKVGhlIFNvbmFyIGNsb3N1cmUgcHJlc2VydmVkIHF1YWxpdHkgcG9saWN5IGluc3RlYWQgb2Ygc3VwcHJlc3NpbmcgaXQuIFBSICM4MyByZWNvbmNpbGVkIGltbXV0YWJsZSBNaW5lQmVuY2ggc2NvcGUgYnV0IHByb3ZlZCB0aGF0IEF1dG9tYXRpYyBBbmFseXNpcyB3YXMgc3RpbGwgdW5zdWl0YWJsZSBmb3IgdGhpcyBtdWx0aS1hdXRob3JpdHkgcmVwb3NpdG9yeS4gQWZ0ZXIgdGhlIHJlcXVpcmVkIHJlcG9zaXRvcnkgY3JlZGVudGlhbCB3YXMgY29uZmlndXJlZCBhbmQgQXV0b21hdGljIEFuYWx5c2lzIHdhcyBkaXNhYmxlZCwgUFIgIzg1IG1pZ3JhdGVkIHRoZSBwcm9qZWN0IHRvIHBpbm5lZCBDSS1iYXNlZCBTb25hciBhbmFseXNpcywgZXhwbGljaXRseSBjbGFzc2lmaWVkIHRlc3RzLCByZXRhaW5lZCBwcm9kdWN0aW9uIHNjb3BlIGFuZCBpbnRyb2R1Y2VkIG5vIGBzb25hci5jb3ZlcmFnZS5leGNsdXNpb25zYC4gUFIgIzg3IHRoZW4gZXN0YWJsaXNoZWQgc3RhYmxlIGBzb25hci5wcm9qZWN0VmVyc2lvbj1jaS1iYXNlbGluZS12MWAgZm9yIFNvbmFyJ3MgYFByZXZpb3VzIHZlcnNpb25gIG5ldy1jb2RlIG1vZGUgd2l0aG91dCBsb3dlcmluZyB0aGUgODAlIG5ldy1jb2RlIGNvdmVyYWdlIGdhdGUuCgpDYW5vbmljYWwgZmluYWwgdmFsaWRhdGlvbiBpcyBgbWFpbkAyYjk1NTU3OWIyZTdhMDE1MTY5MmIzMTUzZDY5MDc2MzRjMmM5OGI0YC4gT24gdGhhdCBleGFjdCBTSEEsIHN0YW5kYWxvbmUgQzAsIEMxQSwgQzFCLCBDMiwgQzMsIEM0LCBDNSwgQzYsIEM3LCBDOCwgQzksIEdvdmVybmFuY2UgYW5kIEZ1bGwgU2tpbGwgTWlncmF0aW9uIGFsbCBjb21wbGV0ZWQgc3VjY2Vzc2Z1bGx5LiBUaGUgZmlyc3QgU29uYXIgQ0kgYXR0ZW1wdCByZWdpc3RlcmVkIHRoZSBuZXcgdmVyc2lvbiBiYXNlbGluZSBhbmQgc3RpbGwgZXZhbHVhdGVkIHRoZSBpbmhlcml0ZWQgaGlzdG9yaWNhbCBwZXJpb2Q7IGEgcmVydW4gb24gdGhlIGV4YWN0IHNhbWUgU0hBLCB3aXRoIG5vIGNvZGUvY29uZmlnIGNoYW5nZSwgY29tcGxldGVkIHN1Y2Nlc3NmdWxseSBhbmQgcmVwb3J0ZWQgYFFVQUxJVFkgR0FURSBTVEFUVVM6IFBBU1NFRGAuIEF1dGhlbnRpY2F0ZWQgQVBJIHByb2JlIGpvYiBgMTAzNTgwMzgzOTUwYCB0aGVuIGluZGVwZW5kZW50bHkgY29uZmlybWVkIGBRVUFMSVRZX0dBVEVfU1RBVFVTPU9LYCwgYWxsIGFjdGl2ZSBOZXcgQ29kZSBjb25kaXRpb25zIGdyZWVuLCAxMSBuZXcgbGluZXMsIDAgbmV3IGxpbmVzIHRvIGNvdmVyIGFuZCAwIHVuY292ZXJlZCBuZXcgbGluZXMuIE5vIFF1YWxpdHkgR2F0ZSB0aHJlc2hvbGQgd2FzIHJlZHVjZWQgYW5kIG5vIHByb2R1Y3Rpb24gY292ZXJhZ2UgZXhjbHVzaW9uIHdhcyBhZGRlZC4KCiMjIyBDOSBhY2NlcHRhbmNlCgotIFt4XSBleGFjdCBNQ1Agc2VydmVyIGlkZW50aXR5IGFuZCB2ZXJzaW9uIGFyZSBmaXhlZAotIFt4XSBleGFjdGx5IG5pbmUgQ29uc3RydWN0aW9uIHRvb2xzIGFyZSBleHBvc2VkCi0gW3hdIHplcm8gcHJvbXB0cyBhbmQgbm8gYXJiaXRyYXJ5IHN0YXRpYy1yZXNvdXJjZSBzdXJmYWNlIGFyZSBleHBvc2VkCi0gW3hdIGltbXV0YWJsZSBTSEEtMjU2IGFydGlmYWN0IHJlc291cmNlIHRlbXBsYXRlIHVzZXMgYGFwcGxpY2F0aW9uL29jdGV0LXN0cmVhbWAKLSBbeF0gQXJ0aWZhY3RTdG9yZSBsaW1pdHMgYXJlIGVuZm9yY2VkIHdpdGhvdXQgZXZpY3Rpb24KLSBbeF0gY2xvc2VkIFB5ZGFudGljIHNjaGVtYXMgaW5jbHVkZSBuZXN0ZWQgZWRpdCBvcGVyYXRpb25zCi0gW3hdIEM5IGVycm9ycyBhcmUgc2FuaXRpemVkIGludG8gY2Fub25pY2FsIHRvb2wgZXJyb3JzIGFuZCB1bmV4cGVjdGVkIGZhaWx1cmVzIGJlY29tZSBnZW5lcmljIGludGVybmFsIGVycm9ycwotIFt4XSBmYcOnYWRlIGRlbGVnYXRlcyB0byBDMi9DNC9DNS9DNi9DNy9DOCByYXRoZXIgdGhhbiByZWltcGxlbWVudGluZyB0aGVpciBhdXRob3JpdGllcwotIFt4XSBleGFjdCBNQ1AgMi4yLjAgZGVwZW5kZW5jeSBzZXQgaXMgaGFzaC1waW5uZWQgYW5kIGluc3RhbGxlZCB3aXRoIGAtLXJlcXVpcmUtaGFzaGVzIC0tbm8tZGVwc2AKLSBbeF0gcmVhbCBzdGRpbyBwcm90b2NvbCB0ZXN0cyBwYXNzCi0gW3hdIGNhcGFiaWxpdHkgaGFyZGVuaW5nIHJlamVjdHMgYXJiaXRyYXJ5IHBhdGgvbmV0d29yay9wcm9jZXNzL3NoZWxsL3BhY2thZ2UvcnVudGltZSBhY2Nlc3MKLSBbeF0gYWdncmVnYXRlIEMwIGRpc2NvdmVycyBDOSB3aXRoIHRoZSBjYW5vbmljYWwgaGFzaGVkIGVudmlyb25tZW50Ci0gW3hdIGZpbmFsIGltbGVtZW50YXRpb24gUFIgIzgyIHBhc3NlZCBDMC1DOSwgQzFBL0MxQiwgR292ZXJuYW5jZSBhbmQgU29uYXIgUFIgYW5hbHlzaXMKLSBbeF0gUFIgIzgyIG1lcmdlZCB3aXRoIGZyb3plbiBoZWFkCi0gW3hdIGluaXRpYWwgZXhhY3QtbWFpbiBDMC1DOSwgQzFBL0MxQiBhbmQgR292ZXJuYW5jZSBwb3N0LW1lcmdlIHZhbGlkYXRpb24gcGFzc2VkCi0gW3hdIHJlcG9zaXRvcnktZ2xvYmFsIFNvbmFyIGJsb2NrZXIgd2FzIHJlbWVkaWF0ZWQgdGhyb3VnaCBDSSBhbmFseXNpcyByYXRoZXIgdGhhbiB3ZWFrZW5lZCBwb2xpY3kKLSBbeF0gQXV0b21hdGljIEFuYWx5c2lzIHdhcyBkaXNhYmxlZCBiZWZvcmUgQ0kgYW5hbHlzaXMgYmVjYW1lIGF1dGhvcml0YXRpdmUKLSBbeF0gdGVzdCBjbGFzc2lmaWNhdGlvbiBpcyBleHBsaWNpdCBhbmQgbm8gcHJvZHVjdGlvbiBjb3ZlcmFnZSBleGNsdXNpb24gd2FzIGludHJvZHVjZWQKLSBbeF0gc3RhYmxlIFNvbmFyIGBjaS1iYXNlbGluZS12MWAgaXMgcmVjb3JkZWQgZm9yIGBQcmV2aW91cyB2ZXJzaW9uYCBtb2RlCi0gW3hdIGNhbm9uaWNhbCBgbWFpbkAyYjk1NTU3OWIyZTdhMDE1MTY5MmIzMTUzZDY5MDc2MzRjMmM5OGI0YCBwYXNzZXMgQzAtQzksIEMxQS9DMUIsIEdvdmVybmFuY2UgYW5kIEZ1bGwgU2tpbGwgTWlncmF0aW9uCi0gW3hdIFNvbmFyIHJlcnVuIG9uIHRoZSBzYW1lIGNhbm9uaWNhbCBTSEEgcGFzc2VzIHRoZSBRdWFsaXR5IEdhdGUKLSBbeF0gYXV0aGVudGljYXRlZCBTb25hciBBUEkgaW5kZXBlbmRlbnRseSByZXBvcnRzIGBRVUFMSVRZX0dBVEVfU1RBVFVTPU9LYAoKQzkgaXMgY29tcGxldGUgYW5kIHBvc3QtbWVyZ2UgdmFsaWRhdGVkLiBUaGUgbmV4dCBDb25zdHJ1Y3Rpb24gc2xpY2UgaXMgQzEwIOKAlCBFeHRlcm5hbCBQcm92aWRlcnMuCg==
+
 jobs:
   materialize-c9-closeout:
     runs-on: ubuntu-24.04
@@ -23,146 +27,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path("construction/STATUS.md")
-          text = path.read_text(encoding="utf-8")
-
-          required = {
-              "UPDATED_AT=2026-09-11": "UPDATED_AT=2026-09-12",
-              "PHASE=C8_COMPLETE_POSTMERGE_VALIDATED": "PHASE=C9_COMPLETE_POSTMERGE_VALIDATED",
-              "NEXT_ACTION=BEGIN_C9_AGENT_MCP": "NEXT_ACTION=BEGIN_C10_EXTERNAL_PROVIDERS",
-          }
-          for old, new in required.items():
-              if text.count(old) != 1:
-                  raise SystemExit(f"expected exactly one marker {old!r}")
-              text = text.replace(old, new, 1)
-
-          if "C9_PR=" in text or "## C9 — Agent/MCP" in text:
-              raise SystemExit("C9 closeout evidence already present")
-
-          anchor = "C8_CLOSEOUT_BASE_MAIN_SHA=76c2540bbaeed4e76c1d372400bbfadf89c3e3be\n"
-          if text.count(anchor) != 1:
-              raise SystemExit("C8 closeout anchor missing or duplicated")
-
-          evidence = """C9_PR=82
-C9_FINAL_PR_HEAD=4ec3de291075e59751c2b718574f4ea223d3e795
-C9_MERGE_SHA=78c0f306b3027a94087d3f92ac4d788d6b9edddb
-C9_INITIAL_POSTMERGE_C0_RUN=34673667949
-C9_INITIAL_POSTMERGE_C1A_RUN=34673667971
-C9_INITIAL_POSTMERGE_C1B_RUN=34673667879
-C9_INITIAL_POSTMERGE_C2_RUN=34673668085
-C9_INITIAL_POSTMERGE_C3_RUN=34673667921
-C9_INITIAL_POSTMERGE_C4_RUN=34673667996
-C9_INITIAL_POSTMERGE_C5_RUN=34673667958
-C9_INITIAL_POSTMERGE_C6_RUN=34673667953
-C9_INITIAL_POSTMERGE_C7_RUN=34673667910
-C9_INITIAL_POSTMERGE_C8_RUN=34673667969
-C9_INITIAL_POSTMERGE_C9_RUN=34673667930
-C9_INITIAL_POSTMERGE_GOVERNANCE_RUN=34673667963
-C9_INITIAL_POSTMERGE_SONAR_AUTOMATIC_CHECK=103500029919
-C9_INITIAL_POSTMERGE_SONAR_AUTOMATIC=FAILED_EXTERNAL_AUTOMATIC_ANALYSIS
-C9_SONAR_SCOPE_REMEDIATION_PR=83
-C9_SONAR_SCOPE_REMEDIATION_MERGE_SHA=fbd7354697eb4b4407585b6bb0a0fca64dde9369
-C9_SONAR_SCOPE_REMEDIATION_C9_RUN=34674722460
-C9_SONAR_CI_MIGRATION_PR=85
-C9_SONAR_CI_MIGRATION_MERGE_SHA=b16338e0d18f30e310a4bf8ca7a45bff991236b0
-C9_SONAR_CI_MIGRATION_POSTMERGE_C9_RUN=34688789025
-C9_SONAR_BASELINE_PR=87
-C9_SONAR_BASELINE_MERGE_SHA=2b955579b2e7a0151692b3153d6907634c2c98b4
-C9_FINAL_VALIDATED_MAIN_SHA=2b955579b2e7a0151692b3153d6907634c2c98b4
-C9_FINAL_C0_RUN=34689347229
-C9_FINAL_C1A_RUN=34689347330
-C9_FINAL_C1B_RUN=34689347164
-C9_FINAL_C2_RUN=34689347498
-C9_FINAL_C3_RUN=34689347438
-C9_FINAL_C4_RUN=34689347470
-C9_FINAL_C5_RUN=34689347461
-C9_FINAL_C6_RUN=34689347261
-C9_FINAL_C7_RUN=34689347472
-C9_FINAL_C8_RUN=34689347181
-C9_FINAL_C9_RUN=34689347192
-C9_FINAL_GOVERNANCE_RUN=34689347484
-C9_FINAL_FULL_SKILL_MIGRATION_RUN=34689347482
-C9_FINAL_SONAR_RUN=34689347171
-C9_FINAL_SONAR_INITIAL_JOB=103541763390_FAILURE_WHILE_ESTABLISHING_VERSION_BASELINE
-C9_FINAL_SONAR_RERUN_JOB=103579982652_SUCCESS
-C9_FINAL_SONAR_QUALITY_GATE=PASS
-C9_FINAL_SONAR_PROBE_JOB=103580383950
-C9_FINAL_SONAR_API=QUALITY_GATE_OK
-C9_FINAL_SONAR_NEW_LINES=11
-C9_FINAL_SONAR_NEW_LINES_TO_COVER=0
-C9_FINAL_SONAR_NEW_UNCOVERED_LINES=0
-C9_CLOSEOUT_BASE_MAIN_SHA=2b955579b2e7a0151692b3153d6907634c2c98b4
-"""
-          text = text.replace(anchor, anchor + evidence, 1)
-
-          section = r'''
-
-## C9 — Agent/MCP
-
-C9 adds the Factory-owned capability-limited MCP façade over the existing Construction authorities. It does not replace C2/C4/C5/C6/C7/C8, does not create a second build or asset authority, and does not expose arbitrary filesystem, network, process, shell, package-manager or runtime execution capabilities. The MCP surface is intentionally narrow: nine tools, zero prompts, one immutable SHA-256 artifact resource template, closed schemas and sanitized canonical errors.
-
-C9_SERVER=construction/mcp/server.py
-C9_FACADE=construction/mcp/facade.py
-C9_ARTIFACT_STORE=construction/mcp/artifacts.py
-C9_LOCK=construction/upstream/harness/c9-mcp-lock.txt
-C9_WORKFLOW=.github/workflows/factory-construction-c9-agent-mcp.yml
-C9_MCP_VERSION=2.2.0
-C9_SERVER_VERSION=c9-mcp-v1
-C9_TOOLS=registry_search_palette_resolve_build_canonicalize_build_validate_build_edit_qa_structural_preview_render_qa_visual_export_sponge_v3
-C9_PROMPTS=NONE
-C9_RESOURCE_TEMPLATE=construction://artifact/sha256/{digest}
-C9_RESOURCE_MIME=application/octet-stream
-C9_AUTHORITIES=C2_C4_C5_C6_C7_C8
-C9_BOUNDARY=NO_ARBITRARY_PATH_NETWORK_PROCESS_SHELL_PACKAGE_OR_RUNTIME_CAPABILITY
-
-The implementation passed the dedicated RED/GREEN sequence for artifact storage/errors, façade parity, server/protocol shape, real stdio transport, authority delegation and capability hardening. The final implementation PR #82 used head `4ec3de291075e59751c2b718574f4ea223d3e795` and merged as `78c0f306b3027a94087d3f92ac4d788d6b9edddb`. On that exact merge, C0 through C9, both C1 upstream gates and Governance all passed. The remaining blocker was the repository-global Sonar Automatic Analysis main-branch failure, not a C9 runtime or contract defect.
-
-The Sonar closure preserved quality policy instead of suppressing it. PR #83 reconciled immutable MineBench scope but proved that Automatic Analysis was still unsuitable for this multi-authority repository. After the required repository credential was configured and Automatic Analysis was disabled, PR #85 migrated the project to pinned CI-based Sonar analysis, explicitly classified tests, retained production scope and introduced no `sonar.coverage.exclusions`. PR #87 then established stable `sonar.projectVersion=ci-baseline-v1` for Sonar's `Previous version` new-code mode without lowering the 80% new-code coverage gate.
-
-Canonical final validation is `main@2b955579b2e7a0151692b3153d6907634c2c98b4`. On that exact SHA, standalone C0, C1A, C1B, C2, C3, C4, C5, C6, C7, C8, C9, Governance and Full Skill Migration all completed successfully. The first Sonar CI attempt registered the new version baseline and still evaluated the inherited historical period; a rerun on the exact same SHA, with no code/config change, completed successfully and reported `QUALITY GATE STATUS: PASSED`. Authenticated API probe job `103580383950` then independently confirmed `QUALITY_GATE_STATUS=OK`, all active New Code conditions green, 11 new lines, 0 new lines to cover and 0 uncovered new lines. No Quality Gate threshold was reduced and no production coverage exclusion was added.
-
-### C9 acceptance
-
-- [x] exact MCP server identity and version are fixed
-- [x] exactly nine Construction tools are exposed
-- [x] zero prompts and no arbitrary static-resource surface are exposed
-- [x] immutable SHA-256 artifact resource template uses `application/octet-stream`
-- [x] ArtifactStore limits are enforced without eviction
-- [x] closed Pydantic schemas include nested edit operations
-- [x] C9 errors are sanitized into canonical tool errors and unexpected failures become generic internal errors
-- [x] façade delegates to C2/C4/C5/C6/C7/C8 rather than reimplementing their authorities
-- [x] exact MCP 2.2.0 dependency set is hash-pinned and installed with `--require-hashes --no-deps`
-- [x] real stdio protocol tests pass
-- [x] capability hardening rejects arbitrary path/network/process/shell/package/runtime access
-- [x] aggregate C0 discovers C9 with the canonical hashed environment
-- [x] final implementation PR #82 passed C0-C9, C1A/C1B, Governance and Sonar PR analysis
-- [x] PR #82 merged with frozen head
-- [x] initial exact-main C0-C9, C1A/C1B and Governance post-merge validation passed
-- [x] repository-global Sonar blocker was remediated through CI analysis rather than weakened policy
-- [x] Automatic Analysis was disabled before CI analysis became authoritative
-- [x] test classification is explicit and no production coverage exclusion was introduced
-- [x] stable Sonar `ci-baseline-v1` is recorded for `Previous version` mode
-- [x] canonical `main@2b955579b2e7a0151692b3153d6907634c2c98b4` passes C0-C9, C1A/C1B, Governance and Full Skill Migration
-- [x] Sonar rerun on the same canonical SHA passes the Quality Gate
-- [x] authenticated Sonar API independently reports `QUALITY_GATE_STATUS=OK`
-
-C9 is complete and post-merge validated. The next Construction slice is C10 — External Providers.
-'''
-          if not text.endswith("\n"):
-              text += "\n"
-          text += section.lstrip("\n")
-          path.write_text(text, encoding="utf-8")
-          PY
-
+          python3 -c 'import base64, os; from pathlib import Path; p=Path("construction/STATUS.md"); t=p.read_text(encoding="utf-8"); repl={"UPDATED_AT=2026-09-11":"UPDATED_AT=2026-09-12","PHASE=C8_COMPLETE_POSTMERGE_VALIDATED":"PHASE=C9_COMPLETE_POSTMERGE_VALIDATED","NEXT_ACTION=BEGIN_C9_AGENT_MCP":"NEXT_ACTION=BEGIN_C10_EXTERNAL_PROVIDERS"}; [(None if t.count(k)==1 else (_ for _ in ()).throw(SystemExit(f"bad marker {k!r}"))) for k in repl]; t=t.replace("UPDATED_AT=2026-09-11","UPDATED_AT=2026-09-12",1).replace("PHASE=C8_COMPLETE_POSTMERGE_VALIDATED","PHASE=C9_COMPLETE_POSTMERGE_VALIDATED",1).replace("NEXT_ACTION=BEGIN_C9_AGENT_MCP","NEXT_ACTION=BEGIN_C10_EXTERNAL_PROVIDERS",1); a="C8_CLOSEOUT_BASE_MAIN_SHA=76c2540bbaeed4e76c1d372400bbfadf89c3e3be\n"; assert t.count(a)==1 and "C9_PR=" not in t and "## C9 — Agent/MCP" not in t; e=base64.b64decode(os.environ["EVIDENCE_B64"]).decode(); s=base64.b64decode(os.environ["SECTION_B64"]).decode(); t=t.replace(a,a+e,1); t=t.rstrip()+"\n\n"+s; p.write_text(t,encoding="utf-8")'
           changed="$(git diff --name-only)"
-          if [[ "$changed" != "construction/STATUS.md" ]]; then
-            echo "::error title=Unexpected closeout diff::Expected only construction/STATUS.md, got: $changed"
-            exit 1
-          fi
-
+          test "$changed" = "construction/STATUS.md"
           git diff --check
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
