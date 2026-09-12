@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://minecraft-mod-factory.local/schemas/provider-handoff-request.schema.json",
+  "title": "Construction C10 Provider Handoff Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_id",
+    "provider_id",
+    "provider_profile_sha256",
+    "mode",
+    "operation",
+    "text_input",
+    "input_artifacts",
+    "expected_output_kinds",
+    "target",
+    "manual_step"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "request_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "provider_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "provider_profile_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "mode": {
+      "enum": [
+        "MANUAL_FILE_HANDOFF",
+        "API_ADAPTER"
+      ]
+    },
+    "operation": {
+      "enum": [
+        "PROMPT_TO_STRUCTURE",
+        "IMAGE_TO_STRUCTURE",
+        "MESH_TO_STRUCTURE",
+        "STRUCTURE_EDITING"
+      ]
+    },
+    "text_input": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "input_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "sha256",
+          "byte_length",
+          "media_type",
+          "repo_relpath"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "BEDROCK_MCSTRUCTURE",
+              "IMAGE",
+              "LITEMATIC_FILE",
+              "MESH",
+              "SCHEMATIC_FILE",
+              "VANILLA_STRUCTURE_NBT",
+              "WORLD_ZIP"
+            ]
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "byte_length": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "media_type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "repo_relpath": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "pattern": "^construction/fixtures/c10/(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"
+          }
+        }
+      }
+    },
+    "expected_output_kinds": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "BEDROCK_MCSTRUCTURE",
+          "IMAGE",
+          "LITEMATIC_FILE",
+          "MESH",
+          "SCHEMATIC_FILE",
+          "VANILLA_STRUCTURE_NBT",
+          "WORLD_ZIP"
+        ]
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minecraft",
+        "loader",
+        "physical_modlist_sha256"
+      ],
+      "properties": {
+        "minecraft": {
+          "const": "1.21.1"
+        },
+        "loader": {
+          "const": "neoforge"
+        },
+        "physical_modlist_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "manual_step": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "step_id",
+        "instruction",
+        "expected_result"
+      ],
+      "properties": {
+        "required": {
+          "const": true
+        },
+        "step_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "instruction": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected_result": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}
