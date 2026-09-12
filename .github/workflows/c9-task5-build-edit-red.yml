@@ -1,4 +1,4 @@
-name: C9 Task 5 Build Edit RED
+name: C9 Task 5 Build Edit Verification
 
 on:
   push:
@@ -16,3 +16,5 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - name: Run C9 Task 5 build_edit contract
         run: python3 -m unittest construction.tests.test_c9_agent_mcp.C9BuildEditContractTests -v
+      - name: Run C2 Build IR regression
+        run: python3 -m unittest construction.tests.test_c2_build_ir -v
