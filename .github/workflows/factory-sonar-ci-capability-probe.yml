@@ -14,7 +14,7 @@ jobs:
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
-      - name: Verify Sonar CI credential and project binding
+      - name: Verify Sonar CI credential and inspect main quality baseline
         shell: bash
         run: |
           set -euo pipefail
@@ -23,22 +23,57 @@ jobs:
             exit 1
           fi
 
-          response="$(curl --fail-with-body --silent --show-error --user "${SONAR_TOKEN}:" \
+          auth=(--fail-with-body --silent --show-error --user "${SONAR_TOKEN}:")
+          component="$(curl "${auth[@]}" \
             'https://sonarcloud.io/api/components/show?component=Gustavaopere_minecraft-mod-factory')"
+          gate="$(curl "${auth[@]}" \
+            'https://sonarcloud.io/api/qualitygates/project_status?projectKey=Gustavaopere_minecraft-mod-factory&branch=main')"
+          measures="$(curl "${auth[@]}" \
+            'https://sonarcloud.io/api/measures/component?component=Gustavaopere_minecraft-mod-factory&branch=main&metricKeys=coverage,new_coverage,lines_to_cover,new_lines_to_cover,uncovered_lines,new_uncovered_lines')"
+          new_code="$(curl "${auth[@]}" \
+            'https://sonarcloud.io/api/new_code_periods/show?project=Gustavaopere_minecraft-mod-factory&branch=main')"
 
-          SONAR_COMPONENT_RESPONSE="$response" python3 - <<'PY'
+          SONAR_COMPONENT_RESPONSE="$component" \
+          SONAR_GATE_RESPONSE="$gate" \
+          SONAR_MEASURES_RESPONSE="$measures" \
+          SONAR_NEW_CODE_RESPONSE="$new_code" \
+          python3 - <<'PY'
           import json
           import os
-          import sys
 
-          payload = json.loads(os.environ["SONAR_COMPONENT_RESPONSE"])
-          component = payload.get("component", {})
+          component = json.loads(os.environ["SONAR_COMPONENT_RESPONSE"]).get("component", {})
+          if component.get("key") != "Gustavaopere_minecraft-mod-factory":
+              raise SystemExit(f"unexpected Sonar project key: {component.get('key')!r}")
           organization = component.get("organization")
-          key = component.get("key")
-          if key != "Gustavaopere_minecraft-mod-factory":
-              raise SystemExit(f"unexpected Sonar project key: {key!r}")
           if not isinstance(organization, str) or not organization:
               raise SystemExit("Sonar organization key missing from component response")
-          print(f"SONAR_PROJECT_KEY={key}")
+
+          gate = json.loads(os.environ["SONAR_GATE_RESPONSE"]).get("projectStatus", {})
+          measures_payload = json.loads(os.environ["SONAR_MEASURES_RESPONSE"]).get("component", {})
+          new_code = json.loads(os.environ["SONAR_NEW_CODE_RESPONSE"])
+
+          print(f"SONAR_PROJECT_KEY={component['key']}")
           print(f"SONAR_ORGANIZATION={organization}")
+          print(f"QUALITY_GATE_STATUS={gate.get('status')}")
+          for condition in gate.get("conditions", []):
+              metric = condition.get("metricKey")
+              if metric in {"new_coverage", "new_reliability_rating", "new_security_rating", "new_security_hotspots_reviewed", "new_duplicated_lines_density"}:
+                  print(
+                      "QUALITY_CONDITION="
+                      f"{metric}:{condition.get('status')}:actual={condition.get('actualValue')}:"
+                      f"op={condition.get('comparator')}:threshold={condition.get('errorThreshold')}"
+                  )
+
+          allowed = {"coverage", "new_coverage", "lines_to_cover", "new_lines_to_cover", "uncovered_lines", "new_uncovered_lines"}
+          for measure in measures_payload.get("measures", []):
+              metric = measure.get("metric")
+              if metric not in allowed:
+                  continue
+              print(f"MEASURE={metric}:value={measure.get('value')}:period={measure.get('period')}")
+
+          print(
+              "NEW_CODE_PERIOD="
+              f"type={new_code.get('type')}:value={new_code.get('value')}:"
+              f"effectiveValue={new_code.get('effectiveValue')}:inherited={new_code.get('inherited')}"
+          )
           PY
