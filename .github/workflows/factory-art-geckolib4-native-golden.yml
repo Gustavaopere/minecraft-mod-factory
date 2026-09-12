@@ -3,7 +3,8 @@ name: Factory Art GeckoLib4 Native Golden Sample
 on:
   pull_request:
     paths:
-      - 'art/golden-samples/geckolib4-simple-mob/**'
+      - 'art/native-golden-samples/geckolib4-simple-mob/**'
+      - 'art/native-golden-samples/README.md'
       - 'art/golden-samples/README.md'
       - 'art/golden-samples/validate_golden_samples.js'
       - 'art/golden-samples/validate_reference_evidence.js'
@@ -14,7 +15,8 @@ on:
     branches:
       - main
     paths:
-      - 'art/golden-samples/geckolib4-simple-mob/**'
+      - 'art/native-golden-samples/geckolib4-simple-mob/**'
+      - 'art/native-golden-samples/README.md'
       - 'art/golden-samples/README.md'
       - 'art/golden-samples/validate_golden_samples.js'
       - 'art/golden-samples/validate_reference_evidence.js'
@@ -34,9 +36,9 @@ jobs:
         with:
           node-version: '20'
       - name: Validate native Golden Sample
-        run: node art/golden-samples/geckolib4-simple-mob/validate_golden_sample.js
+        run: node art/native-golden-samples/geckolib4-simple-mob/validate_golden_sample.js
       - name: Run fail-closed Golden Sample tests
-        run: node --test art/golden-samples/geckolib4-simple-mob/golden_sample.test.js
+        run: node --test art/native-golden-samples/geckolib4-simple-mob/golden_sample.test.js
       - name: Preserve existing reference corpus gates
         run: |
           node art/golden-samples/validate_golden_samples.js
