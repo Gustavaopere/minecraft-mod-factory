@@ -9,6 +9,7 @@ _ROOT = Path(__file__).resolve().parents[2]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
+from construction.providers.common import PROVIDER_ID_RE, SHA256_RE
 from construction.providers.errors import C10Error
 from construction.providers.handoff import validate_handoff_receipt, validate_handoff_request
 from construction.providers.profiles import load_profile_catalog
@@ -32,6 +33,18 @@ _SECRET_KEYS = {
 _TEXT_SECRET_RE = re.compile(
     r"(?i)(?P<key>api[_-]?key|token|password|cookie|session(?:[_-]?id)?)\s*[:=]"
 )
+_FAILURE_FIELDS = {
+    "schema_version",
+    "provider_id",
+    "request_id",
+    "observed_at",
+    "input_sha256",
+    "stage",
+    "outcome",
+    "observation",
+}
+_FAILURE_STAGE = "UPLOAD_PREVIEW"
+_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 def _rel(root: Path, path: Path) -> str:
@@ -162,9 +175,13 @@ def _bind_artifact(
 
     expected_length = artifact.get("byte_length")
     if expected_length != actual["byte_length"]:
-        errors.append(f"{label}: INVALID_HANDOFF_RECEIPT: byte length does not match Factory-owned artifact bytes")
+        errors.append(
+            f"{label}: INVALID_HANDOFF_RECEIPT: byte length does not match Factory-owned artifact bytes"
+        )
     if artifact.get("sha256") != actual["sha256"]:
-        errors.append(f"{label}: ARTIFACT_HASH_MISMATCH: SHA-256 does not match Factory-owned artifact bytes")
+        errors.append(
+            f"{label}: ARTIFACT_HASH_MISMATCH: SHA-256 does not match Factory-owned artifact bytes"
+        )
 
 
 def _fixture_documents(
@@ -182,6 +199,100 @@ def _fixture_documents(
     return documents
 
 
+def _fixture_document_kind(document: dict[str, object]) -> str:
+    if "receipt_sha256" in document:
+        return "receipt"
+    if any(field in document for field in ("stage", "outcome", "observation")):
+        return "failure"
+    if "request_id" in document:
+        return "request"
+    return "unknown"
+
+
+def _validate_failure_record(
+    document: dict[str, object],
+    requests: dict[str, tuple[Path, dict[str, object]]],
+    profiles: dict[str, dict[str, object]],
+    *,
+    label: str,
+    errors: list[str],
+) -> None:
+    if set(document) != _FAILURE_FIELDS:
+        errors.append(
+            f"{label}: INVALID_HANDOFF_REQUEST: failure record fields do not match the C10 contract"
+        )
+
+    if document.get("schema_version") != 1:
+        errors.append(
+            f"{label}: INVALID_HANDOFF_REQUEST: failure record schema_version must be 1"
+        )
+
+    provider_id = document.get("provider_id")
+    if not isinstance(provider_id, str) or PROVIDER_ID_RE.fullmatch(provider_id) is None:
+        errors.append(f"{label}: UNKNOWN_PROVIDER: failure provider_id is invalid")
+    elif provider_id not in profiles:
+        errors.append(
+            f"{label}: UNKNOWN_PROVIDER: failure provider is not in the C10 profile catalog"
+        )
+
+    request_id = document.get("request_id")
+    if not isinstance(request_id, str) or SHA256_RE.fullmatch(request_id) is None:
+        errors.append(
+            f"{label}: INVALID_HANDOFF_REQUEST: failure request_id must be lowercase SHA-256"
+        )
+        request_entry = None
+    else:
+        request_entry = requests.get(request_id)
+        if request_entry is None:
+            errors.append(
+                f"{label}: INVALID_HANDOFF_REQUEST: matching historical request fixture is missing"
+            )
+
+    observed_at = document.get("observed_at")
+    if not isinstance(observed_at, str) or _DATE_RE.fullmatch(observed_at) is None:
+        errors.append(
+            f"{label}: INVALID_HANDOFF_REQUEST: failure observed_at must be YYYY-MM-DD"
+        )
+
+    input_sha256 = document.get("input_sha256")
+    if not isinstance(input_sha256, str) or SHA256_RE.fullmatch(input_sha256) is None:
+        errors.append(
+            f"{label}: ARTIFACT_HASH_MISMATCH: failure input_sha256 must be lowercase SHA-256"
+        )
+
+    if document.get("stage") != _FAILURE_STAGE:
+        errors.append(f"{label}: INVALID_HANDOFF_REQUEST: failure stage is not supported")
+    if document.get("outcome") != "FAIL":
+        errors.append(f"{label}: INVALID_HANDOFF_REQUEST: failure outcome must be FAIL")
+    observation = document.get("observation")
+    if not isinstance(observation, str) or not observation.strip():
+        errors.append(
+            f"{label}: INVALID_HANDOFF_REQUEST: failure observation must be non-empty"
+        )
+
+    if request_entry is None:
+        return
+    _, request = request_entry
+    if request.get("provider_id") != provider_id:
+        errors.append(
+            f"{label}: REQUEST_PROFILE_MISMATCH: failure provider does not match historical request"
+        )
+    raw_artifacts = request.get("input_artifacts")
+    request_hashes = (
+        {
+            artifact.get("sha256")
+            for artifact in raw_artifacts
+            if isinstance(artifact, dict) and isinstance(artifact.get("sha256"), str)
+        }
+        if isinstance(raw_artifacts, list)
+        else set()
+    )
+    if input_sha256 not in request_hashes:
+        errors.append(
+            f"{label}: ARTIFACT_HASH_MISMATCH: failure input hash is not bound to historical request"
+        )
+
+
 def _validate_fixtures(
     root: Path,
     profiles: dict[str, dict[str, object]],
@@ -192,22 +303,26 @@ def _validate_fixtures(
     requests: dict[str, tuple[Path, dict[str, object]]] = {}
 
     for path, document in documents:
-        if "request_id" in document and "receipt_sha256" not in document:
-            request_id = document.get("request_id")
-            if isinstance(request_id, str):
-                if request_id in requests:
-                    errors.append(f"{_rel(root, path)}: duplicate request_id")
-                else:
-                    requests[request_id] = (path, document)
+        if _fixture_document_kind(document) != "request":
+            continue
+        request_id = document.get("request_id")
+        if isinstance(request_id, str):
+            if request_id in requests:
+                errors.append(f"{_rel(root, path)}: duplicate request_id")
+            else:
+                requests[request_id] = (path, document)
 
     for path, document in documents:
         label = _rel(root, path)
         provider_id = document.get("provider_id")
         profile = profiles.get(provider_id) if isinstance(provider_id, str) else None
+        kind = _fixture_document_kind(document)
 
-        if "request_id" in document and "receipt_sha256" not in document:
+        if kind == "request":
             if profile is None:
-                errors.append(f"{label}: UNKNOWN_PROVIDER: request provider is not in the C10 profile catalog")
+                errors.append(
+                    f"{label}: UNKNOWN_PROVIDER: request provider is not in the C10 profile catalog"
+                )
                 continue
             for error in validate_handoff_request(document, profile):
                 errors.append(f"{label}: {error}")
@@ -223,14 +338,18 @@ def _validate_fixtures(
                         errors=errors,
                     )
 
-        elif "receipt_sha256" in document:
+        elif kind == "receipt":
             if profile is None:
-                errors.append(f"{label}: UNKNOWN_PROVIDER: receipt provider is not in the C10 profile catalog")
+                errors.append(
+                    f"{label}: UNKNOWN_PROVIDER: receipt provider is not in the C10 profile catalog"
+                )
                 continue
             request_id = document.get("request_id")
             request_entry = requests.get(request_id) if isinstance(request_id, str) else None
             if request_entry is None:
-                errors.append(f"{label}: INVALID_HANDOFF_RECEIPT: matching request fixture is missing")
+                errors.append(
+                    f"{label}: INVALID_HANDOFF_RECEIPT: matching request fixture is missing"
+                )
                 continue
             _, request = request_entry
             for error in validate_handoff_receipt(document, request, profile):
@@ -246,6 +365,20 @@ def _validate_fixtures(
                         label=f"{label}: received_artifacts[{index}]",
                         errors=errors,
                     )
+
+        elif kind == "failure":
+            _validate_failure_record(
+                document,
+                requests,
+                profiles,
+                label=label,
+                errors=errors,
+            )
+
+        else:
+            errors.append(
+                f"{label}: INVALID_HANDOFF_REQUEST: unrecognized C10 fixture document"
+            )
 
 
 def validate_repository(root: Path) -> list[str]:
