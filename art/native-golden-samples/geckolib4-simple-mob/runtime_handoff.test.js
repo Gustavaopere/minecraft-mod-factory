@@ -7,13 +7,14 @@ const path = require('node:path');
 
 const ROOT = __dirname;
 const RUNTIME_SMOKE = path.join(ROOT, 'runtime-smoke');
+const RUNTIME_TESTS = path.join(RUNTIME_SMOKE, 'tests');
 
 function readJson(relativePath) {
   return JSON.parse(fs.readFileSync(path.join(ROOT, relativePath), 'utf8'));
 }
 
 function readRuntimeSource(fileName) {
-  return fs.readFileSync(path.join(RUNTIME_SMOKE, fileName), 'utf8');
+  return fs.readFileSync(path.join(RUNTIME_TESTS, fileName), 'utf8');
 }
 
 test('runtime smoke contract pins the exact physical target and audited GeckoLib authority', () => {
