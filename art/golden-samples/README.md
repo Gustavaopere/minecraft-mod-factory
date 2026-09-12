@@ -1,6 +1,8 @@
 # Minecraft Art Golden Samples
 
-Status: **MIXED CORPUS** — legacy samples remain `REFERENCE-ONLY`; the GeckoLib simple-mob sample is a native source prepared for real handoff, not yet runtime/I6 evidence.
+Status: **REFERENCE-ONLY — not a runtime registration and not evidence of shipped gameplay.**
+
+This root status continues to govern the historical reference corpus. `geckolib4-simple-mob/` is a separate native handoff candidate governed by its own `MANIFEST.json`; it remains `PREPARED_FOR_REAL_HANDOFF` and is not runtime or F4/I6 evidence.
 
 This area contains two deliberately different evidence classes:
 
