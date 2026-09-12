@@ -137,20 +137,169 @@ def _kind_package(kind: str) -> str:
     return kind
 
 
-def _feature_source(java_package: str, feature: dict[str, Any]) -> str:
+def _identity_fields(kind: str, feature_id: str) -> str:
+    return (
+        f"    public static final String FEATURE_KIND = \"{kind}\";\n"
+        f"    public static final String ID = \"{feature_id}\";\n"
+    )
+
+
+def _block_source(package: str, class_name: str, feature_id: str) -> str:
+    return (
+        f"package {package};\n\n"
+        "import net.minecraft.world.level.block.Block;\n"
+        "import net.minecraft.world.level.block.state.BlockBehaviour;\n\n"
+        f"public final class {class_name} extends Block {{\n"
+        + _identity_fields("block", feature_id)
+        + "\n"
+        f"    public {class_name}(BlockBehaviour.Properties properties) {{\n"
+        "        super(properties);\n"
+        "    }\n"
+        "}\n"
+    )
+
+
+def _item_source(package: str, class_name: str, feature_id: str) -> str:
+    return (
+        f"package {package};\n\n"
+        "import net.minecraft.world.item.Item;\n\n"
+        f"public final class {class_name} extends Item {{\n"
+        + _identity_fields("item", feature_id)
+        + "\n"
+        f"    public {class_name}(Item.Properties properties) {{\n"
+        "        super(properties);\n"
+        "    }\n"
+        "}\n"
+    )
+
+
+def _block_entity_source(package: str, class_name: str, feature_id: str) -> str:
+    return (
+        f"package {package};\n\n"
+        "import net.minecraft.core.BlockPos;\n"
+        "import net.minecraft.world.level.block.entity.BlockEntity;\n"
+        "import net.minecraft.world.level.block.entity.BlockEntityType;\n"
+        "import net.minecraft.world.level.block.state.BlockState;\n\n"
+        f"public final class {class_name} extends BlockEntity {{\n"
+        + _identity_fields("block_entity", feature_id)
+        + "\n"
+        f"    public {class_name}(BlockEntityType<?> type, BlockPos pos, BlockState state) {{\n"
+        "        super(type, pos, state);\n"
+        "    }\n"
+        "}\n"
+    )
+
+
+def _menu_source(package: str, class_name: str, feature_id: str) -> str:
+    return (
+        f"package {package};\n\n"
+        "import net.minecraft.world.entity.player.Player;\n"
+        "import net.minecraft.world.inventory.AbstractContainerMenu;\n"
+        "import net.minecraft.world.inventory.MenuType;\n"
+        "import net.minecraft.world.item.ItemStack;\n\n"
+        f"public final class {class_name} extends AbstractContainerMenu {{\n"
+        + _identity_fields("menu", feature_id)
+        + "\n"
+        f"    public {class_name}(MenuType<?> type, int containerId) {{\n"
+        "        super(type, containerId);\n"
+        "    }\n\n"
+        "    @Override\n"
+        "    public ItemStack quickMoveStack(Player player, int index) {\n"
+        "        return ItemStack.EMPTY;\n"
+        "    }\n\n"
+        "    @Override\n"
+        "    public boolean stillValid(Player player) {\n"
+        "        return true;\n"
+        "    }\n"
+        "}\n"
+    )
+
+
+def _network_payload_source(package: str, class_name: str, feature_id: str, mod_id: str) -> str:
+    return (
+        f"package {package};\n\n"
+        "import net.minecraft.network.protocol.common.custom.CustomPacketPayload;\n"
+        "import net.minecraft.resources.ResourceLocation;\n\n"
+        f"public record {class_name}() implements CustomPacketPayload {{\n"
+        + _identity_fields("network_payload", feature_id)
+        + "\n"
+        f"    public static final CustomPacketPayload.Type<{class_name}> TYPE =\n"
+        f"            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(\"{mod_id}\", ID));\n\n"
+        "    @Override\n"
+        "    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {\n"
+        "        return TYPE;\n"
+        "    }\n"
+        "}\n"
+    )
+
+
+def _recipe_source(package: str, class_name: str, feature_id: str) -> str:
+    return (
+        f"package {package};\n\n"
+        "import net.minecraft.core.HolderLookup;\n"
+        "import net.minecraft.world.item.ItemStack;\n"
+        "import net.minecraft.world.item.crafting.Recipe;\n"
+        "import net.minecraft.world.item.crafting.RecipeSerializer;\n"
+        "import net.minecraft.world.item.crafting.RecipeType;\n"
+        "import net.minecraft.world.item.crafting.SingleRecipeInput;\n"
+        "import net.minecraft.world.level.Level;\n\n"
+        f"public final class {class_name} implements Recipe<SingleRecipeInput> {{\n"
+        + _identity_fields("recipe", feature_id)
+        + "\n"
+        "    private final RecipeType<?> type;\n"
+        "    private final RecipeSerializer<?> serializer;\n"
+        "    private final ItemStack result;\n\n"
+        f"    public {class_name}(RecipeType<?> type, RecipeSerializer<?> serializer, ItemStack result) {{\n"
+        "        this.type = type;\n"
+        "        this.serializer = serializer;\n"
+        "        this.result = result.copy();\n"
+        "    }\n\n"
+        "    @Override\n"
+        "    public boolean matches(SingleRecipeInput input, Level level) {\n"
+        "        return false;\n"
+        "    }\n\n"
+        "    @Override\n"
+        "    public ItemStack assemble(SingleRecipeInput input, HolderLookup.Provider registries) {\n"
+        "        return this.result.copy();\n"
+        "    }\n\n"
+        "    @Override\n"
+        "    public boolean canCraftInDimensions(int width, int height) {\n"
+        "        return width * height >= 1;\n"
+        "    }\n\n"
+        "    @Override\n"
+        "    public ItemStack getResultItem(HolderLookup.Provider registries) {\n"
+        "        return this.result;\n"
+        "    }\n\n"
+        "    @Override\n"
+        "    public RecipeSerializer<?> getSerializer() {\n"
+        "        return this.serializer;\n"
+        "    }\n\n"
+        "    @Override\n"
+        "    public RecipeType<?> getType() {\n"
+        "        return this.type;\n"
+        "    }\n"
+        "}\n"
+    )
+
+
+def _feature_source(java_package: str, mod_id: str, feature: dict[str, Any]) -> str:
     kind = feature["kind"]
     feature_id = feature["id"]
     class_name = feature["class_name"]
     package = f"{java_package}.feature.{_kind_package(kind)}"
-    return (
-        f"package {package};\n\n"
-        f"public final class {class_name} {{\n"
-        f"    public static final String FEATURE_KIND = \"{kind}\";\n"
-        f"    public static final String ID = \"{feature_id}\";\n\n"
-        f"    private {class_name}() {{\n"
-        "    }\n"
-        "}\n"
-    )
+    if kind == "block":
+        return _block_source(package, class_name, feature_id)
+    if kind == "item":
+        return _item_source(package, class_name, feature_id)
+    if kind == "block_entity":
+        return _block_entity_source(package, class_name, feature_id)
+    if kind == "menu":
+        return _menu_source(package, class_name, feature_id)
+    if kind == "network_payload":
+        return _network_payload_source(package, class_name, feature_id, mod_id)
+    if kind == "recipe":
+        return _recipe_source(package, class_name, feature_id)
+    raise ValueError(f"unsupported I8 core feature kind: {kind}")
 
 
 def _generated_test(java_package: str, feature: dict[str, Any]) -> str:
@@ -253,6 +402,7 @@ def plan_feature_set(project_root: Path | str, request: dict[str, Any]) -> dict[
     root = _safe_project_root(project_root)
     project, features = _validate_request(request)
     java_package = project["java_package"]
+    mod_id = project["mod_id"]
     package_path = _java_package_path(java_package)
     main_path = root / "src/main/java" / package_path / f"{project['main_class']}.java"
     if not main_path.is_file():
@@ -265,7 +415,7 @@ def plan_feature_set(project_root: Path | str, request: dict[str, Any]) -> dict[
         relative_package = _kind_package(kind)
         source_path = f"src/main/java/{package_path}/feature/{relative_package}/{class_name}.java"
         test_path = f"src/test/java/{package_path}/feature/{relative_package}/{class_name}GeneratedTest.java"
-        operations.append(_planned_operation(root, source_path, _feature_source(java_package, feature), "feature_source"))
+        operations.append(_planned_operation(root, source_path, _feature_source(java_package, mod_id, feature), "feature_source"))
         operations.append(_planned_operation(root, test_path, _generated_test(java_package, feature), "generated_test"))
 
     registry_path = f"src/main/java/{package_path}/registry/FactoryGeneratedFeatures.java"
@@ -361,6 +511,7 @@ def main() -> int:
     plan = plan_feature_set(args.project, request)
     rendered = json.dumps(plan, indent=2, sort_keys=True) + "\n"
     if args.plan_output:
+        args.plan_output.parent.mkdir(parents=True, exist_ok=True)
         args.plan_output.write_text(rendered, encoding="utf-8", newline="\n")
     else:
         print(rendered, end="")
