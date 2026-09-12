@@ -34,7 +34,7 @@ jobs:
 
           fetch component 'https://sonarcloud.io/api/components/show?component=Gustavaopere_minecraft-mod-factory'
           fetch gate 'https://sonarcloud.io/api/qualitygates/project_status?projectKey=Gustavaopere_minecraft-mod-factory&branch=main'
-          fetch measures 'https://sonarcloud.io/api/measures/component?component=Gustavaopere_minecraft-mod-factory&branch=main&metricKeys=coverage,new_coverage,lines_to_cover,new_lines_to_cover,uncovered_lines,new_uncovered_lines'
+          fetch measures 'https://sonarcloud.io/api/measures/component?component=Gustavaopere_minecraft-mod-factory&branch=main&metricKeys=coverage,new_coverage,lines_to_cover,new_lines_to_cover,uncovered_lines,new_uncovered_lines,new_lines&additionalFields=periods'
           fetch new_code 'https://sonarcloud.io/api/new_code_periods/show?project=Gustavaopere_minecraft-mod-factory&branch=main'
 
           RUNNER_TEMP_PATH="$RUNNER_TEMP" python3 - <<'PY'
@@ -74,12 +74,18 @@ jobs:
                       f"op={condition.get('comparator')}:threshold={condition.get('errorThreshold')}"
                   )
 
-          measures_payload = (load("measures") or {}).get("component", {})
-          allowed = {"coverage", "new_coverage", "lines_to_cover", "new_lines_to_cover", "uncovered_lines", "new_uncovered_lines"}
+          measures_response = load("measures") or {}
+          measures_payload = measures_response.get("component", {})
+          for period in measures_response.get("periods", []):
+              print(
+                  "MEASURE_PERIOD="
+                  f"index={period.get('index')}:mode={period.get('mode')}:date={period.get('date')}:parameter={period.get('parameter')}"
+              )
+          allowed = {"coverage", "new_coverage", "lines_to_cover", "new_lines_to_cover", "uncovered_lines", "new_uncovered_lines", "new_lines"}
           for measure in measures_payload.get("measures", []):
               metric = measure.get("metric")
               if metric in allowed:
-                  print(f"MEASURE={metric}:value={measure.get('value')}:period={measure.get('period')}")
+                  print(f"MEASURE={metric}:value={measure.get('value')}:period={measure.get('period')}:periods={measure.get('periods')}")
 
           new_code = load("new_code") or {}
           if new_code:
