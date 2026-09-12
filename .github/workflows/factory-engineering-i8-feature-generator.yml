@@ -14,7 +14,9 @@ on:
       - 'engineering/tests/test_i8_feature_generator.py'
       - 'engineering/tests/test_i8_feature_generator_neoforge.py'
       - 'engineering/tests/fixtures/i8-*.json'
-      - 'engineering/tests/golden/i3-golden-mod/**'
+      - 'engineering/tests/fixtures/i3-golden-*.json'
+      - 'engineering/tooling/scaffolder/**'
+      - 'engineering/templates/neoforge-mod/**'
       - '.github/workflows/factory-engineering-i8-feature-generator.yml'
 
 permissions:
@@ -46,11 +48,14 @@ jobs:
           engineering/tests/test_i8_feature_generator.py
           engineering/tests/test_i8_feature_generator_neoforge.py
 
-      - name: Generate I8 features into canonical I3 Golden
+      - name: Generate canonical I3 project and apply I8 features
         run: |
           rm -rf .factory-ci/i8/generated
           mkdir -p .factory-ci/i8
-          cp -R engineering/tests/golden/i3-golden-mod .factory-ci/i8/generated
+          python3 engineering/tooling/scaffolder/scaffold_mod.py \
+            --mod-spec engineering/tests/fixtures/i3-golden-mod-spec.json \
+            --config engineering/tests/fixtures/i3-golden-scaffold-config.json \
+            --output .factory-ci/i8/generated
           python3 engineering/tooling/feature-generator/generate_feature.py \
             --project .factory-ci/i8/generated \
             --request engineering/tests/fixtures/i8-feature-set.json \
