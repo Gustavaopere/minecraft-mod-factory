@@ -611,5 +611,156 @@ class C9BuildEditContractTests(unittest.TestCase):
         self.assertEqual(invalid.exception.details, direct_errors)
 
 
+class C9QaPreviewContractTests(unittest.TestCase):
+    def _fixture(self):
+        facade_module = importlib.import_module("construction.mcp.facade")
+        artifacts = importlib.import_module("construction.mcp.artifacts")
+        errors = importlib.import_module("construction.mcp.errors")
+        c2 = _load_module(
+            ROOT / "construction" / "core" / "build_ir.py",
+            "construction_c2_for_c9_task6",
+        )
+        c7 = _load_module(
+            ROOT / "construction" / "core" / "structural_qa.py",
+            "construction_c7_for_c9_task6",
+        )
+        renderer = _load_module(
+            ROOT / "construction" / "qa" / "preview_renderer.py",
+            "construction_c8_renderer_for_c9_task6",
+        )
+        fixtures = _load_module(
+            ROOT / "construction" / "tests" / "test_c8_visual_qa.py",
+            "construction_c8_fixtures_for_c9_task6",
+        )
+        store = artifacts.ArtifactStore()
+        facade = facade_module.ConstructionFacade(store)
+        build_spec = fixtures.make_build_spec(
+            size=(3, 3, 3),
+            loader="none",
+            allow_modded=False,
+            require_determinism=True,
+            seed=906,
+        )
+        placements = [
+            fixtures.placement(0, 0, 0, "minecraft:stone_bricks"),
+            fixtures.placement(1, 0, 0, "minecraft:oak_log", {"axis": "y"}),
+            fixtures.placement(1, 1, 0, "minecraft:oak_log", {"axis": "y"}),
+            fixtures.placement(2, 0, 1, "minecraft:stone"),
+        ]
+        build_ir = c2.canonicalize_build_ir(
+            build_spec,
+            placements,
+            producer="construction-c9-task6-test",
+            producer_version="1",
+        )
+        return facade_module, facade, store, errors, c2, c7, renderer, build_spec, build_ir
+
+    def test_qa_structural_matches_c7(self) -> None:
+        _facade_module, facade, _store, errors, _c2, c7, _renderer, build_spec, build_ir = self._fixture()
+        expected = c7.run_structural_qa(build_spec, build_ir, None)
+        self.assertEqual(facade.qa_structural(build_spec, build_ir, None), expected)
+
+        invalid_ir = copy.deepcopy(build_ir)
+        invalid_ir["target"]["minecraft_version"] = "1.20.1"
+        with self.assertRaises(c7.StructuralQAError) as direct:
+            c7.run_structural_qa(build_spec, invalid_ir, None)
+        with self.assertRaises(errors.C9Error) as wrapped:
+            facade.qa_structural(build_spec, invalid_ir, None)
+        self.assertEqual(wrapped.exception.code, "AUTHORITY_REJECTED")
+        self.assertEqual(wrapped.exception.authority, "C7")
+        self.assertEqual(wrapped.exception.details, [str(direct.exception)])
+
+    def test_preview_render_matches_c8_and_is_deterministic(self) -> None:
+        _facade_module, facade, store, errors, c2, _c7, renderer, _build_spec, build_ir = self._fixture()
+        direct = renderer.render_canonical_views(build_ir)
+        self.assertEqual(tuple(direct), tuple(renderer.VIEW_IDS))
+
+        first = facade.preview_render(build_ir)
+        second = facade.preview_render(build_ir)
+        self.assertEqual(first, second)
+        self.assertEqual(
+            set(first),
+            {"renderer_version", "build_ir_sha256", "bundle_uri", "views"},
+        )
+        self.assertEqual(first["renderer_version"], renderer.RENDERER_VERSION)
+        self.assertEqual(first["build_ir_sha256"], c2.fingerprint_build_ir(build_ir))
+        self.assertEqual(
+            [item["id"] for item in first["views"]],
+            list(renderer.VIEW_IDS),
+        )
+
+        for descriptor in first["views"]:
+            self.assertEqual(
+                set(descriptor),
+                {"id", "uri", "media_type", "sha256", "byte_length"},
+            )
+            view_id = descriptor["id"]
+            record = store.get(descriptor["uri"])
+            self.assertEqual(record.kind, "preview_svg")
+            self.assertEqual(record.media_type, "image/svg+xml")
+            self.assertEqual(record.data, direct[view_id])
+            self.assertEqual(record.sha256, hashlib.sha256(direct[view_id]).hexdigest())
+            self.assertEqual(record.byte_length, len(direct[view_id]))
+            self.assertEqual(descriptor["media_type"], record.media_type)
+            self.assertEqual(descriptor["sha256"], record.sha256)
+            self.assertEqual(descriptor["byte_length"], record.byte_length)
+
+        invalid_ir = copy.deepcopy(build_ir)
+        invalid_ir["target"]["minecraft_version"] = "1.20.1"
+        with self.assertRaises(renderer.PreviewRenderError) as direct_error:
+            renderer.render_canonical_views(invalid_ir)
+        with self.assertRaises(errors.C9Error) as wrapped:
+            facade.preview_render(invalid_ir)
+        self.assertEqual(wrapped.exception.code, "AUTHORITY_REJECTED")
+        self.assertEqual(wrapped.exception.authority, "C8")
+        self.assertEqual(wrapped.exception.details, [str(direct_error.exception)])
+
+    def test_preview_bundle_manifest_is_canonical_and_bound(self) -> None:
+        import json
+
+        _facade_module, facade, store, _errors, c2, _c7, renderer, _build_spec, build_ir = self._fixture()
+        result = facade.preview_render(build_ir)
+        build_ir_sha256 = c2.fingerprint_build_ir(build_ir)
+        expected_views = [
+            {
+                "id": item["id"],
+                "uri": item["uri"],
+                "media_type": item["media_type"],
+                "sha256": item["sha256"],
+                "byte_length": item["byte_length"],
+            }
+            for item in result["views"]
+        ]
+        expected_manifest = {
+            "schema_version": 1,
+            "renderer_version": renderer.RENDERER_VERSION,
+            "build_ir_sha256": build_ir_sha256,
+            "views": expected_views,
+        }
+        expected_bytes = (
+            json.dumps(
+                expected_manifest,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            )
+            + "\n"
+         ).encode("utf-8")
+
+        bundle = store.get(result["bundle_uri"])
+        self.assertEqual(bundle.kind, "preview_bundle")
+        self.assertEqual(bundle.media_type, "application/json")
+        self.assertEqual(bundle.data, expected_bytes)
+        self.assertTrue(bundle.data.endswith(b"\n"))
+        self.assertFalse(bundle.data.endswith(b"\n\n"))
+        self.assertEqual(json.loads(bundle.data), expected_manifest)
+        self.assertEqual(result["renderer_version"], expected_manifest["renderer_version"])
+        self.assertEqual(result["build_ir_sha256"], expected_manifest["build_ir_sha256"])
+
+        repeated = facade.preview_render(build_ir)
+        self.assertEqual(repeated["bundle_uri"], result["bundle_uri"])
+        self.assertEqual(store.get(repeated["bundle_uri"]).data, expected_bytes)
+
+
 if __name__ == "__main__":
     unittest.main()
