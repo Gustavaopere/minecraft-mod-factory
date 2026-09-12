@@ -1,0 +1,43 @@
+name: C9 Task 3 Test Loader Fix
+
+on:
+  push:
+    branches:
+      - feat/construction-c9-agent-mcp
+
+permissions:
+  contents: write
+
+jobs:
+  fix-loader:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/construction-c9-agent-mcp
+      - name: Use canonical package imports in Task 3 tests
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("construction/tests/test_c9_agent_mcp.py")
+          text = path.read_text(encoding="utf-8")
+          old = '''        errors = _load_module(ERRORS_PATH, "construction_c9_errors_contract")
+          artifacts = _load_module(ARTIFACTS_PATH, "construction_c9_artifacts_contract")
+          '''
+          new = '''        errors = importlib.import_module("construction.mcp.errors")
+          artifacts = importlib.import_module("construction.mcp.artifacts")
+          '''
+          if old not in text:
+              raise SystemExit("Task 3 loader fixture drifted")
+          path.write_text(text.replace(old, new, 1), encoding="utf-8")
+          PY
+      - name: Commit loader correction
+        run: |
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add construction/tests/test_c9_agent_mcp.py
+          git commit -m "test(construction): use canonical C9 package imports"
+          git push origin HEAD:feat/construction-c9-agent-mcp
