@@ -19,7 +19,7 @@ const sha256 = (buffer) => crypto.createHash('sha256').update(buffer).digest('he
 function canonical(value) {
   if (Array.isArray(value)) return value.map(canonical);
   if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonical(value[key])]));
+    return Object.fromEntries(Object.keys(value).sort((left, right) => left.localeCompare(right, 'en')).map((key) => [key, canonical(value[key])]));
   }
   return value;
 }
@@ -92,7 +92,7 @@ function validateAnimation(animation) {
   const doc = animation.rawJson;
   if (doc.format_version !== '1.8.0') fail('REAL_ANIMATION_FORMAT_DRIFT', 'expected format_version 1.8.0');
   const animations = doc.animations || {};
-  const names = Object.keys(animations).sort();
+  const names = Object.keys(animations).sort((left, right) => left.localeCompare(right, 'en'));
   if (!semanticEqual(names, ['animation.golden_sample_mob.idle', 'animation.golden_sample_mob.walk'])) {
     fail('REAL_ANIMATION_SET_DRIFT', 'idle/walk animation set drifted');
   }
