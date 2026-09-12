@@ -5,6 +5,10 @@ import re
 import sys
 from pathlib import Path
 
+_ROOT = Path(__file__).resolve().parents[2]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
 from construction.providers.errors import C10Error
 from construction.providers.handoff import validate_handoff_receipt, validate_handoff_request
 from construction.providers.profiles import load_profile_catalog
