@@ -153,7 +153,7 @@ The PR4 UV-island-mask contract adds `texture_paint_uv_island` as a deterministi
 - UV coordinates must map exactly to bitmap pixels using the current project UV dimensions and texture resolution;
 - selected face rectangles must form one connected UV component through positive-area overlap or a shared edge segment; corner-only contact is not connectivity;
 - the declared `region` must exactly equal the bounding rectangle derived from the selected UV mask;
-- `pixels` remains an exact row-major sequence of RGBA tuples for the declared region and the conservative pixel budget is charged by the full region area;
+- `pixels` remains an exact row-major RGBA sequence for the declared region and the conservative pixel budget is charged by the full region area;
 - only pixels covered by the derived face-union mask are changed; holes/gaps inside the bounding rectangle and all pixels outside it are preserved;
 - duplicate face selectors, disconnected selections, texture mismatch, non-pixel-aligned UVs, invalid bounds and layered textures fail during preflight before Undo;
 - dry-run performs validation/preflight without bitmap mutation or Undo;
