@@ -39,6 +39,19 @@ jobs:
             exit 1
           fi
 
+      - name: Set up Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+
+      - name: Install hash-pinned coverage tool
+        run: python3 -m pip install --require-hashes --no-deps -r construction/upstream/harness/sonar-coverage-lock.txt
+
+      - name: Generate C10 provider coverage
+        run: |
+          python3 -m coverage run --branch --source=construction/providers -m unittest discover -s construction/tests -p 'test_c10_*.py' -v
+          python3 -m coverage xml -o coverage.xml
+
       - name: Run SonarQube Cloud scan and wait for Quality Gate
         uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f
         env:
