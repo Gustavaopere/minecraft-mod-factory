@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib
 import importlib.metadata
 import importlib.util
 import unittest
@@ -93,8 +94,8 @@ class C9ArtifactStoreContractTests(unittest.TestCase):
     def _modules(self):
         self.assertTrue(ARTIFACTS_PATH.is_file(), "C9 ArtifactStore is not implemented")
         self.assertTrue(ERRORS_PATH.is_file(), "C9 error boundary is not implemented")
-        errors = _load_module(ERRORS_PATH, "construction_c9_errors_contract")
-        artifacts = _load_module(ARTIFACTS_PATH, "construction_c9_artifacts_contract")
+        errors = importlib.import_module("construction.mcp.errors")
+        artifacts = importlib.import_module("construction.mcp.artifacts")
         return artifacts, errors
 
     def test_artifact_store_deduplicates_and_is_immutable(self) -> None:
