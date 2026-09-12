@@ -23,37 +23,47 @@ jobs:
             exit 1
           fi
 
-          auth=(--fail-with-body --silent --show-error --user "${SONAR_TOKEN}:")
-          component="$(curl "${auth[@]}" \
-            'https://sonarcloud.io/api/components/show?component=Gustavaopere_minecraft-mod-factory')"
-          gate="$(curl "${auth[@]}" \
-            'https://sonarcloud.io/api/qualitygates/project_status?projectKey=Gustavaopere_minecraft-mod-factory&branch=main')"
-          measures="$(curl "${auth[@]}" \
-            'https://sonarcloud.io/api/measures/component?component=Gustavaopere_minecraft-mod-factory&branch=main&metricKeys=coverage,new_coverage,lines_to_cover,new_lines_to_cover,uncovered_lines,new_uncovered_lines')"
-          new_code="$(curl "${auth[@]}" \
-            'https://sonarcloud.io/api/new_code_periods/show?project=Gustavaopere_minecraft-mod-factory&branch=main')"
+          fetch() {
+            local name="$1"
+            local url="$2"
+            local code
+            code="$(curl --silent --show-error --user "${SONAR_TOKEN}:" \
+              --output "${RUNNER_TEMP}/${name}.json" --write-out '%{http_code}' "$url")"
+            echo "API_STATUS=${name}:${code}"
+          }
 
-          SONAR_COMPONENT_RESPONSE="$component" \
-          SONAR_GATE_RESPONSE="$gate" \
-          SONAR_MEASURES_RESPONSE="$measures" \
-          SONAR_NEW_CODE_RESPONSE="$new_code" \
-          python3 - <<'PY'
+          fetch component 'https://sonarcloud.io/api/components/show?component=Gustavaopere_minecraft-mod-factory'
+          fetch gate 'https://sonarcloud.io/api/qualitygates/project_status?projectKey=Gustavaopere_minecraft-mod-factory&branch=main'
+          fetch measures 'https://sonarcloud.io/api/measures/component?component=Gustavaopere_minecraft-mod-factory&branch=main&metricKeys=coverage,new_coverage,lines_to_cover,new_lines_to_cover,uncovered_lines,new_uncovered_lines'
+          fetch new_code 'https://sonarcloud.io/api/new_code_periods/show?project=Gustavaopere_minecraft-mod-factory&branch=main'
+
+          RUNNER_TEMP_PATH="$RUNNER_TEMP" python3 - <<'PY'
           import json
           import os
+          from pathlib import Path
 
-          component = json.loads(os.environ["SONAR_COMPONENT_RESPONSE"]).get("component", {})
+          root = Path(os.environ["RUNNER_TEMP_PATH"])
+
+          def load(name):
+              path = root / f"{name}.json"
+              try:
+                  return json.loads(path.read_text(encoding="utf-8"))
+              except Exception as exc:
+                  print(f"API_PARSE={name}:unavailable:{type(exc).__name__}")
+                  return None
+
+          component_payload = load("component") or {}
+          component = component_payload.get("component", {})
           if component.get("key") != "Gustavaopere_minecraft-mod-factory":
               raise SystemExit(f"unexpected Sonar project key: {component.get('key')!r}")
           organization = component.get("organization")
           if not isinstance(organization, str) or not organization:
               raise SystemExit("Sonar organization key missing from component response")
-
-          gate = json.loads(os.environ["SONAR_GATE_RESPONSE"]).get("projectStatus", {})
-          measures_payload = json.loads(os.environ["SONAR_MEASURES_RESPONSE"]).get("component", {})
-          new_code = json.loads(os.environ["SONAR_NEW_CODE_RESPONSE"])
-
           print(f"SONAR_PROJECT_KEY={component['key']}")
           print(f"SONAR_ORGANIZATION={organization}")
+
+          gate_payload = load("gate") or {}
+          gate = gate_payload.get("projectStatus", {})
           print(f"QUALITY_GATE_STATUS={gate.get('status')}")
           for condition in gate.get("conditions", []):
               metric = condition.get("metricKey")
@@ -64,16 +74,18 @@ jobs:
                       f"op={condition.get('comparator')}:threshold={condition.get('errorThreshold')}"
                   )
 
+          measures_payload = (load("measures") or {}).get("component", {})
           allowed = {"coverage", "new_coverage", "lines_to_cover", "new_lines_to_cover", "uncovered_lines", "new_uncovered_lines"}
           for measure in measures_payload.get("measures", []):
               metric = measure.get("metric")
-              if metric not in allowed:
-                  continue
-              print(f"MEASURE={metric}:value={measure.get('value')}:period={measure.get('period')}")
+              if metric in allowed:
+                  print(f"MEASURE={metric}:value={measure.get('value')}:period={measure.get('period')}")
 
-          print(
-              "NEW_CODE_PERIOD="
-              f"type={new_code.get('type')}:value={new_code.get('value')}:"
-              f"effectiveValue={new_code.get('effectiveValue')}:inherited={new_code.get('inherited')}"
-          )
+          new_code = load("new_code") or {}
+          if new_code:
+              print(
+                  "NEW_CODE_PERIOD="
+                  f"type={new_code.get('type')}:value={new_code.get('value')}:"
+                  f"effectiveValue={new_code.get('effectiveValue')}:inherited={new_code.get('inherited')}"
+              )
           PY
