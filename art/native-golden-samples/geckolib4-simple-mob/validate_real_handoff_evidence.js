@@ -116,15 +116,47 @@ function validateAnimation(animation) {
   }
 }
 
+function validateRuntimeEvidence(runtimeEvidence) {
+  if (!runtimeEvidence || typeof runtimeEvidence !== 'object') fail('INVALID_RUNTIME_EVIDENCE', 'durable runtime evidence object is required');
+  if (
+    runtimeEvidence.classification !== 'PASS' ||
+    runtimeEvidence.commit !== '33f0322fd806d593da4e3063db93b709dbe878da' ||
+    runtimeEvidence.workflowRunId !== 34710808440 ||
+    runtimeEvidence.jobId !== 103599143647
+  ) {
+    fail('INVALID_RUNTIME_PROVENANCE', 'runtime proof provenance drifted from the validated GitHub Actions evidence');
+  }
+  const expectedTarget = {minecraft:'1.21.1', neoforge:'21.1.248', java:21, geckolib:'4.9.2'};
+  if (!semanticEqual(runtimeEvidence.target, expectedTarget)) fail('INVALID_RUNTIME_TARGET', 'runtime proof target drifted');
+  const server = runtimeEvidence.server || {};
+  if (server.gameTest !== 'PASS' || server.player_connected !== true || server.mob_spawned !== true) {
+    fail('INVALID_RUNTIME_SERVER_EVIDENCE', 'dedicated-server/GameTest runtime proof is incomplete');
+  }
+  const client = runtimeEvidence.client || {};
+  if (
+    client.client_joined !== true ||
+    client.renderer_invoked !== true ||
+    client.baked_model_observed !== true ||
+    client.texture_resolved !== true ||
+    client.animation_motion_observed !== true ||
+    client.texture !== 'i3_golden_mod:textures/entity/golden_sample_mob.png' ||
+    !Number.isFinite(client.head_rotation_y) ||
+    Math.abs(client.head_rotation_y) <= 0.0001
+  ) {
+    fail('INVALID_RUNTIME_CLIENT_EVIDENCE', 'live-client renderer/model/texture/animation proof is incomplete');
+  }
+  return runtimeEvidence;
+}
+
 function validateRealHandoffEvidence(input = loadEvidence()) {
   const {manifest, model, animation} = input;
-  if (manifest.state !== 'PREPARED_FOR_REAL_HANDOFF') fail('INVALID_REAL_HANDOFF_STATE', 'handoff must remain prepared until runtime/I6 gates pass');
+  if (manifest.state !== 'REAL_HANDOFF_VALIDATED') fail('INVALID_REAL_HANDOFF_STATE', 'completed handoff must use the existing REAL_HANDOFF_VALIDATED domain state');
   const handoff = manifest.realHandoff || {};
-  const requiredTrue = ['editorOpened', 'sourceRoundTripValidated', 'exporterProduced', 'reopenValidated'];
-  const requiredFalse = ['runtimeValidated', 'f4I6Evidence'];
-  if (requiredTrue.some((key) => handoff[key] !== true) || requiredFalse.some((key) => handoff[key] !== false)) {
-    fail('INVALID_REAL_HANDOFF_FLAGS', 'partial real handoff flags do not match proven evidence boundary');
+  const requiredTrue = ['editorOpened', 'sourceRoundTripValidated', 'exporterProduced', 'reopenValidated', 'runtimeValidated', 'f4I6Evidence'];
+  if (requiredTrue.some((key) => handoff[key] !== true)) {
+    fail('INVALID_REAL_HANDOFF_FLAGS', 'completed real handoff requires every authoring/export/reopen/runtime/I6 gate');
   }
+  const runtimeEvidence = validateRuntimeEvidence(handoff.runtimeEvidence);
   const manual = manifest.manualEvidence || {};
   const expectedAnimationNames = ['animation.golden_sample_mob.idle', 'animation.golden_sample_mob.walk'];
   if (
@@ -160,8 +192,9 @@ function validateRealHandoffEvidence(input = loadEvidence()) {
     animationSha256: sha256(animation.rawBuffer),
     exporterProduced: true,
     reopenValidated: true,
-    runtimeValidated: false,
-    f4I6Evidence: false,
+    runtimeValidated: true,
+    f4I6Evidence: true,
+    runtimeEvidence,
   });
 }
 

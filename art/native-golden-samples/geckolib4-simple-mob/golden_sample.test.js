@@ -6,7 +6,7 @@ const test = require('node:test');
 const {loadSample, validateSample} = require('./validate_golden_sample.js');
 const clone = (value) => JSON.parse(JSON.stringify(value));
 
-test('native GeckoLib Golden Sample satisfies the prepared handoff contract', () => {
+test('native GeckoLib Golden Sample satisfies the validated real handoff contract', () => {
   const result = validateSample();
   assert.equal(result.ok, true);
   assert.equal(result.native.cubeCount, 4);
@@ -32,8 +32,8 @@ test('fails closed when provider plugin pin drifts', () => {
   assert.throws(() => validateSample(sample), /PROVIDER_AUTHORITY_DRIFT/);
 });
 
-test('fails closed on premature I6 completion claim', () => {
-  const sample = loadSample(); sample.manifest = clone(sample.manifest); sample.manifest.realHandoff.f4I6Evidence = true;
+test('fails closed on incomplete I6 completion claim', () => {
+  const sample = loadSample(); sample.manifest = clone(sample.manifest); sample.manifest.realHandoff.runtimeValidated = false;
   assert.throws(() => validateSample(sample), /PREMATURE_I6_EVIDENCE/);
 });
 
@@ -50,5 +50,5 @@ test('fails closed when actual outputs exist but exporter evidence is revoked', 
   const sample = loadSample();
   sample.manifest = clone(sample.manifest);
   sample.manifest.realHandoff.exporterProduced = false;
-  assert.throws(() => validateSample(sample), /UNCLASSIFIED_ACTUAL_OUTPUT/);
+  assert.throws(() => validateSample(sample), /PREMATURE_I6_EVIDENCE|UNCLASSIFIED_ACTUAL_OUTPUT/);
 });
