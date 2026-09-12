@@ -1,0 +1,69 @@
+name: Factory Engineering I7 Provider Catalog
+
+on:
+  push:
+    branches:
+      - main
+      - engineering/i7-provider-catalog
+    paths:
+      - '.github/workflows/factory-engineering-i7-provider-catalog.yml'
+      - 'engineering/tests/test_i7_provider_catalog.py'
+      - 'engineering/tests/test_i7_provider_catalog_content.py'
+      - 'engineering/tests/test_i7_provider_catalog_supported_semantics.py'
+      - 'engineering/catalog/providers/**'
+      - 'engineering/schemas/provider-catalog.schema.json'
+      - 'engineering/tooling/provider-catalog/**'
+      - 'engineering/catalog/sources/SOURCE-REGISTRY.json'
+      - 'engineering/schemas/dependency-profile.schema.json'
+      - 'engineering/schemas/compatibility-matrix.schema.json'
+      - 'engineering/tooling/import-physical-modlist.py'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/factory-engineering-i7-provider-catalog.yml'
+      - 'engineering/tests/test_i7_provider_catalog.py'
+      - 'engineering/tests/test_i7_provider_catalog_content.py'
+      - 'engineering/tests/test_i7_provider_catalog_supported_semantics.py'
+      - 'engineering/catalog/providers/**'
+      - 'engineering/schemas/provider-catalog.schema.json'
+      - 'engineering/tooling/provider-catalog/**'
+      - 'engineering/catalog/sources/SOURCE-REGISTRY.json'
+      - 'engineering/schemas/dependency-profile.schema.json'
+      - 'engineering/schemas/compatibility-matrix.schema.json'
+      - 'engineering/tooling/import-physical-modlist.py'
+
+permissions:
+  contents: read
+
+jobs:
+  provider-catalog-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run I7 provider catalog contract tests
+        run: >-
+          python3 -m unittest
+          engineering/tests/test_i7_provider_catalog.py
+          engineering/tests/test_i7_provider_catalog_content.py
+          engineering/tests/test_i7_provider_catalog_supported_semantics.py
+
+      - name: Check I7 whitespace
+        run: >-
+          git diff --check HEAD^ --
+          .github/workflows/factory-engineering-i7-provider-catalog.yml
+          engineering/tests/test_i7_provider_catalog.py
+          engineering/tests/test_i7_provider_catalog_content.py
+          engineering/tests/test_i7_provider_catalog_supported_semantics.py
+          engineering/catalog/providers
+          engineering/schemas/provider-catalog.schema.json
+          engineering/tooling/provider-catalog
