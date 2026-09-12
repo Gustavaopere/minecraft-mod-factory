@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.AccessibilityOnboardingScreen;
 import net.minecraft.client.gui.screens.ConnectScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.multiplayer.ServerData;
@@ -53,7 +54,9 @@ public final class GoldenSampleMobClientRuntimeProof {
             System.out.println("[GECKOLIB_CLIENT_PROOF] screen=" + screenClass);
         }
 
-        if (!connectStarted && minecraft.screen instanceof TitleScreen) {
+        boolean startupReady = minecraft.screen instanceof TitleScreen
+                || minecraft.screen instanceof AccessibilityOnboardingScreen;
+        if (!connectStarted && startupReady) {
             connectStarted = true;
             String address = SERVER_HOST + ":" + SERVER_PORT;
             ServerData serverData = new ServerData(
