@@ -43,9 +43,13 @@ jobs:
         run: node art/native-golden-samples/geckolib4-simple-mob/validate_real_handoff_evidence.js
       - name: Run fail-closed real handoff tests
         run: node --test art/native-golden-samples/geckolib4-simple-mob/real_handoff_evidence.test.js
+      - name: Run target-exact runtime handoff contract tests
+        run: node --test art/native-golden-samples/geckolib4-simple-mob/runtime_handoff.test.js
       - name: Preserve existing reference corpus gates
+        if: always()
         run: |
           node art/golden-samples/validate_golden_samples.js
           node art/golden-samples/validate_reference_evidence.js
       - name: Validate whitespace
+        if: always()
         run: git diff --check
