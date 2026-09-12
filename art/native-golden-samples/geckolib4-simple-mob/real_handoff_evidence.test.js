@@ -43,6 +43,44 @@ test('real GeckoLib exporter and reopen evidence satisfies the partial handoff c
   assert.equal(result.f4I6Evidence, false);
 });
 
+test('completed real handoff requires durable target-exact runtime evidence', () => {
+  const evidence = cloneEvidence();
+  evidence.manifest.state = 'PASS';
+  evidence.manifest.realHandoff.runtimeValidated = true;
+  evidence.manifest.realHandoff.f4I6Evidence = true;
+  evidence.manifest.realHandoff.runtimeEvidence = {
+    classification: 'PASS',
+    commit: '33f0322fd806d593da4e3063db93b709dbe878da',
+    workflowRunId: 34710808440,
+    jobId: 103599143647,
+    target: {
+      minecraft: '1.21.1',
+      neoforge: '21.1.248',
+      java: 21,
+      geckolib: '4.9.2',
+    },
+    server: {
+      gameTest: 'PASS',
+      player_connected: true,
+      mob_spawned: true,
+    },
+    client: {
+      client_joined: true,
+      renderer_invoked: true,
+      baked_model_observed: true,
+      texture_resolved: true,
+      animation_motion_observed: true,
+      texture: 'i3_golden_mod:textures/entity/golden_sample_mob.png',
+      head_rotation_y: 0.03228859,
+    },
+  };
+  const result = validateRealHandoffEvidence(evidence);
+  assert.equal(result.ok, true);
+  assert.equal(result.runtimeValidated, true);
+  assert.equal(result.f4I6Evidence, true);
+  assert.equal(result.runtimeEvidence.workflowRunId, 34710808440);
+});
+
 test('fails closed when a raw exporter hash drifts', () => {
   const evidence = cloneEvidence();
   evidence.model.declaration.sha256 = '0'.repeat(64);
