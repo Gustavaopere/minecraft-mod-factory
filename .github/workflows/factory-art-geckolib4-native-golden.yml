@@ -136,7 +136,7 @@ jobs:
           PY
       - name: Prepare target-exact live client proof
         run: >-
-          python3 art/native-golden-samples/geckolib4-simple-mob/runtime-smoke/prepare_client_proof.py
+          python3 art/native-golden-samples/geckolib4-simple-mob/runtime-smoke/tests/prepare_client_proof.py
           .factory-ci/geckolib4/generated
       - name: Materialize deterministic empty GameTest structure
         run: |
@@ -189,7 +189,7 @@ jobs:
             ./gradlew runGameTestServer --write-locks --no-daemon
       - name: Execute target-exact live client renderer proof
         run: >-
-          bash art/native-golden-samples/geckolib4-simple-mob/runtime-smoke/run_live_client_proof.sh
+          bash art/native-golden-samples/geckolib4-simple-mob/runtime-smoke/tests/run_live_client_proof.sh
           .factory-ci/geckolib4/generated
       - name: Preserve existing reference corpus gates
         if: always()
