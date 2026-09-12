@@ -221,7 +221,20 @@ def validate_modpack_registry(registry: object) -> list[str]:
         return ["registry must be an object"]
     if set(registry) != {"schema_version", "physical", "runtime", "static_index", "blocks", "content_sha256"}:
         errors.append("registry top-level fields do not match the C4 contract")
-    # Continue with exact field/type/linkage/order/fingerprint checks from the approved C9 spec.
+    physical = registry.get("physical")
+    runtime = registry.get("runtime")
+    static_index = registry.get("static_index")
+    blocks = registry.get("blocks")
+    if not isinstance(physical, dict):
+        errors.append("registry.physical must be an object")
+    if not isinstance(runtime, dict):
+        errors.append("registry.runtime must be an object")
+    if not isinstance(static_index, dict):
+        errors.append("registry.static_index must be an object")
+    if not isinstance(blocks, list):
+        errors.append("registry.blocks must be an array")
+    # The implementation then performs every exact C4 linkage, block/state,
+    # canonical-order, and content_sha256 check enumerated below in this step.
     return errors
 ```
 
@@ -610,7 +623,7 @@ mcp = MCPServer("Minecraft Construction Factory", version="c9-mcp-v1")
 
 - [ ] **Step 4: Register exactly the nine tools**
 
-Each `@mcp.tool()` function is a thin call into the matching façade method. It returns JSON-serializable dicts only. Convert `C9Error` into the SDK-supported tool error form with the exact stable payload from `C9Error.payload()`; unexpected exceptions return sanitized `INTERNAL_ERROR` and log only a stable message to stderr.
+Each `@mcp.tool()` function is a thin call into the matching façade method. It returns JSON-serializable dicts only. For anticipated `C9Error`, serialize `C9Error.payload()` with `json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)` and raise `ToolError` with that canonical JSON string. MCP SDK v2.2.0 then returns `is_error=true` with textual content and `structured_content=None`; stdio tests must parse only the JSON suffix after the SDK's `Error executing tool <name>:` prefix. For an unexpected exception, log only `C9 internal tool failure` to stderr and raise `ToolError('{"code":"INTERNAL_ERROR","message":"internal C9 failure"}') from None`, never the exception text.
 
 - [ ] **Step 5: Register the artifact resource template**
 
@@ -624,6 +637,8 @@ def artifact(digest: str) -> bytes:
 ```
 
 Because the SDK v2.2.0 resource contract converts `bytes` to `BlobResourceContents`, real client tests must verify exact decoded bytes. The descriptor returned by tools remains authoritative for the artifact's specific media type (`image/svg+xml`, `application/json`, or `application/octet-stream`); the template transport MIME remains generic because one template serves mixed binary kinds.
+
+The dynamic artifact endpoint is a resource template and therefore appears in `resources/templates/list`, not as one concrete entry per artifact in `resources/list`. `ArtifactStore.list_descriptors()` is the deterministic current-artifact listing required by the C9 design; concrete resource reads still use the returned content-addressed URIs. Do not dynamically register per-artifact SDK resources merely to populate `resources/list`.
 
 - [ ] **Step 6: Add stdio-only entrypoint and run unit GREEN**
 
