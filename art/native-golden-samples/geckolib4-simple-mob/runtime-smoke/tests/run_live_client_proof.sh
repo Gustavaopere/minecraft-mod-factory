@@ -17,11 +17,11 @@ client_log="$repo_root/.factory-ci/geckolib4/live-client-client.log"
 
 host="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["connection"]["host"])' "$contract")"
 port="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["connection"]["port"])' "$contract")"
-quick_play="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["connection"]["quickPlayArgument"])' "$contract")"
+mechanism="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["connection"]["mechanism"])' "$contract")"
 
 [[ "$host" == "127.0.0.1" ]]
 [[ "$port" == "25565" ]]
-[[ "$quick_play" == "--quickPlayMultiplayer" ]]
+[[ "$mechanism" == "ConnectScreen.startConnecting@TitleScreen" ]]
 command -v xvfb-run >/dev/null
 command -v setsid >/dev/null
 
@@ -104,7 +104,7 @@ client_pid=$!
 
 evidence="$client_project/run/client/client-runtime-proof.json"
 evidence_ready=0
-for _ in $(seq 1 180); do
+for _ in $(seq 1 420); do
   if [[ -s "$evidence" ]]; then
     evidence_ready=1
     break

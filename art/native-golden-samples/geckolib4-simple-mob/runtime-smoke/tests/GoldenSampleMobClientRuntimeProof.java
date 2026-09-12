@@ -10,10 +10,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ConnectScreen;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.model.DefaultedEntityGeoModel;
@@ -26,13 +31,49 @@ public final class GoldenSampleMobClientRuntimeProof {
     private static final ResourceLocation EXPECTED_TEXTURE = ResourceLocation.fromNamespaceAndPath(
             I3GoldenMod.MOD_ID,
             "textures/entity/golden_sample_mob.png");
+    private static final String SERVER_HOST = "127.0.0.1";
+    private static final int SERVER_PORT = 25565;
     private static final float MOTION_EPSILON = 0.0001F;
+    private static boolean connectStarted;
+    private static boolean clientJoinedLogged;
+    private static String lastScreenClass = "";
 
     private GoldenSampleMobClientRuntimeProof() {
     }
 
     public static GeoEntityRenderer<GoldenSampleMob> createRenderer(EntityRendererProvider.Context context) {
         return new ProofRenderer(context);
+    }
+
+    public static void onClientTick(ClientTickEvent.Post event) {
+        Minecraft minecraft = Minecraft.getInstance();
+        String screenClass = minecraft.screen == null ? "<null>" : minecraft.screen.getClass().getName();
+        if (!screenClass.equals(lastScreenClass)) {
+            lastScreenClass = screenClass;
+            System.out.println("[GECKOLIB_CLIENT_PROOF] screen=" + screenClass);
+        }
+
+        if (!connectStarted && minecraft.screen instanceof TitleScreen) {
+            connectStarted = true;
+            String address = SERVER_HOST + ":" + SERVER_PORT;
+            ServerData serverData = new ServerData(
+                    "Factory GeckoLib client proof",
+                    address,
+                    ServerData.Type.OTHER);
+            ConnectScreen.startConnecting(
+                    minecraft.screen,
+                    minecraft,
+                    ServerAddress.parseString(address),
+                    serverData,
+                    false,
+                    null);
+            System.out.println("[GECKOLIB_CLIENT_PROOF] connect_started=true address=" + address);
+        }
+
+        if (!clientJoinedLogged && minecraft.player != null && minecraft.getConnection() != null) {
+            clientJoinedLogged = true;
+            System.out.println("[GECKOLIB_CLIENT_PROOF] client_joined=true");
+        }
     }
 
     private static final class ProofRenderer extends GeoEntityRenderer<GoldenSampleMob> {

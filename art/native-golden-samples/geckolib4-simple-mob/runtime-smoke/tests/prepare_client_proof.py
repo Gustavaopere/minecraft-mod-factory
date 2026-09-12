@@ -45,7 +45,7 @@ def prepare(generated: Path) -> None:
     if connection != {
         "host": "127.0.0.1",
         "port": 25565,
-        "quickPlayArgument": "--quickPlayMultiplayer",
+        "mechanism": "ConnectScreen.startConnecting@TitleScreen",
     }:
         raise ValueError(f"unsupported live-client connection contract: {connection!r}")
 
@@ -58,8 +58,6 @@ def prepare(generated: Path) -> None:
     client_replacement = """    client {
         systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         systemProperty 'i3golden.clientProofPath', file('run/client/client-runtime-proof.json').getAbsolutePath()
-        argument '--quickPlayMultiplayer'
-        argument '127.0.0.1:25565'
     }
 """
     if client_marker not in build:
@@ -79,6 +77,19 @@ def prepare(generated: Path) -> None:
     if listener_line not in main:
         main = main.replace(registry_marker, registry_marker + listener_line, 1)
     main_path.write_text(main, encoding="utf-8", newline="\n")
+
+    client_main_path = generated / "src/main/java/dev/example/i3golden/client/I3GoldenModClient.java"
+    client_main = client_main_path.read_text(encoding="utf-8")
+    renderer_marker = "        modBus.addListener(GoldenSampleMobClient::registerRenderers);\n"
+    client_listener_line = (
+        "        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener("
+        "GoldenSampleMobClientRuntimeProof::onClientTick);\n"
+    )
+    if renderer_marker not in client_main:
+        raise ValueError("runtime client renderer marker missing from generated client class")
+    if client_listener_line not in client_main:
+        client_main = client_main.replace(renderer_marker, renderer_marker + client_listener_line, 1)
+    client_main_path.write_text(client_main, encoding="utf-8", newline="\n")
 
     java_root = generated / "src/main/java/dev/example/i3golden"
     client_root = java_root / "client"
