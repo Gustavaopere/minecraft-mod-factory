@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://minecraft-mod-factory.local/schemas/blockbench-base-safe-preset.schema.json",
+  "title": "Minecraft Mod Factory Blockbench Base Safe Preset",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "presetId",
+    "title",
+    "targetBlockbenchVersion",
+    "purpose",
+    "providerExtensionsAllowed",
+    "humanInstallationOnly",
+    "catalog",
+    "toolkit",
+    "extensions",
+    "installationOrder"
+  ],
+  "properties": {
+    "presetId": {"const": "base_safe"},
+    "title": {"type": "string", "minLength": 1},
+    "targetBlockbenchVersion": {"type": "string", "pattern": "^\\d+(?:\\.\\d+){2}$"},
+    "purpose": {"const": "authoring_and_qa_without_provider_specific_extensions"},
+    "providerExtensionsAllowed": {"const": false},
+    "humanInstallationOnly": {"const": true},
+    "catalog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit", "catalogPath", "auditedAt"],
+      "properties": {
+        "repository": {"const": "JannisX11/blockbench-plugins"},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "catalogPath": {"const": "plugins.json"},
+        "auditedAt": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"}
+      }
+    },
+    "toolkit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pluginId",
+        "sourceBundle",
+        "installArtifact",
+        "installArtifactGeneratedOnDemand",
+        "sourceCommit",
+        "installation",
+        "mcpPolicy",
+        "rollback",
+        "smokeRequired"
+      ],
+      "properties": {
+        "pluginId": {"const": "rpg_asset_toolkit"},
+        "sourceBundle": {"type": "string", "minLength": 1},
+        "installArtifact": {"type": "string", "minLength": 1},
+        "installArtifactGeneratedOnDemand": {"const": true},
+        "sourceCommit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "installation": {"const": "HUMAN_ONLY"},
+        "mcpPolicy": {"const": "READ_ONLY_BRIDGE_ONLY"},
+        "rollback": {"const": "REMOVE_LOCAL_SIDELOAD_AND_RESTART_BLOCKBENCH"},
+        "smokeRequired": {"const": true}
+      }
+    },
+    "extensions": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "items": {"$ref": "#/$defs/extension"}
+    },
+    "installationOrder": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "$defs": {
+    "extension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pluginId",
+        "title",
+        "version",
+        "minBlockbenchVersion",
+        "variant",
+        "sourcePath",
+        "compatibilityMode",
+        "installation",
+        "mcpPolicy",
+        "risk",
+        "rollback",
+        "smokeRequired"
+      ],
+      "properties": {
+        "pluginId": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+        "title": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "pattern": "^\\d+(?:\\.\\d+){2}$"},
+        "minBlockbenchVersion": {
+          "oneOf": [
+            {"type": "string", "pattern": "^\\d+(?:\\.\\d+){2}$"},
+            {"type": "null"}
+          ]
+        },
+        "variant": {"enum": ["both", "desktop"]},
+        "sourcePath": {"type": "string", "pattern": "^plugins/"},
+        "compatibilityMode": {"enum": ["MIN_VERSION_AND_SMOKE", "SMOKE_REQUIRED_NO_MIN_VERSION"]},
+        "installation": {"const": "HUMAN_ONLY"},
+        "mcpPolicy": {"const": "NEVER"},
+        "risk": {"enum": ["THIRD_PARTY_LOCAL_PLUGIN", "THIRD_PARTY_LOCAL_PLUGIN_FILESYSTEM"]},
+        "rollback": {"const": "REMOVE_VIA_BLOCKBENCH_PLUGIN_DIALOG"},
+        "smokeRequired": {"const": true}
+      }
+    }
+  }
+}
