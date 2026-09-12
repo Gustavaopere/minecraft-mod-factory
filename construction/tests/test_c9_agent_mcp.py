@@ -762,5 +762,251 @@ class C9QaPreviewContractTests(unittest.TestCase):
         self.assertEqual(store.get(repeated["bundle_uri"]).data, expected_bytes)
 
 
+class C9VisualExportContractTests(unittest.TestCase):
+    def _fixture(self):
+        base = C9QaPreviewContractTests(methodName="test_qa_structural_matches_c7")
+        facade_module, facade, store, errors, c2, c7, renderer, build_spec, build_ir = base._fixture()
+        visual = _load_module(
+            ROOT / "construction" / "core" / "visual_qa.py",
+            "construction_c8_visual_for_c9_task7",
+        )
+        c6 = _load_module(
+            ROOT / "construction" / "core" / "sponge_v3.py",
+            "construction_c6_sponge_for_c9_task7",
+        )
+        fixtures = _load_module(
+            ROOT / "construction" / "tests" / "test_c8_visual_qa.py",
+            "construction_c8_fixtures_for_c9_task7",
+        )
+        return (
+            facade_module,
+            facade,
+            store,
+            errors,
+            c2,
+            c6,
+            c7,
+            renderer,
+            visual,
+            fixtures,
+            build_spec,
+            build_ir,
+        )
+
+    @staticmethod
+    def _canonical_manifest_bytes(value: object) -> bytes:
+        import json
+        return (
+            json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+            + "\n"
+        ).encode("utf-8")
+
+    def test_qa_visual_matches_c8(self) -> None:
+        (
+            _facade_module,
+            facade,
+            _store,
+            _errors,
+            _c2,
+            _c6,
+            _c7,
+            renderer,
+            visual,
+            fixtures,
+            build_spec,
+            build_ir,
+        ) = self._fixture()
+        direct_views = renderer.render_canonical_views(build_ir)
+        preview = facade.preview_render(build_ir)
+        structural_report = facade.qa_structural(build_spec, build_ir, None)
+        review_evidence = fixtures.make_review(build_spec, build_ir, direct_views, [])
+
+        expected = visual.run_visual_qa(
+            build_spec,
+            build_ir,
+            direct_views,
+            structural_report=structural_report,
+            palette_resolution=None,
+            review_evidence=review_evidence,
+        )
+        actual = facade.qa_visual(
+            build_spec,
+            build_ir,
+            preview["bundle_uri"],
+            structural_report=structural_report,
+            palette_resolution=None,
+            review_evidence=review_evidence,
+        )
+        self.assertEqual(actual, expected)
+
+    def test_qa_visual_rejects_forged_stale_or_wrong_ir_bundle(self) -> None:
+        import json
+
+        (
+            _facade_module,
+            facade,
+            store,
+            errors,
+            c2,
+            _c6,
+            _c7,
+            _renderer,
+            _visual,
+            fixtures,
+            build_spec,
+            build_ir,
+        ) = self._fixture()
+        preview = facade.preview_render(build_ir)
+        original_record = store.get(preview["bundle_uri"])
+        manifest = json.loads(original_record.data)
+
+        noncanonical_uri = store.put(
+            json.dumps(manifest, indent=2, ensure_ascii=False).encode("utf-8"),
+            media_type="application/json",
+            kind="preview_bundle",
+        )["uri"]
+        with self.assertRaises(errors.C9Error) as noncanonical:
+            facade.qa_visual(build_spec, build_ir, noncanonical_uri)
+        self.assertEqual(noncanonical.exception.code, "INVALID_INPUT")
+        self.assertIsNone(noncanonical.exception.authority)
+
+        wrong_sha = copy.deepcopy(manifest)
+        wrong_sha["views"][0]["sha256"] = "0" * 64
+        wrong_sha_uri = store.put(
+            self._canonical_manifest_bytes(wrong_sha),
+            media_type="application/json",
+            kind="preview_bundle",
+        )["uri"]
+        with self.assertRaises(errors.C9Error) as sha_error:
+            facade.qa_visual(build_spec, build_ir, wrong_sha_uri)
+        self.assertEqual(sha_error.exception.code, "INVALID_INPUT")
+        self.assertIsNone(sha_error.exception.authority)
+
+        wrong_length = copy.deepcopy(manifest)
+        wrong_length["views"][0]["byte_length"] += 1
+        wrong_length_uri = store.put(
+            self._canonical_manifest_bytes(wrong_length),
+            media_type="application/json",
+            kind="preview_bundle",
+        )["uri"]
+        with self.assertRaises(errors.C9Error) as length_error:
+            facade.qa_visual(build_spec, build_ir, wrong_length_uri)
+        self.assertEqual(length_error.exception.code, "INVALID_INPUT")
+        self.assertIsNone(length_error.exception.authority)
+
+        missing = copy.deepcopy(manifest)
+        missing["views"][0]["uri"] = "construction://artifact/sha256/" + "f" * 64
+        missing["views"][0]["sha256"] = "f" * 64
+        missing["views"][0]["byte_length"] = 1
+        missing_uri = store.put(
+            self._canonical_manifest_bytes(missing),
+            media_type="application/json",
+            kind="preview_bundle",
+        )["uri"]
+        with self.assertRaises(errors.C9Error) as missing_error:
+            facade.qa_visual(build_spec, build_ir, missing_uri)
+        self.assertEqual(missing_error.exception.code, "ARTIFACT_NOT_FOUND")
+        self.assertIsNone(missing_error.exception.authority)
+
+        alternate_ir = c2.canonicalize_build_ir(
+            build_spec,
+            [fixtures.placement(2, 2, 2, "minecraft:stone")],
+            producer="construction-c9-task7-test",
+            producer_version="1",
+        )
+        self.assertNotEqual(
+            c2.fingerprint_build_ir(alternate_ir),
+            c2.fingerprint_build_ir(build_ir),
+        )
+        with self.assertRaises(errors.C9Error) as wrong_ir:
+            facade.qa_visual(build_spec, alternate_ir, preview["bundle_uri"])
+        self.assertEqual(wrong_ir.exception.code, "INVALID_INPUT")
+        self.assertIsNone(wrong_ir.exception.authority)
+
+    def test_export_sponge_v3_matches_c6_and_revalidates(self) -> None:
+        from unittest.mock import patch
+
+        (
+            facade_module,
+            facade,
+            store,
+            errors,
+            _c2,
+            c6,
+            _c7,
+            _renderer,
+            _visual,
+            _fixtures,
+            _build_spec,
+            build_ir,
+        ) = self._fixture()
+        required_mods = ["alpha", "minecraft"]
+        expected = c6.export_sponge_v3(
+            build_ir,
+            required_mods=required_mods,
+            block_entities=(),
+        )
+        result = facade.export_sponge_v3(build_ir, required_mods=required_mods)
+        self.assertEqual(
+            set(result),
+            {"uri", "artifact_kind", "media_type", "sha256", "byte_length"},
+        )
+        self.assertEqual(result["artifact_kind"], "sponge_v3")
+        self.assertEqual(result["media_type"], "application/octet-stream")
+        record = store.get(result["uri"])
+        self.assertEqual(record.kind, "sponge_v3")
+        self.assertEqual(record.media_type, "application/octet-stream")
+        self.assertEqual(record.data, expected)
+        self.assertEqual(record.sha256, hashlib.sha256(expected).hexdigest())
+        self.assertEqual(record.byte_length, len(expected))
+        self.assertEqual(result["sha256"], record.sha256)
+        self.assertEqual(result["byte_length"], record.byte_length)
+        self.assertEqual(c6.validate_sponge_v3(record.data), [])
+
+        for invalid_required_mods in (
+            ["zeta", "alpha"],
+            ["alpha", "alpha"],
+        ):
+            with self.subTest(required_mods=invalid_required_mods):
+                with self.assertRaises(errors.C9Error) as rejected:
+                    facade.export_sponge_v3(
+                        build_ir,
+                        required_mods=invalid_required_mods,
+                    )
+                self.assertEqual(rejected.exception.code, "INVALID_INPUT")
+                self.assertIsNone(rejected.exception.authority)
+
+        invalid_ir = copy.deepcopy(build_ir)
+        invalid_ir["target"]["minecraft_version"] = "1.20.1"
+        with self.assertRaises(c6.SpongeV3Error) as direct:
+            c6.export_sponge_v3(
+                invalid_ir,
+                required_mods=required_mods,
+                block_entities=(),
+            )
+        with self.assertRaises(errors.C9Error) as wrapped:
+            facade.export_sponge_v3(
+                invalid_ir,
+                required_mods=required_mods,
+            )
+        self.assertEqual(wrapped.exception.code, "AUTHORITY_REJECTED")
+        self.assertEqual(wrapped.exception.authority, "C6")
+        self.assertEqual(wrapped.exception.details, [str(direct.exception)])
+
+        with patch.object(
+            facade_module.c6,
+            "validate_sponge_v3",
+            return_value=["synthetic C6 validation failure"],
+        ):
+            with self.assertRaises(errors.C9Error) as revalidation:
+                facade.export_sponge_v3(build_ir, required_mods=required_mods)
+        self.assertEqual(revalidation.exception.code, "AUTHORITY_REJECTED")
+        self.assertEqual(revalidation.exception.authority, "C6")
+        self.assertEqual(
+            revalidation.exception.details,
+            ["synthetic C6 validation failure"],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
