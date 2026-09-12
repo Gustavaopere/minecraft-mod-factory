@@ -23,11 +23,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Validate deterministic canonical bundle
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node build_toolkit_bundle.js --check
+      - name: Validate synchronized install artifact
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node sync_blockbench_install_artifact.js --check
       - name: Validate install artifact contract
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.install_artifact.test.js
-      - name: Validate deterministic bundles
-        working-directory: art/tooling/blockbench/asset-toolkit
-        run: node build_toolkit_bundle.js --check
       - name: Validate whitespace
         run: git diff --check
