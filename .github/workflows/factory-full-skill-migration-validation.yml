@@ -11,6 +11,8 @@ on:
       - 'skills/**'
       - 'art/**'
       - '.sonarcloud.properties'
+      - 'sonar-project.properties'
+      - '.github/workflows/factory-sonar-ci.yml'
       - '.github/workflows/factory-full-skill-migration-validation.yml'
   pull_request:
     paths:
@@ -19,6 +21,8 @@ on:
       - 'skills/**'
       - 'art/**'
       - '.sonarcloud.properties'
+      - 'sonar-project.properties'
+      - '.github/workflows/factory-sonar-ci.yml'
       - '.github/workflows/factory-full-skill-migration-validation.yml'
   workflow_dispatch:
 
@@ -78,6 +82,7 @@ jobs:
           migration/full-skill-migration/test_m5_naming.py
           migration/full-skill-migration/test_sonar_hardening.py
           migration/full-skill-migration/test_sonar_regex_hardening.py
+          migration/full-skill-migration/test_sonar_ci_contract.py
           -v
 
   m6-golden-relocation:
