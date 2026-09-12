@@ -1,0 +1,41 @@
+name: Factory Engineering I8 Feature Generator
+
+on:
+  push:
+    branches:
+      - main
+      - engineering/i8-feature-generator-core
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'engineering/tooling/feature-generator/**'
+      - 'engineering/templates/neoforge-feature/**'
+      - 'engineering/tests/test_i8_feature_generator.py'
+      - 'engineering/tests/fixtures/i8-*.json'
+      - 'engineering/tests/golden/i3-golden-mod/**'
+      - '.github/workflows/factory-engineering-i8-feature-generator.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  feature-generator-contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run I8 feature generator contract tests
+        run: python3 -m unittest engineering/tests/test_i8_feature_generator.py
+
+      - name: Check whitespace
+        if: always()
+        run: git diff --check HEAD^
