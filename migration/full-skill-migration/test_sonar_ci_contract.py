@@ -8,10 +8,13 @@ ROOT = Path(__file__).resolve().parents[2]
 AUTO_PROPERTIES = ROOT / ".sonarcloud.properties"
 CI_PROPERTIES = ROOT / "sonar-project.properties"
 SONAR_WORKFLOW = ROOT / ".github/workflows/factory-sonar-ci.yml"
+SONAR_COVERAGE_LOCK = ROOT / ".github/sonar/python-coverage-lock.txt"
 
 CHECKOUT_SHA = "11d5960a326750d5838078e36cf38b85af677262"
+SETUP_PYTHON_SHA = "a26af69be951a213d495a4c3e4e4022e16d87065"
 SONAR_SCAN_SHA = "22918119ff8e1ca75a623e15c8296b6ea4fbe28f"
 SONAR_PROJECT_VERSION = "ci-baseline-v1"
+COVERAGE_LOCK_LINE = "coverage==7.16.0 --hash=sha256:7cae7715afa51dd7c9c42e6603bb46daf424c3449fdf06519cc658aa8d46e2e4"
 TEST_PATTERNS = {
     "**/tests/**/*",
     "**/test_*.py",
@@ -95,6 +98,40 @@ class SonarCiContractTest(unittest.TestCase):
             ci,
             "test code must be classified as tests instead of hiding source files from coverage",
         )
+
+    def test_ci_analysis_generates_shared_python_coverage_before_scan(self) -> None:
+        self.assertTrue(
+            SONAR_COVERAGE_LOCK.is_file(),
+            "Sonar CI must install coverage from the shared hash-pinned lock",
+        )
+        lock_lines = [
+            line.strip()
+            for line in SONAR_COVERAGE_LOCK.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        ]
+        self.assertEqual(lock_lines, [COVERAGE_LOCK_LINE])
+
+        ci = parse_properties(CI_PROPERTIES)
+        self.assertEqual(ci.get("sonar.python.coverage.reportPaths"), "coverage.xml")
+        self.assertNotIn("sonar.coverage.exclusions", ci)
+
+        workflow = SONAR_WORKFLOW.read_text(encoding="utf-8")
+        scanner = f"uses: SonarSource/sonarqube-scan-action@{SONAR_SCAN_SHA}"
+        install = "-r .github/sonar/python-coverage-lock.txt"
+        coverage_xml = "python3 -m coverage xml -o coverage.xml"
+
+        self.assertIn(f"uses: actions/setup-python@{SETUP_PYTHON_SHA}", workflow)
+        self.assertIn("python-version: '3.11'", workflow)
+        self.assertIn(install, workflow)
+        self.assertIn("engineering/tooling/provider-catalog/validate_provider_catalog.py", workflow)
+        self.assertIn("engineering/tests/test_i7_provider_catalog.py", workflow)
+        self.assertIn("construction/tests/test_c10_*.py", workflow)
+        self.assertIn("--source=engineering/tooling/provider-catalog", workflow)
+        self.assertIn("--source=construction/providers,construction/scripts", workflow)
+        self.assertIn(coverage_xml, workflow)
+        self.assertIn(scanner, workflow)
+        self.assertLess(workflow.index(install), workflow.index(coverage_xml))
+        self.assertLess(workflow.index(coverage_xml), workflow.index(scanner))
 
     def test_previous_version_new_code_uses_stable_ci_baseline_version(self) -> None:
         ci = parse_properties(CI_PROPERTIES)
