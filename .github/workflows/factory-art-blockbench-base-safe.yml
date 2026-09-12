@@ -1,0 +1,39 @@
+name: Factory Art Blockbench Base Safe
+
+on:
+  pull_request:
+    paths:
+      - 'art/tooling/blockbench/base-safe/**'
+      - 'art/tooling/blockbench/asset-toolkit/**'
+      - '.github/workflows/factory-art-blockbench-base-safe.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'art/tooling/blockbench/base-safe/**'
+      - 'art/tooling/blockbench/asset-toolkit/**'
+      - '.github/workflows/factory-art-blockbench-base-safe.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  base-safe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validate Base Safe contract
+        run: node art/tooling/blockbench/base-safe/validate_base_safe.js --check
+      - name: Test Base Safe fail-closed invariants
+        run: node --test art/tooling/blockbench/base-safe/base_safe.test.js
+      - name: Validate canonical Asset Toolkit bundle
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node build_toolkit_bundle.js --check
+      - name: Validate Asset Toolkit install artifact contract
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node --test asset_toolkit.install_artifact.test.js
+      - name: Validate whitespace
+        run: git diff --check
