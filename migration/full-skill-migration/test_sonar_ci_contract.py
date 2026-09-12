@@ -11,6 +11,7 @@ SONAR_WORKFLOW = ROOT / ".github/workflows/factory-sonar-ci.yml"
 
 CHECKOUT_SHA = "11d5960a326750d5838078e36cf38b85af677262"
 SONAR_SCAN_SHA = "22918119ff8e1ca75a623e15c8296b6ea4fbe28f"
+SONAR_PROJECT_VERSION = "ci-baseline-v1"
 TEST_PATTERNS = {
     "**/tests/**/*",
     "**/test_*.py",
@@ -94,6 +95,16 @@ class SonarCiContractTest(unittest.TestCase):
             ci,
             "test code must be classified as tests instead of hiding source files from coverage",
         )
+
+    def test_previous_version_new_code_uses_stable_ci_baseline_version(self) -> None:
+        ci = parse_properties(CI_PROPERTIES)
+        self.assertEqual(
+            ci.get("sonar.projectVersion"),
+            SONAR_PROJECT_VERSION,
+            "Previous version new-code mode requires an explicit stable project version after the CI migration baseline",
+        )
+        self.assertNotIn("${", ci["sonar.projectVersion"])
+        self.assertNotIn("github", ci["sonar.projectVersion"].lower())
 
 
 if __name__ == "__main__":
