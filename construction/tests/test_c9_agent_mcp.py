@@ -441,5 +441,175 @@ class C9FacadeParityContractTests(unittest.TestCase):
         )
 
 
+class C9BuildEditContractTests(unittest.TestCase):
+    def _fixture(self):
+        facade_module = importlib.import_module("construction.mcp.facade")
+        artifacts = importlib.import_module("construction.mcp.artifacts")
+        errors = importlib.import_module("construction.mcp.errors")
+        c2 = _load_module(ROOT / "construction" / "core" / "build_ir.py", "construction_c2_for_c9_edit")
+        fixtures = _load_module(
+            ROOT / "construction" / "tests" / "test_c5_modded_palette.py",
+            "construction_c5_fixtures_for_c9_edit",
+        )
+        facade = facade_module.ConstructionFacade(artifacts.ArtifactStore())
+        build_spec = fixtures.build_spec()
+        placements = [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "block_state": {"name": "minecraft:stone_bricks", "properties": {}},
+            },
+            {
+                "x": 1,
+                "y": 0,
+                "z": 0,
+                "block_state": {"name": "minecraft:oak_log", "properties": {"axis": "y"}},
+            },
+        ]
+        build_ir = c2.canonicalize_build_ir(
+            build_spec,
+            placements,
+            producer="construction-c9-mcp",
+            producer_version="c9-mcp-v1",
+        )
+        return facade, errors, c2, build_spec, build_ir
+
+    def test_build_edit_add_replace_remove(self) -> None:
+        facade, _errors, c2, build_spec, build_ir = self._fixture()
+        original_spec = copy.deepcopy(build_spec)
+        original_ir = copy.deepcopy(build_ir)
+        operations = [
+            {
+                "op": "set_block",
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "block_state": {"name": "minecraft:oak_log", "properties": {"axis": "x"}},
+            },
+            {
+                "op": "set_block",
+                "x": 2,
+                "y": 0,
+                "z": 0,
+                "block_state": {"name": "minecraft:stone", "properties": {}},
+            },
+            {"op": "remove_block", "x": 1, "y": 0, "z": 0},
+        ]
+
+        edited = facade.build_edit(build_spec, build_ir, operations)
+        expected = c2.canonicalize_build_ir(
+            build_spec,
+            [
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0,
+                    "block_state": {"name": "minecraft:oak_log", "properties": {"axis": "x"}},
+                },
+                {
+                    "x": 2,
+                    "y": 0,
+                    "z": 0,
+                    "block_state": {"name": "minecraft:stone", "properties": {}},
+                },
+            ],
+            producer="construction-c9-edit",
+            producer_version="c9-mcp-v1",
+        )
+        self.assertEqual(edited, expected)
+        self.assertEqual(c2.validate_build_ir(edited), [])
+        self.assertEqual(edited["metadata"]["producer"], "construction-c9-edit")
+        self.assertEqual(edited["metadata"]["producer_version"], "c9-mcp-v1")
+        self.assertEqual(edited["metadata"]["build_spec_sha256"], c2.build_spec_fingerprint(build_spec))
+        self.assertEqual(build_spec, original_spec)
+        self.assertEqual(build_ir, original_ir)
+
+    def test_build_edit_rejects_duplicate_touch_absent_remove_and_bounds(self) -> None:
+        facade, errors, _c2, build_spec, build_ir = self._fixture()
+        cases = {
+            "duplicate_touch": [
+                {
+                    "op": "set_block",
+                    "x": 0,
+                    "y": 0,
+                    "z": 0,
+                    "block_state": {"name": "minecraft:stone", "properties": {}},
+                },
+                {"op": "remove_block", "x": 0, "y": 0, "z": 0},
+            ],
+            "absent_remove": [{"op": "remove_block", "x": 8, "y": 8, "z": 8}],
+            "out_of_bounds": [
+                {
+                    "op": "set_block",
+                    "x": 9,
+                    "y": 0,
+                    "z": 0,
+                    "block_state": {"name": "minecraft:stone", "properties": {}},
+                }
+            ],
+            "empty_operations": [],
+            "malformed_operation": [{"op": "remove_block", "x": 0, "y": 0, "z": 0, "extra": True}],
+            "explicit_air": [
+                {
+                    "op": "set_block",
+                    "x": 2,
+                    "y": 0,
+                    "z": 0,
+                    "block_state": {"name": "minecraft:air", "properties": {}},
+                }
+            ],
+            "block_entity_payload": [
+                {
+                    "op": "set_block",
+                    "x": 2,
+                    "y": 0,
+                    "z": 0,
+                    "block_state": {"name": "minecraft:stone", "properties": {}},
+                    "block_entity": {},
+                }
+            ],
+        }
+        for label, operations in cases.items():
+            with self.subTest(label=label):
+                before = copy.deepcopy(build_ir)
+                with self.assertRaises(errors.C9Error) as rejected:
+                    facade.build_edit(build_spec, build_ir, operations)
+                self.assertEqual(rejected.exception.code, "INVALID_INPUT")
+                self.assertIsNone(rejected.exception.authority)
+                self.assertEqual(build_ir, before)
+
+    def test_build_edit_requires_matching_build_spec_fingerprint(self) -> None:
+        facade, errors, c2, build_spec, build_ir = self._fixture()
+        mismatched_spec = copy.deepcopy(build_spec)
+        mismatched_spec["identity"]["name"] = "different-build"
+        self.assertNotEqual(
+            c2.build_spec_fingerprint(mismatched_spec),
+            build_ir["metadata"]["build_spec_sha256"],
+        )
+        with self.assertRaises(errors.C9Error) as mismatch:
+            facade.build_edit(
+                mismatched_spec,
+                build_ir,
+                [{"op": "remove_block", "x": 1, "y": 0, "z": 0}],
+            )
+        self.assertEqual(mismatch.exception.code, "AUTHORITY_REJECTED")
+        self.assertEqual(mismatch.exception.authority, "C2")
+
+        invalid_ir = copy.deepcopy(build_ir)
+        invalid_ir["target"]["minecraft_version"] = "1.20.1"
+        direct_errors = c2.validate_build_ir(invalid_ir)
+        self.assertTrue(direct_errors)
+        with self.assertRaises(errors.C9Error) as invalid:
+            facade.build_edit(
+                build_spec,
+                invalid_ir,
+                [{"op": "remove_block", "x": 1, "y": 0, "z": 0}],
+            )
+        self.assertEqual(invalid.exception.code, "AUTHORITY_REJECTED")
+        self.assertEqual(invalid.exception.authority, "C2")
+        self.assertEqual(invalid.exception.details, direct_errors)
+
+
 if __name__ == "__main__":
     unittest.main()
