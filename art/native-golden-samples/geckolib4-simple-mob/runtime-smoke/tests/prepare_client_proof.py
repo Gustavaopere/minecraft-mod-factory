@@ -45,7 +45,8 @@ def prepare(generated: Path) -> None:
     if connection != {
         "host": "127.0.0.1",
         "port": 25565,
-        "mechanism": "ConnectScreen.startConnecting@TitleScreen",
+        "mechanism": "ConnectScreen.startConnecting@StartupReadyScreen",
+        "startupScreens": ["TitleScreen", "AccessibilityOnboardingScreen"],
     }:
         raise ValueError(f"unsupported live-client connection contract: {connection!r}")
 

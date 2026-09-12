@@ -18,10 +18,12 @@ client_log="$repo_root/.factory-ci/geckolib4/live-client-client.log"
 host="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["connection"]["host"])' "$contract")"
 port="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["connection"]["port"])' "$contract")"
 mechanism="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["connection"]["mechanism"])' "$contract")"
+startup_screens="$(python3 -c 'import json,sys; print("|".join(json.load(open(sys.argv[1], encoding="utf-8"))["connection"]["startupScreens"]))' "$contract")"
 
 [[ "$host" == "127.0.0.1" ]]
 [[ "$port" == "25565" ]]
-[[ "$mechanism" == "ConnectScreen.startConnecting@TitleScreen" ]]
+[[ "$mechanism" == "ConnectScreen.startConnecting@StartupReadyScreen" ]]
+[[ "$startup_screens" == "TitleScreen|AccessibilityOnboardingScreen" ]]
 command -v xvfb-run >/dev/null
 command -v setsid >/dev/null
 
