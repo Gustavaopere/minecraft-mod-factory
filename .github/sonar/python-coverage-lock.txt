@@ -1,0 +1,3 @@
+# Shared hash-pinned dependency for Factory Sonar Python coverage generation.
+# Target: CPython 3.11 on ubuntu-24.04.
+coverage==7.16.0 --hash=sha256:7cae7715afa51dd7c9c42e6603bb46daf424c3449fdf06519cc658aa8d46e2e4
