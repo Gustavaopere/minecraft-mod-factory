@@ -26,9 +26,13 @@ jobs:
       - name: Validate deterministic canonical bundle
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node build_toolkit_bundle.js --check
-      - name: Validate synchronized install artifact
+      - name: Generate and validate local install artifact
         working-directory: art/tooling/blockbench/asset-toolkit
-        run: node sync_blockbench_install_artifact.js --check
+        run: |
+          node sync_blockbench_install_artifact.js --write
+          node sync_blockbench_install_artifact.js --check
+          cmp -s asset_toolkit.js rpg_asset_toolkit.js
+          rm -f rpg_asset_toolkit.js
       - name: Validate install artifact contract
         working-directory: art/tooling/blockbench/asset-toolkit
         run: node --test asset_toolkit.install_artifact.test.js
