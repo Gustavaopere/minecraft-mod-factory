@@ -99,9 +99,9 @@ function validateManifest(manifest, textureBuffer, geo, animation, actualGeo, ac
   const expected = manifest.expectedExports || [];
   if (expected.length !== 2 || expected.some((x) => x.classification !== 'EXPECTED_CONTRACT_NOT_EXPORTER_EVIDENCE')) fail('EXPECTED_EXPORT_CLASSIFICATION_DRIFT', 'expected fixtures are not exporter evidence');
 
-  const plan = createGeckoLib4ExportPlan({profileId:'geckolib4_entity', sourcePath:'art/golden-samples/geckolib4-simple-mob/golden-sample-mob.bbmodel', outputDirectory:'art/golden-samples/geckolib4-simple-mob/actual', resourceName:'golden-sample-mob', includeAnimations:true});
+  const plan = createGeckoLib4ExportPlan({profileId:'geckolib4_entity', sourcePath:'art/native-golden-samples/geckolib4-simple-mob/golden-sample-mob.bbmodel', outputDirectory:'art/native-golden-samples/geckolib4-simple-mob/actual', resourceName:'golden-sample-mob', includeAnimations:true});
   const paths = plan.artifacts.map((x) => x.path);
-  const wanted = ['art/golden-samples/geckolib4-simple-mob/actual/golden-sample-mob.geo.json','art/golden-samples/geckolib4-simple-mob/actual/golden-sample-mob.animation.json'];
+  const wanted = ['art/native-golden-samples/geckolib4-simple-mob/actual/golden-sample-mob.geo.json','art/native-golden-samples/geckolib4-simple-mob/actual/golden-sample-mob.animation.json'];
   if (!plan.preserveSource || JSON.stringify(paths) !== JSON.stringify(wanted)) fail('EXPORT_PLAN_DRIFT', 'adapter handoff plan drifted');
 
   const h = manifest.realHandoff || {}; const gates = ['editorOpened','sourceRoundTripValidated','exporterProduced','reopenValidated','runtimeValidated'];
