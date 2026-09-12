@@ -27,6 +27,7 @@ const SOURCE_MODULES = Object.freeze([
   'core/provider-adapter/animated_java_adapter.js',
   'core/provider-adapter/player_profiles_adapter.js',
   'core/provider-adapter/epicfight_blender_adapter.js',
+  'core/qa-export/unified_qa_export_manifest.js',
   'core/index.js',
   'live-bridge/protocol.js',
   'live-bridge/project_snapshot.js',
@@ -86,7 +87,26 @@ function buildBundle() {
     return `    ${JSON.stringify(id)}: function(module, exports, require) {\n${indent(source, 6)}\n    }`;
   }).join(',\n');
 
-  return `(function (root, nativeRequire, factory) {\n  'use strict';\n  const api = factory(nativeRequire);\n  if (typeof module === 'object' && module.exports) module.exports = api;\n  if (root && root.Plugin && root.Action && root.MenuBar && root.Blockbench) api.registerBlockbenchPlugin(root);\n})(\n  typeof globalThis !== 'undefined' ? globalThis : this,\n  typeof require === 'function' ? require : null,\n  function (nativeRequire) {\n  'use strict';\n\n  const nativeModuleAllowlist = new Set(${JSON.stringify([...NATIVE_MODULE_ALLOWLIST])});\n  const modules = {\n${moduleEntries}\n  };\n  const cache = Object.create(null);\n\n  function normalizeModuleId(value) {\n    const output = [];\n    for (const segment of value.split('/')) {\n      if (!segment || segment === '.') continue;\n      if (segment === '..') {\n        if (!output.length) throw new Error('Minecraft Mod Factory Asset Toolkit module path escaped bundle root.');\n        output.pop();\n      } else output.push(segment);\n    }\n    return output.join('/');\n  }\n\n  function resolveModuleId(fromId, request) {\n    const base = fromId.split('/');\n    base.pop();\n    const resolved = normalizeModuleId(base.concat(request.split('/')).join('/'));\n    return resolved.endsWith('.js') ? resolved : resolved + '.js';\n  }\n\n  function moduleRequire(fromId, request) {\n    if (typeof request !== 'string') throw new Error('Minecraft Mod Factory Asset Toolkit bundle requires a string module id.');\n    if (request.startsWith('.')) return loadModule(resolveModuleId(fromId, request));\n    if (!nativeModuleAllowlist.has(request)) throw new Error('Minecraft Mod Factory Asset Toolkit bundle forbids native module: ' + request);\n    if (typeof nativeRequire !== 'function') throw new Error('Minecraft Mod Factory Asset Toolkit native module is unavailable in this Blockbench variant: ' + request);\n    return nativeRequire(request);\n  }\n\n  function loadModule(id) {\n    if (cache[id]) return cache[id].exports;\n    const factory = modules[id];\n    if (!factory) throw new Error('Minecraft Mod Factory Asset Toolkit bundle module not found: ' + id);\n    const module = {exports: {}};\n    cache[id] = module;\n    factory(module, module.exports, (request) => moduleRequire(id, request));\n    return module.exports;\n  }\n\n  const core = loadModule('core/index.js');\n  const protocol = loadModule('live-bridge/protocol.js');\n  const bridgeClient = loadModule('live-bridge/blockbench_bridge_client.js');\n  const blockbenchPlugin = loadModule('blockbench-plugin/plugin_adapter.js');\n  return Object.assign({}, core, protocol, bridgeClient, blockbenchPlugin);\n});\n`;
+  return `(function (root, nativeRequire, factory) {\n  'use strict';\n  const api = factory(nativeRequire);\n  if (typeof module === 'object' && module.exports) module.exports = api;\n  if (root && root.Plugin && root.Action && root.MenuBar && root.Blockbench) api.registerBlockbenchPlugin(root);\n})(\n  typeof globalThis !== 'undefined' ? globalThis : this,\n  typeof require === 'function' ? require : null,\n  function (nativeRequire) {\n  'use strict';\n\n  const nativeModuleAllowlist = new Set(${JSON.stringify([...NATIVE_MODULE_ALLOWLIST])});\n  const modules = {\n${moduleEntries}\n  };\n  const cache = Object.create(null);\n\n  function normalizeModuleId(value) {\n    const output = [];\n    for (const segment of value.split('/')) {\n      if (!segment || segment === '.') continue;\n      if (segment === '..') {\n        if (!output.length) throw new Error('Minecraft Mod Factory Asset Toolkit module path escaped bundle root.');\n        output.pop();\n      } else output.push(segment);\n    }\n    return output.join('/');\n  }\n\n  function resolveModuleId(fromId, request) {\n    const base = fromId.split('/');\n    base.pop();\n    const resolved = normalizeModuleId(base.concat(request.split('/')).join('/'));\n    return resolved.endsWith('.js') ? resolved : resolved + '.js';\n  }\n\n  function moduleRequire(fromId, request) {\n    if (typeof request !== 'string') throw new Error('Minecraft Mod Factory Asset Toolkit bundle requires a string module id.');\n    if (request.startsWith('.')) return loadModule(resolveModuleId(fromId, request));\n    if (!nativeModuleAllowlist.has(request)) throw new Error('Minecraft Mod Factory Asset Toolkit bundle forbids native module: ' + request);\n    if (typeof nativeRequire !== 'function') throw new Error('Minecraft Mod Factory Asset Toolkit native module is unavailable in this Blockbench variant: ' + request);\n    return nativeRequire(request);
+  }
+
+  function loadModule(id) {
+    if (cache[id]) return cache[id].exports;
+    const factory = modules[id];
+    if (!factory) throw new Error('Minecraft Mod Factory Asset Toolkit bundle module not found: ' + id);
+    const module = {exports: {}};
+    cache[id] = module;
+    factory(module, module.exports, (request) => moduleRequire(id, request));
+    return module.exports;
+  }
+
+  const core = loadModule('core/index.js');
+  const protocol = loadModule('live-bridge/protocol.js');
+  const bridgeClient = loadModule('live-bridge/blockbench_bridge_client.js');
+  const blockbenchPlugin = loadModule('blockbench-plugin/plugin_adapter.js');
+  return Object.assign({}, core, protocol, bridgeClient, blockbenchPlugin);
+});
+`;
 }
 
 function checkBundle() {
