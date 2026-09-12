@@ -233,12 +233,35 @@ def validate_modpack_registry(registry: object) -> list[str]:
         errors.append("registry.static_index must be an object")
     if not isinstance(blocks, list):
         errors.append("registry.blocks must be an array")
-    # The implementation then performs every exact C4 linkage, block/state,
-    # canonical-order, and content_sha256 check enumerated below in this step.
+    if registry.get("schema_version") != 1:
+        errors.append("registry.schema_version must be 1")
+    if isinstance(physical, dict):
+        required_physical = {"captured_at", "source_name", "source_sha256", "loader_version", "top_level_mods", "nested_mods", "total_entries", "provider_count", "unidentified_entries"}
+        if set(physical) != required_physical:
+            errors.append("registry.physical fields do not match the C4 contract")
+    if isinstance(runtime, dict):
+        if set(runtime) != {"captured_at", "physical_snapshot_sha256", "target"}:
+            errors.append("registry.runtime fields do not match the C4 contract")
+        elif isinstance(physical, dict) and runtime.get("physical_snapshot_sha256") != physical.get("source_sha256"):
+            errors.append("registry.runtime must reference the exact physical snapshot SHA-256")
+    if isinstance(static_index, dict) and set(static_index) != {"jar_count", "nested_jar_count", "discovered_block_count"}:
+        errors.append("registry.static_index fields do not match the C4 contract")
+    if isinstance(blocks, list):
+        block_ids = [block.get("id") for block in blocks if isinstance(block, dict)]
+        if block_ids != sorted(block_ids):
+            errors.append("registry.blocks must be in canonical block-id order")
+        if len(block_ids) != len(set(block_ids)):
+            errors.append("registry.blocks contains duplicate block ids")
+    claimed = registry.get("content_sha256")
+    if isinstance(claimed, str):
+        payload = dict(registry)
+        payload.pop("content_sha256", None)
+        if hashlib.sha256(canonical_json_bytes(payload)).hexdigest() != claimed:
+            errors.append("registry.content_sha256 does not match canonical content")
     return errors
 ```
 
-Do not change `build_modpack_registry(...)` output shape or schema version.
+Do not change `build_modpack_registry(...)` output shape or schema version. The production implementation must additionally validate every scalar type, SHA/resource-location format, non-negative counter, runtime target (`1.21.1`/`neoforge`), loader-version linkage, exact block record fields, availability/authority consistency, safety class, state-property string pairs, state uniqueness/canonical ordering, and the existing C4 canonical fingerprint rule; each requirement gets a named C4 unit test before GREEN.
 
 - [ ] **Step 4: Refactor C7 registry validation to delegate to C4**
 
