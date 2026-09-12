@@ -1,0 +1,44 @@
+name: Factory Sonar CI Capability Probe
+
+on:
+  push:
+    branches:
+      - diagnostic/sonar-ci-capability
+
+permissions:
+  contents: read
+
+jobs:
+  sonar-ci-capability-probe:
+    runs-on: ubuntu-24.04
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - name: Verify Sonar CI credential and project binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${SONAR_TOKEN:-}" ]]; then
+            echo "::error title=Missing SONAR_TOKEN::Repository or organization secret SONAR_TOKEN is not configured or not available to this workflow."
+            exit 1
+          fi
+
+          response="$(curl --fail-with-body --silent --show-error --user "${SONAR_TOKEN}:" \
+            'https://sonarcloud.io/api/components/show?component=Gustavaopere_minecraft-mod-factory')"
+
+          SONAR_COMPONENT_RESPONSE="$response" python3 - <<'PY'
+          import json
+          import os
+          import sys
+
+          payload = json.loads(os.environ["SONAR_COMPONENT_RESPONSE"])
+          component = payload.get("component", {})
+          organization = component.get("organization")
+          key = component.get("key")
+          if key != "Gustavaopere_minecraft-mod-factory":
+              raise SystemExit(f"unexpected Sonar project key: {key!r}")
+          if not isinstance(organization, str) or not organization:
+              raise SystemExit("Sonar organization key missing from component response")
+          print(f"SONAR_PROJECT_KEY={key}")
+          print(f"SONAR_ORGANIZATION={organization}")
+          PY
