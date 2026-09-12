@@ -34,11 +34,11 @@ const cloneEvidence = () => {
   };
 };
 
-test('real GeckoLib exporter evidence satisfies the partial handoff contract', () => {
+test('real GeckoLib exporter and reopen evidence satisfies the partial handoff contract', () => {
   const result = validateRealHandoffEvidence();
   assert.equal(result.ok, true);
   assert.equal(result.exporterProduced, true);
-  assert.equal(result.reopenValidated, false);
+  assert.equal(result.reopenValidated, true);
   assert.equal(result.runtimeValidated, false);
   assert.equal(result.f4I6Evidence, false);
 });
@@ -61,9 +61,21 @@ test('fails closed when canonical alias bytes differ from raw exporter bytes', (
   assert.throws(() => validateRealHandoffEvidence(evidence), /CANONICAL_ALIAS_BYTE_DRIFT/);
 });
 
-test('fails closed on premature reopen/runtime/I6 claim', () => {
+test('fails closed when reopen is claimed without complete manual playback evidence', () => {
   const evidence = cloneEvidence();
-  evidence.manifest.realHandoff.reopenValidated = true;
+  evidence.manifest.manualEvidence.walkPlaybackValidated = false;
+  assert.throws(() => validateRealHandoffEvidence(evidence), /INVALID_MANUAL_EVIDENCE/);
+});
+
+test('fails closed when reopen evidence is revoked after being physically proven', () => {
+  const evidence = cloneEvidence();
+  evidence.manifest.realHandoff.reopenValidated = false;
+  assert.throws(() => validateRealHandoffEvidence(evidence), /INVALID_REAL_HANDOFF_FLAGS/);
+});
+
+test('fails closed on premature runtime or I6 claim', () => {
+  const evidence = cloneEvidence();
+  evidence.manifest.realHandoff.runtimeValidated = true;
   assert.throws(() => validateRealHandoffEvidence(evidence), /INVALID_REAL_HANDOFF_FLAGS/);
 });
 

@@ -21,7 +21,7 @@ The `.bbmodel` remains the authoring authority. No provider conversion was perfo
 
 ## Real Blockbench evidence
 
-The source project was opened in Blockbench 5.1.6 with GeckoLib 4.2.5 active. A native round-trip copy was saved and reopened successfully, so `editorOpened=true` and `sourceRoundTripValidated=true` are now proven by the manual handoff evidence recorded in `MANIFEST.json`.
+The source project was opened in Blockbench 5.1.6 with GeckoLib 4.2.5 active. A native round-trip copy was saved and reopened successfully, so `editorOpened=true` and `sourceRoundTripValidated=true` are proven by the manual handoff evidence recorded in `MANIFEST.json`.
 
 The physical GeckoLib exporter produced these files:
 
@@ -30,7 +30,9 @@ The physical GeckoLib exporter produced these files:
 
 Their byte hashes are pinned in `MANIFEST.json`. The raw exporter filenames use the project identifier with underscores. The additional hyphenated files under `actual/` are explicitly classified as Factory canonical aliases and are byte-identical copies; they are not represented as exporter-origin files.
 
-Observed GeckoLib 4.2.5 model behavior includes exporter-calculated visible bounds and an X-axis mirror for the left/right leg pivots and cube origins. Observed animation behavior uses the Bedrock animation codec shape `{ "vector": [...] }` and the codec coordinate convention that inverts X/Y rotation values relative to Blockbench authoring values. These behaviors are now regression-gated rather than rewritten to match the previous speculative fixtures.
+The exported model was reopened physically in Blockbench 5.1.6 without a visible load error. The exported animation document was then imported into that reopened model, where Blockbench detected exactly `animation.golden_sample_mob.idle` and `animation.golden_sample_mob.walk`. Both animations were played physically: `idle` showed no visible motion and `walk` showed visible movement. This proves the exported-output reopen/playback boundary and sets `reopenValidated=true` without claiming runtime validation.
+
+Observed GeckoLib 4.2.5 model behavior includes exporter-calculated visible bounds and an X-axis mirror for the left/right leg pivots and cube origins. Observed animation behavior uses the Bedrock animation codec shape `{ "vector": [...] }` and the codec coordinate convention that inverts X/Y rotation values relative to Blockbench authoring values. These behaviors are regression-gated rather than rewritten to match the previous speculative fixtures.
 
 ## Expected vs actual exports
 
@@ -52,8 +54,11 @@ The automated gates prove:
 - real `idle` and `walk` outputs match the source through the audited exporter coordinate convention;
 - reconciled expected fixtures match actual exporter semantics;
 - Factory canonical aliases remain byte-identical to the raw physical exports;
+- exported model reopen is physically confirmed;
+- exported animation import detects exactly `idle` and `walk`;
+- physical playback of both imported animations is confirmed;
 - `.bbmodel` remains the source authority;
-- I6 still cannot complete before exported-output reopen and runtime evidence exist.
+- I6 still cannot complete before runtime evidence exists.
 
 Run from the repository root:
 
@@ -66,11 +71,13 @@ node --test art/native-golden-samples/geckolib4-simple-mob/real_handoff_evidence
 
 ## Handoff boundary
 
-The physical exporter gate is now complete: `exporterProduced=true`.
+The physical exporter and exported-output reopen gates are complete:
+
+- `exporterProduced=true`
+- `reopenValidated=true`
 
 The remaining gates are deliberately fail-closed:
 
-- `reopenValidated=false`
 - `runtimeValidated=false`
 - `f4I6Evidence=false`
 

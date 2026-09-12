@@ -74,14 +74,24 @@
     "geckolibPluginVersion": "4.2.5",
     "sourceOpened": true,
     "roundTripLocalPath": "minecraft-mod-factory-handoff/actual/golden-sample-mob-roundtrip.bbmodel",
-    "roundTripReopened": true
+    "roundTripReopened": true,
+    "exportedModelReopened": true,
+    "exportedAnimationImported": true,
+    "importedAnimationNames": [
+      "animation.golden_sample_mob.idle",
+      "animation.golden_sample_mob.walk"
+    ],
+    "idlePlaybackValidated": true,
+    "idlePlaybackObservation": "NO_VISIBLE_MOTION",
+    "walkPlaybackValidated": true,
+    "walkPlaybackObservation": "VISIBLE_MOTION"
   },
   "realHandoff": {
     "actualOutputDirectory": "actual",
     "editorOpened": true,
     "sourceRoundTripValidated": true,
     "exporterProduced": true,
-    "reopenValidated": false,
+    "reopenValidated": true,
     "runtimeValidated": false,
     "f4I6Evidence": false
   }

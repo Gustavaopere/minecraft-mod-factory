@@ -118,16 +118,29 @@ function validateAnimation(animation) {
 
 function validateRealHandoffEvidence(input = loadEvidence()) {
   const {manifest, model, animation} = input;
-  if (manifest.state !== 'PREPARED_FOR_REAL_HANDOFF') fail('INVALID_REAL_HANDOFF_STATE', 'handoff must remain prepared until reopen/runtime gates pass');
+  if (manifest.state !== 'PREPARED_FOR_REAL_HANDOFF') fail('INVALID_REAL_HANDOFF_STATE', 'handoff must remain prepared until runtime/I6 gates pass');
   const handoff = manifest.realHandoff || {};
-  const requiredTrue = ['editorOpened', 'sourceRoundTripValidated', 'exporterProduced'];
-  const requiredFalse = ['reopenValidated', 'runtimeValidated', 'f4I6Evidence'];
+  const requiredTrue = ['editorOpened', 'sourceRoundTripValidated', 'exporterProduced', 'reopenValidated'];
+  const requiredFalse = ['runtimeValidated', 'f4I6Evidence'];
   if (requiredTrue.some((key) => handoff[key] !== true) || requiredFalse.some((key) => handoff[key] !== false)) {
     fail('INVALID_REAL_HANDOFF_FLAGS', 'partial real handoff flags do not match proven evidence boundary');
   }
   const manual = manifest.manualEvidence || {};
-  if (manual.blockbenchVersion !== '5.1.6' || manual.geckolibPluginVersion !== '4.2.5' || manual.sourceOpened !== true || manual.roundTripReopened !== true) {
-    fail('INVALID_MANUAL_EVIDENCE', 'Blockbench/plugin/open/round-trip evidence drifted');
+  const expectedAnimationNames = ['animation.golden_sample_mob.idle', 'animation.golden_sample_mob.walk'];
+  if (
+    manual.blockbenchVersion !== '5.1.6' ||
+    manual.geckolibPluginVersion !== '4.2.5' ||
+    manual.sourceOpened !== true ||
+    manual.roundTripReopened !== true ||
+    manual.exportedModelReopened !== true ||
+    manual.exportedAnimationImported !== true ||
+    !semanticEqual(manual.importedAnimationNames, expectedAnimationNames) ||
+    manual.idlePlaybackValidated !== true ||
+    manual.idlePlaybackObservation !== 'NO_VISIBLE_MOTION' ||
+    manual.walkPlaybackValidated !== true ||
+    manual.walkPlaybackObservation !== 'VISIBLE_MOTION'
+  ) {
+    fail('INVALID_MANUAL_EVIDENCE', 'Blockbench/plugin/open/round-trip/export-reopen/playback evidence drifted');
   }
   for (const [kind, evidence] of [['model', model], ['animation', animation]]) {
     if (evidence.declaration.origin !== 'BLOCKBENCH_5_1_6_GECKOLIB_4_2_5_EXPORTER') fail('INVALID_EXPORT_ORIGIN', `${kind} origin drifted`);
@@ -146,7 +159,7 @@ function validateRealHandoffEvidence(input = loadEvidence()) {
     modelSha256: sha256(model.rawBuffer),
     animationSha256: sha256(animation.rawBuffer),
     exporterProduced: true,
-    reopenValidated: false,
+    reopenValidated: true,
     runtimeValidated: false,
     f4I6Evidence: false,
   });
