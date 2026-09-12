@@ -993,7 +993,7 @@ Canonical final validation is `main@2b955579b2e7a0151692b3153d6907634c2c98b4`. O
 - [x] real stdio protocol tests pass
 - [x] capability hardening rejects arbitrary path/network/process/shell/package/runtime access
 - [x] aggregate C0 discovers C9 with the canonical hashed environment
-- [x] final imlementation PR #82 passed C0-C9, C1A/C1B, Governance and Sonar PR analysis
+- [x] final implementation PR #82 passed C0-C9, C1A/C1B, Governance and Sonar PR analysis
 - [x] PR #82 merged with frozen head
 - [x] initial exact-main C0-C9, C1A/C1B and Governance post-merge validation passed
 - [x] repository-global Sonar blocker was remediated through CI analysis rather than weakened policy
