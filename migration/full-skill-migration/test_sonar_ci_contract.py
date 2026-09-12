@@ -125,7 +125,7 @@ class SonarCiContractTest(unittest.TestCase):
             "-r construction/upstream/harness/sonar-coverage-lock.txt"
         )
         coverage_run = (
-            "python3 -m coverage run --branch --source=construction/providers "
+            "python3 -m coverage run --branch --source=construction/providers,construction/scripts "
             "-m unittest discover -s construction/tests -p 'test_c10_*.py' -v"
         )
         coverage_xml = "python3 -m coverage xml -o coverage.xml"
