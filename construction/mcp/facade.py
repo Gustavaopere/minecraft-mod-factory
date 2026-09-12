@@ -8,7 +8,9 @@ from typing import Any
 from construction.core import build_ir as c2
 from construction.core import modded_palette as c5
 from construction.core import modpack_registry as c4
+from construction.core import sponge_v3 as c6
 from construction.core import structural_qa as c7
+from construction.core import visual_qa as c8_visual
 from construction.qa import preview_renderer as c8_renderer
 
 from .artifacts import ArtifactStore
@@ -17,6 +19,7 @@ from .errors import C9Error
 
 _QUERY_RE = re.compile(r"^[a-z0-9_.:/-]+$")
 _NAMESPACE_RE = re.compile(r"^[a-z0-9_.-]+$")
+_SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _AUTHORITIES = frozenset({"runtime_confirmed", "static_only_unconfirmed"})
 
 
@@ -349,4 +352,156 @@ class ConstructionFacade:
             "build_ir_sha256": build_ir_sha256,
             "bundle_uri": bundle["uri"],
             "views": descriptors,
+        }
+
+    def _verified_preview_views(
+        self,
+        build_ir: object,
+        preview_bundle_uri: str,
+    ) -> dict[str, bytes]:
+        bundle = self.store.get(preview_bundle_uri)
+        if bundle.kind != "preview_bundle" or bundle.media_type != "application/json":
+            raise C9Error("INVALID_INPUT", "preview bundle artifact has the wrong kind or media type")
+
+        try:
+            manifest = json.loads(bundle.data.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            raise C9Error("INVALID_INPUT", "preview bundle is not valid UTF-8 JSON") from None
+        if not isinstance(manifest, dict):
+            raise C9Error("INVALID_INPUT", "preview bundle manifest must be an object")
+        if _canonical_json_bytes(manifest) != bundle.data:
+            raise C9Error("INVALID_INPUT", "preview bundle manifest is not canonically encoded")
+        if set(manifest) != {"schema_version", "renderer_version", "build_ir_sha256", "views"}:
+            raise C9Error("INVALID_INPUT", "preview bundle manifest fields are invalid")
+        if type(manifest["schema_version"]) is not int or manifest["schema_version"] != 1:
+            raise C9Error("INVALID_INPUT", "preview bundle schema_version is invalid")
+        if manifest["renderer_version"] != c8_renderer.RENDERER_VERSION:
+            raise C9Error("INVALID_INPUT", "preview bundle renderer_version is invalid")
+
+        try:
+            build_ir_sha256 = c2.fingerprint_build_ir(build_ir)  # type: ignore[arg-type]
+        except c2.BuildIRError as exc:
+            raise C9Error(
+                "AUTHORITY_REJECTED",
+                "C2 rejected preview bundle Build IR fingerprinting",
+                authority="C2",
+                details=[str(exc)],
+            ) from None
+        manifest_build_ir_sha = manifest["build_ir_sha256"]
+        if (
+            not isinstance(manifest_build_ir_sha, str)
+            or _SHA256_RE.fullmatch(manifest_build_ir_sha) is None
+            or manifest_build_ir_sha != build_ir_sha256
+        ):
+            raise C9Error("INVALID_INPUT", "preview bundle is not bound to the supplied Build IR")
+
+        manifest_views = manifest["views"]
+        if not isinstance(manifest_views, list) or len(manifest_views) != len(c8_renderer.VIEW_IDS):
+            raise C9Error("INVALID_INPUT", "preview bundle views are invalid")
+        if [item.get("id") if isinstance(item, dict) else None for item in manifest_views] != list(c8_renderer.VIEW_IDS):
+            raise C9Error("INVALID_INPUT", "preview bundle views are not in canonical order")
+
+        views: dict[str, bytes] = {}
+        descriptor_fields = {"id", "uri", "media_type", "sha256", "byte_length"}
+        for index, item in enumerate(manifest_views):
+            if not isinstance(item, dict) or set(item) != descriptor_fields:
+                raise C9Error("INVALID_INPUT", f"preview bundle views[{index}] fields are invalid")
+            view_id = c8_renderer.VIEW_IDS[index]
+            if item["id"] != view_id:
+                raise C9Error("INVALID_INPUT", "preview bundle view id is invalid")
+            if item["media_type"] != "image/svg+xml":
+                raise C9Error("INVALID_INPUT", f"preview bundle view {view_id} media type is invalid")
+            if not isinstance(item["sha256"], str) or _SHA256_RE.fullmatch(item["sha256"]) is None:
+                raise C9Error("INVALID_INPUT", f"preview bundle view {view_id} SHA-256 is invalid")
+            if isinstance(item["byte_length"], bool) or not isinstance(item["byte_length"], int) or item["byte_length"] < 1:
+                raise C9Error("INVALID_INPUT", f"preview bundle view {view_id} byte length is invalid")
+
+            record = self.store.get(item["uri"])
+            if record.kind != "preview_svg" or record.media_type != "image/svg+xml":
+                raise C9Error("INVALID_INPUT", f"preview bundle view {view_id} artifact kind is invalid")
+            if (
+                item["uri"] != record.uri
+                or item["media_type"] != record.media_type
+                or item["sha256"] != record.sha256
+                or item["byte_length"] != record.byte_length
+            ):
+                raise C9Error("INVALID_INPUT", f"preview bundle view {view_id} descriptor does not match artifact")
+            views[view_id] = record.data
+        return views
+
+    def qa_visual(
+        self,
+        build_spec: dict[str, Any],
+        build_ir: dict[str, Any],
+        preview_bundle_uri: str,
+        *,
+        structural_report: dict[str, Any] | None = None,
+        palette_resolution: dict[str, Any] | None = None,
+        review_evidence: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        views = self._verified_preview_views(build_ir, preview_bundle_uri)
+        try:
+            return c8_visual.run_visual_qa(
+                build_spec,
+                build_ir,
+                views,
+                structural_report=structural_report,
+                palette_resolution=palette_resolution,
+                review_evidence=review_evidence,
+            )
+        except c8_visual.VisualQAError as exc:
+            raise C9Error(
+                "AUTHORITY_REJECTED",
+                "C8 rejected visual QA input",
+                authority="C8",
+                details=[str(exc)],
+            ) from None
+
+    def export_sponge_v3(
+        self,
+        build_ir: dict[str, Any],
+        *,
+        required_mods: list[str] | None = None,
+    ) -> dict[str, object]:
+        mods = [] if required_mods is None else required_mods
+        if not isinstance(mods, list) or any(not isinstance(item, str) for item in mods):
+            raise C9Error("INVALID_INPUT", "required_mods must be an array of strings")
+        if len(mods) != len(set(mods)):
+            raise C9Error("INVALID_INPUT", "required_mods must be unique")
+        if mods != sorted(mods):
+            raise C9Error("INVALID_INPUT", "required_mods must be sorted ascending")
+
+        try:
+            payload = c6.export_sponge_v3(
+                build_ir,
+                required_mods=mods,
+                block_entities=(),
+            )
+        except c6.SpongeV3Error as exc:
+            raise C9Error(
+                "AUTHORITY_REJECTED",
+                "C6 rejected Sponge v3 export input",
+                authority="C6",
+                details=[str(exc)],
+            ) from None
+
+        errors = c6.validate_sponge_v3(payload)
+        if errors:
+            raise C9Error(
+                "AUTHORITY_REJECTED",
+                "C6 rejected generated Sponge v3 bytes",
+                authority="C6",
+                details=errors,
+            )
+        stored = self.store.put(
+            payload,
+            media_type="application/octet-stream",
+            kind="sponge_v3",
+        )
+        return {
+            "uri": stored["uri"],
+            "artifact_kind": "sponge_v3",
+            "media_type": stored["media_type"],
+            "sha256": stored["sha256"],
+            "byte_length": stored["byte_length"],
         }
