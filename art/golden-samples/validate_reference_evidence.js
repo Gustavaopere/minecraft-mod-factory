@@ -32,7 +32,6 @@ const EXPECTED_FILES = new Set([
   'spell/VFX-QA.md',
   'spell/VISUAL-QA.md',
 ]);
-const NON_REFERENCE_CORPUS_PREFIXES = Object.freeze(['geckolib4-simple-mob/']);
 const NAMED_HTML_ENTITIES = Object.freeze({amp: '&', apos: "'", gt: '>', lt: '<', nbsp: ' ', quot: '"'});
 
 function fail(message) { throw new Error(`Golden Samples evidence validation failed: ${message}`); }
@@ -48,11 +47,6 @@ function walk(dir) {
 }
 
 function relativePath(file) { return path.relative(ROOT, file).split(path.sep).join('/'); }
-
-function isReferenceCorpusFile(file) {
-  const relative = relativePath(file);
-  return !NON_REFERENCE_CORPUS_PREFIXES.some((prefix) => relative.startsWith(prefix));
-}
 
 function decodeHtmlEntities(value) {
   return String(value || '').replace(/&(#x[0-9a-f]+|#\d+|[a-z][a-z0-9]+);/gi, (entity, body) => {
@@ -352,28 +346,20 @@ function runTableBlockTerminationRegressionSelfTest() {
   if (headingRows.length !== 2 || headingRows[0].cells[0] !== 'Check' || headingRows[1].cells[0] !== 'Geometry') fail(`internal table-termination regression self-test expected an ATX heading with a trailing pipe to terminate the live GFM table; found ${headingRows.length} row(s)`);
 }
 
-function runCorpusScopeRegressionSelfTest() {
-  if (isReferenceCorpusFile(path.join(ROOT, 'geckolib4-simple-mob', 'MANIFEST.json'))) fail('internal corpus-scope regression self-test included native Golden Sample evidence in the reference-only corpus');
-  if (!isReferenceCorpusFile(path.join(ROOT, 'model-asset', 'ASSET-BRIEF.md'))) fail('internal corpus-scope regression self-test excluded a legacy reference-only file');
-  if (!isReferenceCorpusFile(path.join(ROOT, 'unexpected-reference-file.txt'))) fail('internal corpus-scope regression self-test would hide an unexpected root-level reference file');
-}
-
 runStatusDeclarationRegressionSelfTest();
 runBacktickFenceInfoRegressionSelfTest();
 runNestedListTableRegressionSelfTest();
 runTabIndentationRegressionSelfTest();
 runTableBlockTerminationRegressionSelfTest();
-runCorpusScopeRegressionSelfTest();
 
 const allFiles = walk(ROOT);
-const referenceFiles = allFiles.filter(isReferenceCorpusFile);
-const actualFiles = referenceFiles.map(relativePath).sort((left, right) => left.localeCompare(right, 'en', {sensitivity: 'variant', numeric: false}));
+const actualFiles = allFiles.map(relativePath).sort((left, right) => left.localeCompare(right, 'en', {sensitivity: 'variant', numeric: false}));
 const unexpectedFiles = actualFiles.filter((relative) => !EXPECTED_FILES.has(relative));
 const missingFiles = [...EXPECTED_FILES].filter((relative) => !actualFiles.includes(relative)).sort((left, right) => left.localeCompare(right, 'en', {sensitivity: 'variant', numeric: false}));
 if (unexpectedFiles.length) fail(`reference-only corpus contains unexpected file(s): ${unexpectedFiles.join(', ')}`);
 if (missingFiles.length) fail(`reference-only corpus is missing allowlisted file(s): ${missingFiles.join(', ')}`);
 
-const markdownFiles = referenceFiles.filter((file) => file.toLowerCase().endsWith('.md'));
+const markdownFiles = allFiles.filter((file) => file.toLowerCase().endsWith('.md'));
 if (!markdownFiles.length) fail('no Markdown files found in Golden Samples corpus');
 for (const file of markdownFiles) requireCanonicalReferenceStatus(file);
 
