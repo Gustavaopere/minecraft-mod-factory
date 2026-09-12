@@ -133,6 +133,23 @@ The six required subjective checks are `silhouette_readability`, `proportion`, `
 
 The C3 pavilion is extended under `construction/fixtures/vanilla-golden/c8/` with all seven canonical SVGs, bound review evidence and an expected Visual QA report. That Golden proves deterministic offline rendering/reporting and exact review-evidence binding; it does not prove Minecraft textures, CTM, tint, transparency, emissives, shaders, lighting, full-modpack boot or live-world appearance.
 
+## C9 scope
+
+C9 implements the capability-limited Agent/MCP boundary under `construction/mcp/` using the exact hash-pinned official MCP SDK `2.2.0`. The production server supports stdio only and advertises exactly nine tools: `registry_search`, `palette_resolve`, `build_canonicalize`, `build_validate`, `build_edit`, `qa_structural`, `preview_render`, `qa_visual` and `export_sponge_v3`.
+
+The C9 boundary is deliberately narrow:
+
+- every tool has a closed request schema and delegates authoritative validation/semantics to C2, C4, C5, C6, C7 or C8 rather than duplicating those authorities;
+- C4 now owns the public `validate_modpack_registry` contract consumed directly by C7 and C9;
+- bounded edits are re-canonicalized by C2 and cannot carry arbitrary BlockEntity/entity payloads;
+- preview SVGs, preview bundles and Sponge v3 payloads are immutable process-scoped artifacts addressed only by `construction://artifact/sha256/<sha256>` URIs;
+- one MCP resource template exposes those exact stored bytes without caller-selected filesystem paths or URLs;
+- the artifact store is content-addressed, deduplicating and capacity-limited, and process restart is its only clearing mechanism;
+- anticipated failures use stable sanitized C9 error codes while unexpected failures surface only as `INTERNAL_ERROR`;
+- real stdio acceptance proves exact nine-tool discovery, malformed-input rejection, byte-exact C8 resource reads, the checked-in Golden flow, C6-valid export and clean process teardown.
+
+C9 does not add a prompt/planning authority, external-provider integration, provider credentials, arbitrary shell/code execution, filesystem access, network access, package installation, HTTP transport or C12 runtime/in-game acceptance. C10 remains the authority frontier for external providers, C12 for runtime acceptance and C13 for Skill/Router integration.
+
 ## Planned pipeline
 
 ```text
@@ -163,13 +180,14 @@ Sponge Schematic v3 validator
 - `docs/` — architecture and provider decisions
 - `fixtures/` — checked-in deterministic Construction Golden Samples and their generation inputs
 - `qa/` — deterministic offline preview/rendering helpers used by Construction QA contracts
+- `mcp/` — capability-limited stdio MCP server, façade, sanitized errors and process-scoped artifact store
 - `runtime/` — Factory-owned runtime probes materialized through shared Engineering scaffolding
 - `schemas/` — machine-readable contracts
 - `upstream/` — pinned provenance and immutable permitted snapshots/references
 - `scripts/` — Factory-owned validators and tooling
 - `tests/` — construction-domain regression tests
 
-Future directories such as `engines/`, `catalog/`, `registry/`, `providers/` and `mcp/` are created only when their implementation starts.
+Future directories such as `engines/`, `catalog/`, `registry/` and `providers/` are created only when their implementation starts.
 
 ## Roadmap
 
