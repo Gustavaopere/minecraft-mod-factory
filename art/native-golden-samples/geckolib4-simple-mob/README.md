@@ -2,7 +2,7 @@
 
 Status: **PREPARED_FOR_REAL_HANDOFF**.
 
-The sibling legacy/reference corpus remains explicitly `REFERENCE-ONLY`; this directory is the separate native handoff candidate and must not be conflated with that reference evidence.
+The legacy/reference corpus under `art/golden-samples/` remains explicitly `REFERENCE-ONLY`; this directory is the separate native handoff candidate and must not be conflated with that reference evidence.
 
 This is the first production-shaped native Blockbench Golden Sample in the Factory. It is intentionally small: one GeckoLib entity model with a root/body/head/two-leg rig, one locator, one canonical PNG texture, and two authoring animations (`idle` and `walk`).
 
@@ -44,8 +44,8 @@ The automated gate proves:
 Run from the repository root:
 
 ```bash
-node art/golden-samples/geckolib4-simple-mob/validate_golden_sample.js
-node --test art/golden-samples/geckolib4-simple-mob/golden_sample.test.js
+node art/native-golden-samples/geckolib4-simple-mob/validate_golden_sample.js
+node --test art/native-golden-samples/geckolib4-simple-mob/golden_sample.test.js
 ```
 
 ## Handoff boundary
