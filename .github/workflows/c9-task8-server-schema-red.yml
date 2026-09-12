@@ -1,4 +1,4 @@
-name: C9 Task 8 Server Schema RED
+name: C9 Task 8 Server Schema Verification
 
 on:
   push:
@@ -25,3 +25,5 @@ jobs:
           python3 -c 'from importlib.metadata import version; assert version("mcp") == "2.2.0"'
       - name: Run C9 Task 8 server schema contract
         run: python3 -m unittest construction.tests.test_c9_agent_mcp.C9ServerSchemaContractTests -v
+      - name: Run full C9 direct contract
+        run: python3 -m unittest construction/tests/test_c9_agent_mcp.py -v
