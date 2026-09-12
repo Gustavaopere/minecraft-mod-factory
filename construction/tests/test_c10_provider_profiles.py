@@ -119,6 +119,7 @@ class ConstructionC10ProviderProfileTest(unittest.TestCase):
             }
 
         def manual_below_ep1(profile):
+            profile["proof_level"] = "EP0_DISCOVERED"
             profile["integration_mode"] = "MANUAL_FILE_HANDOFF"
             profile["handoff"]["accepted_input_kinds"] = ["MESH"]
             profile["handoff"]["output_artifact_kinds"] = ["SCHEMATIC_FILE"]

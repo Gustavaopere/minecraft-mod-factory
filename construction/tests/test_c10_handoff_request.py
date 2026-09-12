@@ -185,6 +185,20 @@ class ConstructionC10HandoffRequestTest(unittest.TestCase):
     def test_research_only_profile_cannot_build_operational_request(self):
         module = self.require_handoff()
         profile = self.baseline_profile()
+        profile["proof_level"] = "EP0_DISCOVERED"
+        profile["integration_mode"] = "RESEARCH_ONLY"
+        profile["handoff"] = {
+            "accepted_input_kinds": [],
+            "output_artifact_kinds": [],
+            "manual_action_required": True,
+            "determinism": "UNKNOWN",
+        }
+        profile["limits"] = {
+            "max_input_bytes": None,
+            "max_output_bytes": None,
+            "timeout_seconds": None,
+        }
+        profile["profile_sha256"] = self.profiles().profile_fingerprint(profile)
         self.assert_invalid_build(module, profile)
 
     def test_all_four_operations_enforce_exact_input_shapes(self):
