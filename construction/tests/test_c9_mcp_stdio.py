@@ -165,6 +165,64 @@ class C9MCPStdioTests(unittest.IsolatedAsyncioTestCase):
             schem = self._blob_bytes(await session.read_resource(exported["uri"]))
             self.assertEqual(c6.validate_sponge_v3(schem), [])
 
+    async def test_stdio_determinism_and_authority_error_sanitation(self) -> None:
+        build_ir = _load_json(GOLDEN / "expected-build-ir.json")
+        async with _session() as session:
+            first_validation = self._tool_json(
+                await session.call_tool("build_validate", arguments={"build_ir": build_ir})
+            )
+            second_validation = self._tool_json(
+                await session.call_tool("build_validate", arguments={"build_ir": build_ir})
+            )
+            self.assertEqual(first_validation, second_validation)
+
+            first_preview = self._tool_json(
+                await session.call_tool("preview_render", arguments={"build_ir": build_ir})
+            )
+            second_preview = self._tool_json(
+                await session.call_tool("preview_render", arguments={"build_ir": build_ir})
+            )
+            self.assertEqual(first_preview, second_preview)
+            self.assertEqual(first_preview["bundle_uri"], second_preview["bundle_uri"])
+            self.assertEqual(
+                [item["uri"] for item in first_preview["views"]],
+                [item["uri"] for item in second_preview["views"]],
+            )
+
+            first_bundle = self._blob_bytes(
+                await session.read_resource(first_preview["bundle_uri"])
+            )
+            second_bundle = self._blob_bytes(
+                await session.read_resource(second_preview["bundle_uri"])
+            )
+            self.assertEqual(first_bundle, second_bundle)
+
+            failure = await session.call_tool(
+                "build_canonicalize",
+                arguments={"build_spec": {}, "placements": []},
+            )
+            self.assertTrue(failure.is_error)
+            self.assertIsNone(failure.structured_content)
+            self.assertEqual(len(failure.content), 1)
+            block = failure.content[0]
+            self.assertIsInstance(block, types.TextContent)
+            text = block.text
+            payload_start = text.find("{")
+            self.assertGreaterEqual(payload_start, 0)
+            payload = json.loads(text[payload_start:])
+            self.assertEqual(payload["code"], "AUTHORITY_REJECTED")
+            self.assertEqual(payload["authority"], "C2")
+            for forbidden in (
+                "Traceback",
+                str(ROOT),
+                "os.environ",
+                "environ(",
+                "SECRET",
+                "repr(",
+            ):
+                with self.subTest(forbidden=forbidden):
+                    self.assertNotIn(forbidden, text)
+
     async def test_stdio_server_terminates_cleanly(self) -> None:
         async def roundtrip() -> None:
             async with _session() as session:
