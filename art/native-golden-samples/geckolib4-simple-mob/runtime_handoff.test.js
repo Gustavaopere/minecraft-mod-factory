@@ -80,3 +80,5 @@ test('runtime proof remains fail-closed until live client validation is recorded
   assert.equal(manifest.realHandoff.f4I6Evidence, false);
   assert.equal(manifest.state, 'PREPARED_FOR_REAL_HANDOFF');
 });
+
+require('./client_runtime_handoff.test.js');
