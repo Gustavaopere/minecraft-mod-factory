@@ -49,7 +49,7 @@ jobs:
 
       - name: Generate C10 provider coverage
         run: |
-          python3 -m coverage run --branch --source=construction/providers -m unittest discover -s construction/tests -p 'test_c10_*.py' -v
+          python3 -m coverage run --branch --source=construction/providers,construction/scripts -m unittest discover -s construction/tests -p 'test_c10_*.py' -v
           python3 -m coverage xml -o coverage.xml
 
       - name: Run SonarQube Cloud scan and wait for Quality Gate
