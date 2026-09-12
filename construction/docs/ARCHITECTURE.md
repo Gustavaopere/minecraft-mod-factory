@@ -181,7 +181,30 @@ The production server does not expose subprocess, shell, arbitrary Python/code e
 
 C10 remains the external-provider boundary, C12 remains the full-modpack/live-world/runtime-visual acceptance boundary and C13 remains the Skill/Router integration boundary. C9 does not pre-empt any of those authorities.
 
-## 11. Runtime/worldgen boundary
+## 11. C10 external-provider boundary
+
+C10 records what the Factory knows about external construction providers and constrains how artifacts cross that boundary. It does not turn those providers into Construction authorities.
+
+```text
+C0 external provider registry
+  -> C10 profile
+  -> handoff request
+  -> manual/proven API boundary
+  -> receipt
+  -> existing Factory validators
+```
+
+Engineering I2 and C10 answer different questions. I2 is the authority for the physical modlist and physically present mod/JAR identities and versions. A C10 profile is an external-provider evidence, capability and handoff contract; it is not evidence that a provider is installed in the modpack.
+
+C10 proof levels (`EP0_DISCOVERED` through `EP5_GOLDEN_VALIDATED`) are independent from API proof state. A provider may have a verified manual handoff while its API remains `UNVERIFIED_API`; conversely, API documentation alone does not prove execution, output format, Factory integration or a Golden Sample. Promotion is evidence-gated and fail-closed.
+
+The baseline implementation performs no provider network calls and consumes no provider credentials. Manual handoffs remain outside the C9 production MCP server, whose public surface stays fixed at exactly nine tools. Any future API adapter requires its own verified contract and proof before it may execute provider operations.
+
+Every byte returned by an external provider is untrusted. C10 binds requests and receipts to provider/profile fingerprints, constrains paths and byte sizes, verifies hashes and requires existing Factory validators to re-establish whatever downstream contract is claimed. A provider's provenance alone never promotes output to C2 Build IR authority, C6 Sponge v3 authority, C7 structural-QA authority or C8 visual-QA authority.
+
+ObjToSchematic remains a candidate manual smoke until fresh official evidence and the required manual evidence are recorded. C10 does not pre-empt C11 complex-modded Golden evidence, C12 full-modpack/live-world/runtime-visual acceptance or C13 Skill/Router integration.
+
+## 12. Runtime/worldgen boundary
 
 Construction may produce reusable structure assets, references and canonical voxel data. Runtime placement, structure sets, biome tags, spacing/separation, processor rules, loot and spawn behavior remain owned by the individual mod runtime and its Mod Engineering worldgen gates.
 
@@ -189,6 +212,6 @@ The C4 NeoForge probe is evidence-gathering infrastructure only. Compiling that 
 
 The visual pipeline may consume structures as reference material, including `.nbt` analysis, without turning a complete build into a runtime entity model by default.
 
-## 12. Current non-goals
+## 13. Current non-goals
 
-Through C9, Construction now owns canonical Build IR validation, modpack registry evidence, semantic palette resolution, deterministic Sponge v3 serialization, conservative offline structural QA, deterministic evidence-gated offline Visual QA and the capability-limited local stdio MCP façade over those authorities. It still does not infer provider-specific support/traversal semantics without explicit authority, integrate or authenticate C10 external providers, claim C12 full-modpack/in-game/worldgen/runtime-visual compatibility, or implement the C13 Skill/Router layer.
+Through C10, Construction now owns canonical Build IR validation, modpack registry evidence, semantic palette resolution, deterministic Sponge v3 serialization, conservative offline structural QA, deterministic evidence-gated offline Visual QA, the capability-limited local stdio MCP façade over those authorities, and the fail-closed external-provider profile/handoff evidence boundary. It still does not infer provider-specific support/traversal semantics without explicit authority, execute unverified provider APIs, grant external bytes Construction authority by provenance, claim C12 full-modpack/in-game/worldgen/runtime-visual compatibility, or implement the C13 Skill/Router layer.

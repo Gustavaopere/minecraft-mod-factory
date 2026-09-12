@@ -150,6 +150,17 @@ The C9 boundary is deliberately narrow:
 
 C9 does not add a prompt/planning authority, external-provider integration, provider credentials, arbitrary shell/code execution, filesystem access, network access, package installation, HTTP transport or C12 runtime/in-game acceptance. C10 remains the authority frontier for external providers, C12 for runtime acceptance and C13 for Skill/Router integration.
 
+## C10 scope
+
+C10 defines the external-provider evidence and handoff boundary without expanding the C9 runtime capability surface.
+
+- C10 external-provider profiles are separate from Engineering I2 physical providers. I2 remains authority for physically present mod/JAR identities and versions; a C10 profile describes an external service/tool handoff contract and does not imply physical-mod presence.
+- The baseline C10 runtime is network-free and credential-free. Provider execution remains manual unless a later adapter is backed by a verified contract and explicit proof; C9 continues to advertise exactly its existing nine tools.
+- Provider proof and API proof are independent. C10 uses `EP0_DISCOVERED`, `EP1_HANDOFF_VERIFIED`, `EP2_EXECUTION_PROVEN`, `EP3_FORMAT_VALIDATED`, `EP4_FACTORY_INTEGRATION_VALIDATED` and `EP5_GOLDEN_VALIDATED`, while API state separately progresses from `UNVERIFIED_API` only when corresponding evidence exists.
+- All bytes crossing an external-provider boundary are untrusted input. Requests, receipts, artifact sizes/hashes, path safety and downstream Factory contracts must be revalidated rather than accepted by provider provenance.
+- ObjToSchematic remains only a candidate manual smoke path until the required fresh official evidence and manual handoff evidence are captured. Discovery alone is not execution proof.
+- C11 remains the complex-modded Golden frontier, C12 remains live/full-modpack runtime acceptance and C13 remains Skill/Router integration. C10 does not pre-empt those authorities.
+
 ## Planned pipeline
 
 ```text
@@ -187,7 +198,7 @@ Sponge Schematic v3 validator
 - `scripts/` — Factory-owned validators and tooling
 - `tests/` — construction-domain regression tests
 
-Future directories such as `engines/`, `catalog/`, `registry/` and `providers/` are created only when their implementation starts.
+Future directories such as `engines/`, `catalog/` and `registry/` are created only when their implementation starts. `providers/` exists from C10 onward for external-provider profiles and bounded handoff helpers; it is not an alternate Engineering I2 mod/provider catalog.
 
 ## Roadmap
 
