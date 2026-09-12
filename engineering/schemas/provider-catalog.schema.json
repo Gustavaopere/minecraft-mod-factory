@@ -1,0 +1,282 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Gustavaopere/minecraft-mod-factory/engineering/schemas/provider-catalog.schema.json",
+  "title": "Engineering Provider Catalog",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "target",
+    "authority",
+    "providers",
+    "state"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "proof_level": {
+      "type": "string",
+      "enum": [
+        "P0 PRESENCE_ONLY",
+        "P1 METADATA_VERIFIED",
+        "P2 SOURCE/DOC_VERIFIED",
+        "P3 COMPILE_PROVEN",
+        "P4 RUNTIME_SMOKE",
+        "P5 INTEGRATION_TESTED",
+        "P6 MULTIPLAYER/PERF_PROVEN"
+      ]
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "CONFIRMED",
+        "IMPLEMENTED",
+        "MERGED",
+        "PASS",
+        "PENDING",
+        "UNRESOLVED",
+        "UNAVAILABLE",
+        "DEFERRED",
+        "REFERENCE_ONLY",
+        "INCOMPATIBLE",
+        "BLOCKED",
+        "SUPERSEDED"
+      ]
+    },
+    "evidence_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "provider": {
+      "type": "object",
+      "required": [
+        "mod_id",
+        "physical",
+        "dependency_profile",
+        "docs",
+        "api_surface",
+        "compatibility",
+        "runtime_health",
+        "known_conflicts",
+        "requirement",
+        "integration_tests",
+        "jar_fingerprints",
+        "supported",
+        "state"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "mod_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_.-]*$"
+        },
+        "physical": {
+          "type": "object",
+          "required": [
+            "version",
+            "version_evidence",
+            "source_registry_id",
+            "source_sha256"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "version_evidence": {
+              "type": "string",
+              "enum": [
+                "MOD_METADATA",
+                "JAR_FILENAME",
+                "UNRESOLVED"
+              ]
+            },
+            "source_registry_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "source_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+        "dependency_profile": {
+          "type": "string",
+          "pattern": "^engineering/catalog/providers/profiles/[a-z0-9_.-]+\\.json$"
+        },
+        "docs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "api_surface": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "surface_id",
+              "proof_level",
+              "state",
+              "evidence"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "surface_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "proof_level": {
+                "$ref": "#/$defs/proof_level"
+              },
+              "state": {
+                "$ref": "#/$defs/state"
+              },
+              "evidence": {
+                "$ref": "#/$defs/evidence_list"
+              }
+            }
+          }
+        },
+        "compatibility": {
+          "type": "object",
+          "required": [
+            "state",
+            "evidence"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "state": {
+              "$ref": "#/$defs/state"
+            },
+            "evidence": {
+              "$ref": "#/$defs/evidence_list"
+            },
+            "matrix": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "runtime_health": {
+          "$ref": "#/$defs/state"
+        },
+        "known_conflicts": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "requirement": {
+          "type": "string",
+          "enum": [
+            "OPTIONAL",
+            "REQUIRED"
+          ]
+        },
+        "integration_tests": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "jar_fingerprints": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "supported": {
+          "type": "boolean"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        }
+      }
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "target": {
+      "type": "object",
+      "required": [
+        "minecraft",
+        "loader",
+        "neoforge",
+        "java"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "minecraft": {
+          "type": "string",
+          "const": "1.21.1"
+        },
+        "loader": {
+          "type": "string",
+          "const": "neoforge"
+        },
+        "neoforge": {
+          "type": "string",
+          "const": "21.1.248"
+        },
+        "java": {
+          "type": "integer",
+          "const": 21
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "required": [
+        "source_registry",
+        "physical_catalog_builder",
+        "dependency_profile_schema",
+        "compatibility_matrix_schema"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source_registry": {
+          "type": "string",
+          "const": "engineering/catalog/sources/SOURCE-REGISTRY.json"
+        },
+        "physical_catalog_builder": {
+          "type": "string",
+          "const": "engineering/tooling/import-physical-modlist.py"
+        },
+        "dependency_profile_schema": {
+          "type": "string",
+          "const": "engineering/schemas/dependency-profile.schema.json"
+        },
+        "compatibility_matrix_schema": {
+          "type": "string",
+          "const": "engineering/schemas/compatibility-matrix.schema.json"
+        }
+      }
+    },
+    "providers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/provider"
+      }
+    },
+    "state": {
+      "$ref": "#/$defs/state"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "target": {
+    "minecraft": "1.21.1",
+    "loader": "neoforge",
+    "neoforge": "21.1.248",
+    "java": 21
+  },
+  "authority": {
+    "source_registry": "engineering/catalog/sources/SOURCE-REGISTRY.json",
+    "physical_catalog_builder": "engineering/tooling/import-physical-modlist.py",
+    "dependency_profile_schema": "engineering/schemas/dependency-profile.schema.json",
+    "compatibility_matrix_schema": "engineering/schemas/compatibility-matrix.schema.json"
+  },
+  "providers": [],
+  "state": "PENDING"
+}
