@@ -1,0 +1,40 @@
+name: Factory Art Blockbench Install Artifact
+
+on:
+  pull_request:
+    paths:
+      - 'art/tooling/blockbench/asset-toolkit/**'
+      - '.github/workflows/factory-art-blockbench-install-artifact.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'art/tooling/blockbench/asset-toolkit/**'
+      - '.github/workflows/factory-art-blockbench-install-artifact.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  blockbench-install-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validate deterministic canonical bundle
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node build_toolkit_bundle.js --check
+      - name: Generate and validate local install artifact
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: |
+          node sync_blockbench_install_artifact.js --write
+          node sync_blockbench_install_artifact.js --check
+          cmp -s asset_toolkit.js rpg_asset_toolkit.js
+          rm -f rpg_asset_toolkit.js
+      - name: Validate install artifact contract
+        working-directory: art/tooling/blockbench/asset-toolkit
+        run: node --test asset_toolkit.install_artifact.test.js
+      - name: Validate whitespace
+        run: git diff --check
