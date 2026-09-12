@@ -51,6 +51,7 @@ jobs:
         run: |
           python3 -m coverage run --branch --source=construction/providers -m unittest discover -s construction/tests -p 'test_c10_*.py' -v
           python3 -m coverage xml -o coverage.xml
+          python3 -m coverage report -m
 
       - name: Run SonarQube Cloud scan and wait for Quality Gate
         uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f
