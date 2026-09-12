@@ -45,6 +45,143 @@ jobs:
         run: node --test art/native-golden-samples/geckolib4-simple-mob/real_handoff_evidence.test.js
       - name: Run target-exact runtime handoff contract tests
         run: node --test art/native-golden-samples/geckolib4-simple-mob/runtime_handoff.test.js
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Generate canonical NeoForge 21.1.248 smoke project
+        run: >-
+          python3 engineering/tooling/scaffolder/scaffold_mod.py
+          --mod-spec engineering/tests/fixtures/i3-golden-mod-spec.json
+          --config engineering/tests/fixtures/i3-golden-scaffold-config.json
+          --output '.factory-ci/geckolib4/generated'
+      - name: Materialize audited GeckoLib runtime fixture and physical assets
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          import json
+          import shutil
+
+          root = Path('art/native-golden-samples/geckolib4-simple-mob')
+          smoke = root / 'runtime-smoke'
+          generated = Path('.factory-ci/geckolib4/generated')
+          contract = json.loads((smoke / 'contract.json').read_text(encoding='utf-8'))
+
+          expected_target = {'minecraft': '1.21.1', 'neoforge': '21.1.248', 'java': 21}
+          if contract['target'] != expected_target:
+              raise SystemExit(f"runtime target drift: {contract['target']!r}")
+
+          properties = (generated / 'gradle.properties').read_text(encoding='utf-8')
+          for line in ('minecraft_version=1.21.1', 'neo_version=21.1.248', 'java_version=21'):
+              if line not in properties.splitlines():
+                  raise SystemExit(f'missing target pin: {line}')
+
+          build_path = generated / 'build.gradle'
+          build = build_path.read_text(encoding='utf-8')
+          repo_marker = "    maven { url = 'https://maven.neoforged.net/releases' }\n"
+          dependency_marker = '    implementation "net.neoforged:neoforge:${neo_version}"\n'
+          gecko_repo = contract['geckolib']['mavenRepository']
+          gecko_coordinate = contract['geckolib']['coordinate']
+          if repo_marker not in build or dependency_marker not in build:
+              raise SystemExit('canonical scaffold build markers missing')
+          build = build.replace(repo_marker, repo_marker + f"    maven {{ url = '{gecko_repo}' }}\n", 1)
+          build = build.replace(dependency_marker, dependency_marker + f'    implementation "{gecko_coordinate}"\n', 1)
+          build_path.write_text(build, encoding='utf-8', newline='\n')
+
+          main_path = generated / 'src/main/java/dev/example/i3golden/I3GoldenMod.java'
+          main = main_path.read_text(encoding='utf-8')
+          main_marker = '    public I3GoldenMod(IEventBus modBus, ModContainer container) {\n    }'
+          if main_marker not in main:
+              raise SystemExit('canonical main constructor marker missing')
+          main = main.replace(
+              main_marker,
+              '    public I3GoldenMod(IEventBus modBus, ModContainer container) {\n'
+              '        GoldenSampleMobRegistry.register(modBus);\n'
+              '    }',
+              1)
+          main_path.write_text(main, encoding='utf-8', newline='\n')
+
+          client_path = generated / 'src/main/java/dev/example/i3golden/client/I3GoldenModClient.java'
+          client = client_path.read_text(encoding='utf-8')
+          client_marker = '    public I3GoldenModClient(IEventBus modBus) {\n    }'
+          if client_marker not in client:
+              raise SystemExit('canonical client constructor marker missing')
+          client = client.replace(
+              client_marker,
+              '    public I3GoldenModClient(IEventBus modBus) {\n'
+              '        modBus.addListener(GoldenSampleMobClient::registerRenderers);\n'
+              '    }',
+              1)
+          client_path.write_text(client, encoding='utf-8', newline='\n')
+
+          java_root = generated / 'src/main/java/dev/example/i3golden'
+          client_root = java_root / 'client'
+          for name in ('GoldenSampleMob.java', 'GoldenSampleMobRegistry.java', 'GoldenSampleMobGameTest.java'):
+              shutil.copyfile(smoke / name, java_root / name)
+          shutil.copyfile(smoke / 'GoldenSampleMobClient.java', client_root / 'GoldenSampleMobClient.java')
+
+          for resource in contract['resources'].values():
+              source = (smoke / resource['source']).resolve()
+              actual_hash = hashlib.sha256(source.read_bytes()).hexdigest()
+              if actual_hash != resource['sha256']:
+                  raise SystemExit(f"physical asset hash drift: {source} => {actual_hash}")
+              target = generated / 'src/main/resources' / resource['target']
+              target.parent.mkdir(parents=True, exist_ok=True)
+              shutil.copyfile(source, target)
+              copied_hash = hashlib.sha256(target.read_bytes()).hexdigest()
+              if copied_hash != resource['sha256']:
+                  raise SystemExit(f"runtime asset copy drift: {target} => {copied_hash}")
+          PY
+      - name: Materialize deterministic empty GameTest structure
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import gzip
+          import struct
+
+          out = Path('.factory-ci/geckolib4/generated/src/main/resources/data/i3_golden_mod/structure/geckolib.empty.nbt')
+          out.parent.mkdir(parents=True, exist_ok=True)
+
+          def u16(value):
+              return struct.pack('>H', value)
+
+          def i32(value):
+              return struct.pack('>i', value)
+
+          def string_payload(value):
+              raw = value.encode('utf-8')
+              return u16(len(raw)) + raw
+
+          def named_header(tag_type, name):
+              return bytes([tag_type]) + string_payload(name)
+
+          nbt = bytearray()
+          nbt += bytes([10]) + u16(0)
+          nbt += named_header(3, 'DataVersion') + i32(3955)
+          nbt += named_header(9, 'size') + bytes([3]) + i32(3)
+          nbt += i32(3) + i32(3) + i32(3)
+          nbt += named_header(9, 'palette') + bytes([10]) + i32(1)
+          nbt += named_header(8, 'Name') + string_payload('minecraft:air')
+          nbt += bytes([0])
+          nbt += named_header(9, 'blocks') + bytes([10]) + i32(1)
+          nbt += named_header(9, 'pos') + bytes([3]) + i32(3)
+          nbt += i32(0) + i32(0) + i32(0)
+          nbt += named_header(3, 'state') + i32(0)
+          nbt += bytes([0])
+          nbt += named_header(9, 'entities') + bytes([10]) + i32(0)
+          nbt += bytes([0])
+
+          with out.open('wb') as raw:
+              with gzip.GzipFile(fileobj=raw, mode='wb', filename='', mtime=0) as compressed:
+                  compressed.write(nbt)
+          PY
+      - name: Execute target-exact NeoForge 21.1.248 GeckoLib 4.9.2 runtime smoke
+        working-directory: .factory-ci/geckolib4/generated
+        run: |
+          chmod +x gradlew
+          GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/geckolib4/gradle-home" \
+            ./gradlew runGameTestServer --write-locks --no-daemon
       - name: Preserve existing reference corpus gates
         if: always()
         run: |
