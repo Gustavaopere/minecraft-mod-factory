@@ -205,156 +205,26 @@ def _validate_build_spec(build_spec: Any) -> dict[str, Any]:
     return spec
 
 
+def _c4_module():
+    path = Path(__file__).with_name("modpack_registry.py")
+    spec = importlib.util.spec_from_file_location("construction_c4_modpack_registry_for_c7", path)
+    if spec is None or spec.loader is None:
+        raise StructuralQAError(f"cannot load C4 registry authority: {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def _validate_registry(registry: Any) -> dict[str, Any]:
     document = _require_object(registry, "C4 registry")
-    _require_keys(
-        document,
-        allowed={"schema_version", "physical", "runtime", "static_index", "blocks", "content_sha256"},
-        required={"schema_version", "physical", "runtime", "static_index", "blocks", "content_sha256"},
-        label="C4 registry",
-    )
-    if document["schema_version"] != 1:
-        raise StructuralQAError("C4 registry schema_version must be 1")
-
-    physical = _require_object(document["physical"], "C4 registry physical")
-    _require_keys(
-        physical,
-        allowed={
-            "captured_at",
-            "source_name",
-            "source_sha256",
-            "loader_version",
-            "top_level_mods",
-            "nested_mods",
-            "total_entries",
-            "provider_count",
-            "unidentified_entries",
-        },
-        required={
-            "captured_at",
-            "source_name",
-            "source_sha256",
-            "loader_version",
-            "top_level_mods",
-            "nested_mods",
-            "total_entries",
-            "provider_count",
-            "unidentified_entries",
-        },
-        label="C4 registry physical",
-    )
-    for field in ("captured_at", "source_name", "loader_version"):
-        _require_string(physical[field], f"C4 registry physical.{field}")
-    physical_sha = _require_string(physical["source_sha256"], "C4 registry physical.source_sha256")
-    if SHA256_RE.fullmatch(physical_sha) is None:
-        raise StructuralQAError("C4 registry physical.source_sha256 is invalid")
-    for field in (
-        "top_level_mods",
-        "nested_mods",
-        "total_entries",
-        "provider_count",
-        "unidentified_entries",
-    ):
-        if not _is_int(physical[field]) or physical[field] < 0:
-            raise StructuralQAError(f"C4 registry physical.{field} must be a non-negative integer")
-
-    runtime = _require_object(document["runtime"], "C4 registry runtime")
-    _require_keys(
-        runtime,
-        allowed={"captured_at", "physical_snapshot_sha256", "target"},
-        required={"captured_at", "physical_snapshot_sha256", "target"},
-        label="C4 registry runtime",
-    )
-    _require_string(runtime["captured_at"], "C4 registry runtime.captured_at")
-    runtime_physical_sha = _require_string(
-        runtime["physical_snapshot_sha256"],
-        "C4 registry runtime.physical_snapshot_sha256",
-    )
-    if SHA256_RE.fullmatch(runtime_physical_sha) is None:
-        raise StructuralQAError("C4 registry runtime.physical_snapshot_sha256 is invalid")
-    if runtime_physical_sha != physical_sha:
-        raise StructuralQAError("C4 registry runtime must reference the exact physical snapshot SHA-256")
-
-    runtime_target = _require_object(runtime["target"], "C4 registry runtime.target")
-    _require_keys(
-        runtime_target,
-        allowed={"minecraft", "loader", "loader_version"},
-        required={"minecraft", "loader", "loader_version"},
-        label="C4 registry runtime.target",
-    )
-    if runtime_target["minecraft"] != "1.21.1" or runtime_target["loader"] != "neoforge":
-        raise StructuralQAError("C4 registry runtime target must be Minecraft 1.21.1 / NeoForge")
-    runtime_loader_version = _require_string(
-        runtime_target["loader_version"],
-        "C4 registry runtime.target.loader_version",
-    )
-    if runtime_loader_version != physical["loader_version"]:
-        raise StructuralQAError("C4 registry runtime loader version must match the physical snapshot")
-
-    static_index = _require_object(document["static_index"], "C4 registry static_index")
-    _require_keys(
-        static_index,
-        allowed={"jar_count", "nested_jar_count", "discovered_block_count"},
-        required={"jar_count", "nested_jar_count", "discovered_block_count"},
-        label="C4 registry static_index",
-    )
-    for field in ("jar_count", "nested_jar_count", "discovered_block_count"):
-        if not _is_int(static_index[field]) or static_index[field] < 0:
-            raise StructuralQAError(f"C4 registry static_index.{field} must be a non-negative integer")
-
-    claimed = document["content_sha256"]
-    if not isinstance(claimed, str) or SHA256_RE.fullmatch(claimed) is None:
-        raise StructuralQAError("C4 registry content_sha256 is invalid")
-    hash_payload = copy.deepcopy(document)
-    hash_payload.pop("content_sha256", None)
-    expected = hashlib.sha256(_canonical_json_bytes(hash_payload)).hexdigest()
-    if claimed != expected:
-        raise StructuralQAError("C4 registry content_sha256 does not match canonical content")
-
-    blocks = document["blocks"]
-    if not isinstance(blocks, list):
-        raise StructuralQAError("C4 registry blocks must be an array")
-    seen: set[str] = set()
-    for index, raw_block in enumerate(blocks):
-        block = _require_object(raw_block, f"C4 registry blocks[{index}]")
-        _require_keys(
-            block,
-            allowed={"id", "available", "authority", "static_discovered", "states", "safety"},
-            required={"id", "available", "authority", "static_discovered", "states", "safety"},
-            label=f"C4 registry blocks[{index}]",
-        )
-        block_id = block["id"]
-        if not isinstance(block_id, str) or RESOURCE_LOCATION_RE.fullmatch(block_id) is None:
-            raise StructuralQAError(f"C4 registry blocks[{index}].id is invalid")
-        if block_id in seen:
-            raise StructuralQAError(f"C4 registry contains duplicate block id: {block_id}")
-        seen.add(block_id)
-        if not isinstance(block["available"], bool) or not isinstance(block["static_discovered"], bool):
-            raise StructuralQAError(f"C4 registry blocks[{index}] availability fields must be booleans")
-        if block["authority"] not in {"runtime_confirmed", "static_only_unconfirmed"}:
-            raise StructuralQAError(f"C4 registry blocks[{index}].authority is invalid")
-        if block["safety"] not in SAFETY_CLASSES:
-            raise StructuralQAError(f"C4 registry blocks[{index}].safety is invalid")
-        states = block["states"]
-        if not isinstance(states, list):
-            raise StructuralQAError(f"C4 registry blocks[{index}].states must be an array")
-        seen_states: set[bytes] = set()
-        for state_index, state in enumerate(states):
-            if not isinstance(state, dict):
-                raise StructuralQAError(f"C4 registry blocks[{index}].states[{state_index}] must be an object")
-            canonical_state: dict[str, str] = {}
-            for key, value in state.items():
-                if not isinstance(key, str) or PROPERTY_NAME_RE.fullmatch(key) is None:
-                    raise StructuralQAError(f"C4 registry blocks[{index}] contains an invalid state property name")
-                if not isinstance(value, str) or not value:
-                    raise StructuralQAError(f"C4 registry blocks[{index}] state values must be non-empty strings")
-                canonical_state[key] = value
-            state_bytes = _canonical_json_bytes(canonical_state)
-            if state_bytes in seen_states:
-                raise StructuralQAError(f"C4 registry blocks[{index}] contains duplicate states")
-            seen_states.add(state_bytes)
+    c4 = _c4_module()
+    try:
+        errors = c4.validate_modpack_registry(document)
+    except Exception as exc:
+        raise StructuralQAError("C4 registry validator failed") from exc
+    if errors:
+        raise StructuralQAError("invalid C4 registry: " + "; ".join(errors))
     return document
-
 
 def _position_key(position: tuple[int, int, int]) -> tuple[int, int, int]:
     x, y, z = position

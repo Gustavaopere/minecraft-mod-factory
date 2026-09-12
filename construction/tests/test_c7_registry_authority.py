@@ -30,6 +30,20 @@ def rehash_registry(registry: dict[str, object]) -> None:
 
 
 class ConstructionC7RegistryAuthorityTest(unittest.TestCase):
+    def test_c4_public_validator_preserves_valid_report_bytes(self) -> None:
+        spec = BASE.make_build_spec(loader="neoforge", allow_modded=True, require_walkability=True)
+        ir = BASE.make_ir(
+            spec,
+            [
+                BASE.placement(0, 0, 0, "test:bricks", {"facing": "north"}),
+                BASE.placement(1, 0, 0, "test:bricks", {"facing": "north"}),
+            ],
+        )
+        registry = BASE.matching_registry(ir)
+        report = MODULE.run_structural_qa(spec, ir, registry)
+        digest = hashlib.sha256(BASE.canonical_json_bytes(report)).hexdigest()
+        self.assertEqual("6fb8c89accfbc84cd607e7fe9e961f196ca95496e6848fb226e01130da530ee7", digest)
+
     def test_c4_cross_authority_mismatches_fail_closed(self) -> None:
         spec = BASE.make_build_spec(loader="neoforge", allow_modded=True)
         ir = BASE.make_ir(

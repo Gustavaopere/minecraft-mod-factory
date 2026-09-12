@@ -14,6 +14,8 @@ MINECRAFT_VERSION = "1.21.1"
 LOADER = "neoforge"
 RESOURCE_LOCATION_RE = re.compile(r"^[a-z0-9_.-]+:[a-z0-9_./-]+$")
 MOD_ID_RE = re.compile(r"^[a-z][a-z0-9_.-]*$")
+PROPERTY_NAME_RE = re.compile(r"^[a-z0-9_]+$")
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 SAFETY_CLASSES = {
     "ordinary",
     "stateful",
@@ -231,6 +233,185 @@ def _walk_static_indexes(indexes):
             raise ValueError("nested_jars must be an array")
         yield from _walk_static_indexes(nested)
 
+
+def _is_int(value):
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def validate_modpack_registry(registry):
+    """Validate an already-composed C4 registry without mutating or repairing it."""
+
+    errors = []
+    if not isinstance(registry, dict):
+        return ["registry must be an object"]
+
+    expected_top = {"schema_version", "physical", "runtime", "static_index", "blocks", "content_sha256"}
+    if set(registry) != expected_top:
+        errors.append("registry top-level fields do not match the C4 contract")
+    if registry.get("schema_version") != SCHEMA_VERSION:
+        errors.append("registry schema_version must be 1")
+
+    physical = registry.get("physical")
+    physical_sha = None
+    physical_loader = None
+    if not isinstance(physical, dict):
+        errors.append("registry.physical must be an object")
+    else:
+        expected_physical = {
+            "captured_at", "source_name", "source_sha256", "loader_version",
+            "top_level_mods", "nested_mods", "total_entries", "provider_count",
+            "unidentified_entries",
+        }
+        if set(physical) != expected_physical:
+            errors.append("registry.physical fields do not match the C4 contract")
+        for field in ("captured_at", "source_name", "loader_version"):
+            if not isinstance(physical.get(field), str) or not physical.get(field):
+                errors.append(f"registry.physical.{field} must be a non-empty string")
+        physical_sha = physical.get("source_sha256")
+        if not isinstance(physical_sha, str) or SHA256_RE.fullmatch(physical_sha) is None:
+            errors.append("registry.physical.source_sha256 must be a lowercase SHA-256")
+        physical_loader = physical.get("loader_version")
+        for field in (
+            "top_level_mods", "nested_mods", "total_entries", "provider_count",
+            "unidentified_entries",
+        ):
+            value = physical.get(field)
+            if not _is_int(value) or value < 0:
+                errors.append(f"registry.physical.{field} must be a non-negative integer")
+
+    runtime = registry.get("runtime")
+    if not isinstance(runtime, dict):
+        errors.append("registry.runtime must be an object")
+    else:
+        if set(runtime) != {"captured_at", "physical_snapshot_sha256", "target"}:
+            errors.append("registry.runtime fields do not match the C4 contract")
+        if not isinstance(runtime.get("captured_at"), str) or not runtime.get("captured_at"):
+            errors.append("registry.runtime.captured_at must be a non-empty string")
+        runtime_sha = runtime.get("physical_snapshot_sha256")
+        if not isinstance(runtime_sha, str) or SHA256_RE.fullmatch(runtime_sha) is None:
+            errors.append("registry.runtime.physical_snapshot_sha256 must be a lowercase SHA-256")
+        if physical_sha is not None and runtime_sha != physical_sha:
+            errors.append("registry.runtime must reference the exact physical snapshot SHA-256")
+        target = runtime.get("target")
+        if not isinstance(target, dict):
+            errors.append("registry.runtime.target must be an object")
+        else:
+            if set(target) != {"minecraft", "loader", "loader_version"}:
+                errors.append("registry.runtime.target fields do not match the C4 contract")
+            if target.get("minecraft") != MINECRAFT_VERSION or target.get("loader") != LOADER:
+                errors.append("registry.runtime target must be Minecraft 1.21.1 / NeoForge")
+            loader_version = target.get("loader_version")
+            if not isinstance(loader_version, str) or not loader_version:
+                errors.append("registry.runtime.target.loader_version must be a non-empty string")
+            if physical_loader is not None and loader_version != physical_loader:
+                errors.append("registry.runtime loader version must match the physical snapshot")
+
+    static_index = registry.get("static_index")
+    if not isinstance(static_index, dict):
+        errors.append("registry.static_index must be an object")
+    else:
+        if set(static_index) != {"jar_count", "nested_jar_count", "discovered_block_count"}:
+            errors.append("registry.static_index fields do not match the C4 contract")
+        for field in ("jar_count", "nested_jar_count", "discovered_block_count"):
+            value = static_index.get(field)
+            if not _is_int(value) or value < 0:
+                errors.append(f"registry.static_index.{field} must be a non-negative integer")
+
+    blocks = registry.get("blocks")
+    block_ids = []
+    if not isinstance(blocks, list):
+        errors.append("registry.blocks must be an array")
+    else:
+        for index, block in enumerate(blocks):
+            label = f"registry.blocks[{index}]"
+            if not isinstance(block, dict):
+                errors.append(f"{label} must be an object")
+                continue
+            expected_block = {"id", "available", "authority", "static_discovered", "states", "safety"}
+            if set(block) != expected_block:
+                errors.append(f"{label} fields do not match the C4 contract")
+
+            block_id = block.get("id")
+            if not isinstance(block_id, str) or RESOURCE_LOCATION_RE.fullmatch(block_id) is None:
+                errors.append(f"{label}.id is invalid")
+            else:
+                block_ids.append(block_id)
+
+            available = block.get("available")
+            static_discovered = block.get("static_discovered")
+            if not isinstance(available, bool):
+                errors.append(f"{label}.available must be boolean")
+            if not isinstance(static_discovered, bool):
+                errors.append(f"{label}.static_discovered must be boolean")
+
+            authority = block.get("authority")
+            if authority not in {"runtime_confirmed", "static_only_unconfirmed"}:
+                errors.append(f"{label}.authority is invalid")
+
+            safety = block.get("safety")
+            if safety not in SAFETY_CLASSES:
+                errors.append(f"{label}.safety is invalid")
+
+            states = block.get("states")
+            state_keys = []
+            if not isinstance(states, list):
+                errors.append(f"{label}.states must be an array")
+            else:
+                for state_index, state in enumerate(states):
+                    state_label = f"{label}.states[{state_index}]"
+                    if not isinstance(state, dict):
+                        errors.append(f"{state_label} must be an object")
+                        continue
+                    state_valid = True
+                    canonical = {}
+                    for key, value in state.items():
+                        if not isinstance(key, str) or PROPERTY_NAME_RE.fullmatch(key) is None:
+                            errors.append(f"{state_label} contains an invalid property name")
+                            state_valid = False
+                            continue
+                        if not isinstance(value, str) or not value:
+                            errors.append(f"{state_label}.{key} must be a non-empty string")
+                            state_valid = False
+                            continue
+                        canonical[key] = value
+                    if state_valid:
+                        state_keys.append(canonical_json_bytes(canonical))
+                if len(state_keys) != len(set(state_keys)):
+                    errors.append(f"{label}.states contains duplicate states")
+                if state_keys != sorted(state_keys):
+                    errors.append(f"{label}.states must be in canonical order")
+
+            if authority == "runtime_confirmed":
+                if available is not True:
+                    errors.append(f"{label} runtime_confirmed block must be available")
+                if isinstance(states, list) and not states:
+                    errors.append(f"{label} runtime_confirmed block must have runtime states")
+            elif authority == "static_only_unconfirmed":
+                if available is not False:
+                    errors.append(f"{label} static_only_unconfirmed block must be unavailable")
+                if static_discovered is not True:
+                    errors.append(f"{label} static_only_unconfirmed block must be statically discovered")
+                if isinstance(states, list) and states:
+                    errors.append(f"{label} static_only_unconfirmed block must not carry runtime states")
+                if safety != "unknown":
+                    errors.append(f"{label} static_only_unconfirmed block safety must be unknown")
+
+        if len(block_ids) != len(set(block_ids)):
+            errors.append("registry.blocks contains duplicate block ids")
+        if block_ids != sorted(block_ids):
+            errors.append("registry.blocks must be in canonical block-id order")
+
+    claimed = registry.get("content_sha256")
+    if not isinstance(claimed, str) or SHA256_RE.fullmatch(claimed) is None:
+        errors.append("registry.content_sha256 must be a lowercase SHA-256")
+    else:
+        payload = dict(registry)
+        payload.pop("content_sha256", None)
+        expected = hashlib.sha256(canonical_json_bytes(payload)).hexdigest()
+        if claimed != expected:
+            errors.append("registry.content_sha256 does not match canonical content")
+
+    return errors
 
 def build_modpack_registry(physical_snapshot, static_indexes, runtime_snapshot):
     physical = normalize_physical_snapshot(physical_snapshot)

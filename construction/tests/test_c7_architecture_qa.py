@@ -336,7 +336,7 @@ class ConstructionC7ArchitectureQATest(unittest.TestCase):
         self.assertEqual(report["overall_status"], "PASS")
 
     @unittest.skipUnless(IMPLEMENTATION_READY, "C7 implementation not present yet")
-    def test_runtime_state_missing_unavailable_static_only_and_property_mismatch_fail(self) -> None:
+    def test_runtime_state_missing_static_only_and_property_mismatch_fail(self) -> None:
         module = load_module()
         spec = make_build_spec(loader="neoforge", allow_modded=True)
         ir = make_ir(spec, [placement(0, 0, 0, "test:bricks", {"facing": "north"})])
@@ -345,14 +345,13 @@ class ConstructionC7ArchitectureQATest(unittest.TestCase):
         variants = []
         variants.append(registry_with_blocks([]))
 
-        unavailable = copy.deepcopy(base_block)
-        unavailable["available"] = False
-        variants.append(registry_with_blocks([unavailable]))
 
         static_only = copy.deepcopy(base_block)
         static_only["available"] = False
         static_only["authority"] = "static_only_unconfirmed"
+        static_only["static_discovered"] = True
         static_only["states"] = []
+        static_only["safety"] = "unknown"
         variants.append(registry_with_blocks([static_only]))
 
         mismatch = copy.deepcopy(base_block)

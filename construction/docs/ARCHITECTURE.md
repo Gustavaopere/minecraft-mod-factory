@@ -160,9 +160,26 @@ The C3 vanilla pavilion has a C8 Golden extension under `construction/fixtures/v
 
 ## 10. MCP boundary
 
-C9 will expose narrow construction operations rather than arbitrary shell/code execution. Intended capabilities include registry search, palette resolution, build generation, bounded edits, preview, validation and export.
+C9 implements the local capability boundary as an stdio-only MCP server using the exact hash-pinned official MCP SDK `2.2.0`:
 
-Credentials or service-specific configuration are not introduced by C0-C8. Manual setup remains deferred until the first provider that actually needs it.
+```text
+MCP host
+  -> stdio C9 server
+  -> closed tool schemas
+  -> C9 facade
+  -> C2/C4/C5/C6/C7/C8 authorities
+  -> process-scoped content-addressed resources
+```
+
+The advertised tool catalog is fixed to exactly `registry_search`, `palette_resolve`, `build_canonicalize`, `build_validate`, `build_edit`, `qa_structural`, `preview_render`, `qa_visual` and `export_sponge_v3`. C9 adds no prompt catalog and no generic generation/planning authority. Closed request envelopes reject unknown fields before a tool body runs; bounded-edit operation objects are independently closed as well.
+
+C9 does not replace the established Construction authorities. Registry search validates through the public C4 `validate_modpack_registry` contract, C5 remains palette authority, C2 remains Build IR/canonicalization authority, C7 remains structural QA authority, C8 remains preview/Visual QA authority and C6 remains Sponge v3 authority. C7 also consumes the consolidated C4 validator directly, preserving the one-way dependency boundary rather than routing authority through C9.
+
+Preview SVGs, preview-bundle manifests and Sponge v3 bytes live only in an immutable process-scoped `ArtifactStore`. Their identity is the SHA-256 of exact bytes and their canonical URI is `construction://artifact/sha256/<sha256>`. One MCP resource template serves exact stored bytes; no tool or resource resolves a caller-selected filesystem path or URL. Restarting the process clears the namespace.
+
+The production server does not expose subprocess, shell, arbitrary Python/code execution, filesystem, socket/network, HTTP, package-install, credential or external-provider capabilities. It binds no port and supports no HTTP/SSE/Streamable HTTP transport. Stable sanitized errors cross the MCP boundary, while unexpected failures expose only `INTERNAL_ERROR` and sanitized stderr diagnostics.
+
+C10 remains the external-provider boundary, C12 remains the full-modpack/live-world/runtime-visual acceptance boundary and C13 remains the Skill/Router integration boundary. C9 does not pre-empt any of those authorities.
 
 ## 11. Runtime/worldgen boundary
 
@@ -174,4 +191,4 @@ The visual pipeline may consume structures as reference material, including `.nb
 
 ## 12. Current non-goals
 
-Through C8, Construction now owns canonical Build IR validation, modpack registry evidence, semantic palette resolution, deterministic Sponge v3 serialization, conservative offline structural QA and deterministic evidence-gated offline Visual QA. It still does not infer provider-specific support/traversal semantics without explicit authority, install C9 MCP servers, request C10 external-provider credentials, or claim C12 full-modpack/in-game/worldgen/runtime-visual compatibility.
+Through C9, Construction now owns canonical Build IR validation, modpack registry evidence, semantic palette resolution, deterministic Sponge v3 serialization, conservative offline structural QA, deterministic evidence-gated offline Visual QA and the capability-limited local stdio MCP façade over those authorities. It still does not infer provider-specific support/traversal semantics without explicit authority, integrate or authenticate C10 external providers, claim C12 full-modpack/in-game/worldgen/runtime-visual compatibility, or implement the C13 Skill/Router layer.
