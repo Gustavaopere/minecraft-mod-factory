@@ -71,7 +71,8 @@ class ConstructionC10WorkflowContractTest(unittest.TestCase):
             with self.subTest(fragment=fragment):
                 self.assertIn(fragment, text)
 
-        positions = [text.index(fragment) for fragment in required_fragments]
+        jobs_text = text.split("\njobs:\n", 1)[1]
+        positions = [jobs_text.index(fragment) for fragment in required_fragments]
         self.assertEqual(sorted(positions), positions)
 
     def test_pull_request_paths_cover_c10_and_consumed_authorities(self):
