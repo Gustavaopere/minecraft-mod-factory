@@ -1,0 +1,18 @@
+name: C9 Task 5 Build Edit RED
+
+on:
+  push:
+    branches:
+      - feat/construction-c9-agent-mcp
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  task5-build-edit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Run C9 Task 5 build_edit contract
+        run: python3 -m unittest construction.tests.test_c9_agent_mcp.C9BuildEditContractTests -v
