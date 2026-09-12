@@ -1,0 +1,114 @@
+name: C9 Task 11 Docs Materializer
+
+on:
+  push:
+    branches:
+      - feat/construction-c9-agent-mcp
+
+permissions:
+  contents: write
+
+jobs:
+  materialize-docs:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/construction-c9-agent-mcp
+      - name: Document implemented C9 boundary
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          readme_path = Path("construction/README.md")
+          readme = readme_path.read_text(encoding="utf-8")
+          if "## C9 scope" in readme:
+              raise SystemExit("README C9 section already exists")
+          readme_anchor = (
+              "The C3 pavilion is extended under `construction/fixtures/vanilla-golden/c8/` with all seven canonical SVGs, bound review evidence and an expected Visual QA report. That Golden proves deterministic offline rendering/reporting and exact review-evidence binding; it does not prove Minecraft textures, CTM, tint, transparency, emissives, shaders, lighting, full-modpack boot or live-world appearance.\n\n"
+              "## Planned pipeline"
+          )
+          readme_c9 = '''The C3 pavilion is extended under `construction/fixtures/vanilla-golden/c8/` with all seven canonical SVGs, bound review evidence and an expected Visual QA report. That Golden proves deterministic offline rendering/reporting and exact review-evidence binding; it does not prove Minecraft textures, CTM, tint, transparency, emissives, shaders, lighting, full-modpack boot or live-world appearance.
+
+## C9 scope
+
+C9 implements the capability-limited Agent/MCP boundary under `construction/mcp/` using the exact hash-pinned official MCP SDK `2.2.0`. The production server supports stdio only and advertises exactly nine tools: `registry_search`, `palette_resolve`, `build_canonicalize`, `build_validate`, `build_edit`, `qa_structural`, `preview_render`, `qa_visual` and `export_sponge_v3`.
+
+The C9 boundary is deliberately narrow:
+
+- every tool has a closed request schema and delegates authoritative validation/semantics to C2, C4, C5, C6, C7 or C8 rather than duplicating those authorities;
+- C4 now owns the public `validate_modpack_registry` contract consumed directly by C7 and C9;
+- bounded edits are re-canonicalized by C2 and cannot carry arbitrary BlockEntity/entity payloads;
+- preview SVGs, preview bundles and Sponge v3 payloads are immutable process-scoped artifacts addressed only by `construction://artifact/sha256/<sha256>` URIs;
+- one MCP resource template exposes those exact stored bytes without caller-selected filesystem paths or URLs;
+- the artifact store is content-addressed, deduplicating and capacity-limited, and process restart is its only clearing mechanism;
+- anticipated failures use stable sanitized C9 error codes while unexpected failures surface only as `INTERNAL_ERROR`;
+- real stdio acceptance proves exact nine-tool discovery, malformed-input rejection, byte-exact C8 resource reads, the checked-in Golden flow, C6-valid export and clean process teardown.
+
+C9 does not add a prompt/planning authority, external-provider integration, provider credentials, arbitrary shell/code execution, filesystem access, network access, package installation, HTTP transport or C12 runtime/in-game acceptance. C10 remains the authority frontier for external providers, C12 for runtime acceptance and C13 for Skill/Router integration.
+
+## Planned pipeline'''
+          if readme.count(readme_anchor) != 1:
+              raise SystemExit("README insertion anchor mismatch")
+          readme = readme.replace(readme_anchor, readme_c9)
+          old_map = "- `qa/` — deterministic offline preview/rendering helpers used by Construction QA contracts\n- `runtime/` — Factory-owned runtime probes materialized through shared Engineering scaffolding"
+          new_map = "- `qa/` — deterministic offline preview/rendering helpers used by Construction QA contracts\n- `mcp/` — capability-limited stdio MCP server, façade, sanitized errors and process-scoped artifact store\n- `runtime/` — Factory-owned runtime probes materialized through shared Engineering scaffolding"
+          if readme.count(old_map) != 1:
+              raise SystemExit("README directory-map anchor mismatch")
+          readme = readme.replace(old_map, new_map)
+          old_future = "Future directories such as `engines/`, `catalog/`, `registry/`, `providers/` and `mcp/` are created only when their implementation starts."
+          new_future = "Future directories such as `engines/`, `catalog/`, `registry/` and `providers/` are created only when their implementation starts."
+          if readme.count(old_future) != 1:
+              raise SystemExit("README future-directory anchor mismatch")
+          readme = readme.replace(old_future, new_future)
+          readme_path.write_text(readme, encoding="utf-8")
+
+          arch_path = Path("construction/docs/ARCHITECTURE.md")
+          arch = arch_path.read_text(encoding="utf-8")
+          old_mcp = '''## 10. MCP boundary
+
+C9 will expose narrow construction operations rather than arbitrary shell/code execution. Intended capabilities include registry search, palette resolution, build generation, bounded edits, preview, validation and export.
+
+Credentials or service-specific configuration are not introduced by C0-C8. Manual setup remains deferred until the first provider that actually needs it.'''
+          new_mcp = '''## 10. MCP boundary
+
+C9 implements the local capability boundary as an stdio-only MCP server using the exact hash-pinned official MCP SDK `2.2.0`:
+
+```text
+MCP host
+  -> stdio C9 server
+  -> closed tool schemas
+  -> C9 facade
+  -> C2/C4/C5/C6/C7/C8 authorities
+  -> process-scoped content-addressed resources
+```
+
+The advertised tool catalog is fixed to exactly `registry_search`, `palette_resolve`, `build_canonicalize`, `build_validate`, `build_edit`, `qa_structural`, `preview_render`, `qa_visual` and `export_sponge_v3`. C9 adds no prompt catalog and no generic generation/planning authority. Closed request envelopes reject unknown fields before a tool body runs; bounded-edit operation objects are independently closed as well.
+
+C9 does not replace the established Construction authorities. Registry search validates through the public C4 `validate_modpack_registry` contract, C5 remains palette authority, C2 remains Build IR/canonicalization authority, C7 remains structural QA authority, C8 remains preview/Visual QA authority and C6 remains Sponge v3 authority. C7 also consumes the consolidated C4 validator directly, preserving the one-way dependency boundary rather than routing authority through C9.
+
+Preview SVGs, preview-bundle manifests and Sponge v3 bytes live only in an immutable process-scoped `ArtifactStore`. Their identity is the SHA-256 of exact bytes and their canonical URI is `construction://artifact/sha256/<sha256>`. One MCP resource template serves exact stored bytes; no tool or resource resolves a caller-selected filesystem path or URL. Restarting the process clears the namespace.
+
+The production server does not expose subprocess, shell, arbitrary Python/code execution, filesystem, socket/network, HTTP, package-install, credential or external-provider capabilities. It binds no port and supports no HTTP/SSE/Streamable HTTP transport. Stable sanitized errors cross the MCP boundary, while unexpected failures expose only `INTERNAL_ERROR` and sanitized stderr diagnostics.
+
+C10 remains the external-provider boundary, C12 remains the full-modpack/live-world/runtime-visual acceptance boundary and C13 remains the Skill/Router integration boundary. C9 does not pre-empt any of those authorities.'''
+          if arch.count(old_mcp) != 1:
+              raise SystemExit("ARCHITECTURE MCP section anchor mismatch")
+          arch = arch.replace(old_mcp, new_mcp)
+          old_non_goals = "Through C8, Construction now owns canonical Build IR validation, modpack registry evidence, semantic palette resolution, deterministic Sponge v3 serialization, conservative offline structural QA and deterministic evidence-gated offline Visual QA. It still does not infer provider-specific support/traversal semantics without explicit authority, install C9 MCP servers, request C10 external-provider credentials, or claim C12 full-modpack/in-game/worldgen/runtime-visual compatibility."
+          new_non_goals = "Through C9, Construction now owns canonical Build IR validation, modpack registry evidence, semantic palette resolution, deterministic Sponge v3 serialization, conservative offline structural QA, deterministic evidence-gated offline Visual QA and the capability-limited local stdio MCP façade over those authorities. It still does not infer provider-specific support/traversal semantics without explicit authority, integrate or authenticate C10 external providers, claim C12 full-modpack/in-game/worldgen/runtime-visual compatibility, or implement the C13 Skill/Router layer."
+          if arch.count(old_non_goals) != 1:
+              raise SystemExit("ARCHITECTURE non-goals anchor mismatch")
+          arch = arch.replace(old_non_goals, new_non_goals)
+          arch_path.write_text(arch, encoding="utf-8")
+          PY
+          git diff --check
+          git diff --exit-code -- construction/STATUS.md
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/c9-task11-docs-materializer.yml
+          git add construction/README.md construction/docs/ARCHITECTURE.md
+          git commit -m 'docs(construction): document C9 agent MCP boundary'
+          git push origin HEAD:feat/construction-c9-agent-mcp
