@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://minecraft-mod-factory.local/schemas/provider-handoff-receipt.schema.json",
+  "title": "Construction C10 Provider Handoff Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_id",
+    "provider_id",
+    "provider_profile_sha256",
+    "mode",
+    "received_artifacts",
+    "provider_metadata",
+    "factory_validation",
+    "receipt_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "request_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "provider_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "provider_profile_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "mode": {
+      "enum": [
+        "MANUAL_FILE_HANDOFF",
+        "API_ADAPTER"
+      ]
+    },
+    "received_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "sha256",
+          "byte_length",
+          "media_type",
+          "repo_relpath"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "BEDROCK_MCSTRUCTURE",
+              "IMAGE",
+              "LITEMATIC_FILE",
+              "MESH",
+              "SCHEMATIC_FILE",
+              "VANILLA_STRUCTURE_NBT",
+              "WORLD_ZIP"
+            ]
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "byte_length": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "media_type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "repo_relpath": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "pattern": "^construction/fixtures/c10/(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"
+          }
+        }
+      }
+    },
+    "provider_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {}
+    },
+    "factory_validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "validators"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "UNVALIDATED",
+            "FORMAT_VALIDATED",
+            "FACTORY_NORMALIZED",
+            "GOLDEN_ACCEPTED"
+          ]
+        },
+        "validators": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "stage",
+              "authority",
+              "artifact_sha256",
+              "result",
+              "evidence_ref"
+            ],
+            "properties": {
+              "stage": {
+                "enum": [
+                  "FORMAT",
+                  "NORMALIZE",
+                  "GOLDEN"
+                ]
+              },
+              "authority": {
+                "type": "string",
+                "minLength": 1
+              },
+              "artifact_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "result": {
+                "enum": [
+                  "PASS",
+                  "FAIL"
+                ]
+              },
+              "evidence_ref": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^repo://construction/(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"
+              }
+            }
+          }
+        }
+      }
+    },
+    "receipt_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}
