@@ -59,15 +59,18 @@ test('runtime smoke packages the real Blockbench exports under GeckoLib default 
 test('runtime Java fixture binds the physical animation names and GeckoLib 4.9.2 APIs', () => {
   const entity = readRuntimeSource('GoldenSampleMob.java');
   const client = readRuntimeSource('GoldenSampleMobClient.java');
+  const clientProof = readRuntimeSource('GoldenSampleMobClientRuntimeProof.java');
   const gameTest = readRuntimeSource('GoldenSampleMobGameTest.java');
+  const clientRuntime = client + '\n' + clientProof;
 
   assert.match(entity, /implements GeoEntity/);
   assert.match(entity, /GeckoLibUtil\.createInstanceCache\(this\)/);
   assert.match(entity, /animation\.golden_sample_mob\.idle/);
   assert.match(entity, /animation\.golden_sample_mob\.walk/);
   assert.match(entity, /registerControllers\(AnimatableManager\.ControllerRegistrar controllers\)/);
-  assert.match(client, /DefaultedEntityGeoModel/);
-  assert.match(client, /golden_sample_mob/);
+  assert.match(clientRuntime, /DefaultedEntityGeoModel/);
+  assert.match(clientRuntime, /golden_sample_mob/);
+  assert.match(client, /GoldenSampleMobClientRuntimeProof::createRenderer/);
   assert.match(gameTest, /@GameTest/);
   assert.match(gameTest, /GoldenSampleMob/);
 });
