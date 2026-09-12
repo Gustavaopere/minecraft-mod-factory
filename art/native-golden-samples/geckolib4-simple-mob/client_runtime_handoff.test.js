@@ -42,7 +42,8 @@ test('live-client proof contract is target-exact and wired to a real client run'
   assert.deepEqual(contract.connection, {
     host: '127.0.0.1',
     port: 25565,
-    mechanism: 'ConnectScreen.startConnecting@TitleScreen',
+    mechanism: 'ConnectScreen.startConnecting@StartupReadyScreen',
+    startupScreens: ['TitleScreen', 'AccessibilityOnboardingScreen'],
   });
   assert.deepEqual(contract.expectedEvidence, [
     'renderer_invoked',
@@ -68,6 +69,7 @@ test('live-client proof contract is target-exact and wired to a real client run'
   assert.match(runner, /runClient/);
   assert.match(proofSource, /ClientTickEvent\.Post/);
   assert.match(proofSource, /TitleScreen/);
+  assert.match(proofSource, /AccessibilityOnboardingScreen/);
   assert.match(proofSource, /ConnectScreen\.startConnecting/);
   assert.match(preparer, /GoldenSampleMobClientRuntimeProof::onClientTick/);
   assert.doesNotMatch(preparer, /--quickPlayMultiplayer/);
