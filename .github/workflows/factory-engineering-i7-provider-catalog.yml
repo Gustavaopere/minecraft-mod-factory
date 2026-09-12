@@ -8,6 +8,7 @@ on:
     paths:
       - '.github/workflows/factory-engineering-i7-provider-catalog.yml'
       - 'engineering/tests/test_i7_provider_catalog.py'
+      - 'engineering/tests/test_i7_provider_catalog_content.py'
       - 'engineering/catalog/providers/**'
       - 'engineering/schemas/provider-catalog.schema.json'
       - 'engineering/tooling/provider-catalog/**'
@@ -21,6 +22,7 @@ on:
     paths:
       - '.github/workflows/factory-engineering-i7-provider-catalog.yml'
       - 'engineering/tests/test_i7_provider_catalog.py'
+      - 'engineering/tests/test_i7_provider_catalog_content.py'
       - 'engineering/catalog/providers/**'
       - 'engineering/schemas/provider-catalog.schema.json'
       - 'engineering/tooling/provider-catalog/**'
@@ -47,13 +49,17 @@ jobs:
           python-version: '3.12'
 
       - name: Run I7 provider catalog contract tests
-        run: python3 -m unittest engineering/tests/test_i7_provider_catalog.py
+        run: >-
+          python3 -m unittest
+          engineering/tests/test_i7_provider_catalog.py
+          engineering/tests/test_i7_provider_catalog_content.py
 
       - name: Check I7 whitespace
         run: >-
           git diff --check HEAD^ --
           .github/workflows/factory-engineering-i7-provider-catalog.yml
           engineering/tests/test_i7_provider_catalog.py
+          engineering/tests/test_i7_provider_catalog_content.py
           engineering/catalog/providers
           engineering/schemas/provider-catalog.schema.json
           engineering/tooling/provider-catalog
