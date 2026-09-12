@@ -65,6 +65,7 @@ jobs:
 
           root = Path('art/native-golden-samples/geckolib4-simple-mob')
           smoke = root / 'runtime-smoke'
+          fixture_tests = smoke / 'tests'
           generated = Path('.factory-ci/geckolib4/generated')
           contract = json.loads((smoke / 'contract.json').read_text(encoding='utf-8'))
 
@@ -118,8 +119,8 @@ jobs:
           java_root = generated / 'src/main/java/dev/example/i3golden'
           client_root = java_root / 'client'
           for name in ('GoldenSampleMob.java', 'GoldenSampleMobRegistry.java', 'GoldenSampleMobGameTest.java'):
-              shutil.copyfile(smoke / name, java_root / name)
-          shutil.copyfile(smoke / 'GoldenSampleMobClient.java', client_root / 'GoldenSampleMobClient.java')
+              shutil.copyfile(fixture_tests / name, java_root / name)
+          shutil.copyfile(fixture_tests / 'GoldenSampleMobClient.java', client_root / 'GoldenSampleMobClient.java')
 
           for resource in contract['resources'].values():
               source = (smoke / resource['source']).resolve()
