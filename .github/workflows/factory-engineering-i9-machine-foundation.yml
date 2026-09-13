@@ -21,6 +21,8 @@ permissions:
 jobs:
   machine-foundation-contract:
     runs-on: ubuntu-24.04
+    env:
+      GRADLE_USER_HOME: ${{ github.workspace }}/.factory-ci/i9/gradle-home
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -33,9 +35,15 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Run I9 composition contract tests
+      - name: Run I9 and relevant engineering regressions
         run: >-
           python3 -m unittest
+          engineering/tests/test_i3_mod_scaffolder.py
+          engineering/tests/test_i3_security_review.py
+          engineering/tests/test_i4_engineering_validators.py
+          engineering/tests/test_i5_test_harness.py
+          engineering/tests/test_i8_feature_generator.py
+          engineering/tests/test_i8_feature_generator_neoforge.py
           engineering/tests/test_i9_machine_foundation.py
           engineering/tests/test_i9_machine_foundation_composition.py
 
@@ -59,12 +67,40 @@ jobs:
         run: |
           chmod +x .factory-ci/i9/generated/gradlew
           cd .factory-ci/i9/generated
-          GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/i9/gradle-home" ./gradlew test build --no-daemon
+          ./gradlew test build --no-daemon
 
       - name: Run I9 GameTest server
         run: |
           cd .factory-ci/i9/generated
-          GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/i9/gradle-home" ./gradlew runGameTestServer --no-daemon
+          ./gradlew runGameTestServer --no-daemon
+
+      - name: Accept EULA in generated fixture only
+        run: |
+          mkdir -p .factory-ci/i9/generated/run/server
+          printf 'eula=true\n' > .factory-ci/i9/generated/run/server/eula.txt
+
+      - name: Run canonical I5 harness
+        run: >-
+          python3 engineering/tooling/test-harness/run_test_harness.py
+          --project .factory-ci/i9/generated
+
+      - name: Verify I5 manifest
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('.factory-ci/i9/generated/build/i5-test-harness/test-manifest.json')
+          manifest = json.loads(path.read_text(encoding='utf-8'))
+          assert manifest['overall_state'] == 'PASS', manifest
+          suites = {suite['suite_id']: suite['state'] for suite in manifest['suites']}
+          assert suites == {
+              'unit': 'PASS',
+              'gametest': 'PASS',
+              'dedicated_server': 'PASS',
+          }, suites
+          print(json.dumps(manifest, indent=2, sort_keys=True))
+          PY
 
       - name: Check whitespace
         if: always()
