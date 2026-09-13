@@ -13,6 +13,7 @@ on:
       - 'engineering/tests/test_i2_modlist_catalog.py'
       - 'engineering/tests/test_i2_security_review.py'
       - 'engineering/tests/fixtures/modlist-i2-sample.txt'
+      - 'engineering/catalog/physical-modlist/**'
       - '.github/workflows/factory-engineering-i2-modlist-catalog.yml'
 
 permissions:
@@ -53,6 +54,12 @@ jobs:
           --check ".factory-ci/i2/snapshot.json"
           --providers ".factory-ci/i2/snapshot.providers.json"
 
+      - name: Validate committed physical snapshot and provider catalog
+        run: >-
+          python3 engineering/tooling/import-physical-modlist.py
+          --check "engineering/catalog/physical-modlist/snapshot-2026-09-09.json"
+          --providers "engineering/catalog/physical-modlist/providers-2026-09-09.json"
+
       - name: Check I2 whitespace
         run: >-
           git diff --check HEAD^ --
@@ -60,4 +67,5 @@ jobs:
           engineering/tests/test_i2_modlist_catalog.py
           engineering/tests/test_i2_security_review.py
           engineering/tests/fixtures/modlist-i2-sample.txt
+          engineering/catalog/physical-modlist
           .github/workflows/factory-engineering-i2-modlist-catalog.yml
