@@ -47,7 +47,10 @@ Permanecem em Engineering ou no repo do mod:
 - `PLANO-MESTRE-UNIFICADO-MINECRAFT-MOD-FACTORY-REPO-TEXTURA-BLOCKBENCH-ASSET-MCP-V5.1.md` — plano artístico principal preservado byte-for-byte do local anterior.
 - `FRONTEIRA-ENGENHARIA-TEXTURA.md` — regra normativa para separar planos mistos.
 - `AUDITORIA-SEPARACAO-APRESENTACAO-2026-09-13.md` — evidência da reorganização inicial.
+- `roadmap/` — mapa operacional do pipeline visual/artístico preservado da PR #104 e subordinado a esta authority.
 
 ## Regra para novos planos
 
 Se um plano de feature possuir comportamento e apresentação, não colocar tudo no mesmo documento por conveniência. A parte funcional especifica estados/eventos/anchors necessários; a parte de Textura define a expressão visual/sonora e referencia o contrato funcional.
+
+Os arquivos de `roadmap/` são derivados do plano mestre e do `STATUS.md`; servem para navegação e progresso e não constituem uma segunda authority.
