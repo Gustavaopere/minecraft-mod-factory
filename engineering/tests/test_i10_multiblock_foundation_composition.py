@@ -12,6 +12,7 @@ OVERLAY = ROOT / "engineering/tests/golden/i10-multiblock-foundation/overlay"
 MANIFEST = ROOT / "engineering/tests/golden/i10-multiblock-foundation/manifest.json"
 SPEC = ROOT / "docs/superpowers/specs/2026-09-13-i10-multiblock-foundation-reference-design.md"
 PLAN = ROOT / "docs/superpowers/plans/2026-09-13-i10-multiblock-foundation-reference.md"
+I3_BUILD_TEMPLATE = ROOT / "engineering/templates/neoforge-mod/build.gradle.tmpl"
 
 
 def load_materializer():
@@ -163,6 +164,17 @@ class I10MultiblockFoundationCompositionTest(unittest.TestCase):
             self.assertIn("public I10MultiblockMod(IEventBus modBus, ModContainer container)", text)
             self.assertIn("dev.example.i10multiblock.multiblock.I10MultiblockContent.register(modBus);", text)
             self.assertIn("modBus.addListener(dev.example.i10multiblock.multiblock.I10MultiblockContent::registerCapabilities);", text)
+
+    def test_i10_server_run_forwards_console_stdin_without_mutating_i3_template(self):
+        module = load_materializer()
+        self.assertNotIn("standardInput", I3_BUILD_TEMPLATE.read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            with contextlib.chdir(workspace):
+                generated = module.materialize_i10("generated")
+            build_gradle = (generated / "build.gradle").read_text(encoding="utf-8")
+            self.assertIn("tasks.named('runServer').configure", build_gradle)
+            self.assertIn("standardInput = System.in", build_gradle)
 
     def test_i10_composition_has_no_i9_runtime_dependency(self):
         module = load_materializer()
