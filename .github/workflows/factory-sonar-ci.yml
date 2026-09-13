@@ -15,7 +15,6 @@ on:
 
 permissions:
   contents: read
-  checks: read
 
 jobs:
   sonar-ci:
@@ -109,7 +108,7 @@ jobs:
             coverage_started=1
           fi
 
-          if [[ -f construction/fixtures/complex-modded-golden/capture_registry.py && -f construction/tests/test_c11_complex_modded_golden.py ]]; then
+          if [[ -f construction/fixtures/complex-modded-golden/capture_registry.py && -f construction/tests/test_c11_complex_modded_golden.py && -f construction/tests/test_c11_capture_path_security.py ]]; then
             if [[ "$coverage_started" -eq 0 ]]; then
               python3 -m coverage run \
                 --branch \
@@ -121,7 +120,9 @@ jobs:
                 construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_rejects_output_outside_workspace \
                 construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_delegates_physical_sha_mismatch_to_c4 \
                 construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_delegates_target_mismatch_to_c4 \
-                construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_cli_writes_canonical_revalidated_registry
+                construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_cli_writes_canonical_revalidated_registry \
+                construction.tests.test_c11_capture_path_security.ConstructionC11CapturePathSecurityTest.test_cli_rejects_physical_modlist_parent_traversal \
+                construction.tests.test_c11_capture_path_security.ConstructionC11CapturePathSecurityTest.test_cli_rejects_runtime_snapshot_parent_traversal
             else
               python3 -m coverage run \
                 --append \
@@ -134,7 +135,9 @@ jobs:
                 construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_rejects_output_outside_workspace \
                 construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_delegates_physical_sha_mismatch_to_c4 \
                 construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_delegates_target_mismatch_to_c4 \
-                construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_cli_writes_canonical_revalidated_registry
+                construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_cli_writes_canonical_revalidated_registry \
+                construction.tests.test_c11_capture_path_security.ConstructionC11CapturePathSecurityTest.test_cli_rejects_physical_modlist_parent_traversal \
+                construction.tests.test_c11_capture_path_security.ConstructionC11CapturePathSecurityTest.test_cli_rejects_runtime_snapshot_parent_traversal
             fi
             coverage_started=1
           fi
@@ -161,34 +164,3 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-      # Temporary diagnostic for PR #100; remove after the Sonar rule/path/line evidence is captured.
-      - name: Diagnose failing SonarCloud annotations
-        if: failure() && github.event_name == 'pull_request'
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          set -euo pipefail
-          check_id=''
-          for attempt in 1 2 3 4 5; do
-            check_id="$(gh api \
-              -H 'Accept: application/vnd.github+json' \
-              "/repos/${GITHUB_REPOSITORY}/commits/${PR_HEAD_SHA}/check-runs" \
-              --jq '.check_runs[] | select(.name == "SonarCloud Code Analysis") | .id' \
-              | head -n 1)"
-            if [[ -n "$check_id" ]]; then
-              break
-            fi
-            sleep 5
-          done
-          if [[ -z "$check_id" ]]; then
-            echo '::error::SonarCloud Code Analysis check was not found for PR head.'
-            exit 1
-          fi
-          echo "SonarCloud check id: ${check_id}"
-          gh api \
-            -H 'Accept: application/vnd.github+json' \
-            "/repos/${GITHUB_REPOSITORY}/check-runs/${check_id}/annotations" \
-            --jq '.[] | {path, start_line, end_line, annotation_level, title, message, raw_details}'
