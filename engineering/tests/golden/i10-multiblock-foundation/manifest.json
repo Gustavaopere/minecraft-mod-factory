@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "source": "README.md",
+      "destination": "I10-MULTIBLOCK-FOUNDATION.md"
+    }
+  ],
+  "main_class_patch": {
+    "path": "src/main/java/dev/example/i10multiblock/I10MultiblockMod.java",
+    "anchor": "    public I10MultiblockMod(IEventBus modBus, ModContainer container) {\n    }\n",
+    "replacement": "    public I10MultiblockMod(IEventBus modBus, ModContainer container) {\n        dev.example.i10multiblock.multiblock.I10MultiblockContent.register(modBus);\n        modBus.addListener(dev.example.i10multiblock.multiblock.I10MultiblockContent::registerCapabilities);\n    }\n"
+  }
+}
