@@ -1,24 +1,46 @@
-# Plans — Minecraft Mod Factory
+# Planos — Minecraft Mod Factory
 
-Este diretório mantém os dois **planos mestres canônicos** na raiz e adiciona mapas de execução separados por domínio para navegação rápida.
+Os planos ativos são separados por authority, com mapas operacionais derivados para navegação rápida.
 
-## Legenda de estado
+## Legenda de estado dos roadmaps
 
 - ✅ — milestone encerrado com evidência aceita no `STATUS.md` canônico ou no gate correspondente.
 - 🔄 — fronteira atual de execução; ainda não concluída.
 - ⬜ — milestone pendente/não iniciado.
 - ⛔ — bloqueado por um gate explícito.
 
-> Os ícones resumem o estado do milestone. Eles não promovem `REFERENCE_ONLY`, `DEFERRED`, `UNAVAILABLE` ou runtime não comprovado para `PASS`. O arquivo do milestone registra essas limitações quando aplicáveis.
+Os ícones resumem o milestone; não promovem `REFERENCE_ONLY`, `DEFERRED`, `UNAVAILABLE` ou runtime não comprovado para `PASS`.
 
-## Domínios
+## Mod Engineering
 
-- [Mod Engineering / Integration Control Plane](./mod-engineering/README.md)
-- [Repo Textura / Visual & Asset Pipeline](./visual-assets/README.md)
+Plano canônico de runtime/integração:
 
-## Planos mestres canônicos
+`PLANO-MESTRE-MINECRAFT-MOD-FACTORY-MOD-ENGINEERING-NEOFORGE-1.21.1-V1.1.md`
 
-- [Mod Engineering — V1.1](./PLANO-MESTRE-MINECRAFT-MOD-FACTORY-MOD-ENGINEERING-NEOFORGE-1.21.1-V1.1.md)
-- [Repo Textura / Visual & Asset Pipeline — V5.1](./PLANO-MESTRE-UNIFICADO-MINECRAFT-MOD-FACTORY-REPO-TEXTURA-BLOCKBENCH-ASSET-MCP-V5.1.md)
+Escopo: runtime, arquitetura, integração, networking, persistência, providers, testes, CI, performance e release.
 
-Os arquivos das subpastas são mapas de execução derivados dos planos mestres e do `STATUS.md`; não criam uma segunda authority e não substituem os planos canônicos.
+Mapa operacional preservado da PR #104:
+
+`mod-engineering/`
+
+## Textura / Apresentação
+
+Toda a authority de planejamento de apresentação fica em:
+
+`textura/`
+
+Inclui UI/HUD visual, texturas, materiais, modelos, Blockbench, UV, rigs, animações, VFX/partículas, áudio/SFX, ícones, cinematics, visual QA e sound QA.
+
+O plano mestre artístico V5.1 foi movido para essa subpasta. A antiga entrada na raiz existe somente como ponte de compatibilidade.
+
+O roadmap artístico criado na PR #104 foi preservado dentro da mesma authority em:
+
+`textura/roadmap/`
+
+## Regra de separação
+
+- comportamento/runtime → Engineering ou repo do mod;
+- aparência/animação/som/apresentação → `plans/textura/`;
+- conteúdo misto → duas especificações conectadas por contrato de handoff.
+
+Os roadmaps são índices operacionais derivados. Não criam segunda authority e não substituem os planos canônicos.
