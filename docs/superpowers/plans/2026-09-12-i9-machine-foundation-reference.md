@@ -1,6 +1,6 @@
 # I9 Machine Foundation Reference Implementation Plan
 
-> **Execution method:** use TDD. No production surface is added before the corresponding failing contract is observed. The current physical target is Minecraft 1.21.1 / NeoForge 21.1.248 / Java 21 / NeoGradle userdev 7.1.26.
+> **Execution method:** TDD with target-exact verification. No production surface is accepted before its failing contract is observed, and no task is marked complete without the corresponding build/runtime/CI evidence. Physical target: Minecraft 1.21.1 / NeoForge 21.1.248 / Java 21 / NeoGradle userdev 7.1.26.
 
 **Goal:** materialize a reproducible dedicated Machine Foundation Golden proving inventory, energy, vanilla-smelting recipe lookup, progress, persistence, menu synchronization/backend, seven required GameTests, and dedicated-server compatibility without making I8 machine-aware.
 
@@ -17,32 +17,47 @@
 - Processing cost: `20` energy/server tick.
 - Processing duration: `100` server ticks.
 - Recipe domain: vanilla `minecraft:smelting`.
-- Canonical test transform: `minecraft:raw_iron` -> `minecraft:iron_ingot`.
+- Canonical transform: `minecraft:raw_iron` -> `minecraft:iron_ingot`.
 - Menu sync: exactly three integers — progress, max progress, energy.
 - No custom recipe type, fluids, visual screen, multiblock, logistics, provider adapter, release tooling, or I14 end-to-end scope.
 - I8 remains generic.
 - `STATUS.md` changes only in a dedicated post-merge closeout.
 
-## Completed target-exact prerequisite audit
+## Execution reconciliation
 
-- [x] Add an experimental RED requiring `setForceExit false` in the I3 Game Test Server run.
-- [x] Capture RED run `34733484481`: `19 PASS / 1 FAIL`, failure exactly `'setForceExit false' not found`.
-- [x] Apply the experimental I3 directive on HEAD `7e9b2bcbc44e827df13bbc5e13b3543b9d641af3`.
-- [x] Capture target-exact run `34733610517`: I3/security tests `20/20 PASS`, generated project fails at Gradle evaluation because NeoGradle `7.1.26` `RunImpl` has no `setForceExit` method.
-- [x] Confirm I8 generated-project build also fails from the same unsupported scaffold directive.
-- [x] Inspect NeoGradle `NG_7.1` run DSL: no force-exit property/method is exposed by the physical run contract.
-- [x] Reconcile the I9 design: do not retain the unsupported directive; real `runGameTestServer` execution is the authoritative gate.
-- [ ] Restore I3 test/template/Golden to canonical pre-probe bytes and reverify I3/I8/Sonar before I9 composition work.
+This plan was written before target-exact implementation and is now reconciled against the real repository tree and recorded CI evidence. The following execution facts override stale assumptions from the original draft:
 
-## Planned files
+- NeoGradle userdev `7.1.26` does **not** expose `setForceExit false`; the experimental probe was reverted and the authoritative runtime gate is `./gradlew runGameTestServer --no-daemon`.
+- The canonical I3 constructor is `public I9MachineMod(IEventBus modBus, ModContainer container)`, not the earlier one-argument draft assumption.
+- The actual I9 main-class patch intentionally uses fully-qualified machine wiring so the overlay does not add imports to the I3-owned main class.
+- The I9 workflow was expanded incrementally when objective compile/runtime evidence became necessary during Tasks 3 and 7. Task 9 finalized the permanent regression + I5 gate after its own workflow-contract RED; it did not retroactively own the earlier proof steps.
+- `engineering/tests/test_i9_machine_foundation_composition.py` is a permanent I9 contract and is part of the final regression set.
+- The checked-in GameTest structure is native `.nbt` source authority. Its SHA-256 is pinned in the I9 manifest and revalidated by the materializer/contracts.
+- Task 8 used a temporary proof workflow only to exercise the unchanged canonical I5 harness. That workflow was deleted after evidence capture; comparison proved no net temporary-workflow diff remained.
 
-Create:
+## Target-exact prerequisite audit — COMPLETE
+
+- [x] Experimental RED requiring `setForceExit false`: run `34733484481`, `19 PASS / 1 FAIL`, expected missing directive.
+- [x] Experimental I3 directive applied only for the probe.
+- [x] Target-exact rejection captured in run `34733610517`: Python I3/security tests passed, generated Gradle evaluation failed because `RunImpl` has no `setForceExit` method.
+- [x] I8 inherited the same experimental scaffold failure, proving shared-owner blast radius.
+- [x] NeoGradle `NG_7.1` run DSL audit found no physical force-exit API to substitute.
+- [x] Design reconciled: do not retain unsupported `setForceExit`; real GameTest server execution is authority.
+- [x] `engineering/tests/test_i3_mod_scaffolder.py`, `engineering/templates/neoforge-mod/build.gradle.tmpl`, and `engineering/tests/golden/i3-golden-mod/build.gradle` restored byte-for-byte to canonical `main` blobs.
+- [x] Final compare proved no net I3 prerequisite diff against `main`; record `TARGET_EXACT_NO_I3_CHANGE_REQUIRED`.
+- [x] Final I9 permanent regression job re-runs I3 contracts and final global I1/Governance/Full Skill/Sonar gates are green.
+
+## Materialized files
+
+I9 creates/owns:
 
 - `engineering/tests/fixtures/i9-machine-mod-spec.json`
 - `engineering/tests/fixtures/i9-machine-scaffold-config.json`
 - `engineering/tests/test_i9_machine_foundation.py`
+- `engineering/tests/test_i9_machine_foundation_composition.py`
 - `engineering/tooling/machine-foundation/materialize_i9.py`
 - `engineering/tests/golden/i9-machine-foundation/manifest.json`
+- `engineering/tests/golden/i9-machine-foundation/overlay/README.md`
 - `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/I9MachineContent.java`
 - `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/MachineBlock.java`
 - `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/MachineEnergyStorage.java`
@@ -52,149 +67,77 @@ Create:
 - `engineering/tests/golden/i9-machine-foundation/overlay/src/main/resources/data/i9_machine/structure/machine_test.nbt`
 - `.github/workflows/factory-engineering-i9-machine-foundation.yml`
 
-Modify existing shared files only when a new failing regression proves ownership. `.github/workflows/factory-sonar-ci.yml` may change only if a real Sonar run proves that `materialize_i9.py` lacks imported coverage.
+Shared `.github/workflows/factory-sonar-ci.yml` was changed only after real Sonar evidence proved imported I9 Python coverage was required.
 
 ---
 
-## Task 1 — Restore and verify the canonical I3 prerequisite
+## Task 1 — Restore and verify canonical I3 prerequisite — COMPLETE
 
-- [ ] Restore `engineering/tests/test_i3_mod_scaffolder.py` to the canonical main blob, removing the experimental `setForceExit` assertion.
-- [ ] Restore `engineering/templates/neoforge-mod/build.gradle.tmpl` to the canonical main blob.
-- [ ] Restore `engineering/tests/golden/i3-golden-mod/build.gradle` to the same canonical buildscript bytes.
-- [ ] Run the I3 workflow and require Python contract/security PASS, generated `test build` PASS, and whitespace PASS.
-- [ ] Run/review I8 on the same HEAD and require generated project build + datagen PASS.
-- [ ] Require Sonar workflow success and `QUALITY GATE STATUS: PASSED`.
-- [ ] Record the prerequisite as `TARGET_EXACT_NO_I3_CHANGE_REQUIRED`; do not claim the experimental fix as retained work.
+- [x] Restore I3 test/template/Golden to canonical `main` bytes.
+- [x] Prove the restored files are byte-identical to `main` and absent from the net PR diff.
+- [x] Preserve target-exact evidence that the experimental directive is incompatible with NeoGradle `7.1.26`.
+- [x] Record `TARGET_EXACT_NO_I3_CHANGE_REQUIRED` rather than claiming the experimental change as retained work.
+
+No artificial commit was created merely to force a redundant I3 workflow after the final restoration produced no net I3 diff. Relevant I3 contracts are included again in the final permanent I9 regression job.
 
 ---
 
-## Task 2 — RED/GREEN: I9 composition authority
+## Task 2 — I9 composition authority — COMPLETE
 
-**RED files only:**
+### RED
 
-- `engineering/tests/fixtures/i9-machine-mod-spec.json`
-- `engineering/tests/fixtures/i9-machine-scaffold-config.json`
-- `engineering/tests/test_i9_machine_foundation.py`
-- initial permanent `.github/workflows/factory-engineering-i9-machine-foundation.yml` that only runs the I9 contract plus required setup.
+- [x] RED fixtures/test/minimal workflow created before materializer/manifest/overlay.
+- [x] Run `34734426490`: expected failure caused by missing I9 composition authority.
 
-The RED commit must not create the materializer, manifest, or overlay.
+### GREEN
 
-### RED fixture identity
+`materialize_i9(output_dir)` now:
 
-Scaffold config:
+1. requires output inside the current workspace and not equal to workspace root;
+2. rejects an existing output;
+3. generates a fresh canonical I3 project from fixed I9 fixtures;
+4. validates closed manifest keys and canonical fixed mapping authority;
+5. rejects unsafe relative paths, duplicates, traversal, absolute paths, backslashes/drive syntax, symlink components, escapes, and overwrite collisions;
+6. copies overlay files byte-for-byte;
+7. validates pinned SHA-256 for the native GameTest structure;
+8. patches exactly one canonical I3 constructor anchor;
+9. stages work in a workspace-contained temp directory and publishes only after validation;
+10. cleans staging on failure and preserves deterministic output.
 
-```json
-{
-  "schema_version": 1,
-  "project_name": "i9-machine-foundation",
-  "java_package": "dev.example.i9machine",
-  "mod_group_id": "dev.example",
-  "mod_version": "0.1.0",
-  "main_class": "I9MachineMod",
-  "client_class": "I9MachineModClient",
-  "license": "MIT",
-  "authors": "Engineering Golden Fixture",
-  "description": "Synthetic project proving the canonical I9 Machine Foundation reference."
+Canonical main-class result:
+
+```java
+public I9MachineMod(IEventBus modBus, ModContainer container) {
+    dev.example.i9machine.machine.I9MachineContent.register(modBus);
+    modBus.addListener(dev.example.i9machine.machine.I9MachineContent::registerCapabilities);
 }
 ```
 
-The mod spec must preserve the current I3 schema exactly while declaring target `1.21.1 / neoforge / 21.1.248 / Java 21`, one machine block/menu backend, persistence for inventory/energy/progress, and vanilla smelting. No real distribution or provider claim is invented.
-
-### RED contract
-
-`engineering/tests/test_i9_machine_foundation.py` begins with:
-
-```python
-ROOT = Path(__file__).resolve().parents[2]
-MATERIALIZER = ROOT / "engineering/tooling/machine-foundation/materialize_i9.py"
-OVERLAY = ROOT / "engineering/tests/golden/i9-machine-foundation/overlay"
-MANIFEST = ROOT / "engineering/tests/golden/i9-machine-foundation/manifest.json"
-
-class I9MachineFoundationContractTest(unittest.TestCase):
-    def test_i9_materializer_and_overlay_exist(self):
-        self.assertTrue(MATERIALIZER.is_file(), "I9 RED: materializer is missing")
-        self.assertTrue(OVERLAY.is_dir(), "I9 RED: overlay is missing")
-        self.assertTrue(MANIFEST.is_file(), "I9 RED: manifest is missing")
-```
-
-- [ ] Commit RED fixtures/test/permanent minimal workflow.
-- [ ] Capture Actions failure caused only by missing I9 materializer/overlay/manifest.
-
-### GREEN composition
-
-Create `engineering/tooling/machine-foundation/materialize_i9.py` with public interface:
-
-```python
-class MaterializationError(RuntimeError):
-    pass
-
-def materialize_i9(output_dir: Path | str) -> Path:
-    ...
-```
-
-Required behavior:
-
-1. output must resolve inside current workspace and must not equal workspace root;
-2. generate a fresh project from the fixed I9 fixtures through canonical I3 `generate_project`;
-3. manifest root keys are closed and validated;
-4. overlay paths reject absolute paths, `..`, duplicates, symlinks, escapes, and existing destinations;
-5. copy overlay files byte-for-byte;
-6. patch only `src/main/java/dev/example/i9machine/I9MachineMod.java` through one exact constructor anchor;
-7. zero/multiple anchor matches fail before writing;
-8. repeat materialization in two fresh outputs is byte-identical.
-
-Main-class result:
-
-```java
-public I9MachineMod(IEventBus modBus) {
-    I9MachineContent.register(modBus);
-    modBus.addListener(I9MachineContent::registerCapabilities);
-}
-```
-
-- [ ] Add traversal, absolute-path, symlink, duplicate, unknown-manifest-key, overwrite, anchor-drift, and determinism tests before declaring GREEN.
-- [ ] Require I3/security/I9 Python tests PASS.
-- [ ] Commit composition GREEN.
+- [x] Composition/security suite added, including traversal, absolute path, symlink, duplicate path, closed manifest, overwrite, anchor drift, authority delegation, and determinism coverage.
+- [x] Sonar security/coverage remediation completed without exclusions.
+- [x] Final Task 2 I9 run `34735084187`: SUCCESS.
+- [x] Final Task 2 Sonar run `34735084205`: SUCCESS / Quality Gate PASS.
 
 ---
 
-## Task 3 — RED/GREEN: registry and capability surfaces
+## Task 3 — Registry and capability surfaces — COMPLETE
 
-Before adding Java, extend I9 contract tests to require exact overlay paths and source tokens for:
-
-- `I9MachineContent.java`
-- `MachineBlock.java`
-- `MachineEnergyStorage.java`
-- `MachineBlockEntity.java`
-- `MachineMenu.java`
-
-Require `DeferredRegister`, `Capabilities.ItemHandler.BLOCK`, `Capabilities.EnergyStorage.BLOCK`, and block-entity capability registration. Capture RED.
-
-GREEN requirements:
-
-- register one `machine` block;
-- register its block item;
-- register one `MachineBlockEntity` type;
-- register one `MachineMenu` type;
-- register stable item and energy block capabilities;
-- `MachineBlock` extends `BaseEntityBlock` and creates the machine BE;
-- no screen class.
-
-Materialize a fresh I9 project and run:
-
-```bash
-./gradlew test build --no-daemon
-```
-
-Any API mismatch is fixed against NeoForge `21.1.248`; compilation is authority.
+- [x] RED required exact registry/capability source surfaces before Java implementation.
+- [x] Register one `machine` block and block item.
+- [x] Register `MachineBlockEntity` and `MachineMenu` types.
+- [x] Register stable `Capabilities.ItemHandler.BLOCK` and `Capabilities.EnergyStorage.BLOCK` via `RegisterCapabilitiesEvent#registerBlockEntity`.
+- [x] `MachineBlock` extends `BaseEntityBlock` and creates the machine BE.
+- [x] No screen class added.
+- [x] Target-exact compile mismatch in `MachineMenu` was handled only after compiler evidence.
+- [x] Final Task 3 run `34735815829`: contracts/materialization/NeoForge `test build`/whitespace SUCCESS.
 
 ---
 
-## Task 4 — RED/GREEN: inventory and energy
+## Task 4 — Inventory and energy — COMPLETE
 
-Add source/runtime contracts before implementation for constants:
+Fixed constants:
 
-```java
+```text
 ENERGY_CAPACITY = 10_000
 MAX_RECEIVE = 1_000
 ENERGY_PER_TICK = 20
@@ -203,52 +146,38 @@ INPUT_SLOT = 0
 OUTPUT_SLOT = 1
 ```
 
-GREEN:
-
-- one stable `ItemStackHandler(2)`;
-- `onContentsChanged` marks BE changed;
-- output rejects insertion;
-- input validates against smelting recipe when server level exists and fails closed before server attachment;
-- direct `IEnergyStorage` implementation;
-- receive is bounded by request, `1_000`, and remaining capacity;
-- external extraction always `0`;
-- `canExtract=false`, `canReceive=true`;
-- explicit internal consume method;
-- explicit clamped load method;
-- energy mutation marks BE changed.
-
-Rematerialize and require `test build` PASS.
+- [x] Stable `ItemStackHandler(2)`.
+- [x] Inventory changes mark BE changed.
+- [x] Output rejects insertion.
+- [x] Input validates vanilla smelting against server `RecipeManager` and fails closed before server attachment.
+- [x] Direct `IEnergyStorage` implementation.
+- [x] Receive bounded by request, `1_000`, and remaining capacity.
+- [x] External extraction always `0`; `canExtract=false`; `canReceive=true`.
+- [x] Explicit internal consume and clamped-load paths.
+- [x] Energy mutation marks BE changed.
+- [x] RED run `34736148946`: expected inventory/energy contract failure.
+- [x] GREEN run `34736188157`: contracts/materialization/target-exact build/whitespace SUCCESS.
 
 ---
 
-## Task 5 — RED/GREEN: smelting, progress, persistence, sync
+## Task 5 — Smelting, progress, persistence, sync — COMPLETE
 
-RED must require `SingleRecipeInput`, `RecipeType.SMELTING`, `getRecipeFor`, `assemble`, `loadAdditional`, `saveAdditional`, and `ContainerData` count `3`.
-
-GREEN server tick:
-
-1. return immediately when not on `ServerLevel`;
-2. resolve smelting recipe for input;
-3. assemble result with server registry access;
-4. verify output compatibility/capacity;
-5. verify `20` energy;
-6. consume `20`, increment progress;
-7. at `100`, consume one input, insert result, reset progress;
-8. failed precondition resets progress to `0` without input/output mutation.
-
-Persist item handler, energy, progress. Clamp energy `0..10_000` and progress `0..99` on load. Fixed constants are not persisted.
-
-`ContainerData` exposes exactly progress, max progress, energy. Client-side menu data must not mutate server-owned energy storage.
-
-Require fresh `test build` PASS.
+- [x] Server-only processing uses `SingleRecipeInput`, `RecipeType.SMELTING`, `getRecipeFor`, and recipe `assemble` with registry access.
+- [x] Validate recipe/output/energy before consuming energy or input.
+- [x] Consume `20` energy and increment progress each valid server tick.
+- [x] At `100`, consume one input, insert result, reset progress.
+- [x] Any failed precondition resets progress without input/output mutation.
+- [x] Persist inventory, energy, progress with target-exact registry-aware item-handler serialization.
+- [x] Clamp energy `0..10_000` and progress `0..99` on load.
+- [x] `ContainerData` exposes exactly progress/max progress/energy and cannot mutate server-owned energy from menu data.
+- [x] RED run `34736388850`: expected processing/persistence/sync contract failure.
+- [x] GREEN run `34736531827`: `15/15` I9 contracts, materialization, target-exact build, whitespace SUCCESS.
 
 ---
 
-## Task 6 — RED/GREEN: menu and block interaction
+## Task 6 — Menu and block interaction — COMPLETE
 
-RED requires `SlotItemHandler`, `SimpleContainerData(3)`, `checkContainerDataCount(data, 3)`, `ContainerLevelAccess`, real `stillValid`, and non-stub `quickMoveStack`.
-
-GREEN menu index contract:
+Menu index contract:
 
 ```text
 0 input
@@ -257,26 +186,28 @@ GREEN menu index contract:
 29..37 hotbar
 ```
 
-- machine-to-player shift-click targets `[2, 38)`;
-- player-to-machine targets input `[0, 1)` only;
-- output never accepts player shift-click;
-- client constructor uses dummy handler/data and `ContainerLevelAccess.NULL`;
-- server constructor receives real handler/data/access;
-- block opens menu only on logical server;
-- ticker delegates to machine server tick only for the correct BE type.
-
-Require fresh `test build` PASS.
+- [x] `SlotItemHandler`, `SimpleContainerData(3)`, `checkContainerDataCount(data, 3)`, `ContainerLevelAccess`.
+- [x] Client constructor uses dummy handler/data and `ContainerLevelAccess.NULL`.
+- [x] Server constructor receives real handler/data/access.
+- [x] Machine-to-player shift-click targets `[2, 38)`.
+- [x] Player-to-machine shift-click targets input `[0, 1)` only.
+- [x] Output never accepts player shift-click.
+- [x] Real `stillValid` against registered machine block.
+- [x] Block opens menu only on logical server.
+- [x] Server ticker delegates to `MachineBlockEntity::serverTick` for the correct BE type.
+- [x] RED run `34736715057`: expected menu/block contract failure.
+- [x] Final Task 6 run `34737111300`: `16/16` contracts, materialization, target-exact build, whitespace SUCCESS.
 
 ---
 
-## Task 7 — RED/GREEN: seven required GameTests
+## Task 7 — Seven required GameTests — COMPLETE
 
-Create only after RED requires:
+Checked-in source authorities:
 
-- `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/gametest/I9MachineGameTests.java`
-- `engineering/tests/golden/i9-machine-foundation/overlay/src/main/resources/data/i9_machine/structure/machine_test.nbt`
+- `I9MachineGameTests.java`
+- native `machine_test.nbt`
 
-Required test methods:
+Required methods implemented:
 
 - `inventoryCapability`
 - `energyCapability`
@@ -286,56 +217,63 @@ Required test methods:
 - `persistence`
 - `progressReset`
 
-Use `@GameTestHolder(I9MachineMod.MOD_ID)` and an explicit template contract so the resource name is deterministic. The structure NBT is checked in as source authority; its actual SHA-256 is computed and stored in the I9 manifest, and the Python contract recomputes it.
+The holder uses `@GameTestHolder(I9MachineMod.MOD_ID)` and `@PrefixGameTestTemplate(false)`; each test uses literal `template = "machine_test"`.
 
-Capability tests query the server level for NeoForge block capabilities. Successful processing uses raw iron, at least `2_000` energy, and verifies one iron ingot after the 100-tick contract. Persistence must exercise actual BlockEntity serialization/load, including numeric bounds.
+The native NBT SHA-256 is:
 
-Authoritative runtime gate:
-
-```bash
-./gradlew runGameTestServer --no-daemon
+```text
+75b23fb80317d88bbde1a2aff7121cfd903b8a1010878e0327ce26fd4d3f1c99
 ```
 
-Require exit code `0` and all seven required tests passing. Do not add unsupported `setForceExit` configuration.
+- [x] RED run `34738355723`: `16 PASS / 1 FAIL`, expected missing GameTest Java/NBT authorities.
+- [x] Structural/build GREEN reached before runtime gate.
+- [x] Permanent runtime-gate RED required `./gradlew runGameTestServer --no-daemon`.
+- [x] First runtime execution discovered exactly seven tests; five passed and two failed because the test fixture incorrectly treated cobblestone as non-smeltable.
+- [x] Test data corrected to `minecraft:diamond`; machine runtime was not altered for that fixture error.
+- [x] Final Task 7 run `34739324935`: SUCCESS; log records `7 GAME TESTS COMPLETE` and `All 7 required tests passed :)`.
 
 ---
 
-## Task 8 — I5 dedicated-server proof
+## Task 8 — I5 dedicated-server proof — COMPLETE
+
+The canonical I5 harness remained unchanged.
 
 For the generated fixture only:
 
 ```bash
 mkdir -p run/server
 printf 'eula=true\n' > run/server/eula.txt
-```
-
-Then run:
-
-```bash
 python3 engineering/tooling/test-harness/run_test_harness.py --project .factory-ci/i9/generated
 ```
 
-Require manifest `overall_state=PASS` with unit, gametest, and dedicated_server PASS. Do not weaken I5 target identity, EULA validation, timeout, or readiness detection. If a generic I5 defect appears, add an I5 RED before changing I5.
+- [x] Temporary branch-local proof workflow used only to execute the unchanged I5 harness.
+- [x] Task 8 proof run `34739552054`: SUCCESS.
+- [x] Manifest target exact: Minecraft `1.21.1`, NeoForge `21.1.248`, Java `21`.
+- [x] Manifest suites: `unit=PASS`, `gametest=PASS`, `dedicated_server=PASS`, `overall_state=PASS`.
+- [x] Harness printed `I5 test harness: PASS`.
+- [x] Temporary proof workflow deleted after evidence capture; compare showed no net temporary-workflow file diff.
 
 ---
 
-## Task 9 — expand permanent I9 CI and Sonar gates
+## Task 9 — Permanent I9 CI and Sonar gates — COMPLETE
 
-The permanent workflow `.github/workflows/factory-engineering-i9-machine-foundation.yml` is created during Task 2 RED and expanded here only after a workflow-contract RED.
+The permanent workflow evolved incrementally to provide objective target-exact evidence as earlier tasks required it. Task 9 then finalized the complete regression/I5 contract after a dedicated workflow-contract RED.
 
-Final workflow must:
+Final workflow requirements:
 
-- use repository-pinned action SHAs;
-- use Java 21;
-- run I9 + relevant I3/I4/I5/I8 regressions;
-- materialize a fresh I9 project;
-- run `test build`;
-- run `runGameTestServer`;
-- create EULA only in generated fixture;
-- run I5 harness;
-- run `git diff --check`.
+- [x] repository-pinned actions;
+- [x] Java 21;
+- [x] relevant I3/I4/I5/I8/I9 regressions;
+- [x] both permanent I9 Python suites;
+- [x] fresh I9 materialization;
+- [x] `test build`;
+- [x] `runGameTestServer`;
+- [x] fixture-only EULA;
+- [x] canonical I5 harness;
+- [x] strict I5 manifest verification;
+- [x] `git diff --check`.
 
-Run the complete Python set:
+Final Python set:
 
 ```bash
 python3 -m unittest \
@@ -345,41 +283,59 @@ python3 -m unittest \
   engineering/tests/test_i5_test_harness.py \
   engineering/tests/test_i8_feature_generator.py \
   engineering/tests/test_i8_feature_generator_neoforge.py \
-  engineering/tests/test_i9_machine_foundation.py
+  engineering/tests/test_i9_machine_foundation.py \
+  engineering/tests/test_i9_machine_foundation_composition.py
 ```
 
-Sonar policy: if branch Sonar proves `materialize_i9.py` lacks imported coverage, add the I9 test to the existing Python coverage run. Do not hide production Python through exclusions.
+- [x] Workflow-contract RED run `34739858451`: `18 PASS / 1 FAIL`, failure only because final regressions/I5 proof were not yet permanent.
+- [x] Final workflow run `34739906134`: SUCCESS; `87` regression tests PASS, target-exact build PASS, `7/7` GameTests PASS, I5 `unit/gametest/dedicated_server/overall=PASS`, whitespace PASS.
+- [x] Final Sonar run `34739906197`: SUCCESS; log records `QUALITY GATE STATUS: PASSED`.
+- [x] Final I1 run `34739906152`: SUCCESS.
+- [x] Final Governance run `34739906143`: SUCCESS.
+- [x] Final Full Skill Migration run `34739906183`: SUCCESS.
 
 ---
 
-## Task 10 — PR, review, merge, post-merge, STATUS closeout
+## Task 10 — PR, review, merge, post-merge, STATUS closeout — IN PROGRESS
 
 Before making PR #99 ready for review:
 
-- revalidate current `main` and concurrent PRs;
-- ensure branch is based/reconciled with current main;
-- update PR body with exact RED/GREEN run IDs, test counts, `test build`, `runGameTestServer`, I5 manifest, Sonar result, and non-goals;
-- require all relevant checks terminal successful;
-- fix correctness/security review findings through new REDs before resolving threads.
+- [x] Revalidate current `main`: `e768a73cfd810ee533d4d7f4c266b99bc1f9fabc`.
+- [x] Confirm branch merge base is current `main`, `behind_by=0`.
+- [x] Revalidate open PRs: #99 I9 and #100 C11 preflight.
+- [x] Compare concurrent surfaces: only `.github/workflows/factory-sonar-ci.yml` overlaps; current hunks are semantically independent but the second PR merged will require normal reconciliation against updated `main`.
+- [x] Confirm PR #99 currently has no review threads or submitted reviews.
+- [x] Perform internal correctness/security review of materializer, registry/capability surfaces, machine state, menu/block interaction, GameTests, and CI; no Critical/Important finding identified before documentation reconciliation.
+- [ ] Update PR #99 body with exact RED/GREEN evidence, final gates, non-goals, and #100 concurrency note.
+- [ ] Re-run all applicable checks on the documentation-reconciled HEAD and require terminal success.
+- [ ] Mark PR #99 ready for review only after fresh verification.
+- [ ] Process any reviewer findings; Critical/Important findings require correction with regression evidence before merge.
 
-Before merge require:
+Before merge require fresh evidence:
 
 ```text
+main unchanged or branch reconciled with latest main
 mergeable = true
-no competing PR affecting I9 surfaces
+no unresolved competing change on an I9-owned runtime surface
 I9 workflow = success
 relevant regressions = success
 Sonar Quality Gate = PASS
 review threads = resolved
 ```
 
-Merge with expected head SHA and regular merge unless repository policy observed at merge time requires otherwise.
+PR #100 is not an I9 runtime competitor, but it currently shares `factory-sonar-ci.yml`; merge ordering must be rechecked immediately before merging #99.
+
+Merge with the expected PR head SHA and regular merge unless repository policy observed at merge time requires otherwise.
 
 Post-merge:
 
-- poll every workflow for the implementation merge SHA until terminal;
-- require zero failure/cancelled/pending/null conclusions among required workflows;
-- inspect main Sonar log for `QUALITY GATE STATUS: PASSED`;
-- only then create a dedicated STATUS closeout branch/PR;
-- record `I9_STATE=PASS`, exact evidence, and `NEXT_ACTION=BEGIN_I10_MULTIBLOCK_FOUNDATION`;
-- merge STATUS closeout and again verify all post-closeout workflows plus main Sonar before calling I9 formally closed.
+- [ ] Poll every workflow for the implementation merge SHA until terminal.
+- [ ] Require zero required workflow failure/cancelled/pending/null conclusions.
+- [ ] Inspect main Sonar log for `QUALITY GATE STATUS: PASSED`.
+- [ ] Only then create a dedicated STATUS closeout branch/PR.
+- [ ] Record `I9_STATE=PASS`, exact evidence, and `NEXT_ACTION=BEGIN_I10_MULTIBLOCK_FOUNDATION`.
+- [ ] Merge STATUS closeout and again verify post-closeout workflows plus main Sonar before calling I9 formally closed.
+
+## Acceptance boundary
+
+I9 implementation is merge-ready only after Task 10 pre-merge gates are freshly satisfied. I9 is formally closed only after the implementation merge and the separate STATUS closeout have both been revalidated on `main`.
