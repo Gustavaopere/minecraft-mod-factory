@@ -83,6 +83,11 @@ jobs:
           cd .factory-ci/i8/generated
           GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/i8/gradle-home" ./gradlew test build --no-daemon
 
+      - name: Execute generated datagen wiring
+        run: |
+          cd .factory-ci/i8/generated
+          GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/i8/gradle-home" ./gradlew runData --no-daemon
+
       - name: Check whitespace
         if: always()
         run: git diff --check HEAD^
