@@ -116,14 +116,31 @@ jobs:
             if [[ "$coverage_started" -eq 0 ]]; then
               python3 -m coverage run \
                 --branch \
-                engineering/tooling/validate-e1-s1-governance.py
+                --include=engineering/tooling/validate-e1-s1-governance.py \
+                -m unittest engineering/tests/test_e1_s1_governance.py
             else
               python3 -m coverage run \
                 --append \
                 --branch \
-                engineering/tooling/validate-e1-s1-governance.py
+                --include=engineering/tooling/validate-e1-s1-governance.py \
+                -m unittest engineering/tests/test_e1_s1_governance.py
             fi
-            python3 -m unittest engineering/tests/test_e1_s1_governance.py
+            coverage_started=1
+          fi
+
+          if [[ -f migration/full-skill-migration/check_whitespace.py && -f migration/full-skill-migration/test_markdown_whitespace_policy.py ]]; then
+            if [[ "$coverage_started" -eq 0 ]]; then
+              python3 -m coverage run \
+                --branch \
+                --include=migration/full-skill-migration/check_whitespace.py \
+                migration/full-skill-migration/test_markdown_whitespace_policy.py
+            else
+              python3 -m coverage run \
+                --append \
+                --branch \
+                --include=migration/full-skill-migration/check_whitespace.py \
+                migration/full-skill-migration/test_markdown_whitespace_policy.py
+            fi
             coverage_started=1
           fi
 
