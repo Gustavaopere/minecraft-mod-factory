@@ -92,6 +92,26 @@ jobs:
             coverage_started=1
           fi
 
+          if [[ -f engineering/tooling/machine-foundation/materialize_i9.py && -f engineering/tests/test_i9_machine_foundation.py && -f engineering/tests/test_i9_machine_foundation_composition.py ]]; then
+            if [[ "$coverage_started" -eq 0 ]]; then
+              python3 -m coverage run \
+                --branch \
+                --source=engineering/tooling/machine-foundation \
+                -m unittest \
+                engineering/tests/test_i9_machine_foundation.py \
+                engineering/tests/test_i9_machine_foundation_composition.py
+            else
+              python3 -m coverage run \
+                --append \
+                --branch \
+                --source=engineering/tooling/machine-foundation \
+                -m unittest \
+                engineering/tests/test_i9_machine_foundation.py \
+                engineering/tests/test_i9_machine_foundation_composition.py
+            fi
+            coverage_started=1
+          fi
+
           if compgen -G 'construction/tests/test_c10_*.py' >/dev/null && [[ -d construction/providers && -d construction/scripts ]]; then
             if [[ "$coverage_started" -eq 0 ]]; then
               python3 -m coverage run \
