@@ -32,6 +32,9 @@ jobs:
       - name: Run E1 S1 regression tests
         run: python3 -m unittest engineering/tests/test_e1_s1_governance.py
 
+      - name: Run CI queue-control RED contracts
+        run: python3 -m unittest engineering/tests/test_ci_queue_control.py -v
+
       - name: Check governance whitespace
         run: >-
           git diff --check HEAD^ --
