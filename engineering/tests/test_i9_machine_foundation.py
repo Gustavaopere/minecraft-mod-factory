@@ -138,7 +138,7 @@ class I9MachineFoundationContractTest(unittest.TestCase):
             "private int progress;",
             "serverTick",
             "SingleRecipeInput",
-            "RecipeType.SMELING".replace("SMELING", "SMELTING"),
+            "RecipeType.SMELTING",
             "getRecipeFor",
             "assemble",
             "consumeInternal(ENERGY_PER_TICK)",
@@ -195,6 +195,7 @@ class I9MachineFoundationContractTest(unittest.TestCase):
         source = GAMETEST_SOURCE.read_text(encoding="utf-8")
         required_tokens = (
             "@GameTestHolder(I9MachineMod.MOD_ID)",
+            "@PrefixGameTestTemplate(false)",
             "@GameTest(",
             'template = "machine_test"',
             *tuple(f"void {method}(" for method in GAMETEST_METHODS),
