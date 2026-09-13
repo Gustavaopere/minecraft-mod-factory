@@ -16,6 +16,10 @@ from skills.scripts.capability_router import (
 
 ROOT = Path(__file__).resolve().parents[2]
 INDEX = ROOT / "skills/capabilities/capability-index.json"
+SCHEMA = ROOT / "skills/capabilities/capability-index.schema.json"
+ROUTER = ROOT / "skills/ROUTER.md"
+SKILLS_README = ROOT / "skills/README.md"
+REPO_ROUTING = ROOT / "engineering/REPO-ROUTING.md"
 BLOCKER = "SUPER_HYPER_URGENT_FINAL_CONSTRUCTION_PHYSICAL_ACCEPTANCE"
 REFERENCE_ONLY_ROOT = "migration/provenance/historical-skills/library"
 
@@ -49,6 +53,12 @@ class C13SkillRouterIntegrationTest(unittest.TestCase):
         self.assertEqual(self.index["target"], TARGET)
         self.assertEqual(validate_capability_index(self.index, repo_root=ROOT), [])
 
+    def test_schema_is_closed_at_root_and_capability_level(self) -> None:
+        schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+        self.assertIs(schema["additionalProperties"], False)
+        capability_schema = schema["properties"]["capabilities"]["items"]
+        self.assertIs(capability_schema["additionalProperties"], False)
+
     def test_c11_and_c12_are_preflight_ready_but_blocked(self) -> None:
         self.assertEqual(FINAL_BLOCKER, BLOCKER)
         c11 = resolve_intent(self.index, "construction.complex_modded_golden")
@@ -64,6 +74,14 @@ class C13SkillRouterIntegrationTest(unittest.TestCase):
         self.assertEqual(
             c12["entrypoint"],
             "construction/runtime/c12_runtime_acceptance.py",
+        )
+
+    def test_c13_self_route_is_preflight_ready_but_blocked(self) -> None:
+        c13 = resolve_intent(self.index, "construction.skill_router_integration")
+        self.assertEqual(c13["authority"], "C13")
+        self.assertEqual(
+            (c13["readiness"], c13["acceptance"], c13["blocker"]),
+            ("PREFLIGHT_READY", "BLOCKED", BLOCKER),
         )
 
     def test_proven_offline_routes_remain_available_and_accepted(self) -> None:
@@ -105,6 +123,25 @@ class C13SkillRouterIntegrationTest(unittest.TestCase):
             "NO_PROVIDER_PRESENCE_TO_API_SUPPORT",
             route["forbidden_promotions"],
         )
+
+    def test_existing_router_authorities_reference_index_without_replacement(self) -> None:
+        router = ROUTER.read_text(encoding="utf-8")
+        skills_readme = SKILLS_README.read_text(encoding="utf-8")
+        repo_routing = REPO_ROUTING.read_text(encoding="utf-8")
+
+        self.assertIn("skills/ROUTER.md permanece o router canônico", router)
+        self.assertIn("capabilities/capability-index.json", router)
+        self.assertIn("metadado de roteamento", router)
+        self.assertIn("readiness não implica acceptance", router)
+
+        self.assertIn("capabilities/", skills_readme)
+        self.assertIn("scripts/capability_router.py", skills_readme)
+        self.assertIn("REFERENCE_ONLY", skills_readme)
+
+        self.assertIn("skills/capabilities/capability-index.json", repo_routing)
+        self.assertIn("não substitui runtime authority", repo_routing)
+        self.assertIn("não substitui evidência física", repo_routing)
+        self.assertIn("não prova API de provider", repo_routing)
 
     def test_unknown_intent_fails_closed_without_guessing_fallback(self) -> None:
         route = resolve_intent(self.index, "provider.unproven.magic_api")
