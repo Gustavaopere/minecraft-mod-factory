@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -18,6 +19,7 @@ CANONICAL_CANCEL = "${{ github.ref != 'refs/heads/main' }}"
 spec = importlib.util.spec_from_file_location("queue_control_validator", VALIDATOR)
 assert spec is not None and spec.loader is not None
 validator = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = validator
 spec.loader.exec_module(validator)
 
 
