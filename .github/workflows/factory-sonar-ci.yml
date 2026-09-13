@@ -72,6 +72,26 @@ jobs:
             coverage_started=1
           fi
 
+          if [[ -f engineering/tooling/feature-generator/generate_feature.py && -f engineering/tests/test_i8_feature_generator.py && -f engineering/tests/test_i8_feature_generator_neoforge.py ]]; then
+            if [[ "$coverage_started" -eq 0 ]]; then
+              python3 -m coverage run \
+                --branch \
+                --source=engineering/tooling/feature-generator \
+                -m unittest \
+                engineering/tests/test_i8_feature_generator.py \
+                engineering/tests/test_i8_feature_generator_neoforge.py
+            else
+              python3 -m coverage run \
+                --append \
+                --branch \
+                --source=engineering/tooling/feature-generator \
+                -m unittest \
+                engineering/tests/test_i8_feature_generator.py \
+                engineering/tests/test_i8_feature_generator_neoforge.py
+            fi
+            coverage_started=1
+          fi
+
           if compgen -G 'construction/tests/test_c10_*.py' >/dev/null && [[ -d construction/providers && -d construction/scripts ]]; then
             if [[ "$coverage_started" -eq 0 ]]; then
               python3 -m coverage run \

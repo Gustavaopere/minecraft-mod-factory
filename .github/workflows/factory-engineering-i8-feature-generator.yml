@@ -1,0 +1,94 @@
+name: Factory Engineering I8 Feature Generator
+
+on:
+  push:
+    branches:
+      - main
+      - engineering/i8-feature-generator-core
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'engineering/tooling/feature-generator/**'
+      - 'engineering/templates/neoforge-feature/**'
+      - 'engineering/tests/test_i8_feature_generator.py'
+      - 'engineering/tests/test_i8_feature_generator_neoforge.py'
+      - 'engineering/tests/fixtures/i8-*.json'
+      - 'engineering/tests/test_i3_mod_scaffolder.py'
+      - 'engineering/tests/test_i3_security_review.py'
+      - 'engineering/tests/fixtures/i3-golden-*.json'
+      - 'engineering/tooling/scaffolder/**'
+      - 'engineering/templates/neoforge-mod/**'
+      - 'engineering/tests/test_i4_engineering_validators.py'
+      - 'engineering/tests/fixtures/i4-*.json'
+      - 'engineering/tooling/validators/**'
+      - 'engineering/schemas/**'
+      - 'engineering/tooling/validate-i1-foundation.py'
+      - '.github/workflows/factory-engineering-i8-feature-generator.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  feature-generator-contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Run I8 feature generator contract tests
+        run: >-
+          python3 -m unittest
+          engineering/tests/test_i8_feature_generator.py
+          engineering/tests/test_i8_feature_generator_neoforge.py
+
+      - name: Run I3 and I4 dependency regressions
+        run: >-
+          python3 -m unittest
+          engineering/tests/test_i3_mod_scaffolder.py
+          engineering/tests/test_i3_security_review.py
+          engineering/tests/test_i4_engineering_validators.py
+
+      - name: Generate canonical I3 project and apply I8 features
+        run: |
+          rm -rf .factory-ci/i8/generated
+          mkdir -p .factory-ci/i8
+          python3 engineering/tooling/scaffolder/scaffold_mod.py \
+            --mod-spec engineering/tests/fixtures/i3-golden-mod-spec.json \
+            --config engineering/tests/fixtures/i3-golden-scaffold-config.json \
+            --output .factory-ci/i8/generated
+          python3 engineering/tooling/feature-generator/generate_feature.py \
+            --project .factory-ci/i8/generated \
+            --request engineering/tests/fixtures/i8-feature-set.json \
+            --apply \
+            --confirm-modified \
+            > .factory-ci/i8/plan.json
+          test -s .factory-ci/i8/plan.json
+
+      - name: Build generated NeoForge project
+        run: |
+          chmod +x .factory-ci/i8/generated/gradlew
+          cd .factory-ci/i8/generated
+          GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/i8/gradle-home" ./gradlew test build --no-daemon
+
+      - name: Execute generated datagen wiring
+        run: |
+          cd .factory-ci/i8/generated
+          GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/i8/gradle-home" ./gradlew runData --no-daemon
+
+      - name: Check whitespace
+        if: always()
+        run: git diff --check HEAD^
