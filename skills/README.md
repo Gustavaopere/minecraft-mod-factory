@@ -11,11 +11,15 @@ Este diretório é o ponto de entrada das skills compartilhadas usadas pela Fact
 ## Estrutura ativa
 
 - `library/<skill>/` — skills recebidas que foram promovidas e revalidadas para uso compartilhado;
+- `capabilities/` — índice/schema machine-readable de capabilities e estados de readiness/acceptance; é metadado de roteamento e não uma segunda authority;
+- `scripts/capability_router.py` — validator/resolver fail-closed do capability index, sem substituir `ROUTER.md` ou authorities de domínio;
 - `../art/skills/<skill>/` — skills project-authored de arte, Blockbench, VFX, spells, áudio e QA visual;
 - `../art/standards/` — contratos e checklists artísticos;
 - `../art/templates/` — briefs reutilizáveis;
 - `../art/tooling/blockbench/asset-toolkit/` — Minecraft Mod Factory Asset Toolkit;
 - `../art/golden-samples/` — corpus `REFERENCE-ONLY`, nunca authority de runtime/API.
+
+O capability index não altera a classificação de skills. Material `REFERENCE_ONLY` continua inativo e não pode virar authority por uma declaração C13.
 
 ## Proveniência histórica
 

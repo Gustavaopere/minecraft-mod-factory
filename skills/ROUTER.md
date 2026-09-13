@@ -2,6 +2,16 @@
 
 Leia `VERSION-AUTHORITY.md` antes de escolher uma skill. Se houver ação manual do usuário, aplique também `USER-GUIDED-WORKFLOW.md`.
 
+## Capability index machine-readable
+
+skills/ROUTER.md permanece o router canônico para seleção humana de skills e authorities compartilhadas.
+
+`capabilities/capability-index.json` é metadado de roteamento machine-readable, não uma segunda authority. `scripts/capability_router.py` valida paths, evidência exigida, blockers e rotas determinísticas sem substituir `VERSION-AUTHORITY.md`, `USER-GUIDED-WORKFLOW.md`, `engineering/REPO-ROUTING.md`, as authorities Construction existentes ou os repositórios runtime dos mods.
+
+readiness não implica acceptance. Uma capability pode estar `PREFLIGHT_READY / BLOCKED`; essa distinção deve ser preservada no roteamento e nenhuma fixture sintética, preview offline ou build isolado pode ser promovido silenciosamente a evidência física/final.
+
+Fallback só é permitido quando a declaração machine-readable o autoriza explicitamente e a alternativa mantém a mesma semântica e authority. Provider, formato-fonte, evidência física e API version-sensitive nunca recebem fallback implícito.
+
 ## Engenharia NeoForge 1.21.1
 
 Preferência:
