@@ -9,7 +9,7 @@ RESOLVER = ROOT / "engineering/tooling/resolve-neoforge-campaign-target.py"
 MOD_SPEC_SCHEMA = ROOT / "engineering/schemas/mod-spec.schema.json"
 TEST_MANIFEST_SCHEMA = ROOT / "engineering/schemas/test-manifest.schema.json"
 COMPATIBILITY_SCHEMA = ROOT / "engineering/schemas/compatibility-matrix.schema.json"
-SCAFFOLDER = ROOT / "engineering/tooling/scaffolder/scaffold_mod.py"
+SCAFFOLDER = ROOT / "engineering/tooling/scaffolder" / "scaffold_mod.py"
 I5_HARNESS = ROOT / "engineering/tooling/test-harness/run_test_harness.py"
 I8_GENERATOR = ROOT / "engineering/tooling/feature-generator/generate_feature.py"
 I8_FEATURE_SET = ROOT / "engineering/tests/fixtures/i8-feature-set.json"
@@ -78,6 +78,18 @@ class NeoForgeCampaignTargetContractTest(unittest.TestCase):
         self.assertEqual("21.1.250", resolver.select_latest_compatible(versions, "1.21.1"))
         with self.assertRaises(ValueError):
             resolver.select_latest_compatible(["21.2.0-beta", "21.2.1"], "1.21.1")
+
+    def test_resolver_rejects_entity_expansion_in_untrusted_metadata(self):
+        resolver = self.require_resolver()
+        metadata = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE metadata [<!ENTITY injected "21.1.999">]>
+<metadata><versioning><versions>
+<version>21.1.250</version>
+<version>&injected;</version>
+</versions></versioning></metadata>
+"""
+        with self.assertRaisesRegex(ValueError, "unsafe XML declaration"):
+            resolver.parse_maven_versions(metadata)
 
     def test_live_schemas_use_the_campaign_pin(self):
         baseline = self.require_baseline()
