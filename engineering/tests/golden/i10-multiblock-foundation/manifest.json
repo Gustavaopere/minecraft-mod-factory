@@ -6,6 +6,8 @@
     {"source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPattern.java", "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPattern.java"},
     {"source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockValidationResult.java", "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockValidationResult.java"},
     {"source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockRuntimeState.java", "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockRuntimeState.java"},
+    {"source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockInvalidation.java", "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockInvalidation.java"},
+    {"source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockCasingBlock.java", "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockCasingBlock.java"},
     {"source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlock.java", "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlock.java"},
     {"source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlockEntity.java", "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlockEntity.java"},
     {"source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlock.java", "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlock.java"},
