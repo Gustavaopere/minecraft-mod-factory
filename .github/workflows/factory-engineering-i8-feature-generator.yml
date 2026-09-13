@@ -14,9 +14,16 @@ on:
       - 'engineering/tests/test_i8_feature_generator.py'
       - 'engineering/tests/test_i8_feature_generator_neoforge.py'
       - 'engineering/tests/fixtures/i8-*.json'
+      - 'engineering/tests/test_i3_mod_scaffolder.py'
+      - 'engineering/tests/test_i3_security_review.py'
       - 'engineering/tests/fixtures/i3-golden-*.json'
       - 'engineering/tooling/scaffolder/**'
       - 'engineering/templates/neoforge-mod/**'
+      - 'engineering/tests/test_i4_engineering_validators.py'
+      - 'engineering/tests/fixtures/i4-*.json'
+      - 'engineering/tooling/validators/**'
+      - 'engineering/schemas/**'
+      - 'engineering/tooling/validate-i1-foundation.py'
       - '.github/workflows/factory-engineering-i8-feature-generator.yml'
 
 permissions:
@@ -47,6 +54,13 @@ jobs:
           python3 -m unittest
           engineering/tests/test_i8_feature_generator.py
           engineering/tests/test_i8_feature_generator_neoforge.py
+
+      - name: Run I3 and I4 dependency regressions
+        run: >-
+          python3 -m unittest
+          engineering/tests/test_i3_mod_scaffolder.py
+          engineering/tests/test_i3_security_review.py
+          engineering/tests/test_i4_engineering_validators.py
 
       - name: Generate canonical I3 project and apply I8 features
         run: |
