@@ -115,6 +115,31 @@ class I8FeatureGeneratorCoreContractTest(unittest.TestCase):
         self.assertIn("registry", roles)
         self.assertIn("datagen", roles)
 
+    def test_real_registry_and_datagen_wiring_modifies_main_only_with_confirmation(self):
+        module = self.require_generator()
+        with tempfile.TemporaryDirectory() as tmp:
+            project = copy_golden(Path(tmp) / "project")
+            main = project / MAIN_RELATIVE
+            original = main.read_text(encoding="utf-8")
+            plan = module.plan_feature_set(project, load_request())
+            operations = {operation["path"]: operation for operation in plan["operations"]}
+            main_operation = operations[MAIN_RELATIVE.as_posix()]
+
+            self.assertEqual("modify", main_operation["action"])
+            self.assertEqual("bootstrap", main_operation["role"])
+            self.assertTrue(main_operation["requires_confirmation"])
+            self.assertIn("FactoryGeneratedRegistries.register(modBus);", main_operation["content"])
+            self.assertIn("modBus.addListener(FactoryGeneratedData::gatherData);", main_operation["content"])
+            self.assertIn("FactoryGeneratedRegistries", main_operation["diff"])
+            self.assertIn("FactoryGeneratedData", main_operation["diff"])
+
+            with self.assertRaises(module.ConfirmationRequiredError):
+                module.apply_plan(project, plan, confirm_modified=False)
+            self.assertEqual(original, main.read_text(encoding="utf-8"))
+
+            module.apply_plan(project, plan, confirm_modified=True)
+            self.assertNotEqual(original, main.read_text(encoding="utf-8"))
+
     def test_modified_existing_file_requires_explicit_confirmation_and_diff(self):
         module = self.require_generator()
         with tempfile.TemporaryDirectory() as tmp:
