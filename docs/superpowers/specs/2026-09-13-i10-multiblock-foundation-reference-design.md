@@ -2,7 +2,7 @@
 
 ## Status
 
-Architecture option A was approved operationally in chat on 2026-09-13 by the user's explicit instruction to proceed after the I10 decision gate. This document is the design artifact only. It does not authorize implementation until the user reviews and approves this spec.
+Architecture option A and implementation were authorized operationally in chat on 2026-09-13 by the user's explicit instruction to proceed and delegation of the technical decision. This document is the design artifact and remains authoritative for the I10 scope. No additional manual spec-review gate is required unless a material scope change or genuine blocker is introduced.
 
 ## Canonical authorities
 
@@ -10,8 +10,8 @@ Architecture option A was approved operationally in chat on 2026-09-13 by the us
 - Art/asset plan: `plans/PLANO-MESTRE-UNIFICADO-MINECRAFT-MOD-FACTORY-REPO-TEXTURA-BLOCKBENCH-ASSET-MCP-V5.1.md`
 - Current status authority: root `STATUS.md`
 - Physical modlist snapshot SHA-256: `7c0a23d6013101383d196526e4b6ba6940fb54a0fed10eaed5956ab015cfcc00`
-- Target: Minecraft `1.21.1`, NeoForge `21.1.248`, Java `21`
-- Current I10 base: `e7f92897f3492cc64e14c27b827b419a33bb2e5d`
+- Target policy: Minecraft `1.21.1`, Java `21`, latest stable NeoForge `21.1.x` compatible with Minecraft 1.21.1 resolved and pinned exactly per implementation/validation cycle; I10 resolved to NeoForge `21.1.250` for this cycle
+- Original I10 implementation base: `e7f92897f3492cc64e14c27b827b419a33bb2e5d`
 - Current asset handoff contract: `engineering/schemas/asset-handoff.schema.json`, schema version `2`
 
 The engineering plan defines the I10 multiblock vertical slice gate as controller, parts, orientation, formation, invalidation, unload/reload, IO capability, visual formed state, asset manifest, GameTest, persistence, and multiplayer. The plan also places multiblock runtime authority in the generated mod while Repo Textura remains authority for multiblock visual contracts and assets.
@@ -532,6 +532,6 @@ No skipped runtime job counts as PASS.
 
 ## Acceptance boundary
 
-I10 is complete only when a fresh canonical I3 scaffold can independently materialize the I10 Golden and the resulting Minecraft 1.21.1 / NeoForge 21.1.248 / Java 21 project proves all twelve multiblock gate items with target-exact evidence.
+I10 is complete only when a fresh canonical I3 scaffold can independently materialize the I10 Golden and the resulting Minecraft 1.21.1 / Java 21 project, pinned to the exact cycle-resolved stable NeoForge 21.1.x build (`21.1.250` for this cycle), proves all twelve multiblock gate items with target-exact evidence.
 
 The I10 Golden remains a reference capability. It does not become a generic runtime library, does not make the Factory a mega-mod, does not make I8 multiblock-aware, does not depend on I9 runtime identity, and does not transfer visual-authoring authority away from Repo Textura.
