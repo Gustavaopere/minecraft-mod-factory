@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import unittest
+from pathlib import Path
 
 from construction.runtime.c12_runtime_acceptance import (
     C12Error,
@@ -9,7 +10,9 @@ from construction.runtime.c12_runtime_acceptance import (
     validate_i5_manifest,
     validate_runtime_acceptance_report,
 )
+from construction.runtime.run_c12_preflight import run_preflight
 
+ROOT = Path(__file__).resolve().parents[2]
 TARGET = {
     "minecraft": "1.21.1",
     "loader": "neoforge",
@@ -143,6 +146,22 @@ class C12RuntimeAcceptanceTest(unittest.TestCase):
         }
         errors = validate_i5_manifest(manifest)
         self.assertTrue(any("target" in error for error in errors))
+
+    def test_preflight_runner_consumes_synthetic_i5_without_physical_promotion(self):
+        report = run_preflight(
+            i5_manifest_path=ROOT / "construction/tests/fixtures/c12-preflight/i5-manifest.json",
+            blocker_state_path=ROOT / "construction/fixtures/complex-modded-golden/capture-state.json",
+            evidence_root=ROOT / "construction/tests/fixtures/c12-preflight/evidence",
+        )
+        self.assertEqual(report["overall_readiness"], "PREFLIGHT_READY")
+        self.assertEqual(report["overall_acceptance"], "BLOCKED")
+        self.assertEqual(report["blocker"], BLOCKER)
+        self.assertEqual(report["stages"], STAGES)
+        self.assertTrue(all(value is None for value in report["authority_fingerprints"].values()))
+        self.assertEqual([item["path"] for item in report["evidence"]], ["preflight-contract.log"])
+        self.assertFalse(
+            (ROOT / "construction/fixtures/complex-modded-golden/c12-runtime-acceptance-report.json").exists()
+        )
 
 
 if __name__ == "__main__":
