@@ -61,46 +61,15 @@ def whitespace_diagnostic_path(line: str) -> str | None:
     return path
 
 
-def is_markdown_hard_break(path: str, payload_line: str) -> bool:
-    payload = payload_line.rstrip("\r\n")
-    return (
-        path.lower().endswith((".md", ".mdx"))
-        and payload.startswith("+")
-        and payload.endswith("  ")
-        and not payload.endswith("   ")
-    )
-
-
 def filter_whitespace_diagnostics(output: str, preserved_paths: set[str]) -> str:
-    lines = output.splitlines(keepends=True)
     kept: list[str] = []
-    index = 0
-    while index < len(lines):
-        line = lines[index]
+    keep_block = True
+    for line in output.splitlines(keepends=True):
         diagnostic_path = whitespace_diagnostic_path(line.rstrip("\r\n"))
-        if diagnostic_path is None:
+        if diagnostic_path is not None:
+            keep_block = diagnostic_path not in preserved_paths
+        if keep_block:
             kept.append(line)
-            index += 1
-            continue
-
-        block = [line]
-        index += 1
-        while index < len(lines):
-            next_path = whitespace_diagnostic_path(lines[index].rstrip("\r\n"))
-            if next_path is not None:
-                break
-            block.append(lines[index])
-            index += 1
-
-        if diagnostic_path in preserved_paths:
-            continue
-        if (
-            "trailing whitespace." in line
-            and len(block) == 2
-            and is_markdown_hard_break(diagnostic_path, block[1])
-        ):
-            continue
-        kept.extend(block)
     return "".join(kept)
 
 
@@ -126,17 +95,14 @@ def run_whitespace_check(preserved_paths: set[str]) -> int:
     if filtered_stdout or filtered_stderr:
         return result.returncode
     if result.stdout or result.stderr:
-        print("FULL SKILL WHITESPACE: PASS (only SOURCE_EXACT or Markdown hard-break diagnostics)")
+        print("FULL SKILL WHITESPACE: PASS (only SOURCE_EXACT whitespace diagnostics)")
         return 0
     return result.returncode
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description=(
-            "Run git diff --check against HEAD^ without rewriting byte-preserved SOURCE_EXACT "
-            "payloads or valid Markdown two-space hard breaks"
-        )
+        description="Run git diff --check against HEAD^ without rewriting byte-preserved SOURCE_EXACT migration payloads"
     )
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     args = parser.parse_args()

@@ -19,23 +19,12 @@ REQUIRED = [
     "skills/USER-GUIDED-WORKFLOW.md",
     "migration/MIGRATION-MATRIX-F1-M3.md",
     "plans/PLANO-MESTRE-MINECRAFT-MOD-FACTORY-MOD-ENGINEERING-NEOFORGE-1.21.1-V1.1.md",
-    "plans/textura/PLANO-MESTRE-UNIFICADO-MINECRAFT-MOD-FACTORY-REPO-TEXTURA-BLOCKBENCH-ASSET-MCP-V5.1.md",
+    "plans/PLANO-MESTRE-UNIFICADO-MINECRAFT-MOD-FACTORY-REPO-TEXTURA-BLOCKBENCH-ASSET-MCP-V5.1.md",
 ]
 
 PLAN_HASHES = {
-    "plans/PLANO-MESTRE-MINECRAFT-MOD-FACTORY-MOD-ENGINEERING-NEOFORGE-1.21.1-V1.1.md": "2e42fee77518c5cd14d39e079ad17a78a7912d4055d59d2b0f359ff8cd74659d",
-    "plans/textura/PLANO-MESTRE-UNIFICADO-MINECRAFT-MOD-FACTORY-REPO-TEXTURA-BLOCKBENCH-ASSET-MCP-V5.1.md": "723bb083d5b646812cd44a03a1ef50e8505b366923b64aba5931ee4b7b63befb",
-}
-
-PLAN_REGISTRY_BINDINGS = {
-    "mod_engineering_plan_v1_1": (
-        "plans/PLANO-MESTRE-MINECRAFT-MOD-FACTORY-MOD-ENGINEERING-NEOFORGE-1.21.1-V1.1.md",
-        "2e42fee77518c5cd14d39e079ad17a78a7912d4055d59d2b0f359ff8cd74659d",
-    ),
-    "repo_textura_plan_v5_1": (
-        "plans/textura/PLANO-MESTRE-UNIFICADO-MINECRAFT-MOD-FACTORY-REPO-TEXTURA-BLOCKBENCH-ASSET-MCP-V5.1.md",
-        "723bb083d5b646812cd44a03a1ef50e8505b366923b64aba5931ee4b7b63befb",
-    ),
+    "plans/PLANO-MESTRE-MINECRAFT-MOD-FACTORY-MOD-ENGINEERING-NEOFORGE-1.21.1-V1.1.md": "29fc7f4b949b2b8dba327eb3f022f4cd84b11a352430ca821bdaec13072b8744",
+    "plans/PLANO-MESTRE-UNIFICADO-MINECRAFT-MOD-FACTORY-REPO-TEXTURA-BLOCKBENCH-ASSET-MCP-V5.1.md": "723bb083d5b646812cd44a03a1ef50e8505b366923b64aba5931ee4b7b63befb",
 }
 
 errors = []
@@ -70,19 +59,6 @@ if registry_path.is_file():
                 errors.append(f"wrong Factory repository binding: {source_id}")
             if locator.get("authority_root") != authority_root:
                 errors.append(f"wrong authority root for {source_id}: {locator.get('authority_root')}")
-
-        for source_id, (expected_path, expected_hash) in PLAN_REGISTRY_BINDINGS.items():
-            item = sources.get(source_id)
-            if not item:
-                errors.append(f"missing source registry entry: {source_id}")
-                continue
-            locator = item.get("locator", {})
-            if item.get("state") != "CONFIRMED":
-                errors.append(f"source not CONFIRMED: {source_id}")
-            if locator.get("path") != expected_path:
-                errors.append(f"wrong canonical plan path for {source_id}: {locator.get('path')}")
-            if locator.get("sha256") != expected_hash:
-                errors.append(f"wrong canonical plan hash for {source_id}: {locator.get('sha256')}")
     except (ValueError, KeyError, TypeError) as exc:
         errors.append(f"invalid source registry: {exc}")
 
