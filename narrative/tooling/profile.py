@@ -22,8 +22,21 @@ def _strings(value, field: str) -> tuple[str, ...]:
     return tuple(item.strip() for item in value)
 
 
-def load_profile(path: str | Path) -> NarrativeProfile:
-    data = json.loads(Path(path).read_text(encoding='utf-8'))
+def resolve_workspace_path(path: str | Path, workspace_root: str | Path) -> Path:
+    workspace = Path(workspace_root).resolve(strict=True)
+    supplied = Path(path)
+    candidate = supplied if supplied.is_absolute() else workspace / supplied
+    resolved = candidate.resolve(strict=True)
+    try:
+        resolved.relative_to(workspace)
+    except ValueError as exc:
+        raise ValueError('path is outside the trusted workspace') from exc
+    return resolved
+
+
+def load_profile(path: str | Path, workspace_root: str | Path | None = None) -> NarrativeProfile:
+    profile_path = Path(path).resolve(strict=True) if workspace_root is None else resolve_workspace_path(path, workspace_root)
+    data = json.loads(profile_path.read_text(encoding='utf-8'))
     if not isinstance(data, dict):
         raise ValueError('profile root must be an object')
     story_root = data.get('story_root')
