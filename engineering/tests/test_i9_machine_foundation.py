@@ -140,6 +140,32 @@ class I9MachineFoundationContractTest(unittest.TestCase):
         missing = [token for token in required if token not in block_entity]
         self.assertEqual([], missing, "I9 RED: processing/persistence/sync contract is incomplete")
 
+    def test_i9_menu_and_block_interaction_contract_tokens(self):
+        menu = (MACHINE_SOURCE_ROOT / "MachineMenu.java").read_text(encoding="utf-8")
+        block = (MACHINE_SOURCE_ROOT / "MachineBlock.java").read_text(encoding="utf-8")
+
+        menu_tokens = (
+            "SlotItemHandler",
+            "SimpleContainerData(3)",
+            "checkContainerDataCount(data, 3)",
+            "ContainerLevelAccess",
+            "ContainerLevelAccess.NULL",
+            "moveItemStackTo",
+            "addDataSlots(data)",
+            "MachineBlockEntity.INPUT_SLOT",
+            "MachineBlockEntity.OUTPUT_SLOT",
+        )
+        block_tokens = (
+            "openMenu",
+            "getTicker",
+            "createTickerHelper",
+            "MachineBlockEntity::serverTick",
+        )
+
+        missing = [f"MachineMenu.java:{token}" for token in menu_tokens if token not in menu]
+        missing.extend(f"MachineBlock.java:{token}" for token in block_tokens if token not in block)
+        self.assertEqual([], missing, "I9 RED: menu/block interaction contract is incomplete")
+
 
 if __name__ == "__main__":
     unittest.main()
