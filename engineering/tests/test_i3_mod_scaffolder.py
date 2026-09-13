@@ -126,6 +126,19 @@ class I3ModScaffolderContractTest(unittest.TestCase):
             for provider in forbidden:
                 self.assertNotIn(provider, lowered)
 
+    def test_generated_gametest_server_disables_neogradle_force_exit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            generated = self.generate(Path(tmp) / "generated")
+            build_gradle = (generated / "build.gradle").read_text(encoding="utf-8")
+            self.assertIn(
+                "    gameTestServer {\n"
+                "        systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id\n"
+                "        setForceExit false\n"
+                "    }\n",
+                build_gradle,
+                "I3 RED: GameTest server must disable NeoGradle force-exit",
+            )
+
     def test_common_and_client_entrypoints_are_physically_separated(self):
         with tempfile.TemporaryDirectory() as tmp:
             generated = self.generate(Path(tmp) / "generated")
