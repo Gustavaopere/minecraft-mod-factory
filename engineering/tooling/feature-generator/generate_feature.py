@@ -741,13 +741,10 @@ def _preflight_operation(root: Path, operation: dict[str, Any], *, confirm_modif
     return destination, content
 
 
-def apply_plan(project_root: Path | str, plan: dict[str, Any], *, confirm_modified: bool = False) -> list[Path]:
-    root = _safe_project_root(project_root)
-    if plan.get("schema_version") != 1:
-        raise ValueError("plan schema_version must be 1")
+def _apply_generated_plan(root: Path, plan: dict[str, Any], *, confirm_modified: bool) -> list[Path]:
     operations = plan.get("operations")
-    if not isinstance(operations, list):
-        raise ValueError("plan operations must be an array")
+    if plan.get("schema_version") != 1 or not isinstance(operations, list):
+        raise ValueError("generated plan is invalid")
 
     prepared: list[tuple[dict[str, Any], Path, str]] = []
     seen: set[Path] = set()
@@ -767,6 +764,17 @@ def apply_plan(project_root: Path | str, plan: dict[str, Any], *, confirm_modifi
         destination.write_text(content, encoding="utf-8", newline="\n")
         written.append(destination)
     return written
+
+
+def apply_feature_set(
+    project_root: Path | str,
+    request: dict[str, Any],
+    *,
+    confirm_modified: bool = False,
+) -> list[Path]:
+    root = _safe_project_root(project_root)
+    plan = plan_feature_set(root, request)
+    return _apply_generated_plan(root, plan, confirm_modified=confirm_modified)
 
 
 def load_request(workspace: Path, relative_path: str) -> dict[str, Any]:
@@ -791,7 +799,7 @@ def main() -> int:
     plan = plan_feature_set(project_root, request)
     print(json.dumps(plan, indent=2, sort_keys=True))
     if args.apply:
-        apply_plan(project_root, plan, confirm_modified=args.confirm_modified)
+        apply_feature_set(project_root, request, confirm_modified=args.confirm_modified)
     return 0
 
 
