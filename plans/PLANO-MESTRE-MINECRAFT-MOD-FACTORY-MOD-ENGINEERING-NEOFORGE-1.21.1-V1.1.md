@@ -1,5 +1,5 @@
 # PLANO MESTRE — MINECRAFT MOD FACTORY / MOD ENGINEERING — V1.1
-## Control plane para criação, integração, validação e entrega de mods completos em Minecraft 1.21.1 / NeoForge 21.1.x / Java 21
+## Control plane para criação, integração, validação e entrega de mods completos em Minecraft 1.21.1 / NeoForge 21.1.x mais recente / Java 21
 
 > **Para agentes que executarem este plano:** cada frente de implementação deve ser convertida em um plano de execução específico com tarefas pequenas, TDD, paths reais e gates verificáveis depois de auditar a árvore do repositório. Não inventar arquivos, APIs, branches, repositórios, providers ou estados.
 >
@@ -58,9 +58,9 @@ Após a decisão V1.1, novas capabilities genéricas de engineering/art tooling 
 
 **Tech Stack alvo:**
 - Minecraft `1.21.1`;
-- NeoForge físico atual: `21.1.248`;
+- NeoForge: **versão estável mais recente da linha `21.1.x` compatível com Minecraft `1.21.1`, resolvida no início de cada ciclo relevante de implementação/validação**;
 - Java `21`;
-- Gradle + MDK NeoForge, preferencialmente ModDevGradle/stack oficial que estiver vigente para o target exato no momento da implementação;
+- Gradle + MDK NeoForge, preferencialmente ModDevGradle/stack oficial vigente para **Minecraft `1.21.1` + a versão NeoForge `21.1.x` resolvida para o ciclo**;
 - Git/GitHub;
 - JUnit para lógica pura quando aplicável;
 - NeoForge GameTest para comportamento in-game;
@@ -69,6 +69,23 @@ Após a decisão V1.1, novas capabilities genéricas de engineering/art tooling 
 - adapters específicos para providers/mods somente após auditoria da versão física.
 
 **Snapshot físico atual:** a modlist anexada contém `595` mods top-level. Esse snapshot é referência de presença/versão e deve ser refeito antes de cada integração relevante.
+
+
+## POLÍTICA CANÔNICA DE VERSÃO DO NEOFORGE
+
+A Factory **não possui pin permanente de build NeoForge**.
+
+Regras obrigatórias:
+
+- Minecraft permanece fixo em `1.21.1`;
+- Java permanece fixo em `21`;
+- NeoForge deve ser resolvido como **a versão estável mais recente da linha `21.1.x` compatível com Minecraft `1.21.1`** no início de cada ciclo relevante de implementação, integração, validação ou atualização;
+- uma build específica da linha `21.1.x` pode ser registrada apenas como **snapshot/evidência do ciclo**, nunca como alvo canônico permanente;
+- após resolver a versão do ciclo, registrar a versão exata em `STATUS`, manifests, fixtures e CI necessários para que aquele ciclo seja reproduzível;
+- se uma versão estável mais nova surgir antes do próximo ciclo relevante, atualizar o target NeoForge antes de iniciar nova implementação e revalidar APIs, source, build, GameTests, dedicated server, multiplayer e integrações afetadas;
+- não atualizar silenciosamente uma execução já em andamento no meio de um gate: concluir ou reiniciar o ciclo de forma explícita com o novo target;
+- a modlist física registra o ambiente realmente instalado, mas não congela o target futuro; drift entre ambiente físico e versão estável mais recente deve ser tratado como atualização/revalidação necessária.
+
 
 ---
 
@@ -265,13 +282,15 @@ Quando houver divergência:
 
 Não usar documentação de outra versão por semelhança.
 
-Alvo atual:
+Alvo canônico:
 
 ```text
 Minecraft = 1.21.1
-NeoForge = 21.1.248 físico no snapshot atual
+NeoForge = latest stable 21.1.x compatible with Minecraft 1.21.1
 Java = 21
 ```
+
+A versão NeoForge exata deve ser resolvida e registrada no início do ciclo atual. O número registrado no snapshot físico é evidência temporal, não pin permanente.
 
 Toda API de terceiros deve registrar:
 
@@ -502,7 +521,7 @@ Nem todo mod usa todos os sistemas. Gates não aplicáveis devem ser marcados `N
 
 ---
 
-# PARTE V — FUNDAÇÃO NEOFORGE 1.21.1
+# PARTE V — FUNDAÇÃO NEOFORGE PARA MINECRAFT 1.21.1
 
 ## 13. WORKSPACE
 
@@ -781,7 +800,7 @@ Não executar trabalho caro todo tick sem necessidade.
 
 ## 26. CAPABILITY-FIRST INTEROP
 
-NeoForge 1.21.1 fornece capabilities para:
+NeoForge `21.1.x` resolvido para Minecraft `1.21.1` fornece capabilities para:
 
 - `IItemHandler`;
 - `IFluidHandler`;
@@ -1074,7 +1093,7 @@ Não sincronizar a BlockEntity inteira a cada tick.
 
 ## 43. PROTOCOL CONTRACT
 
-NeoForge 1.21.1 usa payload registration via `RegisterPayloadHandlersEvent`.
+NeoForge `21.1.x` resolvido para Minecraft `1.21.1` usa payload registration via `RegisterPayloadHandlersEvent`.
 
 Todo mod deve versionar o protocolo quando possuir payloads próprios.
 
@@ -2450,7 +2469,7 @@ Entregar:
 
 Entregar:
 
-- template NeoForge 1.21.1;
+- template NeoForge para Minecraft `1.21.1`, usando a versão `21.1.x` resolvida para o ciclo;
 - mod metadata;
 - common/client split;
 - test scaffold;
@@ -2604,7 +2623,7 @@ F0 — bootstrap inicial de minecraft-mod-factory
 ↓
 F1 — migrar/reconciliar planos, STATUS e authorities
 ↓
-F2 — migrar/reconciliar I1–I5 já comprovados no RPG histórico
+F2 — migrar/revalidar I1–I5 já comprovados no RPG histórico
 ↓
 F3 — migrar/reconciliar contrato estrutural I6 + domínio artístico necessário
 ↓
@@ -2834,7 +2853,7 @@ Esse Golden mod prova a infraestrutura sem acoplar o framework ao design de um m
 
 # PARTE XLIV — FONTES TÉCNICAS AUDITADAS PARA O TARGET
 
-## 146. NEOFORGE 1.21.1
+## 146. NEOFORGE — DOCUMENTAÇÃO PARA MINECRAFT 1.21.1
 
 Documentação oficial consultada:
 
