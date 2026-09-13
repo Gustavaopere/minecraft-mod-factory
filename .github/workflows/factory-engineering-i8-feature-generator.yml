@@ -9,6 +9,7 @@ on:
     branches:
       - main
     paths:
+      - 'engineering/contracts/target-baseline.json'
       - 'engineering/tooling/feature-generator/**'
       - 'engineering/templates/neoforge-feature/**'
       - 'engineering/tests/test_i8_feature_generator.py'
