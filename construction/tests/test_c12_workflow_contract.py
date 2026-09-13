@@ -38,11 +38,12 @@ class C12WorkflowContractTest(unittest.TestCase):
             'if state.get("status") == blocker and '
             'state.get("blocks_c12_acceptance") is True:'
         )
-        self.assertIn(f'blocker = "{BLOCKER}"', self.text)
-        self.assertIn(blocker_guard, self.text)
-        self.assertIn(f'C12_ACCEPTANCE_BLOCKED: {BLOCKER}', self.text)
-        self.assertIn(FINAL_REPORT, self.text)
-        self.assertLess(self.text.index(blocker_guard), self.text.index(FINAL_REPORT))
+        acceptance = self.text.split("  c12-acceptance:", 1)[1]
+        self.assertIn(f'blocker = "{BLOCKER}"', acceptance)
+        self.assertIn(blocker_guard, acceptance)
+        self.assertIn(f'C12_ACCEPTANCE_BLOCKED: {BLOCKER}', acceptance)
+        self.assertIn(FINAL_REPORT, acceptance)
+        self.assertLess(acceptance.index(blocker_guard), acceptance.index(FINAL_REPORT))
 
     def test_acceptance_does_not_treat_preflight_as_final_acceptance(self):
         self.assertIn('report.get("mode") != "PHYSICAL_ACCEPTANCE"', self.text)
