@@ -40,10 +40,15 @@ build/i10-multiplayer-acceptance/
 
 1. Use an exact I10 commit whose contracts, fresh materialization, target-exact build, GameTests, and real chunk acceptance are already green.
 2. Materialize I10 from that exact commit. Do not reuse a generated project from another commit.
-3. Start the dedicated server from that materialization and retain its complete console output as the server log.
-4. Start Client A and Client B from that same materialization/target and retain each complete client output independently as the Client A log and Client B log.
-5. Connect both clients to the same dedicated server and the same world before the multiplayer observations begin.
-6. Build the canonical valid 3×3×3 I10 structure through normal game/world placement while leaving the controller unformed. Controller, rear IO port, hollow interior, casing boundary, facing and rotation must match the I10 canonical pattern. Do not activate the controller while preparing this baseline.
+3. Start the dedicated server from that materialization and retain its complete console output as the server log. Keep the tested footprint loaded with `forceload add 159 160 161 160` for the multiplayer session; this gate is testing client convergence, not chunk unload behavior.
+4. Before Client A or Client B performs the acceptance observations, prepare the exact canonical controller at `(159,80,160)` facing west using only already-tested server/world operations:
+   - run `i10probe setup`;
+   - run `i10probe break_required_part`;
+   - repair the known required casing with `setblock 159 79 161 i10_multiblock:multiblock_casing`;
+   - poll `i10probe status` until the server reports `validation=VALID`, `runtime=UNFORMED`, `capability=false`, and `last_known_formed=false`.
+5. Do not use `i10probe setup` again after that baseline is reached. The next formation must come from Client A through the controller's normal player interaction.
+6. Start Client A and Client B from the same materialization/target and retain each complete client output independently as the Client A log and Client B log. If unsigned NeoGradle development clients are used, configure the dedicated test server for offline development login before connecting them; this does not relax the requirement for two distinct real client processes and identities.
+7. Connect both clients to the same dedicated server and the same world before the multiplayer observations begin, and move both clients so the controller/port are loaded and visible.
 
 ## Required physical sequence
 
@@ -67,6 +72,7 @@ The evidence reviewer must verify all of the following before any later closeout
 - target metadata is Minecraft 1.21.1 / NeoForge 21.1.250 / Java 21;
 - Client A and Client B are two distinct real Minecraft client processes and player identities;
 - both clients joined the same dedicated-server world;
+- the server baseline before client formation was `VALID` + `UNFORMED` with port capability absent;
 - both clients saw the same pre-formation UNFORMED state;
 - the formation action originated from Client A through normal interaction;
 - both clients received the FORMED transition;
