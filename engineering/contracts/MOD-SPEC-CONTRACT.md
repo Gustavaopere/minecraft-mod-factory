@@ -10,7 +10,7 @@ The mod's own repository remains the **runtime authority** for Java code, regist
 
 ## Required rules
 
-1. Target fields are explicit: Minecraft `1.21.1`, loader `neoforge`, NeoForge `21.1.248` for the current physical snapshot, Java `21`.
+1. Target fields are explicit and must match `target-baseline.json`: Minecraft `1.21.1`, loader `neoforge`, NeoForge `21.1.250`, Java `21`. The NeoForge version is resolved under `latest-compatible-at-campaign-start` and then pinned exactly for the campaign; normal builds and CI must not float to a newer release mid-campaign.
 2. `identity.mod_id` must be lowercase and match the schema. A human-readable name never substitutes for the registry identifier.
 3. Unknown facts are recorded as `UNRESOLVED`. Do not infer repositories, provider versions, source refs, APIs, licenses, paths, capabilities or compatibility.
 4. Dependency claims require a dependency profile and evidence appropriate to the claimed state.
