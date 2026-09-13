@@ -1,6 +1,9 @@
+import contextlib
 import hashlib
+import io
 import json
 import pathlib
+import runpy
 import subprocess
 import sys
 import unittest
@@ -10,6 +13,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 ENGINEERING_PLAN = "plans/PLANO-MESTRE-MINECRAFT-MOD-FACTORY-MOD-ENGINEERING-NEOFORGE-1.21.1-V1.1.md"
 ART_PLAN = "plans/textura/PLANO-MESTRE-UNIFICADO-MINECRAFT-MOD-FACTORY-REPO-TEXTURA-BLOCKBENCH-ASSET-MCP-V5.1.md"
 SONAR_WORKFLOW = ROOT / ".github/workflows/factory-sonar-ci.yml"
+VALIDATOR = ROOT / "engineering/tooling/validate-e1-s1-governance.py"
+SOURCE_REGISTRY = ROOT / "engineering/catalog/sources/SOURCE-REGISTRY.json"
 
 EXPECTED_FILES = [
     "engineering/README.md",
@@ -28,14 +33,24 @@ EXPECTED_FILES = [
 ]
 
 
+def run_validator_in_process():
+    stream = io.StringIO()
+    code = 0
+    with contextlib.redirect_stdout(stream):
+        try:
+            runpy.run_path(str(VALIDATOR), run_name="__main__")
+        except SystemExit as exc:
+            code = int(exc.code or 0)
+    return code, stream.getvalue()
+
+
 class GovernanceMigrationTests(unittest.TestCase):
     def test_expected_governance_files_exist(self):
         missing = [path for path in EXPECTED_FILES if not (ROOT / path).is_file()]
         self.assertEqual([], missing, f"missing E1/S1 files: {missing}")
 
     def test_source_registry_binds_both_factory_authorities(self):
-        registry_path = ROOT / "engineering/catalog/sources/SOURCE-REGISTRY.json"
-        data = json.loads(registry_path.read_text(encoding="utf-8"))
+        data = json.loads(SOURCE_REGISTRY.read_text(encoding="utf-8"))
         by_id = {entry["source_id"]: entry for entry in data["sources"]}
 
         control = by_id["integration_control_plane"]
@@ -55,8 +70,7 @@ class GovernanceMigrationTests(unittest.TestCase):
         self.assertEqual("art/", art["locator"]["authority_root"])
 
     def test_source_registry_binds_canonical_plans(self):
-        registry_path = ROOT / "engineering/catalog/sources/SOURCE-REGISTRY.json"
-        data = json.loads(registry_path.read_text(encoding="utf-8"))
+        data = json.loads(SOURCE_REGISTRY.read_text(encoding="utf-8"))
         by_id = {entry["source_id"]: entry for entry in data["sources"]}
 
         expected = {
@@ -87,14 +101,62 @@ class GovernanceMigrationTests(unittest.TestCase):
             text,
         )
 
-    def test_sonar_ci_collects_governance_validator_coverage(self):
+    def test_sonar_ci_runs_governance_tests_under_validator_coverage(self):
         workflow = SONAR_WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("engineering/tests/test_e1_s1_governance.py", workflow)
-        self.assertIn("engineering/tooling/validate-e1-s1-governance.py", workflow)
+        self.assertIn("--include=engineering/tooling/validate-e1-s1-governance.py", workflow)
+        self.assertIn("-m unittest engineering/tests/test_e1_s1_governance.py", workflow)
 
-    def test_validator_passes(self):
+    def test_validator_in_process_accepts_canonical_workspace(self):
+        code, output = run_validator_in_process()
+        self.assertEqual(0, code, output)
+        self.assertIn("E1/S1 governance validation: PASS", output)
+
+    def test_validator_in_process_rejects_registry_plan_drift(self):
+        original = SOURCE_REGISTRY.read_bytes()
+        try:
+            data = json.loads(original.decode("utf-8"))
+            by_id = {entry["source_id"]: entry for entry in data["sources"]}
+            by_id["repo_textura_plan_v5_1"]["locator"]["path"] = "plans/not-canonical.md"
+            by_id["repo_textura_plan_v5_1"]["locator"]["sha256"] = "0" * 64
+            SOURCE_REGISTRY.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+            code, output = run_validator_in_process()
+        finally:
+            SOURCE_REGISTRY.write_bytes(original)
+        self.assertEqual(1, code, output)
+        self.assertIn("wrong canonical plan path for repo_textura_plan_v5_1", output)
+        self.assertIn("wrong canonical plan hash for repo_textura_plan_v5_1", output)
+
+    def test_validator_in_process_rejects_factory_authority_drift(self):
+        original = SOURCE_REGISTRY.read_bytes()
+        try:
+            data = json.loads(original.decode("utf-8"))
+            by_id = {entry["source_id"]: entry for entry in data["sources"]}
+            control = by_id["integration_control_plane"]
+            control["state"] = "PENDING"
+            control["locator"]["repository_full_name"] = "example/wrong"
+            control["locator"]["authority_root"] = "wrong/"
+            SOURCE_REGISTRY.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+            code, output = run_validator_in_process()
+        finally:
+            SOURCE_REGISTRY.write_bytes(original)
+        self.assertEqual(1, code, output)
+        self.assertIn("source not CONFIRMED: integration_control_plane", output)
+        self.assertIn("wrong Factory repository binding: integration_control_plane", output)
+        self.assertIn("wrong authority root for integration_control_plane", output)
+
+    def test_validator_in_process_rejects_invalid_registry_json(self):
+        original = SOURCE_REGISTRY.read_bytes()
+        try:
+            SOURCE_REGISTRY.write_text("{\n", encoding="utf-8")
+            code, output = run_validator_in_process()
+        finally:
+            SOURCE_REGISTRY.write_bytes(original)
+        self.assertEqual(1, code, output)
+        self.assertIn("invalid source registry:", output)
+
+    def test_validator_passes_as_cli(self):
         result = subprocess.run(
-            [sys.executable, str(ROOT / "engineering/tooling/validate-e1-s1-governance.py")],
+            [sys.executable, str(VALIDATOR)],
             cwd=ROOT,
             text=True,
             stdout=subprocess.PIPE,
