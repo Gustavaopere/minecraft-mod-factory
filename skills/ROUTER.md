@@ -25,6 +25,18 @@ Para asset visual project-owned:
 
 O domínio `art/` da Factory é a authority da infraestrutura visual comum. Um export é handoff; o runtime do mod permanece no repositório do próprio mod.
 
+## Autoria narrativa
+
+Para lore, NPCs, quests, facções, locais, eventos, evidências, diálogos, relações, macroprogressão ou epílogos:
+1. leia o profile/instruções do repositório consumidor;
+2. use `../narrative/skills/minecraft-narrative-authoring/SKILL.md`;
+3. use `../narrative/templates/` como scaffolds genéricos;
+4. valide com `../narrative/tooling/validate_story.py` e `validate_dialogues.py`;
+5. use `story_inventory.py` antes de criar IDs novos;
+6. mantenha todo conteúdo/cânone resultante no repositório consumidor.
+
+A Factory não substitui Campaign Bible ou outra authority de lore definida pelo projeto consumidor. O profile local define famílias de ID, estados e seções; o tooling não hardcodeia a campanha. Se a tarefa narrativa depender de mecânica/provider, a versão e capability continuam sujeitas a `VERSION-AUTHORITY.md`.
+
 ## VFX, spells e áudio
 
 VFX geral: `../art/skills/minecraft-vfx-engineering/SKILL.md` + `../art/templates/VFX-BRIEF.md` + `../art/standards/VFX-QA.md`.
