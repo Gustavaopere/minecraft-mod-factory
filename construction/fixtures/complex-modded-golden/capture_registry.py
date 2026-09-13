@@ -3,11 +3,14 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import stat
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 I2_IMPORTER = ROOT / "engineering" / "tooling" / "import-physical-modlist.py"
 C4_REGISTRY = ROOT / "construction" / "core" / "modpack_registry.py"
+CLI_PHYSICAL_MODLIST = Path("modlist.txt")
+CLI_RUNTIME_SNAPSHOT = Path("c11-runtime-snapshot.json")
 
 
 def _load_path(path: Path, name: str):
@@ -35,6 +38,29 @@ def _load_runtime_snapshot(path: Path) -> dict:
         return json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise ValueError(f"runtime snapshot is not valid JSON: {exc}") from exc
+
+
+def _workspace_cli_input(value: Path, *, label: str, expected: Path) -> Path:
+    workspace = Path.cwd().resolve()
+    raw = Path(value)
+    if raw != expected:
+        raise ValueError(f"{label} must stay inside workspace: {workspace}")
+
+    candidate = workspace / expected
+    if candidate.is_symlink():
+        raise ValueError(f"{label} must resolve to a regular file inside workspace")
+    try:
+        resolved = candidate.resolve(strict=True)
+        mode = candidate.stat().st_mode
+    except OSError as exc:
+        raise ValueError(f"{label} must resolve to a regular file inside workspace") from exc
+    try:
+        resolved.relative_to(workspace)
+    except ValueError as exc:
+        raise ValueError(f"{label} must stay inside workspace: {workspace}") from exc
+    if not stat.S_ISREG(mode):
+        raise ValueError(f"{label} must resolve to a regular file inside workspace")
+    return resolved
 
 
 def _workspace_output_path(value: Path) -> Path:
@@ -94,10 +120,20 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = _parse_args()
-    registry = compose_registry(
+    physical_modlist = _workspace_cli_input(
         args.physical_modlist,
-        args.mods_dir,
+        label="physical modlist",
+        expected=CLI_PHYSICAL_MODLIST,
+    )
+    runtime_snapshot = _workspace_cli_input(
         args.runtime_snapshot,
+        label="runtime snapshot",
+        expected=CLI_RUNTIME_SNAPSHOT,
+    )
+    registry = compose_registry(
+        physical_modlist,
+        args.mods_dir,
+        runtime_snapshot,
         captured_at=args.captured_at,
     )
     c4 = load_c4_registry()
