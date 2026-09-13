@@ -1,6 +1,6 @@
 # AGENTS.md — Minecraft Mod Factory
 
-This repository is the canonical control plane for reusable Minecraft mod engineering and artistic infrastructure.
+This repository is the canonical control plane for reusable Minecraft mod engineering, artistic infrastructure and narrative-authoring infrastructure.
 
 Before changing it:
 
@@ -11,8 +11,9 @@ Before changing it:
 5. do not invent APIs, versions, providers, paths or repository state;
 6. preserve source asset formats such as `.bbmodel`; conversions between pipelines must be explicit;
 7. keep mod-specific runtime code and data in the corresponding mod repository;
-8. keep RPG-specific runtime/modlist material in `Gustavaopere/neoforge-rpg-skilltree` unless an explicit migration matrix classifies an item as reusable;
-9. migrate reusable infrastructure in reviewable waves with tests and provenance;
-10. when a user must perform a manual action, request one step at a time and wait for its result.
+8. keep project-specific campaign canon/lore/content in the corresponding consumer repository; `narrative/` owns reusable authoring capability, not Campaign Bible truth;
+9. keep RPG-specific runtime/modlist material in `Gustavaopere/neoforge-rpg-skilltree` unless an explicit migration matrix classifies an item as reusable;
+10. migrate reusable infrastructure in reviewable waves with tests and provenance;
+11. when a user must perform a manual action, request one step at a time and wait for its result.
 
-The repository layout is intentionally established by the migration program rather than copied blindly from historical `PROJECT-INSTRUCTIONS/` paths.
+The repository layout is intentionally established by the migration program rather than copied blindly from historical project paths.
