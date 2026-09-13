@@ -56,7 +56,7 @@ I9 does not include:
 - a full production mod or the I14 end-to-end Golden;
 - fluid handling unless a later canonical requirement explicitly adds it;
 - upgrades, tiers, sides/configuration UX, redstone modes or automation policy beyond what is necessary to prove item/energy capabilities;
-- a custom recipe serializer/type unless required by target-exact evidence.
+- a custom recipe serializer/type.
 
 The art plan remains authoritative for the visual package. Engineering owns the Java menu/runtime logic; Repo Textura owns GUI visual assets and handoff.
 
@@ -77,6 +77,14 @@ The Golden contains one single-block processing machine with two machine item sl
 - slot `0`: input;
 - slot `1`: output.
 
+Reference constants are fixed for I9 so tests do not depend on configuration:
+
+- energy capacity: `10_000`;
+- maximum external receive per call: `1_000`;
+- external extraction: disabled (`0`);
+- processing energy cost: `20` energy units per server tick;
+- processing duration: `100` server ticks.
+
 The machine consumes stored energy while processing an accepted recipe. It accumulates progress server-side, consumes the input when the recipe completes, and inserts the result into the output slot.
 
 The machine must fail closed when:
@@ -86,21 +94,20 @@ The machine must fail closed when:
 - the output cannot accept the recipe result;
 - the input no longer matches while progress is in flight.
 
-When processing preconditions cease to hold, progress resets deterministically to the documented baseline rather than silently completing stale work.
+When processing preconditions cease to hold, progress resets to `0` rather than silently completing stale work.
 
 ## Recipe integration
 
-The first Golden should use an existing vanilla recipe type that can be resolved through `RecipeManager`, rather than introducing a custom recipe serializer/type. This keeps I9 focused on machine composition and avoids pulling I8/I13-style registry/serialization scope into the machine reference.
+The I9 Golden uses the vanilla `minecraft:smelting` recipe type as its reference recipe domain.
 
-The exact vanilla recipe selected during implementation must satisfy all of these constraints:
+The implementation resolves recipes server-side through `RecipeManager` using a `SingleRecipeInput`. The canonical GameTest case is:
 
-- available in Minecraft 1.21.1;
-- server-side lookup through the target `RecipeManager` API;
-- deterministic single-input to output transformation suitable for GameTest;
-- no custom serializer required;
-- no ambiguity that would make the GameTest depend on unrelated modpack content.
+- input: `minecraft:raw_iron`;
+- expected result: `minecraft:iron_ingot`.
 
-If target-exact compilation shows that no candidate meets these constraints cleanly, implementation must stop and amend this design before adding a custom recipe type.
+This provides a deterministic single-input transformation in the vanilla target without introducing a custom recipe serializer/type. The machine's own progress duration remains the fixed I9 value of `100` ticks; it does not inherit the vanilla furnace recipe cooking-time field.
+
+If target-exact compilation shows that the 1.21.1 API shape differs from the documented `RecipeManager` / `SingleRecipeInput` path, implementation must stop and amend this design instead of inventing an API or adding a custom recipe type.
 
 ## Inventory architecture
 
@@ -108,27 +115,20 @@ Use NeoForge's `ItemStackHandler` as the backing store and expose the machine in
 
 The machine owns slot policy:
 
-- input accepts only items that can participate in the selected reference recipe;
+- input accepts only items matching a vanilla smelting recipe in the current server `RecipeManager`;
 - output rejects manual insertion;
 - extraction from output is allowed;
 - no additional slots are added in I9.
 
 The menu consumes an `IItemHandler` view and uses `SlotItemHandler`; the menu must not become the data holder.
 
-Capability registration must use NeoForge's block-entity capability registration path. If a capability object can change at runtime, capability invalidation must be performed according to NeoForge rules. The baseline design should avoid swapping handler instances after construction so no unnecessary invalidation path is introduced.
+Capability registration must use NeoForge's block-entity capability registration path. The handler instance is stable for the lifetime of the BlockEntity, so the baseline I9 implementation does not swap capability instances and therefore does not introduce an avoidable invalidation path.
 
 ## Energy architecture
 
 Expose energy through `Capabilities.EnergyStorage.BLOCK` using an `IEnergyStorage` implementation owned by the machine.
 
-The reference energy store has fixed constants for:
-
-- capacity;
-- maximum receive rate;
-- extraction policy;
-- energy cost per processing tick or per completed operation.
-
-These constants must be explicit in code and covered by tests. The machine reference should accept external energy and should not generate energy itself.
+The store accepts external energy up to the fixed receive rate and capacity, exposes the current/capacity values, and rejects external extraction. The machine itself consumes energy internally as part of server-side processing.
 
 Energy mutation that affects machine state must mark the BlockEntity changed so persistence is not dependent on unrelated inventory mutations.
 
@@ -139,13 +139,14 @@ Processing runs on the logical server only.
 Per server tick:
 
 1. Read the current input and output state.
-2. Resolve the selected recipe against the server `RecipeManager`.
-3. Verify result capacity/output compatibility.
-4. Verify required energy.
-5. If all preconditions hold, consume the configured energy quantum and increment progress.
-6. On reaching `maxProgress`, consume the recipe input, insert the result, then reset progress.
-7. If preconditions fail, reset progress to the baseline defined by the implementation contract.
-8. Mark the BlockEntity changed whenever persistent state changes.
+2. Build a `SingleRecipeInput` and resolve a matching vanilla smelting recipe from the server `RecipeManager`.
+3. Assemble the recipe result against the server registry access.
+4. Verify result capacity/output compatibility.
+5. Verify at least `20` stored energy.
+6. If all preconditions hold, consume `20` energy and increment progress by `1`.
+7. When progress reaches `100`, consume one input item, insert the assembled result, then reset progress to `0`.
+8. If any precondition fails before completion, reset progress to `0` without consuming input or creating output.
+9. Mark the BlockEntity changed whenever persistent state changes.
 
 Client-side ticking must not mutate inventory, energy or progress.
 
@@ -155,22 +156,30 @@ The BlockEntity persists all state needed to resume deterministically after relo
 
 - item handler contents;
 - stored energy;
-- current progress;
-- `maxProgress` only if it is not a compile-time/runtime invariant.
+- current progress.
+
+The fixed I9 constants are not persisted.
 
 For an owned BlockEntity, use direct BlockEntity NBT persistence through the target 1.21.1 `loadAdditional` / `saveAdditional` lifecycle, matching NeoForge guidance.
 
-Loading malformed/out-of-range machine-owned numeric values must fail closed to valid bounds instead of creating negative energy/progress or values above capacity.
+Loading malformed/out-of-range machine-owned numeric values must fail closed to valid bounds:
+
+- energy clamped to `0..10_000`;
+- progress clamped to `0..99` so a loaded value can never trigger an unearned completion tick.
 
 ## Synchronization
 
 Synchronization is deliberately minimal.
 
-The menu synchronizes integer machine state required for presentation through `ContainerData` / `DataSlot` semantics. At minimum, the menu contract exposes progress and energy values needed by a future screen without introducing screen code in I9.
+The menu synchronizes integer machine state required for presentation through `ContainerData` / `DataSlot` semantics. The I9 menu exposes exactly three integer values:
+
+- current progress;
+- maximum progress (`100`);
+- current energy.
 
 Item stacks synchronize through menu slots.
 
-BlockEntity update packets/tags are added only if GameTest or non-menu runtime behavior proves they are required. I9 must not duplicate the same state through both menu synchronization and custom networking without a demonstrated need.
+BlockEntity update packets/tags are not part of the baseline I9 contract. They may be added only if target-exact GameTest/runtime evidence demonstrates a non-menu synchronization requirement. I9 must not duplicate the same state through both menu synchronization and custom networking without a demonstrated need.
 
 ## Menu backend
 
@@ -204,12 +213,12 @@ Use NeoForge 1.21.1 GameTest APIs with a dedicated I9 test holder and a structur
 Required GameTests:
 
 1. **inventory capability** — block exposes item capability and enforces input/output rules;
-2. **energy capability** — block exposes energy capability and respects capacity/receive policy;
-3. **successful processing** — valid input + sufficient energy advances progress and produces the expected output;
-4. **insufficient energy** — machine does not complete work and follows the documented progress reset behavior;
-5. **blocked output** — machine does not consume input or produce overflow when output cannot accept the result;
-6. **persistence** — machine state survives the target save/load or BlockEntity serialization path exercised by the test fixture;
-7. **progress reset** — invalidated processing conditions reset progress deterministically.
+2. **energy capability** — block exposes energy capability, caps storage at `10_000`, accepts no more than `1_000` per external receive call, and rejects external extraction;
+3. **successful processing** — raw iron + at least `2_000` energy advances for `100` ticks and produces one iron ingot while consuming one raw iron;
+4. **insufficient energy** — with less than one processing tick's energy available, the machine does not complete work and progress is `0`;
+5. **blocked output** — incompatible/full output prevents progress and does not consume the input;
+6. **persistence** — inventory, energy and in-flight progress survive the target BlockEntity serialization/load path;
+7. **progress reset** — removing/changing the input after progress has started resets progress to `0` without producing output.
 
 GameTests are required tests, not optional informational tests.
 
@@ -231,9 +240,9 @@ Expected flow:
 4. Run structural contract tests.
 5. Run Gradle build/tests.
 6. Run the Game Test Server.
-7. Run the I5 dedicated-server smoke when EULA handling is satisfied by the controlled CI fixture.
+7. Write `run/server/eula.txt` with `eula=true` only inside the controlled generated CI fixture, then run the I5 dedicated-server smoke. This is test-fixture setup, not a repository-wide or user EULA decision.
 
-The implementation plan will choose the exact checked-in fixture/overlay paths after inspecting the current tree. This design does not prescribe a historical directory merely because earlier plans used one.
+The implementation plan will select physical paths by auditing the branch tree and following the current `engineering/` conventions; it must not create a historical directory solely because an old plan once named one.
 
 ## Determinism and overwrite policy
 
@@ -279,7 +288,7 @@ Minimum gates before I9 can merge:
 
 ## First RED sequence
 
-The implementation plan should begin with the smallest evidence-producing failures, in this order:
+The implementation plan must begin with the smallest evidence-producing failures, in this order:
 
 1. **GameTest run-config RED** — assert the canonical I3 scaffold contains the target-required `gameTestServer { setForceExit false }` behavior; this is expected to fail on the current scaffold and establishes ownership before machine code exists.
 2. **I9 Golden contract RED** — assert the dedicated I9 fixture/overlay and required machine surfaces do not yet exist.
@@ -303,6 +312,8 @@ Canonical plan statements are sourced from the two repository plans listed above
 - Capabilities: https://docs.neoforged.net/docs/1.21.1/inventories/capabilities/
 - Containers / `ItemStackHandler`: https://docs.neoforged.net/docs/1.21.1/inventories/container/
 - Block entities / persistence: https://docs.neoforged.net/docs/1.21.1/blockentities/
+- Recipes: https://docs.neoforged.net/docs/1.21.1/resources/server/recipes/
+- Built-in recipes: https://docs.neoforged.net/docs/1.21.1/resources/server/recipes/builtin/
 - Menus: https://docs.neoforged.net/docs/1.21.1/gui/menus/
 - Game Tests: https://docs.neoforged.net/docs/1.21.1/misc/gametest/
 
