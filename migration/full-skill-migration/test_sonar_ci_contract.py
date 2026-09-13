@@ -133,6 +133,29 @@ class SonarCiContractTest(unittest.TestCase):
         self.assertLess(workflow.index(install), workflow.index(coverage_xml))
         self.assertLess(workflow.index(coverage_xml), workflow.index(scanner))
 
+    def test_ci_analysis_covers_c11_deferred_preflight_before_scan(self) -> None:
+        workflow = SONAR_WORKFLOW.read_text(encoding="utf-8")
+        scanner = f"uses: SonarSource/sonarqube-scan-action@{SONAR_SCAN_SHA}"
+        c11_source = "construction/fixtures/complex-modded-golden/capture_registry.py"
+        c11_test = "construction/tests/test_c11_complex_modded_golden.py"
+
+        self.assertIn(c11_source, workflow)
+        self.assertIn(c11_test, workflow)
+        self.assertIn("--source=construction/fixtures/complex-modded-golden", workflow)
+        self.assertIn("test_capture_helper_requires_every_physical_top_level_jar", workflow)
+        self.assertIn("test_capture_helper_rejects_missing_runtime_snapshot_stably", workflow)
+        self.assertIn("test_capture_helper_rejects_malformed_runtime_json_stably", workflow)
+        self.assertIn("test_capture_helper_rejects_output_outside_workspace", workflow)
+        self.assertIn("test_capture_helper_delegates_physical_sha_mismatch_to_c4", workflow)
+        self.assertIn("test_capture_helper_delegates_target_mismatch_to_c4", workflow)
+        self.assertIn("test_capture_cli_writes_canonical_revalidated_registry", workflow)
+        self.assertNotIn(
+            "ConstructionC11ComplexModdedGoldenTest.test_real_c4_registry_fixture_exists_and_is_canonical",
+            workflow,
+            "Sonar preflight coverage must not execute the intentionally blocked C11 completion gate",
+        )
+        self.assertLess(workflow.index(c11_source), workflow.index(scanner))
+
     def test_previous_version_new_code_uses_stable_ci_baseline_version(self) -> None:
         ci = parse_properties(CI_PROPERTIES)
         self.assertEqual(
