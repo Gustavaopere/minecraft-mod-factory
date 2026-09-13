@@ -49,6 +49,9 @@ jobs:
             construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_rejects_missing_runtime_snapshot_stably \
             construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_rejects_malformed_runtime_json_stably \
             construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_rejects_output_outside_workspace \
+            construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_delegates_physical_sha_mismatch_to_c4 \
+            construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_delegates_target_mismatch_to_c4 \
+            construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_cli_writes_canonical_revalidated_registry \
             -v
 
       - name: Check C11 preflight whitespace
