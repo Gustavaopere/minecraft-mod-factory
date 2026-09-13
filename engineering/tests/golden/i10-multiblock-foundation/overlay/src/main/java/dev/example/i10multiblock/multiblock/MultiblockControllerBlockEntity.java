@@ -37,6 +37,14 @@ public final class MultiblockControllerBlockEntity extends BlockEntity {
         super(I10MultiblockContent.MULTIBLOCK_CONTROLLER_BLOCK_ENTITY.get(), pos, state);
     }
 
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level instanceof ServerLevel serverLevel && lastKnownFormed) {
+            serverLevel.scheduleTick(worldPosition, getBlockState().getBlock(), 1);
+        }
+    }
+
     public void markPendingRevalidation() {
         runtimeState = MultiblockRuntimeState.PENDING_REVALIDATION;
         setChanged();
