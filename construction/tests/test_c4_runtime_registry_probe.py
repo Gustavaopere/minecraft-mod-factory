@@ -42,7 +42,7 @@ class ConstructionC4RuntimeRegistryProbeTest(unittest.TestCase):
         self.assertIn("NeoForge.EVENT_BUS.addListener", source)
         self.assertIn("factory.construction.registryOutput", source)
         self.assertIn("factory.construction.physicalSnapshotSha256", source)
-        self.assertIn('"21.1.248"', source)
+        self.assertIn('"21.1.250"', source)
         self.assertNotIn("BuiltInRegistries.BLOCK.entrySet()", source, "iterate registry keys to avoid relying on entry generic shape")
 
     def test_probe_materializer_reuses_shared_i3_scaffolder(self):
@@ -56,7 +56,7 @@ class ConstructionC4RuntimeRegistryProbeTest(unittest.TestCase):
             wrapper = (generated / "gradle/wrapper/gradle-wrapper.properties").read_text(encoding="utf-8")
             generated_source = generated / "src/main/java/dev/minecraftmodfactory/constructionprobe/FactoryConstructionRegistryProbe.java"
             self.assertIn("minecraft_version=1.21.1", properties)
-            self.assertIn("neo_version=21.1.248", properties)
+            self.assertIn("neo_version=21.1.250", properties)
             self.assertIn("java_version=21", properties)
             self.assertIn("gradle-8.14-bin.zip", wrapper)
             self.assertEqual(PROBE_SOURCE.read_bytes(), generated_source.read_bytes())
