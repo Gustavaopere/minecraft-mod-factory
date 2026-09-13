@@ -74,6 +74,7 @@ jobs:
             --project .factory-ci/i8/generated \
             --request engineering/tests/fixtures/i8-feature-set.json \
             --apply \
+            --confirm-modified \
             --plan-output .factory-ci/i8/plan.json
 
       - name: Build generated NeoForge project
