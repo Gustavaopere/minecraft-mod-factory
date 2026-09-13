@@ -47,6 +47,7 @@ jobs:
           python3 -m unittest \
             construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_deferred_capture_state_is_explicit_and_blocks_completion \
             construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_workflow_distinguishes_preflight_from_completion \
+            construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_docs_define_deferred_c11_boundary \
             construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_requires_every_physical_top_level_jar \
             construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_rejects_missing_runtime_snapshot_stably \
             construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_rejects_malformed_runtime_json_stably \
@@ -60,7 +61,7 @@ jobs:
         run: python3 migration/full-skill-migration/test_sonar_ci_contract.py
 
       - name: Check C11 preflight whitespace
-        run: git diff --check HEAD^ HEAD -- .github/workflows/factory-construction-c11-complex-modded-golden.yml .github/workflows/factory-sonar-ci.yml construction/fixtures/complex-modded-golden construction/tests/test_c11_complex_modded_golden.py migration/full-skill-migration/test_sonar_ci_contract.py docs/superpowers/specs docs/superpowers/plans
+        run: git diff --check HEAD^ HEAD -- .github/workflows/factory-construction-c11-complex-modded-golden.yml .github/workflows/factory-sonar-ci.yml construction/fixtures/complex-modded-golden construction/tests/test_c11_complex_modded_golden.py construction/README.md construction/docs/ARCHITECTURE.md migration/full-skill-migration/test_sonar_ci_contract.py docs/superpowers/specs docs/superpowers/plans
 
   c11-preflight-probe:
     needs: c11-preflight-contracts
