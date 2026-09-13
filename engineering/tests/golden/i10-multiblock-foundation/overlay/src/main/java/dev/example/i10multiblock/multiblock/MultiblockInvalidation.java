@@ -5,6 +5,7 @@ import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.state.BlockState;
 
 public final class MultiblockInvalidation {
     private static final int REVALIDATION_DELAY = 1;
@@ -27,13 +28,20 @@ public final class MultiblockInvalidation {
                         if (!scheduled.add(candidate) || !level.hasChunkAt(candidate)) {
                             continue;
                         }
-                        if (!level.getBlockState(candidate).is(I10MultiblockContent.MULTIBLOCK_CONTROLLER.get())) {
+                        BlockState candidateState = level.getBlockState(candidate);
+                        if (!candidateState.is(I10MultiblockContent.MULTIBLOCK_CONTROLLER.get())) {
                             continue;
                         }
                         if (level.getBlockEntity(candidate) instanceof MultiblockControllerBlockEntity controller
                                 && (controller.runtimeState() == MultiblockRuntimeState.FORMED
                                 || controller.lastKnownFormed())) {
                             controller.markPendingRevalidation();
+                            Direction controllerFacing = candidateState.getValue(MultiblockControllerBlock.FACING);
+                            BlockPos portPos = MultiblockPattern.worldPos(
+                                    candidate, controllerFacing, MultiblockPattern.PORT_LOCAL);
+                            if (level.hasChunkAt(portPos)) {
+                                level.invalidateCapabilities(portPos);
+                            }
                         }
                         level.scheduleTick(candidate, I10MultiblockContent.MULTIBLOCK_CONTROLLER.get(), REVALIDATION_DELAY);
                     }
