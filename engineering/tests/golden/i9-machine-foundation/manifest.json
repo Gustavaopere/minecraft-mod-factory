@@ -4,6 +4,26 @@
     {
       "source": "README.md",
       "destination": "I9-MACHINE-FOUNDATION.md"
+    },
+    {
+      "source": "src/main/java/dev/example/i9machine/machine/I9MachineContent.java",
+      "destination": "src/main/java/dev/example/i9machine/machine/I9MachineContent.java"
+    },
+    {
+      "source": "src/main/java/dev/example/i9machine/machine/MachineBlock.java",
+      "destination": "src/main/java/dev/example/i9machine/machine/MachineBlock.java"
+    },
+    {
+      "source": "src/main/java/dev/example/i9machine/machine/MachineEnergyStorage.java",
+      "destination": "src/main/java/dev/example/i9machine/machine/MachineEnergyStorage.java"
+    },
+    {
+      "source": "src/main/java/dev/example/i9machine/machine/MachineBlockEntity.java",
+      "destination": "src/main/java/dev/example/i9machine/machine/MachineBlockEntity.java"
+    },
+    {
+      "source": "src/main/java/dev/example/i9machine/machine/MachineMenu.java",
+      "destination": "src/main/java/dev/example/i9machine/machine/MachineMenu.java"
     }
   ],
   "main_class_patch": {
