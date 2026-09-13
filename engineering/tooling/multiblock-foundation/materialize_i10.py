@@ -23,6 +23,8 @@ CANONICAL_OVERLAY_FILES = (
     ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockPattern.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPattern.java"),
     ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockValidationResult.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockValidationResult.java"),
     ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockRuntimeState.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockRuntimeState.java"),
+    ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockInvalidation.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockInvalidation.java"),
+    ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockCasingBlock.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockCasingBlock.java"),
     ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlock.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlock.java"),
     ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlockEntity.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlockEntity.java"),
     ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlock.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlock.java"),
