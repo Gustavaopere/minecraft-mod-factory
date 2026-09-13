@@ -61,6 +61,11 @@ jobs:
           cd .factory-ci/i9/generated
           GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/i9/gradle-home" ./gradlew test build --no-daemon
 
+      - name: Run I9 GameTest server
+        run: |
+          cd .factory-ci/i9/generated
+          GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/i9/gradle-home" ./gradlew runGameTestServer --no-daemon
+
       - name: Check whitespace
         if: always()
         run: git diff --check HEAD^
