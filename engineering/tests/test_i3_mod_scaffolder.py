@@ -156,6 +156,32 @@ class I3ModScaffolderContractTest(unittest.TestCase):
                     relative,
                 )
 
+    def test_historical_21_1_248_target_materializes_target_exact_lock(self):
+        module = self.require_scaffolder()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            historical = json.loads(MOD_SPEC.read_text(encoding="utf-8"))
+            historical["identity"]["target"]["neoforge"] = "21.1.248"
+            historical_path = root / "historical-mod-spec.json"
+            historical_path.write_text(json.dumps(historical), encoding="utf-8")
+            with contextlib.chdir(root):
+                generated = module.generate_project(
+                    Path("historical-mod-spec.json"),
+                    SCAFFOLD_CONFIG,
+                    Path("generated"),
+                )
+            properties = (generated / "gradle.properties").read_text(encoding="utf-8")
+            lockfile = (generated / "gradle.lockfile").read_text(encoding="utf-8")
+            self.assertIn("neo_version=21.1.248", properties)
+            self.assertNotIn("neo_version=21.1.250", properties)
+            self.assertIn("net.neoforged:neoforge:21.1.248=sdk,testSdk", lockfile)
+            self.assertIn("ng_dummy_ng.net.neoforged:neoforge:21.1.248=", lockfile)
+            self.assertIn("net.neoforged.fancymodloader:earlydisplay:4.0.43=", lockfile)
+            self.assertIn("net.neoforged.fancymodloader:loader:4.0.43=", lockfile)
+            self.assertNotIn("21.1.250", lockfile)
+            self.assertNotIn("net.neoforged.fancymodloader:earlydisplay:4.0.44=", lockfile)
+            self.assertNotIn("net.neoforged.fancymodloader:loader:4.0.44=", lockfile)
+
     def test_target_drift_is_rejected_instead_of_silently_retargeted(self):
         module = self.require_scaffolder()
         with tempfile.TemporaryDirectory() as tmp:
