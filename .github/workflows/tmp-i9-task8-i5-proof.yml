@@ -1,0 +1,71 @@
+name: Temporary I9 Task 8 I5 Proof
+
+on:
+  push:
+    branches:
+      - engineering/i9-machine-foundation-reference
+    paths:
+      - '.github/workflows/tmp-i9-task8-i5-proof.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  i5-proof:
+    runs-on: ubuntu-24.04
+    env:
+      GRADLE_USER_HOME: ${{ github.workspace }}/.factory-ci/i9/gradle-home
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Set up Java 21
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Materialize I9 Golden
+        run: |
+          rm -rf .factory-ci/i9/generated
+          mkdir -p .factory-ci/i9
+          python3 - <<'PY'
+          import importlib.util
+          from pathlib import Path
+
+          path = Path('engineering/tooling/machine-foundation/materialize_i9.py')
+          spec = importlib.util.spec_from_file_location('i9_materializer_task8', path)
+          module = importlib.util.module_from_spec(spec)
+          assert spec.loader is not None
+          spec.loader.exec_module(module)
+          module.materialize_i9(Path('.factory-ci/i9/generated'))
+          PY
+          chmod +x .factory-ci/i9/generated/gradlew
+
+      - name: Accept EULA in generated fixture only
+        run: |
+          mkdir -p .factory-ci/i9/generated/run/server
+          printf 'eula=true\n' > .factory-ci/i9/generated/run/server/eula.txt
+
+      - name: Run canonical I5 harness
+        run: >-
+          python3 engineering/tooling/test-harness/run_test_harness.py
+          --project .factory-ci/i9/generated
+
+      - name: Verify I5 manifest
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('.factory-ci/i9/generated/build/i5-test-harness/test-manifest.json')
+          manifest = json.loads(path.read_text(encoding='utf-8'))
+          assert manifest['overall_state'] == 'PASS', manifest
+          suites = {suite['suite_id']: suite['state'] for suite in manifest['suites']}
+          assert suites == {
+              'unit': 'PASS',
+              'gametest': 'PASS',
+              'dedicated_server': 'PASS',
+          }, suites
+          print(json.dumps(manifest, indent=2, sort_keys=True))
+          PY
