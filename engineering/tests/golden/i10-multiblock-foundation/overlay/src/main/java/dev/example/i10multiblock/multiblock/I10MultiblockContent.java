@@ -4,7 +4,6 @@ import dev.example.i10multiblock.I10MultiblockMod;
 import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
@@ -20,8 +19,8 @@ public final class I10MultiblockContent {
 
     public static final Supplier<MultiblockControllerBlock> MULTIBLOCK_CONTROLLER = BLOCKS.registerBlock(
             "multiblock_controller", MultiblockControllerBlock::new, BlockBehaviour.Properties.of());
-    public static final Supplier<Block> MULTIBLOCK_CASING = BLOCKS.registerBlock(
-            "multiblock_casing", Block::new, BlockBehaviour.Properties.of());
+    public static final Supplier<MultiblockCasingBlock> MULTIBLOCK_CASING = BLOCKS.registerBlock(
+            "multiblock_casing", MultiblockCasingBlock::new, BlockBehaviour.Properties.of());
     public static final Supplier<MultiblockPortBlock> MULTIBLOCK_IO_PORT = BLOCKS.registerBlock(
             "multiblock_io_port", MultiblockPortBlock::new, BlockBehaviour.Properties.of());
 
