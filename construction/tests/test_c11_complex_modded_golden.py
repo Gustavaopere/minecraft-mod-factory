@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "construction" / "fixtures" / "complex-modded-golden"
 REGISTRY_PATH = FIXTURE / "registry.json"
 CAPTURE_PATH = FIXTURE / "capture_registry.py"
+CAPTURE_STATE_PATH = FIXTURE / "capture-state.json"
 C4_PATH = ROOT / "construction" / "core" / "modpack_registry.py"
 PHYSICAL_MODLIST_SHA256 = "7c0a23d6013101383d196526e4b6ba6940fb54a0fed10eaed5956ab015cfcc00"
 
@@ -32,6 +33,36 @@ def load_path(path: Path, name: str):
 
 
 class ConstructionC11ComplexModdedGoldenTest(unittest.TestCase):
+    def test_deferred_capture_state_is_explicit_and_blocks_completion(self) -> None:
+        self.assertTrue(
+            CAPTURE_STATE_PATH.is_file(),
+            "C11 deferred physical capture state must be versioned explicitly",
+        )
+        state = json.loads(CAPTURE_STATE_PATH.read_text(encoding="utf-8"))
+        self.assertEqual(
+            {
+                "schema_version": 1,
+                "status": "MANUAL_URGENT_PENDING_MODLIST_STABILIZATION",
+                "blocks_c11_completion": True,
+                "reason": "physical modlist changes are still pending; capture would be disposable evidence",
+                "required_before_completion": [
+                    "stabilize physical modlist",
+                    "run the C4 registry probe on the stabilized modpack",
+                    "produce c11-runtime-snapshot.json",
+                    "compose and validate registry.json through C4",
+                ],
+                "probe": {
+                    "artifact_name": "c11-registry-probe",
+                    "workflow_run_id": 34735133220,
+                    "jar_sha256": "ea9d2b89b3ae774e6e3fcc0b9b8a4a48a62ffa95c961cd41becff45c6f9ed943",
+                },
+                "last_observed_physical_modlist_sha256": PHYSICAL_MODLIST_SHA256,
+                "requires_recapture_after_modlist_stabilizes": True,
+            },
+            state,
+        )
+        self.assertFalse(REGISTRY_PATH.exists())
+
     def test_real_c4_registry_fixture_exists_and_is_canonical(self) -> None:
         self.assertTrue(
             REGISTRY_PATH.is_file(),
