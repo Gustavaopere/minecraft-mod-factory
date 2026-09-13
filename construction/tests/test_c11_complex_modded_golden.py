@@ -21,6 +21,7 @@ WORKFLOW_PATH = ROOT / ".github" / "workflows" / "factory-construction-c11-compl
 README_PATH = ROOT / "construction" / "README.md"
 ARCHITECTURE_PATH = ROOT / "construction" / "docs" / "ARCHITECTURE.md"
 PHYSICAL_MODLIST_SHA256 = "7c0a23d6013101383d196526e4b6ba6940fb54a0fed10eaed5956ab015cfcc00"
+PENDING_CAPTURE_STATUS = "MANUAL_URGENT_PENDING_MODLIST_STABILIZATION"
 
 CAPTURE_SAMPLE = """Mods count: 2
 
@@ -79,7 +80,7 @@ class ConstructionC11ComplexModdedGoldenTest(unittest.TestCase):
         self.assertEqual(
             {
                 "schema_version": 1,
-                "status": "MANUAL_URGENT_PENDING_MODLIST_STABILIZATION",
+                "status": PENDING_CAPTURE_STATUS,
                 "blocks_c11_completion": True,
                 "reason": "physical modlist changes are still pending; capture would be disposable evidence",
                 "required_before_completion": [
@@ -115,11 +116,21 @@ class ConstructionC11ComplexModdedGoldenTest(unittest.TestCase):
         for path in (README_PATH, ARCHITECTURE_PATH):
             text = path.read_text(encoding="utf-8")
             self.assertIn("C11 Complex Modded Golden", text)
-            self.assertIn("MANUAL_URGENT_PENDING_MODLIST_STABILIZATION", text)
+            self.assertIn(PENDING_CAPTURE_STATUS, text)
             self.assertIn("real C4 capture is deferred until the physical modlist stabilizes", text)
             self.assertIn("preflight green is readiness evidence, not C11 completion", text)
             self.assertIn("C12 Runtime Acceptance", text)
             self.assertIn("STATUS does not advance", text)
+
+    def test_pending_state_skips_completion_only_registry_assertion_in_aggregate_suites(self) -> None:
+        state = json.loads(CAPTURE_STATE_PATH.read_text(encoding="utf-8"))
+        self.assertEqual(PENDING_CAPTURE_STATUS, state["status"])
+        result = unittest.TestResult()
+        self.__class__("test_real_c4_registry_fixture_exists_and_is_canonical").run(result)
+        self.assertEqual([], result.failures)
+        self.assertEqual([], result.errors)
+        self.assertEqual(1, len(result.skipped))
+        self.assertIn(PENDING_CAPTURE_STATUS, result.skipped[0][1])
 
     def test_real_c4_registry_fixture_exists_and_is_canonical(self) -> None:
         self.assertTrue(
