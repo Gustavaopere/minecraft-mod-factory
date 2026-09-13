@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "identity": {
+    "name": "I9 Machine Foundation",
+    "mod_id": "i9_machine",
+    "repository": "UNRESOLVED",
+    "target": {
+      "minecraft": "1.21.1",
+      "loader": "neoforge",
+      "neoforge": "21.1.248",
+      "java": 21
+    }
+  },
+  "purpose": {
+    "fantasy": "Synthetic Golden Project used only to verify the canonical I9 Machine Foundation reference.",
+    "player_problem": "Prove deterministic single-block machine composition on the canonical NeoForge target.",
+    "core_loop": ["Insert raw iron", "Supply energy", "Process", "Collect iron ingot"],
+    "non_goals": ["Production gameplay", "Custom visual GUI", "Multiblocks", "Logistics networks"]
+  },
+  "dependencies": {
+    "required": ["neoforge"],
+    "optional": [],
+    "incompatible": [],
+    "profiles": []
+  },
+  "systems": {
+    "blocks": ["machine"],
+    "items": ["machine_block_item"],
+    "machines": ["single_block_smelting_machine"],
+    "entities": [],
+    "worldgen": [],
+    "ui": ["machine_menu_backend"],
+    "networking": [],
+    "progression": [],
+    "integrations": []
+  },
+  "visual": {
+    "repo_textura_package": "UNRESOLVED",
+    "provider_profiles": [],
+    "required_assets": [],
+    "handoff_manifest": "UNRESOLVED"
+  },
+  "data": {
+    "persistence": ["machine_inventory", "machine_energy", "machine_progress"],
+    "recipes": ["minecraft:smelting"],
+    "tags": [],
+    "data_maps": [],
+    "configs": []
+  },
+  "testing": {
+    "unit": "PENDING",
+    "gametest": "PENDING",
+    "client": "PENDING",
+    "dedicated_server": "PENDING",
+    "multiplayer": "PENDING",
+    "performance": "PENDING",
+    "manifest": "UNRESOLVED"
+  },
+  "release": {
+    "versioning": "0.1.0",
+    "distribution": ["UNRESOLVED"],
+    "license": "MIT",
+    "state": "UNRESOLVED"
+  },
+  "evidence": {
+    "state": "UNRESOLVED",
+    "sources": ["synthetic I9 Golden fixture"],
+    "open_questions": ["Runtime repository remains unresolved because this is a reference Golden, not a production mod."]
+  }
+}
