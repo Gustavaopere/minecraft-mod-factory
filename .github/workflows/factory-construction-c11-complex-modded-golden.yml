@@ -14,7 +14,7 @@ on:
       - 'construction/fixtures/complex-modded-golden/**'
       - 'construction/tests/test_c11_complex_modded_golden.py'
       - 'construction/tests/test_c11_capture_path_security.py'
-      - 'construction/tests/test_c11_modlist_stabilization_transition.py'
+      - 'construction/tests/test_construction_final_physical_acceptance_gate.py'
       - 'construction/core/modpack_registry.py'
       - 'construction/runtime/neoforge-registry-probe/**'
       - 'construction/scripts/prepare_neoforge_registry_probe.py'
@@ -25,6 +25,8 @@ on:
       - 'docs/superpowers/specs/2026-09-13-construction-c11-registry-deferral-amendment.md'
       - 'docs/superpowers/plans/2026-09-12-construction-c11-complex-modded-golden.md'
       - 'docs/superpowers/plans/2026-09-13-construction-c11-registry-deferral-preflight.md'
+      - 'docs/superpowers/specs/2026-09-13-construction-final-physical-acceptance-gate-design.md'
+      - 'docs/superpowers/plans/2026-09-13-construction-final-physical-acceptance-gate.md'
 
 permissions:
   contents: read
@@ -60,13 +62,13 @@ jobs:
             construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_cli_writes_canonical_revalidated_registry \
             -v
           python3 -m unittest construction/tests/test_c11_capture_path_security.py -v
-          python3 -m unittest construction/tests/test_c11_modlist_stabilization_transition.py -v
+          python3 -m unittest construction/tests/test_construction_final_physical_acceptance_gate.py -v
 
       - name: Run shared Sonar governance contract
         run: python3 migration/full-skill-migration/test_sonar_ci_contract.py
 
       - name: Check C11 preflight whitespace
-        run: git diff --check HEAD^ HEAD -- .github/workflows/factory-construction-c11-complex-modded-golden.yml .github/workflows/factory-sonar-ci.yml construction/fixtures/complex-modded-golden construction/tests/test_c11_complex_modded_golden.py construction/tests/test_c11_capture_path_security.py construction/tests/test_c11_modlist_stabilization_transition.py construction/README.md construction/docs/ARCHITECTURE.md migration/full-skill-migration/test_sonar_ci_contract.py docs/superpowers/specs docs/superpowers/plans
+        run: git diff --check HEAD^ HEAD -- .github/workflows/factory-construction-c11-complex-modded-golden.yml .github/workflows/factory-sonar-ci.yml construction/fixtures/complex-modded-golden construction/tests/test_c11_complex_modded_golden.py construction/tests/test_c11_capture_path_security.py construction/tests/test_construction_final_physical_acceptance_gate.py construction/README.md construction/docs/ARCHITECTURE.md migration/full-skill-migration/test_sonar_ci_contract.py docs/superpowers/specs docs/superpowers/plans
 
   c11-preflight-probe:
     needs: c11-preflight-contracts
@@ -128,10 +130,20 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Require stabilized physical C4 registry
+      - name: Require final physical acceptance gate to be cleared
         run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          blocker = "SUPER_HYPER_URGENT_FINAL_CONSTRUCTION_PHYSICAL_ACCEPTANCE"
+          state_path = Path("construction/fixtures/complex-modded-golden/capture-state.json")
+          state = json.loads(state_path.read_text(encoding="utf-8"))
+          if state.get("status") == blocker and state.get("blocks_c11_completion") is True:
+              raise SystemExit(f"C11_COMPLETION_BLOCKED: {blocker}")
+          PY
           if [[ ! -f construction/fixtures/complex-modded-golden/registry.json ]]; then
-            echo "::error::C11_COMPLETION_BLOCKED: MODLIST_STABILIZED_AWAITING_RUNTIME_CAPTURE"
+            echo "::error::C11_COMPLETION_BLOCKED: missing final canonical C4 registry evidence"
             exit 1
           fi
           python3 -m unittest construction/tests/test_c11_complex_modded_golden.py -v
