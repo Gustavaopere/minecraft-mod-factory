@@ -1,4 +1,4 @@
-name: Temporary I2 Migration Bridge
+name: Temporary I2 Provider Transport
 
 on:
   push:
@@ -11,8 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  migrate-i2:
-    if: github.event.head_commit.message == 'chore: run I2 migration bridge'
+  transport-provider:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,48 +19,29 @@ jobs:
           ref: chore/migrate-i2-modlist-authority
           fetch-depth: 0
 
-      - name: Copy pinned I2 source artifacts
+      - name: Fetch pinned historical provider catalog
         env:
           SOURCE_SHA: b4861c6146a95d8f02018d8e46caca543895b0be
         run: |
           set -euo pipefail
-          base="https://raw.githubusercontent.com/Gustavaopere/neoforge-rpg-skilltree/${SOURCE_SHA}/PROJECT-INSTRUCTIONS/engineering"
-          mkdir -p engineering/catalog/physical-modlist engineering/tooling engineering/tests/fixtures
-          curl -fsSL "$base/catalog/physical-modlist/providers-2026-09-09.json" -o engineering/catalog/physical-modlist/providers-2026-09-09.json
-          curl -fsSL "$base/tooling/import-physical-modlist.py" -o engineering/tooling/import-physical-modlist.py
-          curl -fsSL "$base/tests/fixtures/modlist-i2-sample.txt" -o engineering/tests/fixtures/modlist-i2-sample.txt
-          curl -fsSL "$base/tests/test_i2_modlist_catalog.py" -o engineering/tests/test_i2_modlist_catalog.py
+          mkdir -p engineering/catalog/physical-modlist
+          url="https://raw.githubusercontent.com/Gustavaopere/neoforge-rpg-skilltree/${SOURCE_SHA}/PROJECT-INSTRUCTIONS/engineering/catalog/physical-modlist/providers-2026-09-09.json"
+          curl --fail --location --retry 3 --retry-all-errors "$url" -o engineering/catalog/physical-modlist/providers-2026-09-09.json
+          test "$(git hash-object engineering/catalog/physical-modlist/providers-2026-09-09.json)" = "f3df6f7e56b7060b0f5c790c27acae7003006139"
 
-      - name: Verify byte-identical source artifacts
+      - name: Validate committed physical snapshot with provider catalog
         run: |
           set -euo pipefail
-          test "$(git hash-object engineering/catalog/physical-modlist/providers-2026-09-09.json)" = "f3df6f7e56b7060b0f5c790c27acae7003006139"
-          test "$(git hash-object engineering/tooling/import-physical-modlist.py)" = "5300c5a40c93c427537cf1ba5b46937472bc844a"
-          test "$(git hash-object engineering/tests/fixtures/modlist-i2-sample.txt)" = "146b4a4a081f5d7339984e45a5ecea16c989da40"
+          python3 engineering/tooling/import-physical-modlist.py \
+            --check engineering/catalog/physical-modlist/snapshot-2026-09-09.json \
+            --providers engineering/catalog/physical-modlist/providers-2026-09-09.json
 
-      - name: Adapt test paths to Factory layout
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path('engineering/tests/test_i2_modlist_catalog.py')
-          text = path.read_text(encoding='utf-8')
-          text = text.replace('Path(__file__).resolve().parents[3]', 'Path(__file__).resolve().parents[2]')
-          text = text.replace('ROOT / "PROJECT-INSTRUCTIONS" / "engineering" / ', 'ROOT / "engineering" / ')
-          path.write_text(text, encoding='utf-8')
-          PY
-
-      - name: Run I2 contract tests
-        run: python3 -m unittest engineering/tests/test_i2_modlist_catalog.py
-
-      - name: Validate physical snapshot and providers
-        run: python3 engineering/tooling/import-physical-modlist.py --check engineering/catalog/physical-modlist/snapshot-2026-09-09.json --providers engineering/catalog/physical-modlist/providers-2026-09-09.json
-
-      - name: Commit migrated I2 authority
+      - name: Commit provider blob into Factory object database
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add engineering/catalog/physical-modlist/providers-2026-09-09.json engineering/tooling/import-physical-modlist.py engineering/tests/fixtures/modlist-i2-sample.txt engineering/tests/test_i2_modlist_catalog.py
+          git add engineering/catalog/physical-modlist/providers-2026-09-09.json
           git diff --cached --quiet && exit 0
-          git commit -m "chore(engineering): migrate I2 executable authority"
+          git commit -m "chore(engineering): transport historical I2 provider catalog"
           git push origin HEAD:chore/migrate-i2-modlist-authority
