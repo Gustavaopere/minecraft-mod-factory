@@ -85,6 +85,6 @@ public final class MachineMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return stillValid(access, player, I9MachineContent.MACHINE_BLOCK.get());
+        return stillValid(access, player, I9MachineContent.MACHINE.get());
     }
 }
