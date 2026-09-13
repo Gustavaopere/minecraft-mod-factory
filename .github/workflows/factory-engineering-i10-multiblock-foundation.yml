@@ -3,6 +3,7 @@ name: Factory Engineering I10 Multiblock Foundation
 on:
   push:
     branches:
+      - main
       - engineering/i10-multiblock-foundation-reference
   pull_request:
     branches:
@@ -16,6 +17,20 @@ on:
       - 'engineering/tooling/multiblock-foundation/**'
       - 'engineering/tests/golden/i10-multiblock-foundation/**'
       - 'art/golden-samples/i10-multiblock-visual/**'
+      - 'engineering/templates/neoforge-mod/**'
+      - 'engineering/tooling/scaffolder/**'
+      - 'engineering/tooling/test-harness/**'
+      - 'engineering/tooling/asset-handoff/**'
+      - 'engineering/schemas/asset-handoff.schema.json'
+      - 'engineering/schemas/mod-spec.schema.json'
+      - 'engineering/tooling/feature-generator/**'
+      - 'engineering/tooling/machine-foundation/**'
+      - 'engineering/tests/test_i3_*.py'
+      - 'engineering/tests/test_i4_*.py'
+      - 'engineering/tests/test_i5_*.py'
+      - 'engineering/tests/test_i6_*.py'
+      - 'engineering/tests/test_i8_*.py'
+      - 'engineering/tests/test_i9_*.py'
       - '.github/workflows/factory-engineering-i10-multiblock-foundation.yml'
 
 permissions:
@@ -38,9 +53,18 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Run I10 composition and runtime contracts
+      - name: Run I10 and relevant engineering regressions
         run: >-
           python3 -m unittest
+          engineering/tests/test_i3_mod_scaffolder.py
+          engineering/tests/test_i3_security_review.py
+          engineering/tests/test_i4_engineering_validators.py
+          engineering/tests/test_i5_test_harness.py
+          engineering/tests/test_i6_asset_handoff.py
+          engineering/tests/test_i8_feature_generator.py
+          engineering/tests/test_i8_feature_generator_neoforge.py
+          engineering/tests/test_i9_machine_foundation.py
+          engineering/tests/test_i9_machine_foundation_composition.py
           engineering/tests/test_i10_multiblock_foundation.py
           engineering/tests/test_i10_multiblock_foundation_task5.py
           engineering/tests/test_i10_multiblock_foundation_handoff.py
@@ -66,6 +90,34 @@ jobs:
         run: |
           cd .factory-ci/i10/generated
           ./gradlew runGameTestServer --no-daemon
+
+      - name: Accept EULA in generated fixture only
+        run: |
+          mkdir -p .factory-ci/i10/generated/run/server
+          printf 'eula=true\n' > .factory-ci/i10/generated/run/server/eula.txt
+
+      - name: Run canonical I5 harness
+        run: >-
+          python3 engineering/tooling/test-harness/run_test_harness.py
+          --project .factory-ci/i10/generated
+
+      - name: Verify I5 manifest
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('.factory-ci/i10/generated/build/i5-test-harness/test-manifest.json')
+          manifest = json.loads(path.read_text(encoding='utf-8'))
+          assert manifest['overall_state'] == 'PASS', manifest
+          suites = {suite['suite_id']: suite['state'] for suite in manifest['suites']}
+          assert suites == {
+              'unit': 'PASS',
+              'gametest': 'PASS',
+              'dedicated_server': 'PASS',
+          }, suites
+          print(json.dumps(manifest, indent=2, sort_keys=True))
+          PY
 
       - name: Run I10 real chunk acceptance
         run: python3 engineering/tooling/multiblock-foundation/run_i10_chunk_acceptance.py --project .factory-ci/i10/generated
