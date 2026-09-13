@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "project_name": "i9-machine-foundation",
+  "java_package": "dev.example.i9machine",
+  "mod_group_id": "dev.example",
+  "mod_version": "0.1.0",
+  "main_class": "I9MachineMod",
+  "client_class": "I9MachineModClient",
+  "license": "MIT",
+  "authors": "Engineering Golden Fixture",
+  "description": "Synthetic project proving the canonical I9 Machine Foundation reference."
+}
