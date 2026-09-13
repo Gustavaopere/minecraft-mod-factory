@@ -173,8 +173,10 @@ class I10MultiblockFoundationCompositionTest(unittest.TestCase):
             with contextlib.chdir(workspace):
                 generated = module.materialize_i10("generated")
             build_gradle = (generated / "build.gradle").read_text(encoding="utf-8")
-            self.assertIn("tasks.named('runServer').configure", build_gradle)
-            self.assertIn("standardInput = System.in", build_gradle)
+            self.assertIn("tasks.configureEach { task ->", build_gradle)
+            self.assertIn("if (task.name == 'runServer')", build_gradle)
+            self.assertIn("task.standardInput = System.in", build_gradle)
+            self.assertNotIn("tasks.named('runServer')", build_gradle)
 
     def test_i10_composition_has_no_i9_runtime_dependency(self):
         module = load_materializer()
