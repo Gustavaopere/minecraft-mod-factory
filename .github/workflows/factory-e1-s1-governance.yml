@@ -36,8 +36,11 @@ jobs:
       - name: Run E1 S1 regression tests
         run: python3 -m unittest engineering/tests/test_e1_s1_governance.py
 
-      - name: Run CI queue-control RED contracts
+      - name: Validate CI queue-control contracts
         run: python3 -m unittest engineering/tests/test_ci_queue_control.py -v
+
+      - name: Validate CI queue-control policy
+        run: python3 engineering/tooling/ci/validate_queue_control.py
 
       - name: Check governance whitespace
         run: >-
@@ -51,7 +54,10 @@ jobs:
           engineering/TESTING.md
           engineering/catalog/sources/SOURCE-REGISTRY.json
           engineering/tests/test_e1_s1_governance.py
+          engineering/tests/test_ci_queue_control.py
           engineering/tooling/validate-e1-s1-governance.py
+          engineering/tooling/ci/queue-control-policy.json
+          engineering/tooling/ci/validate_queue_control.py
           skills/README.md
           skills/ROUTER.md
           skills/VERSION-AUTHORITY.md

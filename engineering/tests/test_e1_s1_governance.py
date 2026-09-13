@@ -64,6 +64,19 @@ class GovernanceMigrationTests(unittest.TestCase):
             text,
         )
 
+    def test_governance_enforces_queue_control(self):
+        text = (ROOT / ".github/workflows/factory-e1-s1-governance.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            "python3 -m unittest engineering/tests/test_ci_queue_control.py -v",
+            text,
+        )
+        self.assertIn(
+            "python3 engineering/tooling/ci/validate_queue_control.py",
+            text,
+        )
+
     def test_validator_passes(self):
         result = subprocess.run(
             [sys.executable, str(ROOT / "engineering/tooling/validate-e1-s1-governance.py")],
