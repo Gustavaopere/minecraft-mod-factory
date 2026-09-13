@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://minecraft-mod-factory.invalid/schemas/runtime-acceptance-report.schema.json",
+  "title": "Construction C12 Runtime Acceptance Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "mode",
+    "target",
+    "authority_fingerprints",
+    "stages",
+    "blocker",
+    "overall_readiness",
+    "overall_acceptance",
+    "evidence",
+    "diagnostics"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "mode": {"enum": ["PREFLIGHT", "PHYSICAL_ACCEPTANCE"]},
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minecraft", "loader", "neoforge", "java"],
+      "properties": {
+        "minecraft": {"const": "1.21.1"},
+        "loader": {"const": "neoforge"},
+        "neoforge": {"const": "21.1.248"},
+        "java": {"const": 21}
+      }
+    },
+    "authority_fingerprints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "i2_physical_snapshot_sha256",
+        "c4_registry_sha256",
+        "c11_manifest_sha256",
+        "c6_schematic_sha256",
+        "c7_report_sha256",
+        "c8_report_sha256"
+      ],
+      "properties": {
+        "i2_physical_snapshot_sha256": {"$ref": "#/$defs/nullableSha256"},
+        "c4_registry_sha256": {"$ref": "#/$defs/nullableSha256"},
+        "c11_manifest_sha256": {"$ref": "#/$defs/nullableSha256"},
+        "c6_schematic_sha256": {"$ref": "#/$defs/nullableSha256"},
+        "c7_report_sha256": {"$ref": "#/$defs/nullableSha256"},
+        "c8_report_sha256": {"$ref": "#/$defs/nullableSha256"}
+      }
+    },
+    "stages": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_environment",
+        "i5_baseline",
+        "client_smoke",
+        "live_placement",
+        "runtime_visual_fidelity",
+        "multiplayer",
+        "full_modpack",
+        "evidence_packaging"
+      ],
+      "properties": {
+        "target_environment": {"$ref": "#/$defs/stageState"},
+        "i5_baseline": {"$ref": "#/$defs/stageState"},
+        "client_smoke": {"$ref": "#/$defs/stageState"},
+        "live_placement": {"$ref": "#/$defs/stageState"},
+        "runtime_visual_fidelity": {"$ref": "#/$defs/stageState"},
+        "multiplayer": {"$ref": "#/$defs/stageState"},
+        "full_modpack": {"$ref": "#/$defs/stageState"},
+        "evidence_packaging": {"$ref": "#/$defs/stageState"}
+      }
+    },
+    "blocker": {
+      "oneOf": [
+        {"type": "null"},
+        {"const": "SUPER_HYPER_URGENT_FINAL_CONSTRUCTION_PHYSICAL_ACCEPTANCE"}
+      ]
+    },
+    "overall_readiness": {"enum": ["PREFLIGHT_READY", "BLOCKED"]},
+    "overall_acceptance": {"enum": ["PASS", "FAIL", "BLOCKED"]},
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"$ref": "#/$defs/sha256"}
+        }
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nullableSha256": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/sha256"}
+      ]
+    },
+    "stageState": {
+      "enum": ["PASS", "FAIL", "BLOCKED", "DEFERRED", "NOT_APPLICABLE"]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"mode": {"const": "PHYSICAL_ACCEPTANCE"}},
+        "required": ["mode"]
+      },
+      "then": {
+        "properties": {
+          "authority_fingerprints": {
+            "properties": {
+              "i2_physical_snapshot_sha256": {"$ref": "#/$defs/sha256"},
+              "c4_registry_sha256": {"$ref": "#/$defs/sha256"},
+              "c11_manifest_sha256": {"$ref": "#/$defs/sha256"},
+              "c6_schematic_sha256": {"$ref": "#/$defs/sha256"},
+              "c7_report_sha256": {"$ref": "#/$defs/sha256"},
+              "c8_report_sha256": {"$ref": "#/$defs/sha256"}
+            }
+          }
+        }
+      }
+    }
+  ]
+}
