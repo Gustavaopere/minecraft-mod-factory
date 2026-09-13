@@ -105,7 +105,7 @@ class I10RuntimeSurfaceContract(unittest.TestCase):
         self.assertEqual([], missing, f"I10 RED: registry contract incomplete: {missing}")
         self.assertEqual(3, text.count("BLOCKS.registerBlock("), "I10 must register exactly three blocks")
         self.assertEqual(3, text.count("ITEMS.registerSimpleBlockItem("), "I10 must register exactly three block items")
-        self.assertEqual(2, text.count("BLOCK_ENTITY_TYPES.register("), "I10 must register only controller and port BEs")
+        self.assertEqual(2, text.count('BLOCK_ENTITY_TYPES.register("'), "I10 must register only controller and port BEs")
         self.assertNotIn('BLOCK_ENTITY_TYPES.register("multiblock_casing"', text)
 
 
