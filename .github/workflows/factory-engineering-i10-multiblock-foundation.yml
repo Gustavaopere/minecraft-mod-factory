@@ -63,6 +63,11 @@ jobs:
           cd .factory-ci/i10/generated
           ./gradlew runGameTestServer --no-daemon
 
+      - name: Run I10 real chunk acceptance
+        run: >-
+          python3 engineering/tooling/multiblock-foundation/run_i10_chunk_acceptance.py
+          --project .factory-ci/i10/generated
+
       - name: Check whitespace
         if: always()
         run: git diff --check HEAD^

@@ -35,6 +35,7 @@ CANONICAL_OVERLAY_FILES = (
     ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlock.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlock.java"),
     ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlockEntity.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlockEntity.java"),
     ("src/main/java/dev/example/i10multiblock/gametest/I10MultiblockGameTests.java", "src/main/java/dev/example/i10multiblock/gametest/I10MultiblockGameTests.java"),
+    ("src/main/java/dev/example/i10multiblock/acceptance/I10AcceptanceCommands.java", "src/main/java/dev/example/i10multiblock/acceptance/I10AcceptanceCommands.java"),
     ("src/main/resources/assets/i10_multiblock/blockstates/multiblock_controller.json", "src/main/resources/assets/i10_multiblock/blockstates/multiblock_controller.json"),
     ("src/main/resources/assets/i10_multiblock/blockstates/multiblock_io_port.json", "src/main/resources/assets/i10_multiblock/blockstates/multiblock_io_port.json"),
     ("src/main/resources/assets/i10_multiblock/blockstates/multiblock_casing.json", "src/main/resources/assets/i10_multiblock/blockstates/multiblock_casing.json"),
