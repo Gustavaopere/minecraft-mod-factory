@@ -128,6 +128,22 @@ jobs:
             coverage_started=1
           fi
 
+          if [[ -d narrative/tooling && -d narrative/tests ]]; then
+            if [[ "$coverage_started" -eq 0 ]]; then
+              python3 -m coverage run \
+                --branch \
+                --source=narrative/tooling \
+                -m unittest discover -s narrative/tests -p 'test_*.py' -v
+            else
+              python3 -m coverage run \
+                --append \
+                --branch \
+                --source=narrative/tooling \
+                -m unittest discover -s narrative/tests -p 'test_*.py' -v
+            fi
+            coverage_started=1
+          fi
+
           if [[ "$coverage_started" -eq 1 ]]; then
             python3 -m coverage xml -o coverage.xml
             test -s coverage.xml
