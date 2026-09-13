@@ -254,7 +254,7 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
             with mock.patch.object(module.subprocess, "Popen", return_value=process):
                 session.start()
             self.assertIs(session.process, process)
-            self.assertEqual("", session._next_line(0))
+            self.assertIsNone(session._next_line(0))
 
             session.output_queue.put(marker_line(action="setup"))
             session.output_queue.put(marker_line())
