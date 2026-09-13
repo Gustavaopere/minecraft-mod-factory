@@ -15,9 +15,27 @@ import time
 from pathlib import Path
 
 
-TARGET_MINECRAFT = "1.21.1"
-TARGET_NEOFORGE = "21.1.248"
-TARGET_JAVA = 21
+REPO_ROOT = Path(__file__).resolve().parents[3]
+TARGET_BASELINE = REPO_ROOT / "engineering" / "contracts" / "target-baseline.json"
+
+
+def _load_campaign_target() -> dict[str, object]:
+    baseline = json.loads(TARGET_BASELINE.read_text(encoding="utf-8"))
+    target = baseline.get("target")
+    if not isinstance(target, dict):
+        raise RuntimeError(f"invalid campaign target baseline: {TARGET_BASELINE}")
+    return {
+        "minecraft": target.get("minecraft"),
+        "loader": target.get("loader"),
+        "neoforge": target.get("neoforge"),
+        "java": target.get("java"),
+    }
+
+
+CAMPAIGN_TARGET = _load_campaign_target()
+TARGET_MINECRAFT = str(CAMPAIGN_TARGET["minecraft"])
+TARGET_NEOFORGE = str(CAMPAIGN_TARGET["neoforge"])
+TARGET_JAVA = int(CAMPAIGN_TARGET["java"])
 MOD_ID_RE = re.compile(r"^[a-z][a-z0-9_]{1,63}$")
 OUTPUT_RELATIVE = Path("build/i5-test-harness")
 ARTIFACT_RELATIVE = OUTPUT_RELATIVE / "artifacts"
