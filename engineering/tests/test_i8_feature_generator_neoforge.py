@@ -36,7 +36,7 @@ class I8NeoForgeSkeletonContractTest(unittest.TestCase):
 
     def generate(self, project: Path) -> None:
         plan = self.module.plan_feature_set(project, load_request())
-        self.module.apply_plan(project, plan, confirm_modified=False)
+        self.module.apply_plan(project, plan, confirm_modified=True)
 
     def read_source(self, project: Path, kind: str, class_name: str) -> str:
         path = project / "src/main/java" / PACKAGE_PATH / "feature" / kind / f"{class_name}.java"
@@ -67,10 +67,9 @@ class I8NeoForgeSkeletonContractTest(unittest.TestCase):
             self.generate(project)
             source = self.read_source(project, "block_entity", "CopperMachineBlockEntity")
         self.assertIn("extends BlockEntity", source)
-        self.assertIn("BlockEntityType<?> type", source)
         self.assertIn("BlockPos pos", source)
         self.assertIn("BlockState state", source)
-        self.assertIn("super(type, pos, state);", source)
+        self.assertIn("super(FactoryGeneratedRegistries.COPPER_MACHINE_ENTITY.get(), pos, state);", source)
 
     def test_menu_skeleton_uses_real_container_menu_contract(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -78,7 +77,8 @@ class I8NeoForgeSkeletonContractTest(unittest.TestCase):
             self.generate(project)
             source = self.read_source(project, "menu", "CopperMachineMenu")
         self.assertIn("extends AbstractContainerMenu", source)
-        self.assertIn("MenuType<?> type", source)
+        self.assertIn("Inventory playerInventory", source)
+        self.assertIn("FactoryGeneratedRegistries.COPPER_MACHINE_MENU.get()", source)
         self.assertIn("quickMoveStack", source)
         self.assertIn("stillValid", source)
 
@@ -102,6 +102,43 @@ class I8NeoForgeSkeletonContractTest(unittest.TestCase):
         self.assertIn("assemble(SingleRecipeInput input, HolderLookup.Provider registries)", source)
         self.assertIn("getSerializer()", source)
         self.assertIn("getType()", source)
+
+    def test_registry_surface_uses_neoforge_deferred_registers_for_generated_features(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = copy_golden(Path(tmp) / "project")
+            self.generate(project)
+            source = (project / "src/main/java" / PACKAGE_PATH / "registry/FactoryGeneratedRegistries.java").read_text(encoding="utf-8")
+
+        self.assertIn("DeferredRegister.createBlocks(I3GoldenMod.MOD_ID)", source)
+        self.assertIn("DeferredRegister.createItems(I3GoldenMod.MOD_ID)", source)
+        self.assertIn("DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, I3GoldenMod.MOD_ID)", source)
+        self.assertIn("DeferredRegister.create(Registries.MENU, I3GoldenMod.MOD_ID)", source)
+        self.assertIn("DeferredRegister.create(Registries.RECIPE_TYPE, I3GoldenMod.MOD_ID)", source)
+        self.assertIn('BLOCKS.registerBlock("copper_machine", CopperMachineBlock::new', source)
+        self.assertIn('ITEMS.registerItem("copper_gear", CopperGearItem::new', source)
+        self.assertIn("CopperMachineBlockEntity::new", source)
+        self.assertIn("new MenuType<>(CopperMachineMenu::new, FeatureFlags.DEFAULT_FLAGS)", source)
+        self.assertIn("RecipeType::simple", source)
+        self.assertIn("public static void register(IEventBus modBus)", source)
+        self.assertIn("BLOCKS.register(modBus);", source)
+        self.assertIn("ITEMS.register(modBus);", source)
+        self.assertIn("BLOCK_ENTITY_TYPES.register(modBus);", source)
+        self.assertIn("MENUS.register(modBus);", source)
+        self.assertIn("RECIPE_TYPES.register(modBus);", source)
+
+    def test_datagen_surface_registers_real_recipe_provider_from_gather_data_event(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = copy_golden(Path(tmp) / "project")
+            self.generate(project)
+            source = (project / "src/main/java" / PACKAGE_PATH / "data/FactoryGeneratedData.java").read_text(encoding="utf-8")
+
+        self.assertIn("GatherDataEvent", source)
+        self.assertIn("extends RecipeProvider", source)
+        self.assertIn("buildRecipes(RecipeOutput output)", source)
+        self.assertIn("DataGenerator generator = event.getGenerator();", source)
+        self.assertIn("generator.addProvider(", source)
+        self.assertIn("event.includeServer()", source)
+        self.assertIn("new FactoryGeneratedRecipeProvider(output, event.getLookupProvider())", source)
 
 
 if __name__ == "__main__":
