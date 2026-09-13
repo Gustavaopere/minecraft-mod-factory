@@ -8,6 +8,7 @@ from validate_queue_control import QueueControlError, parse_workflow_contract
 
 ROOT = Path(__file__).resolve().parents[3]
 POLICY = ROOT / "engineering" / "tooling" / "ci" / "queue-control-policy.json"
+# Temporary branch-local materializer; final PR removes this file after batch generation.
 CONCURRENCY_LINES = [
     "concurrency:",
     "  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.run_id || 'dedupe' }}",
