@@ -16,6 +16,17 @@ GOLDEN_ROOT = REPO_ROOT / "engineering/tests/golden/i9-machine-foundation"
 MANIFEST_PATH = GOLDEN_ROOT / "manifest.json"
 OVERLAY_ROOT = GOLDEN_ROOT / "overlay"
 MAIN_CLASS_RELATIVE = "src/main/java/dev/example/i9machine/I9MachineMod.java"
+CANONICAL_OVERLAY_FILES = (("README.md", "I9-MACHINE-FOUNDATION.md"),)
+CANONICAL_PATCH = {
+    "path": MAIN_CLASS_RELATIVE,
+    "anchor": "    public I9MachineMod(IEventBus modBus, ModContainer container) {\n    }\n",
+    "replacement": (
+        "    public I9MachineMod(IEventBus modBus, ModContainer container) {\n"
+        "        dev.example.i9machine.machine.I9MachineContent.register(modBus);\n"
+        "        modBus.addListener(dev.example.i9machine.machine.I9MachineContent::registerCapabilities);\n"
+        "    }\n"
+    ),
+}
 
 
 class MaterializationError(RuntimeError):
@@ -83,7 +94,7 @@ def _validate_manifest() -> tuple[list[tuple[PurePosixPath, PurePosixPath]], dic
     if not isinstance(files, list) or not files:
         raise MaterializationError("I9 manifest files must be a non-empty list")
 
-    validated: list[tuple[PurePosixPath, PurePosixPath]] = []
+    declared_files: list[tuple[str, str]] = []
     seen_sources: set[str] = set()
     seen_destinations: set[str] = set()
     for index, entry in enumerate(files):
@@ -100,22 +111,29 @@ def _validate_manifest() -> tuple[list[tuple[PurePosixPath, PurePosixPath]], dic
             raise MaterializationError("I9 manifest overlay paths must be unique")
         seen_sources.add(source_key)
         seen_destinations.add(destination_key)
-        validated.append((source, destination))
+        declared_files.append((source_key, destination_key))
+
+    if tuple(declared_files) != CANONICAL_OVERLAY_FILES:
+        raise MaterializationError("I9 manifest cannot delegate overlay write authority")
 
     patch = manifest["main_class_patch"]
     if not isinstance(patch, dict):
         raise MaterializationError("I9 manifest main_class_patch must be an object")
     _closed_keys(patch, {"path", "anchor", "replacement"}, label="I9 main_class_patch")
     patch_path = _safe_relative(patch["path"], label="I9 main_class_patch.path")
-    if patch_path.as_posix() != MAIN_CLASS_RELATIVE:
-        raise MaterializationError(f"I9 may patch only {MAIN_CLASS_RELATIVE}")
-    anchor = patch["anchor"]
-    replacement = patch["replacement"]
-    if not isinstance(anchor, str) or not anchor:
-        raise MaterializationError("I9 main_class_patch.anchor must be a non-empty string")
-    if not isinstance(replacement, str) or not replacement:
-        raise MaterializationError("I9 main_class_patch.replacement must be a non-empty string")
-    return validated, {"path": patch_path.as_posix(), "anchor": anchor, "replacement": replacement}
+    declared_patch = {
+        "path": patch_path.as_posix(),
+        "anchor": patch.get("anchor"),
+        "replacement": patch.get("replacement"),
+    }
+    if declared_patch != CANONICAL_PATCH:
+        raise MaterializationError("I9 manifest cannot delegate main-class patch authority")
+
+    operational_files = [
+        (PurePosixPath(source), PurePosixPath(destination))
+        for source, destination in CANONICAL_OVERLAY_FILES
+    ]
+    return operational_files, dict(CANONICAL_PATCH)
 
 
 def _validate_overlay_source(relative: PurePosixPath) -> Path:
