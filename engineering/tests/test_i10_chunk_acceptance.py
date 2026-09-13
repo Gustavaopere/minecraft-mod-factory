@@ -105,6 +105,16 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
                 with self.assertRaises(module.AcceptanceError):
                     module.parse_probe_marker(line)
 
+    def test_marker_timeout_diagnostic_tail_is_bounded_and_visible(self) -> None:
+        module = load_harness()
+        lines = [f"line-{index}\n" for index in range(6)]
+        tail = module.recent_output_tail(lines, limit=3)
+        self.assertEqual("line-3\nline-4\nline-5\n", tail)
+        self.assertNotIn("line-2", tail)
+        text = HARNESS.read_text(encoding="utf-8")
+        self.assertIn("recent server output", text)
+        self.assertIn("recent_output_tail(self.lines)", text)
+
     def test_project_and_artifact_paths_remain_contained(self) -> None:
         module = load_harness()
         with tempfile.TemporaryDirectory() as tmp:
