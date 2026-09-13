@@ -43,6 +43,7 @@ jobs:
           engineering/REPO-ROUTING.md
           engineering/TESTING.md
           engineering/catalog/sources/SOURCE-REGISTRY.json
+          engineering/contracts/target-baseline.json
           engineering/tests/test_e1_s1_governance.py
           engineering/tooling/validate-e1-s1-governance.py
           skills/README.md
