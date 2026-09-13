@@ -23,7 +23,7 @@ REQUIRED = [
 ]
 
 PLAN_HASHES = {
-    "plans/PLANO-MESTRE-MINECRAFT-MOD-FACTORY-MOD-ENGINEERING-NEOFORGE-1.21.1-V1.1.md": "29fc7f4b949b2b8dba327eb3f022f4cd84b11a352430ca821bdaec13072b8744",
+    "plans/PLANO-MESTRE-MINECRAFT-MOD-FACTORY-MOD-ENGINEERING-NEOFORGE-1.21.1-V1.1.md": "17d6dc4b2250fb3c74d4c8b283d4377ef3b9e0c416ab58fd346159a2062af784",
     "plans/PLANO-MESTRE-UNIFICADO-MINECRAFT-MOD-FACTORY-REPO-TEXTURA-BLOCKBENCH-ASSET-MCP-V5.1.md": "723bb083d5b646812cd44a03a1ef50e8505b366923b64aba5931ee4b7b63befb",
 }
 
@@ -65,7 +65,15 @@ if registry_path.is_file():
 version_path = ROOT / "skills/VERSION-AUTHORITY.md"
 if version_path.is_file():
     version_text = version_path.read_text(encoding="utf-8")
-    for token in ("Minecraft: **1.21.1**", "NeoForge: **21.1.248**", "Java: **21**", "modlist física"):
+    for token in (
+        "Minecraft: **1.21.1**",
+        "NeoForge: **21.1.x estável mais recente compatível com Minecraft 1.21.1**",
+        "Java: **21**",
+        "resolvida no início de cada ciclo relevante de implementação ou validação",
+        "Não atualizar silenciosamente o NeoForge no meio de um gate já iniciado",
+        "A resolução exata do ciclo I10 atual é NeoForge **21.1.250**",
+        "modlist física",
+    ):
         if token not in version_text:
             errors.append(f"version authority missing token: {token}")
 
