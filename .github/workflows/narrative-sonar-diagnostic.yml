@@ -1,39 +1,94 @@
-name: Narrative Sonar Diagnostic
+name: Narrative Path Security Fix
 
 on:
   push:
     branches:
       - feat/narrative-authoring-toolkit-clean
+    paths:
+      - '.github/workflows/narrative-sonar-diagnostic.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  sonar-diagnostic:
+  apply-and-verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     steps:
-      - name: Query PR 108 Sonar issues
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/narrative-authoring-toolkit-clean
+          fetch-depth: 0
+
+      - name: Apply deterministic path-security patch
         shell: bash
         run: |
           set -euo pipefail
-          test -n "${SONAR_TOKEN:-}"
-          curl --fail --silent --show-error \
-            --user "${SONAR_TOKEN}:" \
-            'https://sonarcloud.io/api/issues/search?componentKeys=Gustavaopere_minecraft-mod-factory&pullRequest=108&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true' \
-            -o /tmp/issues.json
           python3 - <<'PY'
-          import json
-          data = json.load(open('/tmp/issues.json', encoding='utf-8'))
-          for issue in data.get('issues', []):
-              print(json.dumps({
-                  'rule': issue.get('rule'),
-                  'type': issue.get('type'),
-                  'severity': issue.get('severity'),
-                  'component': issue.get('component'),
-                  'line': issue.get('line'),
-                  'message': issue.get('message'),
-              }, ensure_ascii=False))
+          from pathlib import Path
+
+          def replace(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'expected snippet not found in {path}')
+              p.write_text(text.replace(old, new), encoding='utf-8')
+
+          replace('narrative/tooling/profile.py',
+              "    profile_path = Path(path).resolve(strict=True) if workspace_root is None else resolve_workspace_path(path, workspace_root)\n",
+              "    workspace = Path.cwd() if workspace_root is None else workspace_root\n    profile_path = resolve_workspace_path(path, workspace)\n")
+
+          for path in ('narrative/tooling/validate_story.py', 'narrative/tooling/validate_dialogues.py', 'narrative/tooling/story_inventory.py'):
+              replace(path,
+                  'from profile import NarrativeProfile, load_profile\n',
+                  'from profile import NarrativeProfile, load_profile, resolve_workspace_path\n')
+
+          replace('narrative/tooling/validate_story.py',
+              'def main(argv=None) -> int:\n',
+              'def main(argv=None, workspace_root=None) -> int:\n')
+          replace('narrative/tooling/validate_story.py',
+              "    profile = load_profile(args.profile)\n    root = pathlib.Path(args.root or profile.story_root)\n    issues = validate(root, profile)\n",
+              "    workspace = pathlib.Path(workspace_root or pathlib.Path.cwd()).resolve(strict=True)\n    try:\n        profile = load_profile(args.profile, workspace)\n        root = resolve_workspace_path(args.root or profile.story_root, workspace)\n    except (OSError, ValueError):\n        print('ERROR workspace-path: profile/root must resolve inside the trusted workspace')\n        return 2\n    issues = validate(root, profile)\n")
+
+          replace('narrative/tooling/validate_dialogues.py',
+              'def main(argv=None) -> int:\n',
+              'def main(argv=None, workspace_root=None) -> int:\n')
+          replace('narrative/tooling/validate_dialogues.py',
+              "    profile = load_profile(args.profile)\n    root = pathlib.Path(args.root or profile.dialogue_root)\n    issues = validate(root, profile)\n",
+              "    workspace = pathlib.Path(workspace_root or pathlib.Path.cwd()).resolve(strict=True)\n    try:\n        profile = load_profile(args.profile, workspace)\n        root = resolve_workspace_path(args.root or profile.dialogue_root, workspace)\n    except (OSError, ValueError):\n        print('ERROR workspace-path: profile/root must resolve inside the trusted workspace')\n        return 2\n    issues = validate(root, profile)\n")
+
+          replace('narrative/tooling/story_inventory.py',
+              'def main(argv=None):\n',
+              'def main(argv=None, workspace_root=None):\n')
+          replace('narrative/tooling/story_inventory.py',
+              "    profile = load_profile(args.profile)\n    root = pathlib.Path(args.root or profile.story_root)\n    records = inventory(root, profile)\n",
+              "    workspace = pathlib.Path(workspace_root or pathlib.Path.cwd()).resolve(strict=True)\n    try:\n        profile = load_profile(args.profile, workspace)\n        root = resolve_workspace_path(args.root or profile.story_root, workspace)\n    except (OSError, ValueError):\n        print('ERROR workspace-path: profile/root must resolve inside the trusted workspace')\n        return 2\n    records = inventory(root, profile)\n")
+
+          replace('narrative/tests/test_validate_story.py', 'mod.load_profile(self.profile)', 'mod.load_profile(self.profile, self.root)')
+          replace('narrative/tests/test_validate_story.py', "mod.main(['--profile', str(self.profile), '--root', str(self.root / 'story')])", "mod.main(['--profile', str(self.profile), '--root', str(self.root / 'story')], workspace_root=self.root)")
+          replace('narrative/tests/test_validate_story.py', "mod.main(['--profile', str(self.profile), '--root', str(self.root / 'story'), '--reveal'])", "mod.main(['--profile', str(self.profile), '--root', str(self.root / 'story'), '--reveal'], workspace_root=self.root)")
+          replace('narrative/tests/test_validate_story.py', "mod.main(['--profile', str(self.profile), '--root', str(self.story), '--strict-references'])", "mod.main(['--profile', str(self.profile), '--root', str(self.story), '--strict-references'], workspace_root=self.root)")
+
+          replace('narrative/tests/test_validate_dialogues.py', 'mod.load_profile(self.profile_path)', 'mod.load_profile(self.profile_path, self.root)')
+          replace('narrative/tests/test_validate_dialogues.py', "mod.main(['--profile', str(self.profile_path), '--root', str(self.dialogues)])", "mod.main(['--profile', str(self.profile_path), '--root', str(self.dialogues)], workspace_root=self.root)")
+          replace('narrative/tests/test_validate_dialogues.py', "mod.main(['--profile', str(self.profile_path), '--root', str(self.dialogues), '--reveal'])", "mod.main(['--profile', str(self.profile_path), '--root', str(self.dialogues), '--reveal'], workspace_root=self.root)")
+
+          replace('narrative/tests/test_story_inventory.py', 'mod.load_profile(profile_path)', 'mod.load_profile(profile_path, root)')
+          replace('narrative/tests/test_story_inventory.py', 'mod.load_profile(self.profile_path)', 'mod.load_profile(self.profile_path, self.root)')
           PY
+
+      - name: Verify GREEN
+        run: |
+          python3 -m unittest discover -s narrative/tests -p 'test_*.py' -v
+          git diff --check
+
+      - name: Commit verified code only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add narrative/tooling narrative/tests
+          git diff --cached --exit-code && exit 0 || true
+          git commit -m 'fix(narrative): enforce trusted workspace paths'
+          git push origin HEAD:feat/narrative-authoring-toolkit-clean
