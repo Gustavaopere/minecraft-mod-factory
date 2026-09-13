@@ -181,6 +181,87 @@ class I10RuntimeSurfaceContract(unittest.TestCase):
         self.assertEqual(1, capability_body.count("event.registerBlockEntity("))
         self.assertNotIn("MULTIBLOCK_CONTROLLER_BLOCK_ENTITY.get()", capability_body)
 
+    def test_task5_visual_state_and_explicit_controller_interaction_contract(self) -> None:
+        controller = (JAVA_ROOT / "MultiblockControllerBlock.java").read_text(encoding="utf-8")
+        port = (JAVA_ROOT / "MultiblockPortBlock.java").read_text(encoding="utf-8")
+        controller_required = (
+            "HorizontalDirectionalBlock.FACING",
+            'BooleanProperty.create("formed")',
+            "getStateForPlacement",
+            "createBlockStateDefinition",
+            "useWithoutItem",
+            "instanceof ServerLevel",
+            "controller.tryForm",
+            "protected void tick",
+            "controller.revalidate",
+        )
+        port_required = (
+            "HorizontalDirectionalBlock.FACING",
+            'BooleanProperty.create("formed")',
+            "createBlockStateDefinition",
+        )
+        missing = [f"controller:{token}" for token in controller_required if token not in controller]
+        missing.extend(f"port:{token}" for token in port_required if token not in port)
+        self.assertEqual([], missing, f"I10 RED: formed/facing interaction contract incomplete: {missing}")
+
+    def test_task5_controller_formation_and_revalidation_are_fail_closed(self) -> None:
+        source = (JAVA_ROOT / "MultiblockControllerBlockEntity.java").read_text(encoding="utf-8")
+        required = (
+            "tryForm(ServerLevel",
+            "revalidate(ServerLevel",
+            "MultiblockPattern.validate",
+            "MultiblockValidationResult.VALID",
+            "MultiblockValidationResult.INVALID",
+            "MultiblockValidationResult.UNAVAILABLE",
+            "MultiblockPattern.PORT_LOCAL",
+            "bindToController",
+            "markPendingRevalidation",
+            "markRevalidatedFormed",
+            "markUnformed",
+            "setVisualFormed",
+            "Block.UPDATE_CLIENTS",
+            "level.invalidateCapabilities(portPos)",
+        )
+        missing = [token for token in required if token not in source]
+        self.assertEqual([], missing, f"I10 RED: formation/revalidation lifecycle incomplete: {missing}")
+
+    def test_task5_mutations_schedule_only_bounded_candidate_revalidation(self) -> None:
+        invalidation = JAVA_ROOT / "MultiblockInvalidation.java"
+        casing = JAVA_ROOT / "MultiblockCasingBlock.java"
+        self.assertTrue(invalidation.is_file(), "I10 RED: MultiblockInvalidation.java is missing")
+        self.assertTrue(casing.is_file(), "I10 RED: MultiblockCasingBlock.java is missing")
+        if invalidation.is_file():
+            text = invalidation.read_text(encoding="utf-8")
+            required = (
+                "Direction.Plane.HORIZONTAL",
+                "MultiblockPattern.MIN_X",
+                "MultiblockPattern.MAX_X",
+                "MultiblockPattern.MIN_Y",
+                "MultiblockPattern.MAX_Y",
+                "MultiblockPattern.MIN_Z",
+                "MultiblockPattern.MAX_Z",
+                "changedPos.offset",
+                "level.hasChunkAt",
+                "MULTIBLOCK_CONTROLLER.get()",
+                "level.scheduleTick",
+            )
+            missing = [token for token in required if token not in text]
+            self.assertEqual([], missing, f"I10 RED: bounded invalidation helper incomplete: {missing}")
+            self.assertNotIn("getAllEntities", text)
+            self.assertNotIn("getChunkSource().force", text)
+        if casing.is_file():
+            text = casing.read_text(encoding="utf-8")
+            for token in ("onPlace", "onRemove", "MultiblockInvalidation.scheduleAround"):
+                self.assertIn(token, text)
+
+    def test_task5_all_structure_blocks_participate_in_mutation_invalidation(self) -> None:
+        for filename in ("MultiblockControllerBlock.java", "MultiblockPortBlock.java"):
+            text = (JAVA_ROOT / filename).read_text(encoding="utf-8")
+            missing = [token for token in ("onPlace", "onRemove", "MultiblockInvalidation.scheduleAround") if token not in text]
+            self.assertEqual([], missing, f"I10 RED: {filename} mutation hooks incomplete: {missing}")
+        content = (JAVA_ROOT / "I10MultiblockContent.java").read_text(encoding="utf-8")
+        self.assertIn("MultiblockCasingBlock::new", content, "I10 casing must remain non-BE but participate in invalidation")
+
 
 if __name__ == "__main__":
     unittest.main()
