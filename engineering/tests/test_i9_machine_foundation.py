@@ -238,6 +238,34 @@ class I9MachineFoundationContractTest(unittest.TestCase):
             "I9 workflow must not reintroduce the unsupported NeoGradle setForceExit directive",
         )
 
+    def test_i9_workflow_runs_final_regressions_and_i5_harness(self):
+        workflow = I9_WORKFLOW.read_text(encoding="utf-8")
+        required = (
+            "engineering/tests/test_i3_mod_scaffolder.py",
+            "engineering/tests/test_i3_security_review.py",
+            "engineering/tests/test_i4_engineering_validators.py",
+            "engineering/tests/test_i5_test_harness.py",
+            "engineering/tests/test_i8_feature_generator.py",
+            "engineering/tests/test_i8_feature_generator_neoforge.py",
+            "engineering/tests/test_i9_machine_foundation.py",
+            "engineering/tests/test_i9_machine_foundation_composition.py",
+            "mkdir -p .factory-ci/i9/generated/run/server",
+            "printf 'eula=true\\n' > .factory-ci/i9/generated/run/server/eula.txt",
+            "python3 engineering/tooling/test-harness/run_test_harness.py",
+            "--project .factory-ci/i9/generated",
+            ".factory-ci/i9/generated/build/i5-test-harness/test-manifest.json",
+            "manifest['overall_state'] == 'PASS'",
+            "'unit': 'PASS'",
+            "'gametest': 'PASS'",
+            "'dedicated_server': 'PASS'",
+        )
+        missing = [token for token in required if token not in workflow]
+        self.assertEqual(
+            [],
+            missing,
+            "I9 RED: permanent workflow lacks final regressions or canonical I5 harness proof",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
