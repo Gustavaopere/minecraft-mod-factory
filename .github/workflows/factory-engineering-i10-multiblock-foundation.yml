@@ -10,6 +10,7 @@ on:
     paths:
       - 'engineering/tests/fixtures/i10-multiblock-*.json'
       - 'engineering/tests/test_i10_multiblock_foundation*.py'
+      - 'engineering/tests/test_i10_chunk_acceptance.py'
       - 'engineering/tooling/multiblock-foundation/**'
       - 'engineering/tests/golden/i10-multiblock-foundation/**'
       - 'art/golden-samples/i10-multiblock-visual/**'
@@ -42,6 +43,7 @@ jobs:
           engineering/tests/test_i10_multiblock_foundation_task5.py
           engineering/tests/test_i10_multiblock_foundation_handoff.py
           engineering/tests/test_i10_multiblock_foundation_gametest.py
+          engineering/tests/test_i10_chunk_acceptance.py
           engineering/tests/test_i10_multiblock_foundation_composition.py
 
       - name: Materialize I10 Golden
