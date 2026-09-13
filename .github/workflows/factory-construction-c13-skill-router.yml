@@ -9,6 +9,12 @@ on:
       - 'construction/tests/test_c13_*.py'
       - 'skills/capabilities/**'
       - 'skills/scripts/capability_router.py'
+      - 'skills/scripts/validate_skill_repository.py'
+      - 'skills/ROUTER.md'
+      - 'skills/README.md'
+      - 'skills/VERSION-AUTHORITY.md'
+      - 'skills/USER-GUIDED-WORKFLOW.md'
+      - 'engineering/REPO-ROUTING.md'
   pull_request:
     branches:
       - feat/construction-c12-runtime-acceptance-preflight
@@ -17,6 +23,12 @@ on:
       - 'construction/tests/test_c13_*.py'
       - 'skills/capabilities/**'
       - 'skills/scripts/capability_router.py'
+      - 'skills/scripts/validate_skill_repository.py'
+      - 'skills/ROUTER.md'
+      - 'skills/README.md'
+      - 'skills/VERSION-AUTHORITY.md'
+      - 'skills/USER-GUIDED-WORKFLOW.md'
+      - 'engineering/REPO-ROUTING.md'
 
 permissions:
   contents: read
@@ -36,5 +48,16 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Run C13 RED router integration contracts
+      - name: Set up Node 20 for existing skill and art validation
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '20.20.2'
+
+      - name: Run C13 router integration contracts
         run: python3 -m unittest construction/tests/test_c13_skill_router_integration.py -v
+
+      - name: Run existing Factory skill repository validator
+        run: python3 skills/scripts/validate_skill_repository.py
+
+      - name: Check C13 authority integration whitespace
+        run: git diff --check
