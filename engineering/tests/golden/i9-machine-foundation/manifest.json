@@ -24,6 +24,15 @@
     {
       "source": "src/main/java/dev/example/i9machine/machine/MachineMenu.java",
       "destination": "src/main/java/dev/example/i9machine/machine/MachineMenu.java"
+    },
+    {
+      "source": "src/main/java/dev/example/i9machine/gametest/I9MachineGameTests.java",
+      "destination": "src/main/java/dev/example/i9machine/gametest/I9MachineGameTests.java"
+    },
+    {
+      "source": "src/main/resources/data/i9_machine/structure/machine_test.nbt",
+      "destination": "src/main/resources/data/i9_machine/structure/machine_test.nbt",
+      "sha256": "75b23fb80317d88bbde1a2aff7121cfd903b8a1010878e0327ce26fd4d3f1c99"
     }
   ],
   "main_class_patch": {
