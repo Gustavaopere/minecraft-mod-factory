@@ -278,17 +278,18 @@ class ConstructionC11ComplexModdedGoldenTest(unittest.TestCase):
             root = Path(tmp)
             workspace = root / "workspace"
             workspace.mkdir()
-            modlist, mods_dir, runtime_snapshot = self._prepare_sample_inputs(root)
+            modlist, mods_dir, _ = self._prepare_sample_inputs(workspace)
+            runtime_snapshot = workspace / "c11-runtime-snapshot.json"
             runtime_snapshot.write_text(json.dumps(self._valid_runtime_snapshot()), encoding="utf-8")
             previous = Path.cwd()
             argv = [
                 str(CAPTURE_PATH),
                 "--physical-modlist",
-                str(modlist),
+                modlist.name,
                 "--mods-dir",
                 str(mods_dir),
                 "--runtime-snapshot",
-                str(runtime_snapshot),
+                runtime_snapshot.name,
                 "--captured-at",
                 "2026-09-09",
                 "--output",
