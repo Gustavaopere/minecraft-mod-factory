@@ -83,6 +83,7 @@ jobs:
           migration/full-skill-migration/test_sonar_hardening.py
           migration/full-skill-migration/test_sonar_regex_hardening.py
           migration/full-skill-migration/test_sonar_ci_contract.py
+          migration/full-skill-migration/test_sonar_campaign_target_coverage.py
           -v
 
   m6-golden-relocation:
