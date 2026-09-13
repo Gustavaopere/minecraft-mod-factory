@@ -180,6 +180,22 @@ jobs:
             coverage_started=1
           fi
 
+          if [[ -f migration/full-skill-migration/check_whitespace.py && -f migration/full-skill-migration/test_markdown_whitespace_policy.py ]]; then
+            if [[ "$coverage_started" -eq 0 ]]; then
+              python3 -m coverage run \
+                --branch \
+                --include=migration/full-skill-migration/check_whitespace.py \
+                migration/full-skill-migration/test_markdown_whitespace_policy.py
+            else
+              python3 -m coverage run \
+                --append \
+                --branch \
+                --include=migration/full-skill-migration/check_whitespace.py \
+                migration/full-skill-migration/test_markdown_whitespace_policy.py
+            fi
+            coverage_started=1
+          fi
+
           if compgen -G 'construction/tests/test_c10_*.py' >/dev/null && [[ -d construction/providers && -d construction/scripts ]]; then
             if [[ "$coverage_started" -eq 0 ]]; then
               python3 -m coverage run \
@@ -192,6 +208,22 @@ jobs:
                 --branch \
                 --source=construction/providers,construction/scripts \
                 -m unittest discover -s construction/tests -p 'test_c10_*.py' -v
+            fi
+            coverage_started=1
+          fi
+
+          if [[ -d narrative/tooling && -d narrative/tests ]]; then
+            if [[ "$coverage_started" -eq 0 ]]; then
+              python3 -m coverage run \
+                --branch \
+                --source=narrative/tooling \
+                -m unittest discover -s narrative/tests -p 'test_*.py' -v
+            else
+              python3 -m coverage run \
+                --append \
+                --branch \
+                --source=narrative/tooling \
+                -m unittest discover -s narrative/tests -p 'test_*.py' -v
             fi
             coverage_started=1
           fi
