@@ -1,5 +1,6 @@
 name: Materialize Narrative Migration
 
+# Staging verified: 12 chunks / 59616 base64 characters.
 on:
   push:
     branches:
