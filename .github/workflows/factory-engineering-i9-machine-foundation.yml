@@ -1,0 +1,35 @@
+name: Factory Engineering I9 Machine Foundation
+
+on:
+  push:
+    branches:
+      - main
+      - engineering/i9-machine-foundation-reference
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'engineering/tooling/machine-foundation/**'
+      - 'engineering/tests/golden/i9-machine-foundation/**'
+      - 'engineering/tests/test_i9_machine_foundation.py'
+      - 'engineering/tests/fixtures/i9-machine-*.json'
+      - '.github/workflows/factory-engineering-i9-machine-foundation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  machine-foundation-contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+
+      - name: Run I9 structural contract tests
+        run: python3 -m unittest engineering/tests/test_i9_machine_foundation.py
+
+      - name: Check whitespace
+        if: always()
+        run: git diff --check HEAD^
