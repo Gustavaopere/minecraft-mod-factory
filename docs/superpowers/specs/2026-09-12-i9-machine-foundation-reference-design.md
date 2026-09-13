@@ -2,32 +2,47 @@
 
 ## Status
 
-Design approved in chat on 2026-09-12. This document defines the architectural boundary for PR I9 before implementation.
+Design approved in chat on 2026-09-12 and reconciled during target-exact implementation audit on 2026-09-12/13. The reconciliation preserves the approved I9 architecture but removes one buildscript assumption that the physical NeoGradle stack disproved.
 
 ## Canonical authorities
 
 - Engineering plan: `plans/PLANO-MESTRE-MINECRAFT-MOD-FACTORY-MOD-ENGINEERING-NEOFORGE-1.21.1-V1.1.md`
 - Art/asset plan: `plans/PLANO-MESTRE-UNIFICADO-MINECRAFT-MOD-FACTORY-REPO-TEXTURA-BLOCKBENCH-ASSET-MCP-V5.1.md`
 - Current status authority: root `STATUS.md`
-- Physical target authority: project-supplied modlist snapshot with SHA-256 `7c0a23d6013101383d196526e4b6ba6940fb54a0fed10eaed5956ab015cfcc00`
+- Physical modlist snapshot SHA-256: `7c0a23d6013101383d196526e4b6ba6940fb54a0fed10eaed5956ab015cfcc00`
 - Target: Minecraft `1.21.1`, NeoForge `21.1.248`, Java `21`
+- Physical build plugin: `net.neoforged.gradle.userdev` `7.1.26`
 
 The engineering plan defines I9 as a reference implementation in a dedicated Golden fixture, not forced into every mod, covering inventory, energy, recipe, progress, persistence, sync, menu, and GameTest.
 
 ## Problem statement
 
-I8 proves deterministic generation of block/item/BlockEntity/menu/network/recipe skeletons. I9 must prove that the Factory can assemble those lower-level primitives into a coherent, server-authoritative machine reference with real NeoForge behavior. The reference must be reproducible and testable without turning the Factory into a mega-mod or changing the generic I8 generator into a machine runtime generator.
+I8 proves deterministic generation of block/item/BlockEntity/menu/network/recipe skeletons. I9 must prove that the Factory can assemble lower-level primitives into a coherent, server-authoritative machine reference with real NeoForge behavior. The reference must be reproducible and testable without turning the Factory into a mega-mod or changing the generic I8 generator into a machine runtime generator.
 
 ## Decision
 
 Use a **compositional dedicated Golden**.
 
-The I9 Golden is produced from a fresh canonical I3 scaffold plus an I9-owned overlay/reference layer. The I9 layer contains only machine-specific runtime code, tests, resources, and any narrowly required build configuration delta. Common scaffold/build metadata remains owned by I3.
+The I9 Golden is produced from a fresh canonical I3 scaffold plus an I9-owned overlay/reference layer. The I9 layer contains only machine-specific runtime code, tests, resources, and narrowly required composition metadata. Common scaffold/build metadata remains owned by I3.
 
 Rejected alternatives:
 
-1. **Standalone duplicated Golden** — rejected because it duplicates I3 build/scaffold authority and increases drift risk.
-2. **Add a `machine` feature to I8** — rejected because I9 is a reference composition, while I8 is generic feature scaffolding. Mixing them expands blast radius and makes the machine reference implicitly normative for all generated mods.
+1. **Standalone duplicated Golden** — duplicates I3 build/scaffold authority and increases drift risk.
+2. **Add a `machine` feature to I8** — mixes a reference composition into generic feature scaffolding and expands blast radius.
+
+## Target-exact GameTest buildscript reconciliation
+
+NeoForge GameTest documentation recommends `setForceExit false` for a Game Test Server run. The physical I9 target, however, uses NeoGradle userdev `7.1.26`. A TDD probe was executed before machine implementation:
+
+- RED run `34733484481`: the newly added contract failed because the canonical I3 scaffold did not contain `setForceExit false`.
+- Experimental correction HEAD `7e9b2bcbc44e827df13bbc5e13b3543b9d641af3` added that directive to I3.
+- Target-exact I3 run `34733610517` then passed all `20/20` Python I3/security tests but failed while evaluating the generated project: `Could not find method setForceExit() ... RunImpl`.
+- The same unsupported buildscript directive propagated to I8 and caused its generated-project build gate to fail.
+- NeoGradle `NG_7.1` run DSL inspection does not expose a `forceExit` property/method on the physical `Run` contract.
+
+Therefore, `setForceExit false` is **not part of the I9/I3 contract for NeoGradle 7.1.26**. The experimental I3 change must be reverted. The authoritative GameTest gate is the real target-exact command `./gradlew runGameTestServer --no-daemon`. If that command fails once actual I9 GameTests exist, the failure must be diagnosed from the physical runtime/build logs; no unsupported ForgeGradle-style directive may be invented or copied into NeoGradle.
+
+This reconciliation is evidence-driven and does not weaken the requirement that GameTests must run successfully before I9 can pass.
 
 ## Scope
 
@@ -42,42 +57,42 @@ I9 must implement and prove all of the following in one reference machine:
 - menu backend;
 - GameTest coverage.
 
-I9 also inherits target validation, build, GameTest-server, dedicated-server and evidence behavior from the existing I3/I5 infrastructure where applicable.
+I9 inherits target validation, build, GameTest-server, dedicated-server, and evidence behavior from I3/I5 where applicable.
 
 ## Non-goals
 
 I9 does not include:
 
-- custom visual screen art, sprites, textures, animation, VFX or GUI visual design;
+- custom visual screen art, sprites, textures, animation, VFX, or GUI visual design;
 - multiblock behavior (I10);
 - logistics graph/transfer networks (I11);
 - provider adapter framework (I12);
 - release tooling (I13);
-- a full production mod or the I14 end-to-end Golden;
-- fluid handling unless a later canonical requirement explicitly adds it;
-- upgrades, tiers, sides/configuration UX, redstone modes or automation policy beyond what is necessary to prove item/energy capabilities;
+- the I14 end-to-end Golden;
+- fluid handling;
+- upgrades, tiers, side-configuration UX, redstone modes, or automation policy beyond proving item/energy capabilities;
 - a custom recipe serializer/type.
 
-The art plan remains authoritative for the visual package. Engineering owns the Java menu/runtime logic; Repo Textura owns GUI visual assets and handoff.
+Engineering owns Java menu/runtime logic; Repo Textura owns GUI visual assets and handoff.
 
 ## Reuse and provenance
 
-The pre-I9 audit found no equivalent reusable Machine Foundation in the historical RPG repository. I9 is therefore new Factory engineering work built on proven Factory infrastructure, not a reimplementation of a migrated historical capability.
+The pre-I9 audit found no equivalent reusable Machine Foundation in the historical RPG repository. I9 is new Factory engineering built on proven Factory infrastructure.
 
 Reuse boundaries:
 
 - **I3 scaffolder**: canonical project/bootstrap/build base.
 - **I5 test harness**: allowlisted `test`, `runGameTestServer`, and dedicated-server smoke execution.
-- **I8 feature generator**: reference for target-exact registry, BlockEntity, menu and recipe skeleton conventions only. I9 must not make I8 machine-aware in this PR.
+- **I8 feature generator**: reference for target-exact registry, BlockEntity, menu, and recipe skeleton conventions only. I9 must not make I8 machine-aware.
 
 ## Reference machine model
 
-The Golden contains one single-block processing machine with two machine item slots:
+The Golden contains one single-block processing machine with two item slots:
 
 - slot `0`: input;
 - slot `1`: output.
 
-Reference constants are fixed for I9 so tests do not depend on configuration:
+Fixed I9 constants:
 
 - energy capacity: `10_000`;
 - maximum external receive per call: `1_000`;
@@ -85,238 +100,203 @@ Reference constants are fixed for I9 so tests do not depend on configuration:
 - processing energy cost: `20` energy units per server tick;
 - processing duration: `100` server ticks.
 
-The machine consumes stored energy while processing an accepted recipe. It accumulates progress server-side, consumes the input when the recipe completes, and inserts the result into the output slot.
+The machine consumes stored energy while processing an accepted recipe, accumulates progress server-side, consumes input only on completion, and inserts the result into output.
 
-The machine must fail closed when:
-
-- no matching recipe exists;
-- stored energy is insufficient for the current processing step;
-- the output cannot accept the recipe result;
-- the input no longer matches while progress is in flight.
-
-When processing preconditions cease to hold, progress resets to `0` rather than silently completing stale work.
+The machine fails closed when no matching recipe exists, energy is insufficient, output cannot accept the result, or the input changes during processing. When preconditions cease to hold, progress resets to `0` without stale completion.
 
 ## Recipe integration
 
-The I9 Golden uses the vanilla `minecraft:smelting` recipe type as its reference recipe domain.
+The I9 Golden uses vanilla `minecraft:smelting`.
 
-The implementation resolves recipes server-side through `RecipeManager` using a `SingleRecipeInput`. The canonical GameTest case is:
+Reference GameTest transformation:
 
 - input: `minecraft:raw_iron`;
 - expected result: `minecraft:iron_ingot`.
 
-This provides a deterministic single-input transformation in the vanilla target without introducing a custom recipe serializer/type. The machine's own progress duration remains the fixed I9 value of `100` ticks; it does not inherit the vanilla furnace recipe cooking-time field.
+Lookup is server-side through `RecipeManager` with `SingleRecipeInput`; result assembly uses server registry access. I9 keeps its own fixed `100`-tick duration rather than inheriting furnace cooking time.
 
-If target-exact compilation shows that the 1.21.1 API shape differs from the documented `RecipeManager` / `SingleRecipeInput` path, implementation must stop and amend this design instead of inventing an API or adding a custom recipe type.
+If target-exact compilation disproves an assumed recipe API signature, implementation must amend this design before substituting another API or adding a custom recipe type.
 
 ## Inventory architecture
 
-Use NeoForge's `ItemStackHandler` as the backing store and expose the machine inventory via `Capabilities.ItemHandler.BLOCK` registered for the machine BlockEntity type.
+Use NeoForge `ItemStackHandler` as the backing store and expose inventory with `Capabilities.ItemHandler.BLOCK` registered for the machine BlockEntity type.
 
-The machine owns slot policy:
+Policy:
 
 - input accepts only items matching a vanilla smelting recipe in the current server `RecipeManager`;
 - output rejects manual insertion;
-- extraction from output is allowed;
-- no additional slots are added in I9.
+- output extraction is allowed;
+- no additional machine slots.
 
-The menu consumes an `IItemHandler` view and uses `SlotItemHandler`; the menu must not become the data holder.
-
-Capability registration must use NeoForge's block-entity capability registration path. The handler instance is stable for the lifetime of the BlockEntity, so the baseline I9 implementation does not swap capability instances and therefore does not introduce an avoidable invalidation path.
+The menu consumes an `IItemHandler` view and uses `SlotItemHandler`; the menu is never the data holder. The handler instance remains stable for the lifetime of the BlockEntity.
 
 ## Energy architecture
 
 Expose energy through `Capabilities.EnergyStorage.BLOCK` using an `IEnergyStorage` implementation owned by the machine.
 
-The store accepts external energy up to the fixed receive rate and capacity, exposes the current/capacity values, and rejects external extraction. The machine itself consumes energy internally as part of server-side processing.
-
-Energy mutation that affects machine state must mark the BlockEntity changed so persistence is not dependent on unrelated inventory mutations.
+The store accepts external energy up to fixed receive/capacity bounds, rejects external extraction, and exposes current/max energy. Internal processing has an explicit machine-owned consumption path. Real energy mutations call `setChanged()` through the owning BlockEntity so persistence cannot depend on inventory mutation.
 
 ## Processing state machine
 
-Processing runs on the logical server only.
+Processing mutates state on the logical server only.
 
 Per server tick:
 
-1. Read the current input and output state.
-2. Build a `SingleRecipeInput` and resolve a matching vanilla smelting recipe from the server `RecipeManager`.
-3. Assemble the recipe result against the server registry access.
-4. Verify result capacity/output compatibility.
+1. Read input/output.
+2. Resolve the vanilla smelting recipe using `SingleRecipeInput`.
+3. Assemble the result using server registry access.
+4. Verify output capacity/compatibility.
 5. Verify at least `20` stored energy.
-6. If all preconditions hold, consume `20` energy and increment progress by `1`.
-7. When progress reaches `100`, consume one input item, insert the assembled result, then reset progress to `0`.
-8. If any precondition fails before completion, reset progress to `0` without consuming input or creating output.
-9. Mark the BlockEntity changed whenever persistent state changes.
+6. Consume `20` energy and increment progress by `1` when all preconditions hold.
+7. At progress `100`, consume one input, insert the result, and reset progress to `0`.
+8. On any failed precondition, reset progress to `0` without consuming input or creating output.
+9. Mark persistent state changed whenever it mutates.
 
-Client-side ticking must not mutate inventory, energy or progress.
+Client-side ticking must not mutate inventory, energy, or progress.
 
 ## Persistence
 
-The BlockEntity persists all state needed to resume deterministically after reload:
+Persist:
 
 - item handler contents;
 - stored energy;
 - current progress.
 
-The fixed I9 constants are not persisted.
+Fixed constants are not persisted. Use target 1.21.1 BlockEntity `loadAdditional` / `saveAdditional` lifecycle with registry-aware serialization where required.
 
-For an owned BlockEntity, use direct BlockEntity NBT persistence through the target 1.21.1 `loadAdditional` / `saveAdditional` lifecycle, matching NeoForge guidance.
+Load bounds:
 
-Loading malformed/out-of-range machine-owned numeric values must fail closed to valid bounds:
+- energy: `0..10_000`;
+- progress: `0..99`.
 
-- energy clamped to `0..10_000`;
-- progress clamped to `0..99` so a loaded value can never trigger an unearned completion tick.
+A loaded value must never trigger an unearned completion tick.
 
 ## Synchronization
 
 Synchronization is deliberately minimal.
 
-The menu synchronizes integer machine state required for presentation through `ContainerData` / `DataSlot` semantics. The I9 menu exposes exactly three integer values:
+The menu exposes exactly three integer values through `ContainerData`:
 
-- current progress;
-- maximum progress (`100`);
-- current energy.
+1. current progress;
+2. maximum progress (`100`);
+3. current energy.
 
-Item stacks synchronize through menu slots.
-
-BlockEntity update packets/tags are not part of the baseline I9 contract. They may be added only if target-exact GameTest/runtime evidence demonstrates a non-menu synchronization requirement. I9 must not duplicate the same state through both menu synchronization and custom networking without a demonstrated need.
+Items synchronize through menu slots. BlockEntity update packets/tags are excluded from the baseline unless runtime evidence demonstrates a non-menu need. I9 must not duplicate the same state through menu sync plus custom networking without evidence.
 
 ## Menu backend
 
 Implement an `AbstractContainerMenu` with:
 
-- client constructor using dummy/safe local references;
-- server constructor receiving the real machine item handler and synchronized integer data;
+- safe client constructor;
+- server constructor receiving real machine `IItemHandler`, synchronized integer data, and `ContainerLevelAccess`;
 - machine input/output slots first;
 - player inventory and hotbar afterward;
-- `stillValid` based on `ContainerLevelAccess` and the machine block;
-- complete `quickMoveStack` behavior for machine-to-player and player-to-machine movement;
-- output slot insertion restrictions preserved during shift-click.
+- `stillValid` based on the machine block and access position;
+- complete `quickMoveStack` behavior;
+- no shift-click path that inserts into output.
 
-The block opens the menu on the logical server using the target NeoForge/Minecraft menu-opening path. No `AbstractContainerScreen` is part of I9.
+The block opens the menu only on the logical server. No `AbstractContainerScreen` is part of I9.
 
 ## Registry and bootstrap
 
-The I9 overlay registers only the objects required by the Golden:
+The I9 overlay registers only:
 
 - machine block;
 - machine block item;
 - machine BlockEntity type;
 - machine menu type.
 
-The overlay must integrate through the canonical mod event bus/bootstrap pattern already established by I3/I8. It must not replace the canonical main class with an unrelated bootstrap architecture.
+Registration integrates through the canonical mod event bus/bootstrap pattern established by I3/I8. It must not replace the canonical main class with unrelated bootstrap architecture.
 
 ## GameTest design
 
-Use NeoForge 1.21.1 GameTest APIs with a dedicated I9 test holder and a structure template under `data/<namespace>/structure`.
+Use target NeoForge GameTest APIs with an I9 test holder and structure template under `data/<namespace>/structure`.
 
 Required GameTests:
 
-1. **inventory capability** — block exposes item capability and enforces input/output rules;
-2. **energy capability** — block exposes energy capability, caps storage at `10_000`, accepts no more than `1_000` per external receive call, and rejects external extraction;
-3. **successful processing** — raw iron + at least `2_000` energy advances for `100` ticks and produces one iron ingot while consuming one raw iron;
-4. **insufficient energy** — with less than one processing tick's energy available, the machine does not complete work and progress is `0`;
-5. **blocked output** — incompatible/full output prevents progress and does not consume the input;
-6. **persistence** — inventory, energy and in-flight progress survive the target BlockEntity serialization/load path;
-7. **progress reset** — removing/changing the input after progress has started resets progress to `0` without producing output.
+1. **inventory capability** — capability exists and input/output rules hold;
+2. **energy capability** — capacity `10_000`, max receive `1_000`, external extraction `0`;
+3. **successful processing** — raw iron + at least `2_000` energy produces one iron ingot after `100` processing ticks and consumes one raw iron;
+4. **insufficient energy** — work cannot complete and progress returns to `0`;
+5. **blocked output** — no input consumption or overflow when output rejects result;
+6. **persistence** — inventory, energy, and in-flight progress survive real serialization/load;
+7. **progress reset** — invalidating input after progress starts resets to `0` without output.
 
-GameTests are required tests, not optional informational tests.
-
-## Build configuration requirement
-
-The existing I3 build configuration already defines a `gameTestServer` run and the namespace property. NeoForge 1.21.1 documentation states that NeoGradle's default force-exit behavior can make `runGameTestServer` report failure and recommends `setForceExit false` on the Game Test Server run configuration.
-
-I9 must begin with a RED contract that proves whether the current I3-generated project is missing this required target-exact setting. If RED reproduces the documented failure/contract gap, the narrowest owner-correct fix must be applied. Because the setting belongs to scaffold/run configuration rather than machine runtime, the preferred ownership is I3 scaffold output plus its Golden, with regression coverage. I9 must not carry a private divergent buildscript workaround if the shared scaffold is objectively wrong.
+All seven are required tests.
 
 ## Golden materialization
 
-The Golden must remain compositional and reproducible.
+The Golden remains compositional and reproducible:
 
-Expected flow:
+1. Generate a fresh I3 project.
+2. Apply the I9 overlay deterministically.
+3. Validate declared I9-owned paths and the exact main-class wiring mutation.
+4. Run structural/unit contracts.
+5. Run `test build`.
+6. Run `runGameTestServer` on the physical target.
+7. Prepare `run/server/eula.txt` with `eula=true` only inside the controlled generated CI fixture, then run I5 dedicated-server smoke.
 
-1. Generate a fresh mod project with the canonical I3 scaffolder.
-2. Apply the I9 reference overlay deterministically.
-3. Validate that only declared I9-owned paths/build deltas are introduced.
-4. Run structural contract tests.
-5. Run Gradle build/tests.
-6. Run the Game Test Server.
-7. Write `run/server/eula.txt` with `eula=true` only inside the controlled generated CI fixture, then run the I5 dedicated-server smoke. This is test-fixture setup, not a repository-wide or user EULA decision.
-
-The implementation plan will select physical paths by auditing the branch tree and following the current `engineering/` conventions; it must not create a historical directory solely because an old plan once named one.
+No historical directory is prescribed when the current tree supports a better location.
 
 ## Determinism and overwrite policy
 
-Applying or materializing the I9 reference must be deterministic.
-
-- Existing unrelated project files are not overwritten silently.
-- Shared scaffold files may be changed only through their owning I3 contract and tests.
-- I9-owned files may be regenerated only when byte-equivalent to the declared reference or under an explicit update path covered by tests.
-- Any file mutation that changes an existing non-I9 artifact requires explicit ownership evidence and regression coverage.
+- Unrelated existing project files are never overwritten silently.
+- Shared scaffold files can change only under their owning I3 contract with a proven target-exact defect.
+- I9-owned files are copied/generated deterministically.
+- Main-class wiring uses one exact anchor and fails on zero/multiple matches.
+- Any mutation to a non-I9 artifact requires ownership evidence and regression coverage.
 
 ## Error handling
 
-The reference must fail closed on:
+Fail closed on:
 
 - unsupported target identity;
-- missing required registry/bootstrap state;
-- malformed persistent numeric state;
+- missing registry/bootstrap state;
+- malformed/out-of-range persisted state;
 - recipe lookup failure;
 - output overflow/incompatibility;
 - missing capability registration;
-- GameTest structure/template mismatch;
-- build/run configuration drift.
-
-Tests should assert externally observable behavior and contract boundaries rather than incidental private implementation details.
+- GameTest template mismatch;
+- build/run configuration drift;
+- path traversal, symlink escape, unknown manifest fields, duplicate overlay paths, or unintended overwrite.
 
 ## Test strategy and gates
 
 Implementation follows RED → GREEN with objective evidence.
 
-Minimum gates before I9 can merge:
+Minimum gates before merge:
 
-- new I9 structural/unit contract tests pass;
-- any I3 buildscript regression introduced by the GameTest-server correction passes;
+- I9 structural/unit contracts pass;
 - relevant I3/I4/I5/I8 regressions pass;
 - target-exact `gradlew test build` passes;
-- target-exact `gradlew runGameTestServer` passes with all required I9 GameTests;
-- I5 dedicated-server smoke passes in the controlled fixture;
-- whitespace gate passes;
+- target-exact `gradlew runGameTestServer` exits `0` with all seven required I9 GameTests passing;
+- I5 dedicated-server smoke passes;
+- whitespace passes;
 - Sonar Quality Gate passes;
-- PR review findings are either fixed with regression evidence or explicitly shown non-applicable;
-- no pending/failing required checks remain immediately before merge;
-- post-merge workflows and main-branch Sonar pass before `STATUS.md` records `I9_STATE=PASS`.
+- review findings are fixed through regression evidence or proven non-applicable;
+- no pending/failing required checks immediately before merge;
+- post-merge workflows and main Sonar pass before `STATUS.md` records `I9_STATE=PASS`.
 
 ## First RED sequence
 
-The implementation plan must begin with the smallest evidence-producing failures, in this order:
+The corrected implementation sequence is:
 
-1. **GameTest run-config RED** — assert the canonical I3 scaffold contains the target-required `gameTestServer { setForceExit false }` behavior; this is expected to fail on the current scaffold and establishes ownership before machine code exists.
-2. **I9 Golden contract RED** — assert the dedicated I9 fixture/overlay and required machine surfaces do not yet exist.
-3. **Machine behavior RED** — after the project compiles, add required GameTests for capabilities and processing behavior before completing runtime logic.
+1. **I9 Golden composition RED** — assert fixtures exist but materializer/manifest/overlay surfaces do not yet exist.
+2. **Machine surface RED** — require registry, block, BlockEntity, menu, inventory, and energy surfaces before adding them.
+3. **Machine behavior RED** — add required GameTests before completing runtime behavior.
+4. **Workflow RED** — require the permanent I9 workflow contract before expanding it to full gates.
 
-Do not skip the first RED by editing `build.gradle` preemptively.
+The prior `setForceExit` probe remains recorded as target-exact audit evidence but is not retained as an I3 contract.
 
 ## Security and quality constraints
 
-- No arbitrary filesystem write surface is introduced.
-- No user-provided path becomes a write authority without existing Factory containment rules.
-- No secrets or remote credentials are required by the Golden runtime.
-- CI actions should follow repository pinning conventions.
-- New Python/JavaScript tooling, if any, must be included in Sonar coverage according to the existing fail-closed coverage workflow.
-- Java runtime behavior is verified primarily by real target-exact Gradle/GameTest execution; Sonar remains a quality gate, not a substitute for runtime proof.
-
-## Source references checked for this design
-
-Canonical plan statements are sourced from the two repository plans listed above. Target-exact API assumptions were checked against NeoForge documentation for the 1.21–1.21.1 line:
-
-- Capabilities: https://docs.neoforged.net/docs/1.21.1/inventories/capabilities/
-- Containers / `ItemStackHandler`: https://docs.neoforged.net/docs/1.21.1/inventories/container/
-- Block entities / persistence: https://docs.neoforged.net/docs/1.21.1/blockentities/
-- Recipes: https://docs.neoforged.net/docs/1.21.1/resources/server/recipes/
-- Built-in recipes: https://docs.neoforged.net/docs/1.21.1/resources/server/recipes/builtin/
-- Menus: https://docs.neoforged.net/docs/1.21.1/gui/menus/
-- Game Tests: https://docs.neoforged.net/docs/1.21.1/misc/gametest/
+- No arbitrary filesystem write surface.
+- No user-provided path becomes write authority without containment validation.
+- No secrets or remote credentials required by Golden runtime.
+- CI actions follow repository pinning conventions.
+- New production Python/JavaScript tooling must participate in Sonar coverage.
+- Runtime correctness is proven by real target-exact Gradle/GameTest execution; Sonar is a quality gate, not a runtime substitute.
 
 ## Acceptance boundary
 
-I9 is complete only when a fresh canonical scaffold can materialize the dedicated machine reference and the resulting NeoForge 1.21.1 project proves, with target-exact automated evidence, inventory + energy + recipe + progress + persistence + sync + menu + GameTest behavior. The reference remains a Golden/reference capability and is not automatically injected into every generated mod.
+I9 is complete only when a fresh canonical scaffold can materialize the dedicated machine reference and the resulting NeoForge 1.21.1 / NeoForge 21.1.248 / Java 21 project proves inventory + energy + recipe + progress + persistence + sync + menu + GameTest behavior with target-exact automated evidence. The machine remains a Golden/reference capability and is not automatically injected into every generated mod.
