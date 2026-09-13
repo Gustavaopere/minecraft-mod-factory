@@ -161,6 +161,14 @@ C10 defines the external-provider evidence and handoff boundary without expandin
 - ObjToSchematic remains only a candidate manual smoke path until the required fresh official evidence and manual handoff evidence are captured. Discovery alone is not execution proof.
 - C11 remains the complex-modded Golden frontier, C12 remains live/full-modpack runtime acceptance and C13 remains Skill/Router integration. C10 does not pre-empt those authorities.
 
+## C11 scope
+
+C11 Complex Modded Golden remains an evidence-gated offline Golden frontier. Its completion requires a real C4 registry captured from the exact stabilized physical modpack before any modded palette, Build IR, C7/C8 evidence, Sponge v3 artifact or final manifest can be frozen.
+
+The current state is `MANUAL_URGENT_PENDING_MODLIST_STABILIZATION`: real C4 capture is deferred until the physical modlist stabilizes. During that deferral, the Factory may harden the capture helper, probe build, governance, Sonar coverage and documentation only. A preflight green is readiness evidence, not C11 completion.
+
+C11 must remain fail-closed: no synthetic registry, inferred block ID, placeholder palette or fabricated Golden artifact may replace the required physical C4 evidence. C12 Runtime Acceptance remains the separate authority for full-modpack boot, live placement and runtime visual fidelity. STATUS does not advance until C11 completion is proven and validated post-merge.
+
 ## Planned pipeline
 
 ```text
