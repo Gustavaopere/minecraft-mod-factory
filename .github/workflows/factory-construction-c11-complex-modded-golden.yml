@@ -48,6 +48,7 @@ jobs:
             construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_deferred_capture_state_is_explicit_and_blocks_completion \
             construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_workflow_distinguishes_preflight_from_completion \
             construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_docs_define_deferred_c11_boundary \
+            construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_pending_state_skips_completion_only_registry_assertion_in_aggregate_suites \
             construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_requires_every_physical_top_level_jar \
             construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_rejects_missing_runtime_snapshot_stably \
             construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_rejects_malformed_runtime_json_stably \
