@@ -15,6 +15,7 @@ MOD_SPEC_PATH = REPO_ROOT / "engineering/tests/fixtures/i10-multiblock-mod-spec.
 SCAFFOLD_CONFIG_PATH = REPO_ROOT / "engineering/tests/fixtures/i10-multiblock-scaffold-config.json"
 GOLDEN_ROOT = REPO_ROOT / "engineering/tests/golden/i10-multiblock-foundation"
 MANIFEST_PATH = GOLDEN_ROOT / "manifest.json"
+HANDOFF_PATH = GOLDEN_ROOT / "asset-handoff.json"
 OVERLAY_ROOT = GOLDEN_ROOT / "overlay"
 MAIN_CLASS_RELATIVE = "src/main/java/dev/example/i10multiblock/I10MultiblockMod.java"
 CANONICAL_OVERLAY_FILES = (
@@ -29,6 +30,16 @@ CANONICAL_OVERLAY_FILES = (
     ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlockEntity.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlockEntity.java"),
     ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlock.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlock.java"),
     ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlockEntity.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlockEntity.java"),
+    ("src/main/resources/assets/i10_multiblock/blockstates/multiblock_controller.json", "src/main/resources/assets/i10_multiblock/blockstates/multiblock_controller.json"),
+    ("src/main/resources/assets/i10_multiblock/blockstates/multiblock_io_port.json", "src/main/resources/assets/i10_multiblock/blockstates/multiblock_io_port.json"),
+    ("src/main/resources/assets/i10_multiblock/blockstates/multiblock_casing.json", "src/main/resources/assets/i10_multiblock/blockstates/multiblock_casing.json"),
+)
+CANONICAL_ART_FILES = (
+    ("art/golden-samples/i10-multiblock-visual/models/controller_unformed.json", "src/main/resources/assets/i10_multiblock/models/block/controller_unformed.json"),
+    ("art/golden-samples/i10-multiblock-visual/models/controller_formed.json", "src/main/resources/assets/i10_multiblock/models/block/controller_formed.json"),
+    ("art/golden-samples/i10-multiblock-visual/models/casing.json", "src/main/resources/assets/i10_multiblock/models/block/casing.json"),
+    ("art/golden-samples/i10-multiblock-visual/models/io_port_unformed.json", "src/main/resources/assets/i10_multiblock/models/block/io_port_unformed.json"),
+    ("art/golden-samples/i10-multiblock-visual/models/io_port_formed.json", "src/main/resources/assets/i10_multiblock/models/block/io_port_formed.json"),
 )
 CANONICAL_PATCH = {
     "path": MAIN_CLASS_RELATIVE,
@@ -148,6 +159,35 @@ def _validate_manifest() -> tuple[list[tuple[PurePosixPath, PurePosixPath]], dic
     )
 
 
+def _validate_handoff_art_files() -> list[tuple[PurePosixPath, PurePosixPath]]:
+    handoff = _load_json_object(HANDOFF_PATH, label="I10 asset handoff")
+    artifacts = handoff.get("artifacts")
+    if not isinstance(artifacts, list):
+        raise MaterializationError("I10 asset handoff artifacts must be an array")
+
+    declared: list[tuple[str, str]] = []
+    for index, artifact in enumerate(artifacts):
+        if not isinstance(artifact, dict):
+            raise MaterializationError(f"I10 asset handoff artifacts[{index}] must be an object")
+        source = _safe_relative(
+            artifact.get("source_path"),
+            label=f"I10 asset handoff artifacts[{index}].source_path",
+        )
+        destination = _safe_relative(
+            artifact.get("delivery_path"),
+            label=f"I10 asset handoff artifacts[{index}].delivery_path",
+        )
+        declared.append((source.as_posix(), destination.as_posix()))
+
+    if tuple(declared) != CANONICAL_ART_FILES:
+        raise MaterializationError("I10 asset handoff cannot delegate art delivery authority")
+
+    return [
+        (PurePosixPath(source), PurePosixPath(destination))
+        for source, destination in CANONICAL_ART_FILES
+    ]
+
+
 def _validate_overlay_source(relative: PurePosixPath) -> Path:
     if not OVERLAY_ROOT.is_dir():
         raise MaterializationError(f"I10 overlay root is missing: {OVERLAY_ROOT}")
@@ -162,6 +202,21 @@ def _validate_overlay_source(relative: PurePosixPath) -> Path:
     resolved = current.resolve(strict=True)
     if not _is_within(resolved, overlay_root):
         raise MaterializationError(f"I10 overlay source escapes overlay root: {relative.as_posix()}")
+    return resolved
+
+
+def _validate_repo_source(relative: PurePosixPath) -> Path:
+    current = REPO_ROOT
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            raise MaterializationError(f"I10 Repo Textura source cannot contain symlinks: {relative.as_posix()}")
+    if not current.is_file():
+        raise MaterializationError(f"I10 Repo Textura source is missing: {relative.as_posix()}")
+    repo_root = REPO_ROOT.resolve(strict=True)
+    resolved = current.resolve(strict=True)
+    if not _is_within(resolved, repo_root):
+        raise MaterializationError(f"I10 Repo Textura source escapes repository root: {relative.as_posix()}")
     return resolved
 
 
@@ -184,9 +239,14 @@ def _stage_destination(stage: Path, relative: PurePosixPath, *, label: str) -> P
 def materialize_i10(output_dir: Path | str) -> Path:
     workspace, output = _workspace_output_path(output_dir)
     files, patch = _validate_manifest()
+    art_files = _validate_handoff_art_files()
     overlay_sources = [
         (source, destination, _validate_overlay_source(source))
         for source, destination in files
+    ]
+    art_sources = [
+        (source, destination, _validate_repo_source(source))
+        for source, destination in art_files
     ]
 
     stage = Path(tempfile.mkdtemp(prefix=".i10-stage-", dir=workspace)).resolve()
@@ -198,11 +258,18 @@ def materialize_i10(output_dir: Path | str) -> Path:
             raise MaterializationError(f"canonical I3 scaffold generation failed: {exc}") from exc
 
         destinations: list[tuple[Path, Path]] = []
-        for _source_relative, destination_relative, source_path in overlay_sources:
-            destination = _stage_destination(stage, destination_relative, label="I10 overlay destination")
+        destination_keys: set[PurePosixPath] = set()
+        for _source_relative, destination_relative, source_path in overlay_sources + art_sources:
+            if destination_relative in destination_keys:
+                raise MaterializationError(
+                    "I10 canonical delivery destinations must be unique: "
+                    + destination_relative.as_posix()
+                )
+            destination_keys.add(destination_relative)
+            destination = _stage_destination(stage, destination_relative, label="I10 delivery destination")
             if destination.exists() or destination.is_symlink():
                 raise MaterializationError(
-                    "I10 overlay destination already exists in canonical scaffold: "
+                    "I10 delivery destination already exists in canonical scaffold: "
                     + destination_relative.as_posix()
                 )
             destinations.append((source_path, destination))
