@@ -53,11 +53,21 @@ jobs:
           --output .factory-ci/c11/runtime-probe
 
       - name: Build C4 NeoForge runtime registry probe
+        id: c4-probe-build
         if: always()
         run: |
           chmod +x ".factory-ci/c11/runtime-probe/gradlew"
           cd ".factory-ci/c11/runtime-probe"
           GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/c11/gradle-home" ./gradlew test build --no-daemon
+
+      - name: Publish C11 registry probe JAR
+        if: always() && steps.c4-probe-build.outcome == 'success'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: c11-registry-probe
+          path: .factory-ci/c11/runtime-probe/build/libs/*.jar
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Enforce C11 contract result
         if: always()
