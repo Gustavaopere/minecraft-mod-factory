@@ -1,17 +1,20 @@
 # Skills e instruções especializadas — Minecraft Mod Factory
 
-Este diretório é o ponto de entrada das skills compartilhadas usadas pela Factory. A Factory é a autoridade da infraestrutura comum; os repositórios individuais dos mods continuam sendo a autoridade de seus runtimes.
+Este diretório é o ponto de entrada das skills compartilhadas usadas pela Factory. A Factory é a autoridade da infraestrutura comum; os repositórios individuais dos mods continuam sendo a autoridade de seus runtimes e conteúdo específico.
 
 ## Leia primeiro
 
-1. `ROUTER.md` — escolhe a skill adequada e respeita as authorities de engenharia e arte.
-2. `VERSION-AUTHORITY.md` — fixa Minecraft 1.21.1 / NeoForge 21.1.x / Java 21 e exige evidência da versão física exata.
+1. `ROUTER.md` — escolhe a skill adequada e respeita as authorities de engenharia, arte e narrativa.
+2. `VERSION-AUTHORITY.md` — fixa Minecraft 1.21.1 / NeoForge 21.1.x / Java 21 e exige evidência da versão física exata quando a tarefa depende de runtime/provider.
 3. `USER-GUIDED-WORKFLOW.md` — limita ações manuais do usuário a uma etapa verificável por vez.
 
 ## Estrutura ativa
 
 - `library/<skill>/` — skills recebidas que foram promovidas e revalidadas para uso compartilhado;
 - `../art/skills/<skill>/` — skills project-authored de arte, Blockbench, VFX, spells, áudio e QA visual;
+- `../narrative/skills/<skill>/` — skills project-authored de autoria narrativa reutilizável;
+- `../narrative/templates/` — scaffolds narrativos genéricos;
+- `../narrative/tooling/` — validators e inventory profile-driven;
 - `../art/standards/` — contratos e checklists artísticos;
 - `../art/templates/` — briefs reutilizáveis;
 - `../art/tooling/blockbench/asset-toolkit/` — Minecraft Mod Factory Asset Toolkit;
@@ -30,6 +33,7 @@ A origem histórica da frente `IMPLEMENTAR SKILL` é `Gustavaopere/neoforge-rpg-
 - `minecraft-spell-production`
 - `minecraft-audio-design`
 - `minecraft-visual-qa`
+- `minecraft-narrative-authoring`
 
 ## Skills compartilhadas recebidas e ativas
 
@@ -42,6 +46,8 @@ A origem histórica da frente `IMPLEMENTAR SKILL` é `Gustavaopere/neoforge-rpg-
 - `minecraft-neoforge-modpack-debugging`
 - `modpack-inventory-redundancy-audit`
 
-## Segurança de versão
+## Segurança de authority
+
+Tooling genérico não pode assumir Campaign Bible, taxonomia de IDs, estados editoriais, provider ou runtime de um projeto consumidor. Essas decisões entram por profile/instruções locais.
 
 Payloads multi-versão não são authority. Exemplos de versões posteriores, Fabric, Forge legado, Paper ou multi-loader só podem ser usados após prova explícita para o alvo físico atual. A modlist física continua externa à Factory e deve ser consultada na authority vigente antes de afirmar suporte de provider.
