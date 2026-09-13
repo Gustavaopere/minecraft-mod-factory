@@ -9,7 +9,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[2]
 MATERIALIZER = ROOT / "engineering/tooling/machine-foundation/materialize_i9.py"
 OVERLAY = ROOT / "engineering/tests/golden/i9-machine-foundation/overlay"
-MANIFEST = ROOT / "engineering/tests/golden/i9-machine-foundation/manifest.json"
+MANIFEST = ROOT / "engineering" / "tests" / "golden" / "i9-machine-foundation" / "manifest.json"
 
 
 def load_materializer():
@@ -56,6 +56,19 @@ class I9MachineFoundationCompositionTest(unittest.TestCase):
         module = load_materializer()
         manifest = canonical_manifest()
         manifest["unexpected"] = True
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            path = workspace / "manifest.json"
+            write_json(path, manifest)
+            with contextlib.chdir(workspace), mock.patch.object(module, "MANIFEST_PATH", path):
+                with self.assertRaises(module.MaterializationError):
+                    module.materialize_i9("generated")
+            self.assertFalse((workspace / "generated").exists())
+
+    def test_manifest_cannot_delegate_write_mapping_authority(self):
+        module = load_materializer()
+        manifest = canonical_manifest()
+        manifest["files"][0]["destination"] = "ALTERNATE-I9.md"
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp)
             path = workspace / "manifest.json"
