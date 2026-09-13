@@ -511,7 +511,7 @@ C10_POSTMERGE_GOVERNANCE_RUN=34725351765
 C10_POSTMERGE_SONAR_RUN=34725351776
 C10_POSTMERGE_FULL_SKILL_MIGRATION_RUN=NOT_TRIGGERED
 C10_POSTMERGE_ALL_WORKFLOWS=31_SUCCESS_0_FAIL
-C10_CLOSEOUT_BASE_MAIN_SHA=c30a76ca6d7f013037c506ba80e538b77dd290de
+C10_CLOSEOUT_BASE_MAIN_SHA=62f12db450a1a54fe7def848b3986113bbab32b9
 HEAD_SHA=RESOLVE_FROM_GIT
 OPEN_CONSTRUCTION_IMPLEMENTATION_PR=NONE
 TARGET_MINECRAFT=1.21.1
@@ -589,7 +589,7 @@ PR #25 merged as `bdb6eee2c6829ce8de0cc7e0cf283dfb6c01144c`. The resulting `main
 
 ### C1B acceptance
 
-- [x] pinned upstream commit independently resolves
+- [x] pinned upstream commit resolves and declares MIT
 - [x] upstream license independently confirmed MIT
 - [x] upstream package manager and frozen lockfile identified
 - [x] upstream native CI gates audited
@@ -1076,6 +1076,6 @@ On exact merged `main@c30a76ca6d7f013037c506ba80e538b77dd290de`, every one of th
 - [x] implementation PR #91 merged with frozen validated head
 - [x] exact merged main revalidates C10 evidence and fixture hashes
 - [x] all 31 workflows triggered by the implementation merge completed successfully
-- [x] closeout base is exact `main@c30a76ca6d7f013037c506ba80e538b77dd290de`
+- [x] closeout base is exact `main@62f12db450a1a54fe7def848b3986113bbab32b9`
 
 C10 is complete and post-merge validated. The next Construction slice is C11 — Complex Modded Golden.
