@@ -104,6 +104,12 @@ def is_allowed_server_command(command: str) -> bool:
     return command in ALLOWED_SERVER_COMMANDS
 
 
+def recent_output_tail(lines: list[str], limit: int = 40) -> str:
+    if limit <= 0:
+        return ""
+    return "".join(lines[-limit:])
+
+
 def _parse_bool(value: str, key: str) -> bool:
     if value == "true":
         return True
@@ -264,7 +270,11 @@ class ServerSession:
             marker = parse_probe_marker(line)
             if marker["action"] == expected_action:
                 return marker
-        raise AcceptanceError(f"{self.phase}: no I10_PROBE action={expected_action} marker observed")
+        tail = recent_output_tail(self.lines)
+        raise AcceptanceError(
+            f"{self.phase}: no I10_PROBE action={expected_action} marker observed; "
+            f"recent server output:\n{tail}"
+        )
 
     def poll_status(self, predicate, description: str) -> dict[str, object]:
         deadline = time.monotonic() + POLL_TIMEOUT_SECONDS
