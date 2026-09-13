@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "source": "README.md",
+      "destination": "I9-MACHINE-FOUNDATION.md"
+    }
+  ],
+  "main_class_patch": {
+    "path": "src/main/java/dev/example/i9machine/I9MachineMod.java",
+    "anchor": "    public I9MachineMod(IEventBus modBus, ModContainer container) {\n    }\n",
+    "replacement": "    public I9MachineMod(IEventBus modBus, ModContainer container) {\n        dev.example.i9machine.machine.I9MachineContent.register(modBus);\n        modBus.addListener(dev.example.i9machine.machine.I9MachineContent::registerCapabilities);\n    }\n"
+  }
+}
