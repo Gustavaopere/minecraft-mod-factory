@@ -41,6 +41,24 @@ class I10Task5MutationClosureContract(unittest.TestCase):
         missing = [token for token in required if token not in text]
         self.assertEqual([], missing, f"I10 RED: pending state does not close cached port IO immediately: {missing}")
 
+    def test_persisted_formed_controller_schedules_one_revalidation_on_load(self) -> None:
+        source = JAVA_ROOT / "MultiblockControllerBlockEntity.java"
+        self.assertTrue(source.is_file(), "I10 RED: controller BlockEntity source is missing")
+        text = source.read_text(encoding="utf-8")
+        required = (
+            "public void onLoad()",
+            "super.onLoad()",
+            "level instanceof ServerLevel serverLevel",
+            "lastKnownFormed",
+            "serverLevel.scheduleTick(worldPosition, getBlockState().getBlock(), 1)",
+        )
+        missing = [token for token in required if token not in text]
+        self.assertEqual(
+            [],
+            missing,
+            f"I10 RED: persisted controller load cannot schedule bounded revalidation: {missing}",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
