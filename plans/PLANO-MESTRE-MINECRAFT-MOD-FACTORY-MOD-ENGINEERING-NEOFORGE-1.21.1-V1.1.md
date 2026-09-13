@@ -7,7 +7,7 @@
 
 **Repositório canônico:** `Gustavaopere/minecraft-mod-factory`  
 **Minecraft:** `1.21.1`  
-**NeoForge:** versão estável mais recente da linha `21.1.x` compatível com Minecraft `1.21.1`, resolvida no início de cada ciclo relevante; resolução exata do ciclo I10: `21.1.250`  
+**NeoForge:** versão estável mais recente da linha `21.1.x` compatível com Minecraft `1.21.1`, resolvida no início de cada ciclo relevante; resolução exata do ciclo I10: `21.1.250`
 **Java:** `21`  
 **Authority de planejamento artístico:** `plans/textura/`  
 **Authority de runtime de cada mod:** repositório do próprio mod.
