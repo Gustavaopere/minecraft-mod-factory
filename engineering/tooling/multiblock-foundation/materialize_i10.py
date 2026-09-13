@@ -19,6 +19,7 @@ MANIFEST_PATH = GOLDEN_ROOT / "manifest.json"
 HANDOFF_PATH = GOLDEN_ROOT / "asset-handoff.json"
 OVERLAY_ROOT = GOLDEN_ROOT / "overlay"
 MAIN_CLASS_RELATIVE = "src/main/java/dev/example/i10multiblock/I10MultiblockMod.java"
+BUILD_GRADLE_RELATIVE = "build.gradle"
 GAMETEST_STRUCTURE_RELATIVE = "src/main/resources/data/i10_multiblock/structure/multiblock_test.nbt"
 GAMETEST_STRUCTURE_SHA256 = "75b23fb80317d88bbde1a2aff7121cfd903b8a1010878e0327ce26fd4d3f1c99"
 
@@ -59,6 +60,22 @@ CANONICAL_PATCH = {
         "        dev.example.i10multiblock.multiblock.I10MultiblockContent.register(modBus);\n"
         "        modBus.addListener(dev.example.i10multiblock.multiblock.I10MultiblockContent::registerCapabilities);\n"
         "    }\n"
+    ),
+}
+CANONICAL_RUN_SERVER_STDIN_PATCH = {
+    "path": BUILD_GRADLE_RELATIVE,
+    "anchor": (
+        "tasks.withType(JavaCompile).configureEach {\n"
+        "    options.encoding = 'UTF-8'\n"
+        "}\n"
+    ),
+    "replacement": (
+        "tasks.withType(JavaCompile).configureEach {\n"
+        "    options.encoding = 'UTF-8'\n"
+        "}\n\n"
+        "tasks.named('runServer').configure {\n"
+        "    standardInput = System.in\n"
+        "}\n"
     ),
 }
 
@@ -255,6 +272,22 @@ def _stage_destination(stage: Path, relative: PurePosixPath, *, label: str) -> P
     return candidate
 
 
+def _apply_canonical_text_patch(stage: Path, patch: dict[str, str], *, label: str) -> None:
+    relative = _safe_relative(patch["path"], label=f"{label} path")
+    target = _stage_destination(stage, relative, label=label)
+    if not target.is_file() or target.is_symlink():
+        raise MaterializationError(f"{label} target is missing or unsafe")
+    text = target.read_text(encoding="utf-8")
+    matches = text.count(patch["anchor"])
+    if matches != 1:
+        raise MaterializationError(f"{label} anchor must match exactly once; got {matches}")
+    target.write_text(
+        text.replace(patch["anchor"], patch["replacement"], 1),
+        encoding="utf-8",
+        newline="\n",
+    )
+
+
 def materialize_i10(output_dir: Path | str) -> Path:
     workspace, output = _workspace_output_path(output_dir)
     files, patch = _validate_manifest()
@@ -293,25 +326,15 @@ def materialize_i10(output_dir: Path | str) -> Path:
                 )
             destinations.append((source_path, destination))
 
-        patch_relative = _safe_relative(patch["path"], label="I10 main class path")
-        patch_target = _stage_destination(stage, patch_relative, label="I10 main class patch")
-        if not patch_target.is_file() or patch_target.is_symlink():
-            raise MaterializationError("I10 canonical main class target is missing or unsafe")
-        text = patch_target.read_text(encoding="utf-8")
-        matches = text.count(patch["anchor"])
-        if matches != 1:
-            raise MaterializationError(
-                f"I10 main class constructor anchor must match exactly once; got {matches}"
-            )
-
         for source, destination in destinations:
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(source, destination)
 
-        patch_target.write_text(
-            text.replace(patch["anchor"], patch["replacement"], 1),
-            encoding="utf-8",
-            newline="\n",
+        _apply_canonical_text_patch(stage, patch, label="I10 main class patch")
+        _apply_canonical_text_patch(
+            stage,
+            CANONICAL_RUN_SERVER_STDIN_PATCH,
+            label="I10 runServer stdin patch",
         )
 
         output.parent.mkdir(parents=True, exist_ok=True)
