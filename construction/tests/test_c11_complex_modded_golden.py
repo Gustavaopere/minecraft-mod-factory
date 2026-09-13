@@ -4,6 +4,7 @@ import importlib.util
 import json
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -33,6 +34,16 @@ def load_path(path: Path, name: str):
 
 
 class ConstructionC11ComplexModdedGoldenTest(unittest.TestCase):
+    def _prepare_sample_inputs(self, root: Path) -> tuple[Path, Path, Path]:
+        modlist = root / "modlist.txt"
+        mods_dir = root / "mods"
+        runtime_snapshot = root / "runtime.json"
+        modlist.write_text(CAPTURE_SAMPLE, encoding="utf-8")
+        mods_dir.mkdir()
+        with zipfile.ZipFile(mods_dir / "alpha-1.0.0.jar", "w"):
+            pass
+        return modlist, mods_dir, runtime_snapshot
+
     def test_deferred_capture_state_is_explicit_and_blocks_completion(self) -> None:
         self.assertTrue(
             CAPTURE_STATE_PATH.is_file(),
@@ -101,6 +112,37 @@ class ConstructionC11ComplexModdedGoldenTest(unittest.TestCase):
             with self.assertRaisesRegex(
                 ValueError,
                 r"^missing physical top-level JARs: alpha-1\.0\.0\.jar$",
+            ):
+                capture.compose_registry(
+                    modlist,
+                    mods_dir,
+                    runtime_snapshot,
+                    captured_at="2026-09-09",
+                )
+
+    def test_capture_helper_rejects_missing_runtime_snapshot_stably(self) -> None:
+        capture = load_path(CAPTURE_PATH, "construction_c11_capture_registry_missing_runtime")
+        with tempfile.TemporaryDirectory() as tmp:
+            modlist, mods_dir, runtime_snapshot = self._prepare_sample_inputs(Path(tmp))
+            with self.assertRaisesRegex(
+                ValueError,
+                r"^runtime snapshot does not exist: .*runtime\.json$",
+            ):
+                capture.compose_registry(
+                    modlist,
+                    mods_dir,
+                    runtime_snapshot,
+                    captured_at="2026-09-09",
+                )
+
+    def test_capture_helper_rejects_malformed_runtime_json_stably(self) -> None:
+        capture = load_path(CAPTURE_PATH, "construction_c11_capture_registry_bad_json")
+        with tempfile.TemporaryDirectory() as tmp:
+            modlist, mods_dir, runtime_snapshot = self._prepare_sample_inputs(Path(tmp))
+            runtime_snapshot.write_text("{", encoding="utf-8")
+            with self.assertRaisesRegex(
+                ValueError,
+                r"^runtime snapshot is not valid JSON: ",
             ):
                 capture.compose_registry(
                     modlist,
