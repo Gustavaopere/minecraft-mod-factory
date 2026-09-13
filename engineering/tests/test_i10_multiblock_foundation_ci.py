@@ -17,6 +17,7 @@ class I10PermanentCIContract(unittest.TestCase):
         self.assertIn("- engineering/i10-multiblock-foundation-reference", push_section)
 
         for token in (
+            "'engineering/tests/test_i10_multiblock_foundation*.py'",
             "'engineering/templates/neoforge-mod/**'",
             "'engineering/tooling/scaffolder/**'",
             "'engineering/tooling/test-harness/**'",
@@ -26,6 +27,7 @@ class I10PermanentCIContract(unittest.TestCase):
             "'engineering/tooling/machine-foundation/**'",
         ):
             self.assertIn(token, text, f"I10 workflow must track shared dependency path: {token}")
+        self.assertNotIn("test_i10_multiblock-foundation*.py", text)
 
     def test_relevant_engineering_regressions_are_explicit(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
@@ -43,6 +45,7 @@ class I10PermanentCIContract(unittest.TestCase):
             "engineering/tests/test_i10_multiblock_foundation_task5.py",
             "engineering/tests/test_i10_multiblock_foundation_handoff.py",
             "engineering/tests/test_i10_multiblock_foundation_gametest.py",
+            "engineering/tests/test_i10_multiblock_foundation_provider.py",
             "engineering/tests/test_i10_chunk_acceptance.py",
             "engineering/tests/test_i10_multiplayer_acceptance.py",
             "engineering/tests/test_i10_multiblock_foundation_composition.py",
