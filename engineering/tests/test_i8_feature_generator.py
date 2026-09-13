@@ -95,6 +95,22 @@ class I8FeatureGeneratorCoreContractTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 module.plan_feature_set(project, invalid_id)
 
+    def test_project_identity_and_target_must_match_physical_project(self):
+        module = self.require_generator()
+        request = load_request()
+        with tempfile.TemporaryDirectory() as tmp:
+            project = copy_golden(Path(tmp) / "project")
+            properties = project / "gradle.properties"
+            original = properties.read_text(encoding="utf-8")
+
+            properties.write_text(original.replace("mod_id=i3_golden_mod", "mod_id=wrong_mod"), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                module.plan_feature_set(project, request)
+
+            properties.write_text(original.replace("neo_version=21.1.248", "neo_version=21.1.247"), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                module.plan_feature_set(project, request)
+
     def test_block_entity_reference_must_target_requested_block(self):
         module = self.require_generator()
         request = load_request()
@@ -136,6 +152,38 @@ class I8FeatureGeneratorCoreContractTest(unittest.TestCase):
             self.assertIn("modBus.addListener(FactoryGeneratedData::gatherData);", source)
 
             self.assertEqual([], module.apply_feature_set(project, request, confirm_modified=True))
+
+    def test_non_cumulative_request_is_rejected_after_generation(self):
+        module = self.require_generator()
+        request = load_request()
+        with tempfile.TemporaryDirectory() as tmp:
+            project = copy_golden(Path(tmp) / "project")
+            module.apply_feature_set(project, request, confirm_modified=True)
+
+            incremental = copy.deepcopy(request)
+            incremental["features"] = [
+                {"kind": "item", "id": "silver_gear", "class_name": "SilverGearItem"}
+            ]
+            with self.assertRaises(ValueError):
+                module.plan_feature_set(project, incremental)
+
+    def test_modify_action_requires_confirmation_even_if_plan_flag_is_false(self):
+        module = self.require_generator()
+        with tempfile.TemporaryDirectory() as tmp:
+            project = copy_golden(Path(tmp) / "project")
+            main = project / MAIN_RELATIVE
+            current = main.read_text(encoding="utf-8")
+            operation = {
+                "action": "modify",
+                "role": "bootstrap",
+                "path": str(MAIN_RELATIVE).replace("\\", "/"),
+                "before_sha256": module._sha256_text(current),
+                "content": current + "\n",
+                "diff": "synthetic diff",
+                "requires_confirmation": False,
+            }
+            with self.assertRaises(module.ConfirmationRequiredError):
+                module._preflight_operation(project.resolve(), operation, confirm_modified=False)
 
     def test_partial_bootstrap_wiring_is_rejected(self):
         module = self.require_generator()
