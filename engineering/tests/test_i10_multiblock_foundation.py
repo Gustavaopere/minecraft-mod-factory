@@ -94,20 +94,18 @@ class I10RuntimeSurfaceContract(unittest.TestCase):
             "DeferredRegister.createBlocks",
             "DeferredRegister.createItems",
             "Registries.BLOCK_ENTITY_TYPE",
-            'registerBlock("multiblock_controller"',
-            'registerBlock("multiblock_casing"',
-            'registerBlock("multiblock_io_port"',
-            'registerSimpleBlockItem("multiblock_controller"',
-            'registerSimpleBlockItem("multiblock_casing"',
-            'registerSimpleBlockItem("multiblock_io_port"',
-            'BLOCK_ENTITY_TYPES.register("multiblock_controller"',
-            'BLOCK_ENTITY_TYPES.register("multiblock_io_port"',
+            '"multiblock_controller"',
+            '"multiblock_casing"',
+            '"multiblock_io_port"',
             "MultiblockControllerBlockEntity::new",
             "MultiblockPortBlockEntity::new",
             "registerCapabilities",
         )
         missing = [token for token in required if token not in text]
         self.assertEqual([], missing, f"I10 RED: registry contract incomplete: {missing}")
+        self.assertEqual(3, text.count("BLOCKS.registerBlock("), "I10 must register exactly three blocks")
+        self.assertEqual(3, text.count("ITEMS.registerSimpleBlockItem("), "I10 must register exactly three block items")
+        self.assertEqual(2, text.count("BLOCK_ENTITY_TYPES.register("), "I10 must register only controller and port BEs")
         self.assertNotIn('BLOCK_ENTITY_TYPES.register("multiblock_casing"', text)
 
 
