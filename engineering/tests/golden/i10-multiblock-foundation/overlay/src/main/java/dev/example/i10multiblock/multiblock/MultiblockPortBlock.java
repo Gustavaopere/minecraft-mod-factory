@@ -63,4 +63,18 @@ public final class MultiblockPortBlock extends BaseEntityBlock {
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
+
+    @Override
+    protected void neighborChanged(
+            BlockState state,
+            Level level,
+            BlockPos pos,
+            Block neighborBlock,
+            BlockPos neighborPos,
+            boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
+        if (level instanceof ServerLevel serverLevel) {
+            MultiblockInvalidation.scheduleAround(serverLevel, neighborPos);
+        }
+    }
 }
