@@ -440,7 +440,6 @@ C9_SONAR_SCOPE_REMEDIATION_MERGE_SHA=fbd7354697eb4b4407585b6bb0a0fca64dde9369
 C9_SONAR_SCOPE_REMEDIATION_C9_RUN=34674722460
 C9_SONAR_CI_MIGRATION_PR=85
 C9_SONAR_CI_MIGRATION_MERGE_SHA=b16338e0d18f30e310a4bf8ca7a45bff991236b0
-C9_SONAR_CI_MIGRATION_POSTMERGE_C9_RUN=34688789025
 C9_SONAR_BASELINE_PR=87
 C9_SONAR_BASELINE_MERGE_SHA=2b955579b2e7a0151692b3153d6907634c2c98b4
 C9_FINAL_VALIDATED_MAIN_SHA=2b955579b2e7a0151692b3153d6907634c2c98b4
@@ -589,7 +588,7 @@ PR #25 merged as `bdb6eee2c6829ce8de0cc7e0cf283dfb6c01144c`. The resulting `main
 
 ### C1B acceptance
 
-- [x] pinned upstream commit resolves and declares MIT
+- [x] pinned upstream commit independently resolves
 - [x] upstream license independently confirmed MIT
 - [x] upstream package manager and frozen lockfile identified
 - [x] upstream native CI gates audited
