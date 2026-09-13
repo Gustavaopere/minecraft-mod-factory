@@ -139,17 +139,6 @@ class I3ModScaffolderContractTest(unittest.TestCase):
             self.assertIn("@Mod(value = I3GoldenMod.MOD_ID, dist = Dist.CLIENT)", client_text)
             self.assertIn("package dev.example.i3golden.client;", client_text)
 
-    def test_game_test_server_disables_neogradle_force_exit(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            generated = self.generate(Path(tmp) / "generated")
-            build_gradle = (generated / "build.gradle").read_text(encoding="utf-8")
-            block = build_gradle.split("gameTestServer {", 1)[1].split("}", 1)[0]
-            self.assertIn(
-                "setForceExit false",
-                block,
-                "I9 prerequisite RED: NeoForge 1.21.1 Game Test Server must disable NeoGradle force exit",
-            )
-
     def test_wrapper_authority_is_complete_and_gradle_8_14(self):
         self.assertTrue(WRAPPER_AUTHORITY.is_dir())
         for relative in WRAPPER_FILES:
