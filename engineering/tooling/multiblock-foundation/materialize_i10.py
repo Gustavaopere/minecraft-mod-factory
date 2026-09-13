@@ -19,6 +19,14 @@ OVERLAY_ROOT = GOLDEN_ROOT / "overlay"
 MAIN_CLASS_RELATIVE = "src/main/java/dev/example/i10multiblock/I10MultiblockMod.java"
 CANONICAL_OVERLAY_FILES = (
     ("README.md", "I10-MULTIBLOCK-FOUNDATION.md"),
+    ("src/main/java/dev/example/i10multiblock/multiblock/I10MultiblockContent.java", "src/main/java/dev/example/i10multiblock/multiblock/I10MultiblockContent.java"),
+    ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockPattern.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPattern.java"),
+    ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockValidationResult.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockValidationResult.java"),
+    ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockRuntimeState.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockRuntimeState.java"),
+    ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlock.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlock.java"),
+    ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlockEntity.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlockEntity.java"),
+    ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlock.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlock.java"),
+    ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlockEntity.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlockEntity.java"),
 )
 CANONICAL_PATCH = {
     "path": MAIN_CLASS_RELATIVE,
@@ -107,9 +115,7 @@ def _validate_manifest() -> tuple[list[tuple[PurePosixPath, PurePosixPath]], dic
             raise MaterializationError(f"I10 manifest files[{index}] must be an object")
         _closed_keys(entry, {"source", "destination"}, label=f"I10 manifest files[{index}]")
         source = _safe_relative(entry["source"], label=f"I10 manifest files[{index}].source")
-        destination = _safe_relative(
-            entry["destination"], label=f"I10 manifest files[{index}].destination"
-        )
+        destination = _safe_relative(entry["destination"], label=f"I10 manifest files[{index}].destination")
         source_key = source.as_posix()
         destination_key = destination.as_posix()
         if source_key in seen_sources or destination_key in seen_destinations:
@@ -147,9 +153,7 @@ def _validate_overlay_source(relative: PurePosixPath) -> Path:
     for part in relative.parts:
         current = current / part
         if current.is_symlink():
-            raise MaterializationError(
-                f"I10 overlay source cannot contain symlinks: {relative.as_posix()}"
-            )
+            raise MaterializationError(f"I10 overlay source cannot contain symlinks: {relative.as_posix()}")
     if not current.is_file():
         raise MaterializationError(f"I10 overlay source is missing: {relative.as_posix()}")
     overlay_root = OVERLAY_ROOT.resolve(strict=True)
