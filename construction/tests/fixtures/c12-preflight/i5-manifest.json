@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "mod_id": "factoryprobe",
+  "target": {
+    "minecraft": "1.21.1",
+    "loader": "neoforge",
+    "neoforge": "21.1.248",
+    "java": 21
+  },
+  "suites": [
+    {
+      "suite_id": "unit",
+      "type": "unit",
+      "state": "PASS",
+      "command": "./gradlew --no-daemon test",
+      "evidence": []
+    },
+    {
+      "suite_id": "gametest",
+      "type": "gametest",
+      "state": "PASS",
+      "command": "./gradlew --no-daemon runGameTestServer",
+      "evidence": []
+    },
+    {
+      "suite_id": "dedicated_server",
+      "type": "dedicated_server",
+      "state": "PASS",
+      "command": "./gradlew --no-daemon runServer",
+      "evidence": []
+    }
+  ],
+  "overall_state": "PASS",
+  "fixture_authority": "SYNTHETIC_PREFLIGHT_ONLY"
+}
