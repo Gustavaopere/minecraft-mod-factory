@@ -349,7 +349,7 @@ function runTabIndentationRegressionSelfTest() {
 
 function runTableBlockTerminationRegressionSelfTest() {
   const headingRows = extractGfmTableRows(['Check | Status | Evidence','--- | --- | ---','Geometry | PENDING | UNRESOLVED','## Follow-up |'].join('\n'));
-  if (headingRows.length !== 2 || rows[0].cells[0] !== 'Check' || rows[1].cells[0] !== 'Geometry') fail(`internal table-termination regression self-test expected an ATX heading with a trailing pipe to terminate the live GFM table; found ${rows.length} row(s)`);
+  if (headingRows.length !== 2 || headingRows[0].cells[0] !== 'Check' || headingRows[1].cells[0] !== 'Geometry') fail(`internal table-termination regression self-test expected an ATX heading with a trailing pipe to terminate the live GFM table; found ${headingRows.length} row(s)`);
 }
 
 runStatusDeclarationRegressionSelfTest();
