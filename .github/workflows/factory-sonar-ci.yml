@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: read
+  checks: read
 
 jobs:
   sonar-ci:
@@ -160,3 +161,34 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      # Temporary diagnostic for PR #100; remove after the Sonar rule/path/line evidence is captured.
+      - name: Diagnose failing SonarCloud annotations
+        if: failure() && github.event_name == 'pull_request'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          check_id=''
+          for attempt in 1 2 3 4 5; do
+            check_id="$(gh api \
+              -H 'Accept: application/vnd.github+json' \
+              "/repos/${GITHUB_REPOSITORY}/commits/${PR_HEAD_SHA}/check-runs" \
+              --jq '.check_runs[] | select(.name == "SonarCloud Code Analysis") | .id' \
+              | head -n 1)"
+            if [[ -n "$check_id" ]]; then
+              break
+            fi
+            sleep 5
+          done
+          if [[ -z "$check_id" ]]; then
+            echo '::error::SonarCloud Code Analysis check was not found for PR head.'
+            exit 1
+          fi
+          echo "SonarCloud check id: ${check_id}"
+          gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/${GITHUB_REPOSITORY}/check-runs/${check_id}/annotations" \
+            --jq '.[] | {path, start_line, end_line, annotation_level, title, message, raw_details}'
