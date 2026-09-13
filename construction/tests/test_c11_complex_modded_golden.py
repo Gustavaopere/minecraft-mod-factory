@@ -13,6 +13,7 @@ REGISTRY_PATH = FIXTURE / "registry.json"
 CAPTURE_PATH = FIXTURE / "capture_registry.py"
 CAPTURE_STATE_PATH = FIXTURE / "capture-state.json"
 C4_PATH = ROOT / "construction" / "core" / "modpack_registry.py"
+WORKFLOW_PATH = ROOT / ".github" / "workflows" / "factory-construction-c11-complex-modded-golden.yml"
 PHYSICAL_MODLIST_SHA256 = "7c0a23d6013101383d196526e4b6ba6940fb54a0fed10eaed5956ab015cfcc00"
 
 CAPTURE_SAMPLE = """Mods count: 2
@@ -73,6 +74,17 @@ class ConstructionC11ComplexModdedGoldenTest(unittest.TestCase):
             state,
         )
         self.assertFalse(REGISTRY_PATH.exists())
+
+    def test_workflow_distinguishes_preflight_from_completion(self) -> None:
+        workflow = WORKFLOW_PATH.read_text(encoding="utf-8")
+        self.assertIn("c11-preflight-contracts:", workflow)
+        self.assertIn("c11-preflight-probe:", workflow)
+        self.assertIn("c11-completion:", workflow)
+        self.assertIn("C11_COMPLETION_BLOCKED: MANUAL_URGENT_PENDING_MODLIST_STABILIZATION", workflow)
+        self.assertIn("actions/checkout@11d5960a326750d5838078e36cf38b85af677262", workflow)
+        self.assertIn("actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065", workflow)
+        self.assertIn("actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3", workflow)
+        self.assertIn("actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f", workflow)
 
     def test_real_c4_registry_fixture_exists_and_is_canonical(self) -> None:
         self.assertTrue(
