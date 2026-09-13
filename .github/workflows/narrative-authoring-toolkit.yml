@@ -22,6 +22,8 @@ jobs:
   narrative-tooling:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - uses: actions/checkout@v7
       - name: Unit tests
@@ -30,12 +32,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/narrative-smoke
-          cat > /tmp/narrative-smoke/HIST-0001-example.md <<'EOF'
+          rm -rf .factory-ci/narrative-smoke
+          mkdir -p .factory-ci/narrative-smoke
+          cat > .factory-ci/narrative-smoke/HIST-0001-example.md <<'EOF'
           # HIST-0001 — Example
 
           ## Editorial state
           DRAFT
           EOF
-          python3 narrative/tooling/validate_story.py --profile narrative/profiles/example.json --root /tmp/narrative-smoke --strict-references
-          python3 narrative/tooling/story_inventory.py --profile narrative/profiles/example.json --root /tmp/narrative-smoke --format json > /tmp/narrative-inventory.json
+          python3 narrative/tooling/validate_story.py --profile narrative/profiles/example.json --root .factory-ci/narrative-smoke --strict-references
+          python3 narrative/tooling/story_inventory.py --profile narrative/profiles/example.json --root .factory-ci/narrative-smoke --format json > .factory-ci/narrative-inventory.json
