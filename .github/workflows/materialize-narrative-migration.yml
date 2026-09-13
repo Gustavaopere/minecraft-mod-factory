@@ -1,0 +1,50 @@
+name: Materialize Narrative Migration
+
+on:
+  push:
+    branches:
+      - feat/narrative-authoring-toolkit
+    paths:
+      - migration/staging/**
+      - .github/workflows/materialize-narrative-migration.yml
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/narrative-authoring-toolkit
+          fetch-depth: 0
+      - name: Reconstruct package
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat migration/staging/narrative-pack.part* | base64 --decode > /tmp/narrative.tar.gz
+          echo '9ef1d924b574ca57ae76b0d0b46eb02dcac097ab2ab0b23c7b4eafdfd0ffb735  /tmp/narrative.tar.gz' | sha256sum --check
+          mkdir -p /tmp/narrative-unpack
+          tar -xzf /tmp/narrative.tar.gz -C /tmp/narrative-unpack
+      - name: Materialize migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          rsync -a --exclude='__pycache__' /tmp/narrative-unpack/narrative_factory/ ./
+          rm -rf migration/staging
+          rm -f narrative/STATUS.md
+          rm -f .github/workflows/materialize-narrative-migration.yml
+          find . -type d -name __pycache__ -prune -exec rm -rf {} +
+      - name: Verify narrative toolkit
+        run: python3 -m unittest discover -s narrative/tests -p 'test_*.py' -v
+      - name: Commit materialized migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat(narrative): materialize authoring toolkit migration'
+          git push origin HEAD:feat/narrative-authoring-toolkit
