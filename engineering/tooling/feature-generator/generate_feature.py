@@ -28,6 +28,14 @@ MOD_ID_RE = re.compile(r"^[a-z][a-z0-9_]{1,63}$")
 JAVA_PACKAGE_RE = re.compile(r"^[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*$")
 CLASS_RE = re.compile(r"^[A-Z][A-Za-z0-9_]*$")
 FEATURE_ID_RE = re.compile(r"^[a-z][a-z0-9_]{1,63}$")
+SAFE_PATH_SEGMENT_RE = re.compile(r"^[A-Za-z0-9_$.-]+$")
+ROLE_PATH_PREFIXES = {
+    "feature_source": "src/main/java/",
+    "registry": "src/main/java/",
+    "datagen": "src/main/java/",
+    "bootstrap": "src/main/java/",
+    "generated_test": "src/test/java/",
+}
 
 
 class FeatureGeneratorError(ValueError):
@@ -54,20 +62,41 @@ def _safe_project_root(project_root: Path | str) -> Path:
 
 
 def _safe_relative_path(value: str) -> Path:
-    path = Path(value)
-    if path.is_absolute() or not path.parts or any(part in {"", ".", ".."} for part in path.parts):
-        raise ValueError(f"planned path must be a safe project-relative path: {value}")
-    return path
+    if not isinstance(value, str) or not value or "\\" in value:
+        raise ValueError(f"path must be a safe relative path: {value!r}")
+    parts = value.split("/")
+    if any(
+        part in {"", ".", ".."} or SAFE_PATH_SEGMENT_RE.fullmatch(part) is None
+        for part in parts
+    ):
+        raise ValueError(f"path must be a safe relative path: {value!r}")
+    return Path(*parts)
+
+
+def _contained_path(root: Path, relative: str, *, must_exist: bool) -> Path:
+    path = _safe_relative_path(relative)
+    candidate = root.joinpath(*path.parts)
+    if candidate.is_symlink():
+        raise ValueError(f"symlink path is not allowed: {relative}")
+    resolved = candidate.resolve(strict=must_exist)
+    try:
+        resolved.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f"path escapes authorized root: {relative}") from exc
+    return resolved
+
+
+def _workspace_input(workspace: Path, value: str, *, directory: bool) -> Path:
+    resolved = _contained_path(workspace, value, must_exist=True)
+    if directory and not resolved.is_dir():
+        raise ValueError(f"workspace input must be a directory: {value}")
+    if not directory and not resolved.is_file():
+        raise ValueError(f"workspace input must be a file: {value}")
+    return resolved
 
 
 def _project_child(root: Path, relative: str) -> Path:
-    path = _safe_relative_path(relative)
-    candidate = (root / path).resolve(strict=False)
-    try:
-        candidate.relative_to(root)
-    except ValueError as exc:
-        raise ValueError(f"planned path escapes project root: {relative}") from exc
-    return candidate
+    return _contained_path(root, relative, must_exist=False)
 
 
 def _require_mapping(value: Any, label: str) -> dict[str, Any]:
@@ -94,11 +123,11 @@ def _validate_request(request: dict[str, Any]) -> tuple[dict[str, Any], list[dic
     mod_id = _require_nonempty_string(project, "mod_id", "project")
     java_package = _require_nonempty_string(project, "java_package", "project")
     main_class = _require_nonempty_string(project, "main_class", "project")
-    if not MOD_ID_RE.fullmatch(mod_id):
+    if MOD_ID_RE.fullmatch(mod_id) is None:
         raise ValueError("project.mod_id is invalid")
-    if not JAVA_PACKAGE_RE.fullmatch(java_package):
+    if JAVA_PACKAGE_RE.fullmatch(java_package) is None:
         raise ValueError("project.java_package is invalid")
-    if not CLASS_RE.fullmatch(main_class):
+    if CLASS_RE.fullmatch(main_class) is None:
         raise ValueError("project.main_class is invalid")
 
     raw_features = request.get("features")
@@ -115,9 +144,9 @@ def _validate_request(request: dict[str, Any]) -> tuple[dict[str, Any], list[dic
         class_name = _require_nonempty_string(feature, "class_name", f"features[{index}]")
         if kind not in CORE_FEATURE_KINDS:
             raise ValueError(f"unsupported I8 core feature kind: {kind}")
-        if not FEATURE_ID_RE.fullmatch(feature_id):
+        if FEATURE_ID_RE.fullmatch(feature_id) is None:
             raise ValueError(f"invalid feature id: {feature_id}")
-        if not CLASS_RE.fullmatch(class_name):
+        if CLASS_RE.fullmatch(class_name) is None:
             raise ValueError(f"invalid feature class_name: {class_name}")
         if feature_id in seen_ids:
             raise ValueError(f"duplicate feature id: {feature_id}")
@@ -132,7 +161,7 @@ def _validate_request(request: dict[str, Any]) -> tuple[dict[str, Any], list[dic
         if feature["kind"] != "block_entity":
             continue
         block_id = _require_nonempty_string(feature, "block_id", f"block_entity {feature['id']}")
-        if not FEATURE_ID_RE.fullmatch(block_id):
+        if FEATURE_ID_RE.fullmatch(block_id) is None:
             raise ValueError(f"invalid block_id for block entity {feature['id']}: {block_id}")
         if block_id not in block_ids:
             raise ValueError(
@@ -189,12 +218,7 @@ def _item_source(package: str, class_name: str, feature_id: str) -> str:
     )
 
 
-def _block_entity_source(
-    java_package: str,
-    package: str,
-    class_name: str,
-    feature_id: str,
-) -> str:
+def _block_entity_source(java_package: str, package: str, class_name: str, feature_id: str) -> str:
     registry_constant = _constant_name(feature_id)
     return (
         f"package {package};\n\n"
@@ -212,12 +236,7 @@ def _block_entity_source(
     )
 
 
-def _menu_source(
-    java_package: str,
-    package: str,
-    class_name: str,
-    feature_id: str,
-) -> str:
+def _menu_source(java_package: str, package: str, class_name: str, feature_id: str) -> str:
     registry_constant = _constant_name(feature_id)
     return (
         f"package {package};\n\n"
@@ -352,21 +371,20 @@ def _generated_test(java_package: str, feature: dict[str, Any]) -> str:
 
 
 def _feature_import(java_package: str, feature: dict[str, Any]) -> str:
-    return (
-        f"import {java_package}.feature.{_kind_package(feature['kind'])}."
-        f"{feature['class_name']};"
-    )
+    return f"import {java_package}.feature.{_kind_package(feature['kind'])}.{feature['class_name']};"
 
 
 def _registry_source(java_package: str, main_class: str, features: list[dict[str, Any]]) -> str:
-    by_kind = {kind: [feature for feature in features if feature["kind"] == kind] for kind in CORE_FEATURE_KINDS}
+    by_kind = {
+        kind: [feature for feature in features if feature["kind"] == kind]
+        for kind in CORE_FEATURE_KINDS
+    }
     feature_by_id = {feature["id"]: feature for feature in features}
-
     imports = {
         f"import {java_package}.{main_class};",
+        "import java.util.function.Supplier;",
         "import net.neoforged.bus.api.IEventBus;",
         "import net.neoforged.neoforge.registries.DeferredRegister;",
-        "import java.util.function.Supplier;",
     }
     for feature in features:
         if feature["kind"] != "network_payload":
@@ -385,10 +403,7 @@ def _registry_source(java_package: str, main_class: str, features: list[dict[str
     if by_kind["recipe"]:
         imports.add("import net.minecraft.world.item.crafting.RecipeType;")
 
-    lines = [f"package {java_package}.registry;", ""]
-    lines.extend(sorted(imports))
-    lines.extend(["", "public final class FactoryGeneratedRegistries {"])
-
+    lines = [f"package {java_package}.registry;", "", *sorted(imports), "", "public final class FactoryGeneratedRegistries {"]
     registrar_names: list[str] = []
     if by_kind["block"]:
         lines.append(
@@ -401,66 +416,79 @@ def _registry_source(java_package: str, main_class: str, features: list[dict[str
         )
         registrar_names.append("ITEMS")
     if by_kind["block_entity"]:
-        lines.append(
-            "    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES ="
-        )
-        lines.append(
-            f"            DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, {main_class}.MOD_ID);"
+        lines.extend(
+            [
+                "    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES =",
+                f"            DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, {main_class}.MOD_ID);",
+            ]
         )
         registrar_names.append("BLOCK_ENTITY_TYPES")
     if by_kind["menu"]:
-        lines.append("    public static final DeferredRegister<MenuType<?>> MENUS =")
-        lines.append(f"            DeferredRegister.create(Registries.MENU, {main_class}.MOD_ID);")
+        lines.extend(
+            [
+                "    public static final DeferredRegister<MenuType<?>> MENUS =",
+                f"            DeferredRegister.create(Registries.MENU, {main_class}.MOD_ID);",
+            ]
+        )
         registrar_names.append("MENUS")
     if by_kind["recipe"]:
-        lines.append("    public static final DeferredRegister<RecipeType<?>> RECIPE_TYPES =")
-        lines.append(f"            DeferredRegister.create(Registries.RECIPE_TYPE, {main_class}.MOD_ID);")
+        lines.extend(
+            [
+                "    public static final DeferredRegister<RecipeType<?>> RECIPE_TYPES =",
+                f"            DeferredRegister.create(Registries.RECIPE_TYPE, {main_class}.MOD_ID);",
+            ]
+        )
         registrar_names.append("RECIPE_TYPES")
-
     if registrar_names:
         lines.append("")
 
     for feature in by_kind["block"]:
         constant = _constant_name(feature["id"])
-        lines.append(
-            f"    public static final Supplier<{feature['class_name']}> {constant} = BLOCKS.registerBlock("
+        lines.extend(
+            [
+                f"    public static final Supplier<{feature['class_name']}> {constant} = BLOCKS.registerBlock(",
+                f"            \"{feature['id']}\", {feature['class_name']}::new, BlockBehaviour.Properties.of());",
+                "",
+            ]
         )
-        lines.append(f"            \"{feature['id']}\", {feature['class_name']}::new, BlockBehaviour.Properties.of());")
-        lines.append("")
-
     for feature in by_kind["item"]:
         constant = _constant_name(feature["id"])
-        lines.append(
-            f"    public static final Supplier<{feature['class_name']}> {constant} = ITEMS.registerItem("
+        lines.extend(
+            [
+                f"    public static final Supplier<{feature['class_name']}> {constant} = ITEMS.registerItem(",
+                f"            \"{feature['id']}\", {feature['class_name']}::new, new Item.Properties());",
+                "",
+            ]
         )
-        lines.append(f"            \"{feature['id']}\", {feature['class_name']}::new, new Item.Properties());")
-        lines.append("")
-
     for feature in by_kind["block_entity"]:
         constant = _constant_name(feature["id"])
-        block_feature = feature_by_id[feature["block_id"]]
-        block_constant = _constant_name(block_feature["id"])
-        lines.append(
-            f"    public static final Supplier<BlockEntityType<{feature['class_name']}>> {constant} ="
+        block_constant = _constant_name(feature_by_id[feature["block_id"]]["id"])
+        lines.extend(
+            [
+                f"    public static final Supplier<BlockEntityType<{feature['class_name']}>> {constant} =",
+                f"            BLOCK_ENTITY_TYPES.register(\"{feature['id']}\", () -> BlockEntityType.Builder.of(",
+                f"                    {feature['class_name']}::new, {block_constant}.get()).build(null));",
+                "",
+            ]
         )
-        lines.append(f"            BLOCK_ENTITY_TYPES.register(\"{feature['id']}\", () -> BlockEntityType.Builder.of(")
-        lines.append(f"                    {feature['class_name']}::new, {block_constant}.get()).build(null));")
-        lines.append("")
-
     for feature in by_kind["menu"]:
         constant = _constant_name(feature["id"])
-        lines.append(f"    public static final Supplier<MenuType<{feature['class_name']}>> {constant} =")
-        lines.append(
-            f"            MENUS.register(\"{feature['id']}\", () -> new MenuType<>("
-            f"{feature['class_name']}::new, FeatureFlags.DEFAULT_FLAGS));"
+        lines.extend(
+            [
+                f"    public static final Supplier<MenuType<{feature['class_name']}>> {constant} =",
+                f"            MENUS.register(\"{feature['id']}\", () -> new MenuType<>({feature['class_name']}::new, FeatureFlags.DEFAULT_FLAGS));",
+                "",
+            ]
         )
-        lines.append("")
-
     for feature in by_kind["recipe"]:
         constant = _constant_name(feature["id"])
-        lines.append(f"    public static final Supplier<RecipeType<{feature['class_name']}>> {constant} =")
-        lines.append(f"            RECIPE_TYPES.register(\"{feature['id']}\", RecipeType::simple);")
-        lines.append("")
+        lines.extend(
+            [
+                f"    public static final Supplier<RecipeType<{feature['class_name']}>> {constant} =",
+                f"            RECIPE_TYPES.register(\"{feature['id']}\", RecipeType::simple);",
+                "",
+            ]
+        )
 
     lines.append("    public static void register(IEventBus modBus) {")
     for registrar_name in registrar_names:
@@ -555,18 +583,16 @@ def _main_bootstrap_source(existing: str, java_package: str, main_class: str) ->
     constructor_marker = f"    public {main_class}(IEventBus modBus, ModContainer container) {{\n"
     if package_marker not in existing or constructor_marker not in existing:
         raise ValueError("target main class does not match canonical I3 bootstrap shape")
-
     updated = existing.replace(
         package_marker,
         package_marker + datagen_import + "\n" + registry_import + "\n",
         1,
     )
-    updated = updated.replace(
+    return updated.replace(
         constructor_marker,
         constructor_marker + registry_call + "\n" + datagen_call + "\n",
         1,
     )
-    return updated
 
 
 def _unified_diff(path: str, before: str, after: str) -> str:
@@ -623,9 +649,9 @@ def plan_feature_set(project_root: Path | str, request: dict[str, Any]) -> dict[
     main_class = project["main_class"]
     package_path = _java_package_path(java_package)
     main_relative = f"src/main/java/{package_path}/{main_class}.java"
-    main_path = root / main_relative
+    main_path = _project_child(root, main_relative)
     if not main_path.is_file():
-        raise ValueError(f"target project does not match requested main class: {main_path.relative_to(root)}")
+        raise ValueError(f"target project does not match requested main class: {main_relative}")
 
     operations: list[dict[str, Any]] = []
     for feature in features:
@@ -673,7 +699,6 @@ def plan_feature_set(project_root: Path | str, request: dict[str, Any]) -> dict[
             "bootstrap",
         )
     )
-
     operations.sort(key=lambda operation: (operation["path"], operation["role"], operation["action"]))
     return {
         "schema_version": 1,
@@ -685,29 +710,31 @@ def plan_feature_set(project_root: Path | str, request: dict[str, Any]) -> dict[
 
 def _preflight_operation(root: Path, operation: dict[str, Any], *, confirm_modified: bool) -> tuple[Path, str]:
     action = operation.get("action")
+    role = operation.get("role")
     path_value = operation.get("path")
     content = operation.get("content")
     if action not in {"create", "modify", "noop"}:
         raise ValueError(f"unknown plan action: {action}")
+    if not isinstance(role, str) or role not in ROLE_PATH_PREFIXES:
+        raise ValueError(f"unknown plan role: {role}")
     if not isinstance(path_value, str) or not isinstance(content, str):
         raise ValueError("plan operation requires string path and content")
+    if not path_value.startswith(ROLE_PATH_PREFIXES[role]) or not path_value.endswith(".java"):
+        raise ValueError(f"plan role {role} cannot target path: {path_value}")
     destination = _project_child(root, path_value)
 
     if action == "create":
         if destination.exists():
             raise StalePlanError(f"create target appeared after planning: {path_value}")
         return destination, content
-
     if not destination.is_file():
         raise StalePlanError(f"planned existing file is missing: {path_value}")
     current = destination.read_text(encoding="utf-8")
     expected_hash = operation.get("before_sha256")
     if not isinstance(expected_hash, str) or _sha256_text(current) != expected_hash:
         raise StalePlanError(f"planned file changed after planning: {path_value}")
-
     if action == "noop":
         return destination, current
-
     if operation.get("requires_confirmation") is True and not confirm_modified:
         diff = operation.get("diff", "")
         raise ConfirmationRequiredError(f"modified file requires explicit confirmation; diff follows:\n{diff}")
@@ -742,8 +769,9 @@ def apply_plan(project_root: Path | str, plan: dict[str, Any], *, confirm_modifi
     return written
 
 
-def load_request(path: Path | str) -> dict[str, Any]:
-    value = json.loads(Path(path).read_text(encoding="utf-8"))
+def load_request(workspace: Path, relative_path: str) -> dict[str, Any]:
+    request_path = _workspace_input(workspace, relative_path, directory=False)
+    value = json.loads(request_path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
         raise ValueError("feature request root must be an object")
     return value
@@ -751,23 +779,19 @@ def load_request(path: Path | str) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Plan and apply deterministic I8 feature skeleton generation.")
-    parser.add_argument("--project", required=True, type=Path)
-    parser.add_argument("--request", required=True, type=Path)
-    parser.add_argument("--plan-output", type=Path)
+    parser.add_argument("--project", required=True)
+    parser.add_argument("--request", required=True)
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--confirm-modified", action="store_true")
     args = parser.parse_args()
 
-    request = load_request(args.request)
-    plan = plan_feature_set(args.project, request)
-    rendered = json.dumps(plan, indent=2, sort_keys=True) + "\n"
-    if args.plan_output:
-        args.plan_output.parent.mkdir(parents=True, exist_ok=True)
-        args.plan_output.write_text(rendered, encoding="utf-8", newline="\n")
-    else:
-        print(rendered, end="")
+    workspace = Path.cwd().resolve(strict=True)
+    project_root = _workspace_input(workspace, args.project, directory=True)
+    request = load_request(workspace, args.request)
+    plan = plan_feature_set(project_root, request)
+    print(json.dumps(plan, indent=2, sort_keys=True))
     if args.apply:
-        apply_plan(args.project, plan, confirm_modified=args.confirm_modified)
+        apply_plan(project_root, plan, confirm_modified=args.confirm_modified)
     return 0
 
 
