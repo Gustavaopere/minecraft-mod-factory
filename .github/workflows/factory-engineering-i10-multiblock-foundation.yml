@@ -9,7 +9,7 @@ on:
       - main
     paths:
       - 'engineering/tests/fixtures/i10-multiblock-*.json'
-      - 'engineering/tests/test_i10_multiblock_foundation*.py'
+      - 'engineering/tests/test_i10_multiblock-foundation*.py'
       - 'engineering/tests/test_i10_chunk_acceptance.py'
       - 'engineering/tooling/multiblock-foundation/**'
       - 'engineering/tests/golden/i10-multiblock-foundation/**'
@@ -64,9 +64,7 @@ jobs:
           ./gradlew runGameTestServer --no-daemon
 
       - name: Run I10 real chunk acceptance
-        run: >-
-          python3 engineering/tooling/multiblock-foundation/run_i10_chunk_acceptance.py
-          --project .factory-ci/i10/generated
+        run: python3 engineering/tooling/multiblock-foundation/run_i10_chunk_acceptance.py --project .factory-ci/i10/generated
 
       - name: Check whitespace
         if: always()
