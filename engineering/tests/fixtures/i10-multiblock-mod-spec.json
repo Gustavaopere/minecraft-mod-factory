@@ -36,7 +36,7 @@
   },
   "visual": {
     "repo_textura_package": "art/golden-samples/i10-multiblock-visual",
-    "provider_profiles": ["java_block_item"],
+    "provider_profiles": [],
     "required_assets": ["controller", "casing", "io_port"],
     "handoff_manifest": "engineering/tests/golden/i10-multiblock-foundation/asset-handoff.json"
   },
