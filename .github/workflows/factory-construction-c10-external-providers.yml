@@ -5,6 +5,48 @@ on:
     branches:
       - main
       - feat/construction-c10-external-providers
+    paths:
+      - '.github/workflows/factory-construction-c10-external-providers.yml'
+      - 'engineering/tooling/import-physical-modlist.py'
+      - 'engineering/tests/test_i2_modlist_catalog.py'
+      - 'engineering/tests/test_i2_security_review.py'
+      - 'construction/providers/**'
+      - 'construction/schemas/**'
+      - 'construction/tests/test_c10_*.py'
+      - 'construction/fixtures/c10/**'
+      - 'construction/upstream/registry.json'
+      - 'construction/upstream/harness/schematica-test-lock.txt'
+      - 'construction/upstream/harness/c9-mcp-lock.txt'
+      - 'construction/core/build_ir.py'
+      - 'construction/core/modpack_registry.py'
+      - 'construction/core/modded_palette.py'
+      - 'construction/core/sponge_v3.py'
+      - 'construction/core/structural_qa.py'
+      - 'construction/core/visual_qa.py'
+      - 'construction/qa/**'
+      - 'construction/mcp/**'
+      - 'construction/runtime/neoforge-registry-probe/**'
+      - 'construction/tests/test_c9_agent_mcp.py'
+      - 'construction/tests/test_c9_mcp_stdio.py'
+      - 'construction/tests/test_c8_visual_qa.py'
+      - 'construction/tests/test_c8_palette_resolution_contract.py'
+      - 'construction/tests/test_c7_architecture_qa.py'
+      - 'construction/tests/test_c7_registry_authority.py'
+      - 'construction/tests/test_c6_sponge_v3.py'
+      - 'construction/tests/test_c5_modded_palette.py'
+      - 'construction/tests/test_c4_modpack_registry.py'
+      - 'construction/tests/test_c4_runtime_registry_probe.py'
+      - 'construction/scripts/prepare_neoforge_registry_probe.py'
+      - 'construction/tests/test_c3_vanilla_golden.py'
+      - 'construction/tests/test_c2_build_ir.py'
+      - 'construction/tests/test_c0_foundation.py'
+      - 'construction/scripts/validate_c0.py'
+      - 'construction/scripts/validate_c10.py'
+      - 'docs/superpowers/specs/2026-09-12-construction-c10-external-providers-design.md'
+      - 'docs/superpowers/plans/2026-09-12-construction-c10-external-providers.md'
+      - 'construction/README.md'
+      - 'construction/docs/ARCHITECTURE.md'
+      - 'construction/STATUS.md'
   pull_request:
     branches:
       - main
@@ -50,6 +92,10 @@ on:
       - 'construction/README.md'
       - 'construction/docs/ARCHITECTURE.md'
       - 'construction/STATUS.md'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.run_id || 'dedupe' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read

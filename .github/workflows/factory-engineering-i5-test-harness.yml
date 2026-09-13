@@ -25,6 +25,10 @@ on:
       - 'engineering/tests/golden/i3-golden-mod/build.gradle'
       - '.github/workflows/factory-engineering-i5-test-harness.yml'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.run_id || 'dedupe' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 permissions:
   contents: read
 

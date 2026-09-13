@@ -5,6 +5,13 @@ on:
     branches:
       - main
       - feat/m4-visual-style-provenance-migration
+    paths:
+      - 'art/VISUAL-STYLE-BIBLE.md'
+      - 'art/provenance/**'
+      - 'art/tooling/validate-m4-visual-style-provenance.py'
+      - 'art/tests/test_m4_visual_style_provenance.py'
+      - 'migration/M4-VISUAL-STYLE-PROVENANCE.json'
+      - '.github/workflows/factory-art-m4-visual-style-provenance.yml'
   pull_request:
     branches:
       - main
@@ -15,6 +22,10 @@ on:
       - 'art/tests/test_m4_visual_style_provenance.py'
       - 'migration/M4-VISUAL-STYLE-PROVENANCE.json'
       - '.github/workflows/factory-art-m4-visual-style-provenance.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.run_id || 'dedupe' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read

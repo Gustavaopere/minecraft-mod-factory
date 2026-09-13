@@ -14,6 +14,14 @@ on:
       - main
       - feat/art-pr14-unified-qa-export-manifest
 
+    paths:
+      - 'art/tooling/blockbench/asset-toolkit/**'
+      - 'art/standards/**'
+      - '.github/workflows/factory-art-pr14-unified-qa-export-manifest.yml'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.run_id || 'dedupe' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   unified-qa-export-manifest:
     runs-on: ubuntu-latest

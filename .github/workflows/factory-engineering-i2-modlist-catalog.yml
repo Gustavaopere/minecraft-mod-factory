@@ -5,6 +5,12 @@ on:
     branches:
       - main
       - feat/f3-e3-i2-i3-migration
+    paths:
+      - 'engineering/tooling/import-physical-modlist.py'
+      - 'engineering/tests/test_i2_modlist_catalog.py'
+      - 'engineering/tests/test_i2_security_review.py'
+      - 'engineering/tests/fixtures/modlist-i2-sample.txt'
+      - '.github/workflows/factory-engineering-i2-modlist-catalog.yml'
   pull_request:
     branches:
       - main
@@ -14,6 +20,10 @@ on:
       - 'engineering/tests/test_i2_security_review.py'
       - 'engineering/tests/fixtures/modlist-i2-sample.txt'
       - '.github/workflows/factory-engineering-i2-modlist-catalog.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.run_id || 'dedupe' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read

@@ -5,11 +5,19 @@ on:
     branches:
       - main
       - feat/art-pr6-geckolib4-adapter
+    paths:
+      - 'art/tooling/blockbench/asset-toolkit/**'
+      - 'art/golden-samples/**'
+      - '.github/workflows/factory-art-pr6-geckolib4-adapter.yml'
   pull_request:
     paths:
       - 'art/tooling/blockbench/asset-toolkit/**'
       - 'art/golden-samples/**'
       - '.github/workflows/factory-art-pr6-geckolib4-adapter.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.run_id || 'dedupe' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read

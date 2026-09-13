@@ -23,6 +23,10 @@ on:
       - 'engineering/examples/asset-handoff.example.json'
       - 'engineering/tooling/validate-i1-foundation.py'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.run_id || 'dedupe' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 permissions:
   contents: read
 

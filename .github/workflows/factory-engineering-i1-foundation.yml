@@ -5,12 +5,19 @@ on:
     branches:
       - main
       - feat/f2-e2-i1-foundation-migration
+    paths:
+      - 'engineering/**'
+      - '.github/workflows/factory-engineering-i1-foundation.yml'
   pull_request:
     branches:
       - main
     paths:
       - 'engineering/**'
       - '.github/workflows/factory-engineering-i1-foundation.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.run_id || 'dedupe' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read

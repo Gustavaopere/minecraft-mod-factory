@@ -5,12 +5,19 @@ on:
     branches:
       - main
       - feat/construction-c2-canonical-build-ir
+    paths:
+      - '.github/workflows/factory-construction-c2-build-ir.yml'
+      - 'construction/**'
   pull_request:
     branches:
       - main
     paths:
       - '.github/workflows/factory-construction-c2-build-ir.yml'
       - 'construction/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.run_id || 'dedupe' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read

@@ -5,6 +5,12 @@ on:
     branches:
       - main
       - feat/m4-standards-core-migration
+    paths:
+      - 'art/standards/**'
+      - 'art/tooling/validate-m4-standards-core.py'
+      - 'art/tests/test_m4_standards_core.py'
+      - 'migration/M4-STANDARDS-CORE-PROVENANCE.json'
+      - '.github/workflows/factory-art-m4-standards-core.yml'
   pull_request:
     branches:
       - main
@@ -14,6 +20,10 @@ on:
       - 'art/tests/test_m4_standards_core.py'
       - 'migration/M4-STANDARDS-CORE-PROVENANCE.json'
       - '.github/workflows/factory-art-m4-standards-core.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.run_id || 'dedupe' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read

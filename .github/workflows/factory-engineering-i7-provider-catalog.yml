@@ -33,6 +33,10 @@ on:
       - 'engineering/schemas/compatibility-matrix.schema.json'
       - 'engineering/tooling/import-physical-modlist.py'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.run_id || 'dedupe' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 permissions:
   contents: read
 

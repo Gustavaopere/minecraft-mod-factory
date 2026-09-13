@@ -5,11 +5,19 @@ on:
     branches:
       - main
       - feat/art-pr9-easy-model-entities
+    paths:
+      - 'art/tooling/blockbench/asset-toolkit/**'
+      - 'art/standards/**'
+      - '.github/workflows/factory-art-pr9-easy-model-entities.yml'
   pull_request:
     paths:
       - 'art/tooling/blockbench/asset-toolkit/**'
       - 'art/standards/**'
       - '.github/workflows/factory-art-pr9-easy-model-entities.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.run_id || 'dedupe' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read

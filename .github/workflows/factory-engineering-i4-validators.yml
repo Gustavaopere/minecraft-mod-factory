@@ -5,6 +5,14 @@ on:
     branches:
       - main
       - feat/f4-e4-i4-validators-migration
+    paths:
+      - '.github/workflows/factory-engineering-i4-validators.yml'
+      - 'engineering/tooling/validators/**'
+      - 'engineering/tests/test_i4_engineering_validators.py'
+      - 'engineering/tests/fixtures/i4-*.json'
+      - 'engineering/tests/golden/i3-golden-mod/**'
+      - 'engineering/schemas/**'
+      - 'engineering/tooling/validate-i1-foundation.py'
   pull_request:
     branches:
       - main
@@ -16,6 +24,10 @@ on:
       - 'engineering/tests/golden/i3-golden-mod/**'
       - 'engineering/schemas/**'
       - 'engineering/tooling/validate-i1-foundation.py'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.run_id || 'dedupe' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read

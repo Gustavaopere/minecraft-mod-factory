@@ -5,6 +5,12 @@ on:
     branches:
       - main
       - feat/m4-art-templates-migration
+    paths:
+      - 'art/templates/**'
+      - 'art/tooling/validate-m4-art-templates.py'
+      - 'art/tests/test_m4_art_templates.py'
+      - 'migration/M4-ART-TEMPLATES-PROVENANCE.json'
+      - '.github/workflows/factory-art-m4-templates.yml'
   pull_request:
     branches:
       - main
@@ -14,6 +20,10 @@ on:
       - 'art/tests/test_m4_art_templates.py'
       - 'migration/M4-ART-TEMPLATES-PROVENANCE.json'
       - '.github/workflows/factory-art-m4-templates.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.run_id || 'dedupe' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read

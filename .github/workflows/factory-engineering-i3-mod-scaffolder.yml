@@ -5,6 +5,14 @@ on:
     branches:
       - main
       - feat/f3-e3-i2-i3-migration
+    paths:
+      - 'engineering/templates/neoforge-mod/**'
+      - 'engineering/tooling/scaffolder/**'
+      - 'engineering/tests/test_i3_mod_scaffolder.py'
+      - 'engineering/tests/test_i3_security_review.py'
+      - 'engineering/tests/fixtures/i3-*.json'
+      - 'engineering/tests/golden/i3-golden-mod/**'
+      - '.github/workflows/factory-engineering-i3-mod-scaffolder.yml'
   pull_request:
     branches:
       - main
@@ -16,6 +24,10 @@ on:
       - 'engineering/tests/fixtures/i3-*.json'
       - 'engineering/tests/golden/i3-golden-mod/**'
       - '.github/workflows/factory-engineering-i3-mod-scaffolder.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.run_id || 'dedupe' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read

@@ -5,10 +5,17 @@ on:
     branches:
       - main
       - feat/art-pr5-generic-animation-core
+    paths:
+      - 'art/tooling/blockbench/asset-toolkit/**'
+      - '.github/workflows/factory-art-pr5-generic-animation-core.yml'
   pull_request:
     paths:
       - 'art/tooling/blockbench/asset-toolkit/**'
       - '.github/workflows/factory-art-pr5-generic-animation-core.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.run_id || 'dedupe' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read

@@ -5,6 +5,19 @@ on:
     branches:
       - main
       - feat/construction-c6-sponge-schematic-v3
+    paths:
+      - '.github/workflows/factory-construction-c6-sponge-v3.yml'
+      - 'construction/STATUS.md'
+      - 'construction/README.md'
+      - 'construction/docs/ARCHITECTURE.md'
+      - 'construction/core/sponge_v3.py'
+      - 'construction/core/build_ir.py'
+      - 'construction/tests/test_c6_sponge_v3.py'
+      - 'construction/tests/test_c5_modded_palette.py'
+      - 'construction/tests/test_c4_modpack_registry.py'
+      - 'construction/tests/test_c3_vanilla_golden.py'
+      - 'construction/tests/test_c2_build_ir.py'
+      - 'construction/tests/test_c0_foundation.py'
   pull_request:
     branches:
       - main
@@ -21,6 +34,10 @@ on:
       - 'construction/tests/test_c3_vanilla_golden.py'
       - 'construction/tests/test_c2_build_ir.py'
       - 'construction/tests/test_c0_foundation.py'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.run_id || 'dedupe' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read

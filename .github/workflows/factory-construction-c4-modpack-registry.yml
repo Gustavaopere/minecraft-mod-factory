@@ -5,6 +5,23 @@ on:
     branches:
       - main
       - feat/construction-c4-modpack-registry
+    paths:
+      - '.github/workflows/factory-construction-c4-modpack-registry.yml'
+      - 'engineering/tooling/import-physical-modlist.py'
+      - 'engineering/tests/test_i2_modlist_catalog.py'
+      - 'engineering/tests/test_i2_security_review.py'
+      - 'engineering/tooling/scaffolder/**'
+      - 'engineering/templates/neoforge-mod/**'
+      - 'construction/STATUS.md'
+      - 'construction/README.md'
+      - 'construction/docs/ARCHITECTURE.md'
+      - 'construction/core/modpack_registry.py'
+      - 'construction/runtime/neoforge-registry-probe/**'
+      - 'construction/schemas/modpack-registry.schema.json'
+      - 'construction/scripts/index_modpack_jars.py'
+      - 'construction/scripts/prepare_neoforge_registry_probe.py'
+      - 'construction/tests/test_c4_modpack_registry.py'
+      - 'construction/tests/test_c4_runtime_registry_probe.py'
   pull_request:
     branches:
       - main
@@ -25,6 +42,10 @@ on:
       - 'construction/scripts/prepare_neoforge_registry_probe.py'
       - 'construction/tests/test_c4_modpack_registry.py'
       - 'construction/tests/test_c4_runtime_registry_probe.py'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.run_id || 'dedupe' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
