@@ -14,4 +14,9 @@ public final class MachineMenu extends AbstractContainerMenu {
     public ItemStack quickMoveStack(Player player, int index) {
         return ItemStack.EMPTY;
     }
+
+    @Override
+    public boolean stillValid(Player player) {
+        return true;
+    }
 }
