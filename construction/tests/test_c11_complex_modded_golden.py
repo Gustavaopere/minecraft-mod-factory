@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import os
+import sys
 import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "construction" / "fixtures" / "complex-modded-golden"
@@ -45,6 +48,25 @@ class ConstructionC11ComplexModdedGoldenTest(unittest.TestCase):
         with zipfile.ZipFile(mods_dir / "alpha-1.0.0.jar", "w"):
             pass
         return modlist, mods_dir, runtime_snapshot
+
+    def _valid_runtime_snapshot(self) -> dict:
+        return {
+            "schema_version": 1,
+            "captured_at": "2026-09-13T00:00:00Z",
+            "physical_snapshot_sha256": hashlib.sha256(CAPTURE_SAMPLE.encode("utf-8")).hexdigest(),
+            "target": {
+                "minecraft": "1.21.1",
+                "loader": "neoforge",
+                "loader_version": "21.1.248",
+            },
+            "blocks": [
+                {
+                    "id": "minecraft:stone",
+                    "safety": "ordinary",
+                    "states": [{}],
+                }
+            ],
+        }
 
     def test_deferred_capture_state_is_explicit_and_blocks_completion(self) -> None:
         self.assertTrue(
@@ -181,6 +203,77 @@ class ConstructionC11ComplexModdedGoldenTest(unittest.TestCase):
                     capture._workspace_output_path(outside)
             finally:
                 os.chdir(previous)
+
+    def test_capture_helper_delegates_physical_sha_mismatch_to_c4(self) -> None:
+        capture = load_path(CAPTURE_PATH, "construction_c11_capture_registry_sha_mismatch")
+        with tempfile.TemporaryDirectory() as tmp:
+            modlist, mods_dir, runtime_snapshot = self._prepare_sample_inputs(Path(tmp))
+            runtime = self._valid_runtime_snapshot()
+            runtime["physical_snapshot_sha256"] = "0" * 64
+            runtime_snapshot.write_text(json.dumps(runtime), encoding="utf-8")
+            with self.assertRaisesRegex(
+                ValueError,
+                r"^runtime snapshot must reference the exact physical snapshot SHA-256$",
+            ):
+                capture.compose_registry(
+                    modlist,
+                    mods_dir,
+                    runtime_snapshot,
+                    captured_at="2026-09-09",
+                )
+
+    def test_capture_helper_delegates_target_mismatch_to_c4(self) -> None:
+        capture = load_path(CAPTURE_PATH, "construction_c11_capture_registry_target_mismatch")
+        with tempfile.TemporaryDirectory() as tmp:
+            modlist, mods_dir, runtime_snapshot = self._prepare_sample_inputs(Path(tmp))
+            runtime = self._valid_runtime_snapshot()
+            runtime["target"]["minecraft"] = "1.20.1"
+            runtime_snapshot.write_text(json.dumps(runtime), encoding="utf-8")
+            with self.assertRaisesRegex(
+                ValueError,
+                r"^runtime target must match Minecraft 1\.21\.1 / NeoForge$",
+            ):
+                capture.compose_registry(
+                    modlist,
+                    mods_dir,
+                    runtime_snapshot,
+                    captured_at="2026-09-09",
+                )
+
+    def test_capture_cli_writes_canonical_revalidated_registry(self) -> None:
+        capture = load_path(CAPTURE_PATH, "construction_c11_capture_registry_cli")
+        c4 = load_path(C4_PATH, "construction_c4_for_c11_cli")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            modlist, mods_dir, runtime_snapshot = self._prepare_sample_inputs(root)
+            runtime_snapshot.write_text(json.dumps(self._valid_runtime_snapshot()), encoding="utf-8")
+            previous = Path.cwd()
+            argv = [
+                str(CAPTURE_PATH),
+                "--physical-modlist",
+                str(modlist),
+                "--mods-dir",
+                str(mods_dir),
+                "--runtime-snapshot",
+                str(runtime_snapshot),
+                "--captured-at",
+                "2026-09-09",
+                "--output",
+                "out/registry.json",
+            ]
+            try:
+                os.chdir(workspace)
+                with mock.patch.object(sys, "argv", argv):
+                    self.assertEqual(0, capture.main())
+            finally:
+                os.chdir(previous)
+
+            output = workspace / "out" / "registry.json"
+            registry = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual([], c4.validate_modpack_registry(registry))
+            self.assertEqual(c4.canonical_json_bytes(registry), output.read_bytes())
 
 
 if __name__ == "__main__":
