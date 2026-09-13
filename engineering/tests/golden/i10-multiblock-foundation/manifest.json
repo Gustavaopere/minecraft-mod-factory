@@ -1,22 +1,75 @@
 {
   "schema_version": 1,
   "files": [
-    {"source": "README.md", "destination": "I10-MULTIBLOCK-FOUNDATION.md"},
-    {"source": "src/main/java/dev/example/i10multiblock/multiblock/I10MultiblockContent.java", "destination": "src/main/java/dev/example/i10multiblock/multiblock/I10MultiblockContent.java"},
-    {"source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPattern.java", "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPattern.java"},
-    {"source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockValidationResult.java", "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockValidationResult.java"},
-    {"source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockRuntimeState.java", "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockRuntimeState.java"},
-    {"source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockInvalidation.java", "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockInvalidation.java"},
-    {"source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockCasingBlock.java", "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockCasingBlock.java"},
-    {"source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlock.java", "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlock.java"},
-    {"source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlockEntity.java", "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlockEntity.java"},
-    {"source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlock.java", "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlock.java"},
-    {"source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlockEntity.java", "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlockEntity.java"},
-    {"source": "src/main/java/dev/example/i10multiblock/gametest/I10MultiblockGameTests.java", "destination": "src/main/java/dev/example/i10multiblock/gametest/I10MultiblockGameTests.java"},
-    {"source": "src/main/resources/assets/i10_multiblock/blockstates/multiblock_controller.json", "destination": "src/main/resources/assets/i10_multiblock/blockstates/multiblock_controller.json"},
-    {"source": "src/main/resources/assets/i10_multiblock/blockstates/multiblock_io_port.json", "destination": "src/main/resources/assets/i10_multiblock/blockstates/multiblock_io_port.json"},
-    {"source": "src/main/resources/assets/i10_multiblock/blockstates/multiblock_casing.json", "destination": "src/main/resources/assets/i10_multiblock/blockstates/multiblock_casing.json"},
-    {"source": "src/main/resources/data/i10_multiblock/structure/multiblock_test.nbt", "destination": "src/main/resources/data/i10_multiblock/structure/multiblock_test.nbt", "sha256": "75b23fb80317d88bbde1a2aff7121cfd903b8a1010878e0327ce26fd4d3f1c99"}
+    {
+      "source": "README.md",
+      "destination": "I10-MULTIBLOCK-FOUNDATION.md"
+    },
+    {
+      "source": "src/main/java/dev/example/i10multiblock/multiblock/I10MultiblockContent.java",
+      "destination": "src/main/java/dev/example/i10multiblock/multiblock/I10MultiblockContent.java"
+    },
+    {
+      "source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPattern.java",
+      "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPattern.java"
+    },
+    {
+      "source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockValidationResult.java",
+      "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockValidationResult.java"
+    },
+    {
+      "source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockRuntimeState.java",
+      "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockRuntimeState.java"
+    },
+    {
+      "source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockInvalidation.java",
+      "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockInvalidation.java"
+    },
+    {
+      "source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockCasingBlock.java",
+      "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockCasingBlock.java"
+    },
+    {
+      "source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlock.java",
+      "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlock.java"
+    },
+    {
+      "source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlockEntity.java",
+      "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlockEntity.java"
+    },
+    {
+      "source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlock.java",
+      "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlock.java"
+    },
+    {
+      "source": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlockEntity.java",
+      "destination": "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlockEntity.java"
+    },
+    {
+      "source": "src/main/java/dev/example/i10multiblock/gametest/I10MultiblockGameTests.java",
+      "destination": "src/main/java/dev/example/i10multiblock/gametest/I10MultiblockGameTests.java"
+    },
+    {
+      "source": "src/main/java/dev/example/i10multiblock/acceptance/I10AcceptanceCommands.java",
+      "destination": "src/main/java/dev/example/i10multiblock/acceptance/I10AcceptanceCommands.java"
+    },
+    {
+      "source": "src/main/resources/assets/i10_multiblock/blockstates/multiblock_controller.json",
+      "destination": "src/main/resources/assets/i10_multiblock/blockstates/multiblock_controller.json"
+    },
+    {
+      "source": "src/main/resources/assets/i10_multiblock/blockstates/multiblock_io_port.json",
+      "destination": "src/main/resources/assets/i10_multiblock/blockstates/multiblock_io_port.json"
+    },
+    {
+      "source": "src/main/resources/assets/i10_multiblock/blockstates/multiblock_casing.json",
+      "destination": "src/main/resources/assets/i10_multiblock/blockstates/multiblock_casing.json"
+    },
+    {
+      "source": "src/main/resources/data/i10_multiblock/structure/multiblock_test.nbt",
+      "destination": "src/main/resources/data/i10_multiblock/structure/multiblock_test.nbt",
+      "sha256": "75b23fb80317d88bbde1a2aff7121cfd903b8a1010878e0327ce26fd4d3f1c99"
+    }
   ],
   "main_class_patch": {
     "path": "src/main/java/dev/example/i10multiblock/I10MultiblockMod.java",
