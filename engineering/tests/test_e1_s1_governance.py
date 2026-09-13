@@ -1,3 +1,4 @@
+import hashlib
 import json
 import pathlib
 import subprocess
@@ -5,6 +6,9 @@ import sys
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+
+ENGINEERING_PLAN = "plans/PLANO-MESTRE-MINECRAFT-MOD-FACTORY-MOD-ENGINEERING-NEOFORGE-1.21.1-V1.1.md"
+ART_PLAN = "plans/textura/PLANO-MESTRE-UNIFICADO-MINECRAFT-MOD-FACTORY-REPO-TEXTURA-BLOCKBENCH-ASSET-MCP-V5.1.md"
 
 EXPECTED_FILES = [
     "engineering/README.md",
@@ -18,6 +22,8 @@ EXPECTED_FILES = [
     "skills/ROUTER.md",
     "skills/VERSION-AUTHORITY.md",
     "skills/USER-GUIDED-WORKFLOW.md",
+    ENGINEERING_PLAN,
+    ART_PLAN,
 ]
 
 
@@ -46,6 +52,22 @@ class GovernanceMigrationTests(unittest.TestCase):
             art["locator"]["repository_full_name"],
         )
         self.assertEqual("art/", art["locator"]["authority_root"])
+
+    def test_source_registry_binds_canonical_plans(self):
+        registry_path = ROOT / "engineering/catalog/sources/SOURCE-REGISTRY.json"
+        data = json.loads(registry_path.read_text(encoding="utf-8"))
+        by_id = {entry["source_id"]: entry for entry in data["sources"]}
+
+        expected = {
+            "mod_engineering_plan_v1_1": ENGINEERING_PLAN,
+            "repo_textura_plan_v5_1": ART_PLAN,
+        }
+        for source_id, rel in expected.items():
+            source = by_id[source_id]
+            self.assertEqual("CONFIRMED", source["state"])
+            self.assertEqual(rel, source["locator"]["path"])
+            actual_hash = hashlib.sha256((ROOT / rel).read_bytes()).hexdigest()
+            self.assertEqual(actual_hash, source["locator"]["sha256"])
 
     def test_version_authority_matches_physical_baseline(self):
         text = (ROOT / "skills/VERSION-AUTHORITY.md").read_text(encoding="utf-8")
