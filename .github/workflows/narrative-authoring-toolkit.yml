@@ -27,6 +27,15 @@ jobs:
       - name: Unit tests
         run: python3 -m unittest discover -s narrative/tests -p 'test_*.py' -v
       - name: Example profile smoke
+        shell: bash
         run: |
-          python3 narrative/tooling/validate_story.py --profile narrative/profiles/example.json --root narrative/templates
-          python3 narrative/tooling/story_inventory.py --profile narrative/profiles/example.json --root narrative/templates --format json > /tmp/narrative-inventory.json
+          set -euo pipefail
+          mkdir -p /tmp/narrative-smoke
+          cat > /tmp/narrative-smoke/HIST-0001-example.md <<'EOF'
+          # HIST-0001 — Example
+
+          ## Editorial state
+          DRAFT
+          EOF
+          python3 narrative/tooling/validate_story.py --profile narrative/profiles/example.json --root /tmp/narrative-smoke --strict-references
+          python3 narrative/tooling/story_inventory.py --profile narrative/profiles/example.json --root /tmp/narrative-smoke --format json > /tmp/narrative-inventory.json
