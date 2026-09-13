@@ -118,6 +118,28 @@ class I9MachineFoundationContractTest(unittest.TestCase):
         )
         self.assertEqual([], missing, "I9 RED: inventory/energy contract is incomplete")
 
+    def test_i9_processing_persistence_and_sync_contract_tokens(self):
+        block_entity = (MACHINE_SOURCE_ROOT / "MachineBlockEntity.java").read_text(encoding="utf-8")
+        required = (
+            "private int progress;",
+            "serverTick",
+            "SingleRecipeInput",
+            "RecipeType.SMELTING",
+            "getRecipeFor",
+            "assemble",
+            "consumeInternal(ENERGY_PER_TICK)",
+            "resetProgress",
+            "loadAdditional",
+            "saveAdditional",
+            "serializeNBT",
+            "deserializeNBT",
+            "energyStorage.loadClamped",
+            "ContainerData",
+            "return 3;",
+        )
+        missing = [token for token in required if token not in block_entity]
+        self.assertEqual([], missing, "I9 RED: processing/persistence/sync contract is incomplete")
+
 
 if __name__ == "__main__":
     unittest.main()
