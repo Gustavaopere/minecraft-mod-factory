@@ -1,10 +1,13 @@
 package dev.example.i10multiblock.multiblock;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -49,10 +52,132 @@ public final class MultiblockControllerBlockEntity extends BlockEntity {
         return formationRevision;
     }
 
+    public void markRevalidatedFormed() {
+        if (!lastKnownFormed || formationRevision <= 0L) {
+            markUnformed();
+            return;
+        }
+        runtimeState = MultiblockRuntimeState.FORMED;
+        setChanged();
+    }
+
     public void markUnformed() {
         lastKnownFormed = false;
         runtimeState = MultiblockRuntimeState.UNFORMED;
         setChanged();
+    }
+
+    public MultiblockValidationResult tryForm(ServerLevel level, Direction facing) {
+        MultiblockValidationResult validation = MultiblockPattern.validate(level, worldPosition, facing);
+        if (validation == MultiblockValidationResult.UNAVAILABLE) {
+            if (lastKnownFormed || runtimeState == MultiblockRuntimeState.FORMED) {
+                markPendingRevalidation();
+            }
+            setVisualFormed(level, facing, false);
+            return validation;
+        }
+        if (validation == MultiblockValidationResult.INVALID) {
+            dissolve(level, facing);
+            return validation;
+        }
+
+        BlockPos portPos = MultiblockPattern.worldPos(worldPosition, facing, MultiblockPattern.PORT_LOCAL);
+        if (!(level.getBlockEntity(portPos) instanceof MultiblockPortBlockEntity port)) {
+            dissolve(level, facing);
+            return MultiblockValidationResult.INVALID;
+        }
+
+        long revision = markFormed();
+        port.bindToController(worldPosition, revision);
+        setVisualFormed(level, facing, true);
+        return MultiblockValidationResult.VALID;
+    }
+
+    public MultiblockValidationResult revalidate(ServerLevel level, Direction facing) {
+        MultiblockValidationResult validation = MultiblockPattern.validate(level, worldPosition, facing);
+        if (validation == MultiblockValidationResult.UNAVAILABLE) {
+            if (lastKnownFormed || runtimeState == MultiblockRuntimeState.FORMED
+                    || runtimeState == MultiblockRuntimeState.PENDING_REVALIDATION) {
+                markPendingRevalidation();
+            }
+            setVisualFormed(level, facing, false);
+            return validation;
+        }
+        if (validation == MultiblockValidationResult.INVALID) {
+            dissolve(level, facing);
+            return validation;
+        }
+
+        if (!lastKnownFormed || formationRevision <= 0L) {
+            dissolve(level, facing);
+            return MultiblockValidationResult.VALID;
+        }
+
+        BlockPos portPos = MultiblockPattern.worldPos(worldPosition, facing, MultiblockPattern.PORT_LOCAL);
+        if (!(level.getBlockEntity(portPos) instanceof MultiblockPortBlockEntity port)) {
+            dissolve(level, facing);
+            return MultiblockValidationResult.INVALID;
+        }
+
+        markRevalidatedFormed();
+        port.bindToController(worldPosition, formationRevision);
+        setVisualFormed(level, facing, true);
+        return MultiblockValidationResult.VALID;
+    }
+
+    public void beforeControllerRemoval(ServerLevel level, Direction facing) {
+        BlockPos portPos = MultiblockPattern.worldPos(worldPosition, facing, MultiblockPattern.PORT_LOCAL);
+        if (!level.hasChunkAt(portPos)) {
+            return;
+        }
+        if (level.getBlockEntity(portPos) instanceof MultiblockPortBlockEntity port) {
+            port.clearBinding();
+        }
+        BlockState portState = level.getBlockState(portPos);
+        if (portState.is(I10MultiblockContent.MULTIBLOCK_IO_PORT.get())) {
+            level.setBlock(
+                    portPos,
+                    portState.setValue(MultiblockPortBlock.FACING, facing).setValue(MultiblockPortBlock.FORMED, false),
+                    Block.UPDATE_CLIENTS);
+        }
+        level.invalidateCapabilities(portPos);
+    }
+
+    private void dissolve(ServerLevel level, Direction facing) {
+        BlockPos portPos = MultiblockPattern.worldPos(worldPosition, facing, MultiblockPattern.PORT_LOCAL);
+        if (level.hasChunkAt(portPos)
+                && level.getBlockEntity(portPos) instanceof MultiblockPortBlockEntity port) {
+            port.clearBinding();
+        }
+        markUnformed();
+        setVisualFormed(level, facing, false);
+    }
+
+    private void setVisualFormed(ServerLevel level, Direction facing, boolean formed) {
+        BlockState controllerState = level.getBlockState(worldPosition);
+        if (controllerState.is(I10MultiblockContent.MULTIBLOCK_CONTROLLER.get())) {
+            level.setBlock(
+                    worldPosition,
+                    controllerState
+                            .setValue(MultiblockControllerBlock.FACING, facing)
+                            .setValue(MultiblockControllerBlock.FORMED, formed),
+                    Block.UPDATE_CLIENTS);
+        }
+
+        BlockPos portPos = MultiblockPattern.worldPos(worldPosition, facing, MultiblockPattern.PORT_LOCAL);
+        if (!level.hasChunkAt(portPos)) {
+            return;
+        }
+        BlockState portState = level.getBlockState(portPos);
+        if (portState.is(I10MultiblockContent.MULTIBLOCK_IO_PORT.get())) {
+            level.setBlock(
+                    portPos,
+                    portState
+                            .setValue(MultiblockPortBlock.FACING, facing)
+                            .setValue(MultiblockPortBlock.FORMED, formed),
+                    Block.UPDATE_CLIENTS);
+        }
+        level.invalidateCapabilities(portPos);
     }
 
     public MultiblockRuntimeState runtimeState() {
