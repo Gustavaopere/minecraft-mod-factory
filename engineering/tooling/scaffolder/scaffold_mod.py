@@ -18,7 +18,7 @@ MOD_SPEC_SCHEMA = REPO_ROOT / "engineering" / "schemas" / "mod-spec.schema.json"
 EXPECTED_TARGET = {
     "minecraft": "1.21.1",
     "loader": "neoforge",
-    "neoforge": "21.1.248",
+    "neoforge": "21.1.250",
     "java": 21,
 }
 REQUIRED_CONFIG_KEYS = (
