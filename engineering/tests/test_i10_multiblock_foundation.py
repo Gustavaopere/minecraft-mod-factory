@@ -108,6 +108,79 @@ class I10RuntimeSurfaceContract(unittest.TestCase):
         self.assertEqual(2, text.count('BLOCK_ENTITY_TYPES.register("'), "I10 must register only controller and port BEs")
         self.assertNotIn('BLOCK_ENTITY_TYPES.register("multiblock_casing"', text)
 
+    def test_controller_owns_single_slot_and_persistent_formation_authority(self) -> None:
+        source = JAVA_ROOT / "MultiblockControllerBlockEntity.java"
+        text = source.read_text(encoding="utf-8")
+        required = (
+            "new ItemStackHandler(1)",
+            "lastKnownFormed",
+            "formationRevision",
+            "MultiblockRuntimeState.UNFORMED",
+            "MultiblockRuntimeState.PENDING_REVALIDATION",
+            "MultiblockRuntimeState.FORMED",
+            "markPendingRevalidation",
+            "markFormed",
+            "markUnformed",
+            "runtimeState()",
+            "formationRevision()",
+            "itemHandler()",
+            "loadAdditional",
+            "saveAdditional",
+            "serializeNBT",
+            "deserializeNBT",
+            "Math.max(0L",
+        )
+        missing = [token for token in required if token not in text]
+        self.assertEqual([], missing, f"I10 RED: controller storage/persistence contract incomplete: {missing}")
+
+    def test_controller_load_is_fail_closed_until_revalidation(self) -> None:
+        source = JAVA_ROOT / "MultiblockControllerBlockEntity.java"
+        text = source.read_text(encoding="utf-8")
+        required = (
+            "lastKnownFormed ? MultiblockRuntimeState.PENDING_REVALIDATION : MultiblockRuntimeState.UNFORMED",
+            "formationRevision++",
+            "lastKnownFormed = true",
+            "lastKnownFormed = false",
+        )
+        missing = [token for token in required if token not in text]
+        self.assertEqual([], missing, f"I10 RED: controller fail-closed lifecycle incomplete: {missing}")
+
+    def test_port_binding_persists_position_revision_and_rejects_stale_links(self) -> None:
+        source = JAVA_ROOT / "MultiblockPortBlockEntity.java"
+        text = source.read_text(encoding="utf-8")
+        required = (
+            "controllerPos",
+            "linkedRevision",
+            "bindToController",
+            "clearBinding",
+            "linkedRevision <= 0",
+            "level.hasChunkAt(controllerPos)",
+            "instanceof MultiblockControllerBlockEntity controller",
+            "controller.runtimeState() != MultiblockRuntimeState.FORMED",
+            "controller.formationRevision() != linkedRevision",
+            "return controller.itemHandler()",
+            "BlockPos.of",
+            ".asLong()",
+            "loadAdditional",
+            "saveAdditional",
+        )
+        missing = [token for token in required if token not in text]
+        self.assertEqual([], missing, f"I10 RED: port binding/capability guard incomplete: {missing}")
+
+    def test_item_capability_is_exposed_only_by_io_port(self) -> None:
+        content = JAVA_ROOT / "I10MultiblockContent.java"
+        text = content.read_text(encoding="utf-8")
+        capability_body = text.split("public static void registerCapabilities", 1)[1]
+        required = (
+            "Capabilities.ItemHandler.BLOCK",
+            "MULTIBLOCK_IO_PORT_BLOCK_ENTITY.get()",
+            "blockEntity.itemHandler()",
+        )
+        missing = [token for token in required if token not in capability_body]
+        self.assertEqual([], missing, f"I10 RED: IO-port capability registration incomplete: {missing}")
+        self.assertEqual(1, capability_body.count("event.registerBlockEntity("))
+        self.assertNotIn("MULTIBLOCK_CONTROLLER_BLOCK_ENTITY.get()", capability_body)
+
 
 if __name__ == "__main__":
     unittest.main()
