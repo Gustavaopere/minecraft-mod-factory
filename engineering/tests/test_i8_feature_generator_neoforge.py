@@ -35,8 +35,7 @@ class I8NeoForgeSkeletonContractTest(unittest.TestCase):
         self.module = load_generator()
 
     def generate(self, project: Path) -> None:
-        plan = self.module.plan_feature_set(project, load_request())
-        self.module.apply_plan(project, plan, confirm_modified=True)
+        self.module.apply_feature_set(project, load_request(), confirm_modified=True)
 
     def read_source(self, project: Path, kind: str, class_name: str) -> str:
         path = project / "src/main/java" / PACKAGE_PATH / "feature" / kind / f"{class_name}.java"
