@@ -9,6 +9,8 @@ on:
     branches:
       - main
     paths:
+      - 'engineering/contracts/target-baseline.json'
+      - 'engineering/schemas/mod-spec.schema.json'
       - 'engineering/templates/neoforge-mod/**'
       - 'engineering/tooling/scaffolder/**'
       - 'engineering/tests/test_i3_mod_scaffolder.py'
