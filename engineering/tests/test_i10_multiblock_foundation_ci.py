@@ -6,6 +6,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 WORKFLOW = REPO / ".github/workflows/factory-engineering-i10-multiblock-foundation.yml"
+SONAR_WORKFLOW = REPO / ".github/workflows/factory-sonar-ci.yml"
 PROTOCOL = REPO / "engineering/tests/i10-multiplayer-acceptance.md"
 
 
@@ -66,6 +67,18 @@ class I10PermanentCIContract(unittest.TestCase):
             "'dedicated_server': 'PASS'",
         ):
             self.assertIn(token, text, f"I10 permanent CI is missing I5 gate token: {token}")
+
+    def test_sonar_fail_closed_coverage_includes_i10_tooling(self) -> None:
+        text = SONAR_WORKFLOW.read_text(encoding="utf-8")
+        for token in (
+            "--source=engineering/tooling/multiblock-foundation",
+            "engineering/tests/test_i10_multiblock_foundation.py",
+            "engineering/tests/test_i10_multiblock_foundation_composition.py",
+            "engineering/tests/test_i10_chunk_acceptance.py",
+            "--include='engineering/tooling/multiblock-foundation/*'",
+            "--fail-under=80",
+        ):
+            self.assertIn(token, text, f"Sonar CI must measure I10 tooling coverage: {token}")
 
     def test_multiplayer_remains_fail_closed_until_real_evidence(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
