@@ -1,0 +1,36 @@
+name: Factory Engineering I10 Multiblock Foundation
+
+on:
+  push:
+    branches:
+      - engineering/i10-multiblock-foundation-reference
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'engineering/tests/fixtures/i10-multiblock-*.json'
+      - 'engineering/tests/test_i10_multiblock_foundation*.py'
+      - 'engineering/tooling/multiblock-foundation/**'
+      - 'engineering/tests/golden/i10-multiblock-foundation/**'
+      - 'art/golden-samples/i10-multiblock-visual/**'
+      - '.github/workflows/factory-engineering-i10-multiblock-foundation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  composition-red:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Run I10 RED contracts
+        run: >-
+          python3 -m unittest
+          engineering/tests/test_i10_multiblock_foundation.py
+          engineering/tests/test_i10_multiblock_foundation_composition.py
+
+      - name: Check whitespace
+        if: always()
+        run: git diff --check HEAD^
