@@ -9,6 +9,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 ENGINEERING_PLAN = "plans/PLANO-MESTRE-MINECRAFT-MOD-FACTORY-MOD-ENGINEERING-NEOFORGE-1.21.1-V1.1.md"
 ART_PLAN = "plans/textura/PLANO-MESTRE-UNIFICADO-MINECRAFT-MOD-FACTORY-REPO-TEXTURA-BLOCKBENCH-ASSET-MCP-V5.1.md"
+SONAR_WORKFLOW = ROOT / ".github/workflows/factory-sonar-ci.yml"
 
 EXPECTED_FILES = [
     "engineering/README.md",
@@ -85,6 +86,11 @@ class GovernanceMigrationTests(unittest.TestCase):
             "Gustavaopere/neoforge-rpg-skilltree` is the canonical integration/control-plane repository",
             text,
         )
+
+    def test_sonar_ci_collects_governance_validator_coverage(self):
+        workflow = SONAR_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("engineering/tests/test_e1_s1_governance.py", workflow)
+        self.assertIn("engineering/tooling/validate-e1-s1-governance.py", workflow)
 
     def test_validator_passes(self):
         result = subprocess.run(
