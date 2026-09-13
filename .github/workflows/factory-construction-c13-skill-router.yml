@@ -54,7 +54,9 @@ jobs:
           node-version: '20.20.2'
 
       - name: Run C13 router integration contracts
-        run: python3 -m unittest construction/tests/test_c13_skill_router_integration.py -v
+        run: |
+          python3 -m unittest construction/tests/test_c13_skill_router_integration.py -v
+          python3 -m unittest construction/tests/test_c13_workflow_contract.py -v
 
       - name: Run existing Factory skill repository validator
         run: python3 skills/scripts/validate_skill_repository.py
