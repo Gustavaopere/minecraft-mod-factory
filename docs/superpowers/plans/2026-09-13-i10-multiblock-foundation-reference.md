@@ -148,11 +148,11 @@ private MultiblockRuntimeState runtimeState = MultiblockRuntimeState.UNFORMED;
 
 ## Task 6 — Repo Textura Source + I6 Handoff
 
-**Interfaces:** use I6 `validate_manifest_data(...)`; provider profile `java_block_item`; visual inputs `formed` and `facing`.
+**Interfaces:** use I6 `validate_manifest_data(...)`; provider-neutral source/delivery with no external provider profile; visual inputs `formed` and `facing`.
 
 - [ ] Add RED that loads I6 schema v2 and I10 handoff, validates with repository `source_root` and fresh generated `runtime_root`, requiring zero errors.
 - [ ] Create simple source-native Java block-model JSONs under `art/golden-samples/i10-multiblock-visual/` using only vanilla texture references. These are Repo Textura authority; overlay wiring is not relabeled as art.
-- [ ] Create schema-v2 handoff with `source_authority="Repo Textura"`, source repository Factory, runtime authority I10 Golden, `java_block_item`, explicit runtime bindings `MultiblockControllerBlock.FORMED`, `MultiblockPortBlock.FORMED`, `MultiblockControllerBlock.FACING`, exact source/delivery hashes, and explicit no-conversion record.
+- [ ] Create schema-v2 handoff with `source_authority="Repo Textura"`, source repository Factory, runtime authority I10 Golden, empty provider profiles/bindings, explicit runtime bindings `MultiblockControllerBlock.FORMED`, `MultiblockPortBlock.FORMED`, `MultiblockControllerBlock.FACING`, exact source/delivery hashes, and explicit no-conversion record.
 - [ ] Keep unperformed visual/Blockbench/runtime QA `PENDING`; structural success never upgrades it automatically.
 - [ ] Materializer copies only declared handoff artifacts to `src/main/resources/assets/i10_multiblock/...`, then canonical I6 validator verifies source and delivery hashes/namespace.
 - [ ] Run I6 validation + I10 tests + target-exact build and commit.
