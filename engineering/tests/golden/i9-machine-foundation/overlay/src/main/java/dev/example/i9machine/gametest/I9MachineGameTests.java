@@ -21,12 +21,11 @@ import net.neoforged.neoforge.items.IItemHandler;
 @PrefixGameTestTemplate(false)
 public final class I9MachineGameTests {
     private static final BlockPos MACHINE_POS = new BlockPos(1, 1, 1);
-    private static final String TEMPLATE = "machine_test";
 
     private I9MachineGameTests() {
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 160)
+    @GameTest(template = "machine_test", timeoutTicks = 160)
     public static void inventoryCapability(GameTestHelper helper) {
         placeMachine(helper);
         IItemHandler items = requireItemCapability(helper);
@@ -52,7 +51,7 @@ public final class I9MachineGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 160)
+    @GameTest(template = "machine_test", timeoutTicks = 160)
     public static void energyCapability(GameTestHelper helper) {
         placeMachine(helper);
         IEnergyStorage energy = requireEnergyCapability(helper);
@@ -75,7 +74,7 @@ public final class I9MachineGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 160)
+    @GameTest(template = "machine_test", timeoutTicks = 160)
     public static void successfulProcessing(GameTestHelper helper) {
         MachineBlockEntity machine = placeMachine(helper);
         machine.itemHandler().setStackInSlot(
@@ -98,7 +97,7 @@ public final class I9MachineGameTests {
         });
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 160)
+    @GameTest(template = "machine_test", timeoutTicks = 160)
     public static void insufficientEnergy(GameTestHelper helper) {
         MachineBlockEntity machine = placeMachine(helper);
         machine.itemHandler().setStackInSlot(
@@ -118,7 +117,7 @@ public final class I9MachineGameTests {
         });
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 160)
+    @GameTest(template = "machine_test", timeoutTicks = 160)
     public static void blockedOutput(GameTestHelper helper) {
         MachineBlockEntity machine = placeMachine(helper);
         machine.itemHandler().setStackInSlot(
@@ -143,7 +142,7 @@ public final class I9MachineGameTests {
         });
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 160)
+    @GameTest(template = "machine_test", timeoutTicks = 160)
     public static void persistence(GameTestHelper helper) {
         MachineBlockEntity machine = placeMachine(helper);
         machine.itemHandler().setStackInSlot(
@@ -175,7 +174,7 @@ public final class I9MachineGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = TEMPLATE, timeoutTicks = 160)
+    @GameTest(template = "machine_test", timeoutTicks = 160)
     public static void progressReset(GameTestHelper helper) {
         MachineBlockEntity machine = placeMachine(helper);
         machine.itemHandler().setStackInSlot(
