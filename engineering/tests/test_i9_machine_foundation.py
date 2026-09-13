@@ -154,6 +154,7 @@ class I9MachineFoundationContractTest(unittest.TestCase):
             "addDataSlots(data)",
             "MachineBlockEntity.INPUT_SLOT",
             "MachineBlockEntity.OUTPUT_SLOT",
+            "I9MachineContent.MACHINE.get()",
         )
         block_tokens = (
             "openMenu",
