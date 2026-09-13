@@ -204,7 +204,17 @@ Every byte returned by an external provider is untrusted. C10 binds requests and
 
 ObjToSchematic remains a candidate manual smoke until fresh official evidence and the required manual evidence are recorded. C10 does not pre-empt C11 complex-modded Golden evidence, C12 full-modpack/live-world/runtime-visual acceptance or C13 Skill/Router integration.
 
-## 12. Runtime/worldgen boundary
+## 12. C11 Complex Modded Golden boundary
+
+C11 Complex Modded Golden is the offline integration Golden over the existing C2/C4/C5/C6/C7/C8 authorities. It does not create a new registry, palette engine, renderer, exporter, provider runtime or live-world acceptance authority.
+
+The current execution state is `MANUAL_URGENT_PENDING_MODLIST_STABILIZATION`: real C4 capture is deferred until the physical modlist stabilizes. While that state exists, only preflight/tooling work may advance: capture-helper hardening, C4 probe build, CI separation, governance/Sonar coverage and documentation.
+
+A preflight green is readiness evidence, not C11 completion. C11 completion remains fail-closed until a real stabilized C4 registry is captured, validated and frozen; only then may C5 palette resolution, Canonical Build IR, C7 structural evidence, C8 preview/review evidence, C6 Sponge v3 bytes and the final manifest be frozen.
+
+C12 Runtime Acceptance remains a separate later boundary for full-modpack boot, live placement and runtime visual fidelity. STATUS does not advance while C11 is in the deferred preflight state; advancement occurs only after completed C11 evidence is merged and its exact post-merge gates are validated.
+
+## 13. Runtime/worldgen boundary
 
 Construction may produce reusable structure assets, references and canonical voxel data. Runtime placement, structure sets, biome tags, spacing/separation, processor rules, loot and spawn behavior remain owned by the individual mod runtime and its Mod Engineering worldgen gates.
 
@@ -212,6 +222,6 @@ The C4 NeoForge probe is evidence-gathering infrastructure only. Compiling that 
 
 The visual pipeline may consume structures as reference material, including `.nbt` analysis, without turning a complete build into a runtime entity model by default.
 
-## 13. Current non-goals
+## 14. Current non-goals
 
 Through C10, Construction now owns canonical Build IR validation, modpack registry evidence, semantic palette resolution, deterministic Sponge v3 serialization, conservative offline structural QA, deterministic evidence-gated offline Visual QA, the capability-limited local stdio MCP façade over those authorities, and the fail-closed external-provider profile/handoff evidence boundary. It still does not infer provider-specific support/traversal semantics without explicit authority, execute unverified provider APIs, grant external bytes Construction authority by provenance, claim C12 full-modpack/in-game/worldgen/runtime-visual compatibility, or implement the C13 Skill/Router layer.
