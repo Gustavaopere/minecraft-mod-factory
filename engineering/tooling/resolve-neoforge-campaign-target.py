@@ -5,24 +5,57 @@ import argparse
 import json
 import re
 import urllib.request
-import xml.etree.ElementTree as ET
+from xml.parsers import expat
 
 MAVEN_METADATA_URL = "https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml"
 MINECRAFT_NEOFORGE_LINES = {
     "1.21.1": "21.1",
 }
 STABLE_VERSION_RE = re.compile(r"^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)$")
+VERSION_PATH = ("metadata", "versioning", "versions", "version")
 
 
 def parse_maven_versions(metadata_xml: str) -> list[str]:
+    versions: list[str] = []
+    path: list[str] = []
+    version_text: list[str] = []
+    parser = expat.ParserCreate()
+    parser.buffer_text = True
+
+    def reject_unsafe_declaration(*_args) -> None:
+        raise ValueError("unsafe XML declaration in NeoForge Maven metadata")
+
+    def start_element(name: str, _attributes: dict[str, str]) -> None:
+        path.append(name)
+        if tuple(path) == VERSION_PATH:
+            version_text.clear()
+
+    def character_data(data: str) -> None:
+        if tuple(path) == VERSION_PATH:
+            version_text.append(data)
+
+    def end_element(name: str) -> None:
+        if tuple(path) == VERSION_PATH and name == "version":
+            value = "".join(version_text).strip()
+            if value:
+                versions.append(value)
+            version_text.clear()
+        path.pop()
+
+    parser.StartDoctypeDeclHandler = reject_unsafe_declaration
+    parser.EntityDeclHandler = reject_unsafe_declaration
+    parser.ExternalEntityRefHandler = reject_unsafe_declaration
+    parser.StartElementHandler = start_element
+    parser.CharacterDataHandler = character_data
+    parser.EndElementHandler = end_element
+
     try:
-        root = ET.fromstring(metadata_xml)
-    except ET.ParseError as exc:
+        parser.Parse(metadata_xml, True)
+    except ValueError:
+        raise
+    except expat.ExpatError as exc:
         raise ValueError(f"invalid NeoForge Maven metadata XML: {exc}") from exc
-    versions = []
-    for node in root.findall("./versioning/versions/version"):
-        if node.text and node.text.strip():
-            versions.append(node.text.strip())
+
     if not versions:
         raise ValueError("NeoForge Maven metadata contains no versions")
     return versions
