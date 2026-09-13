@@ -1,0 +1,39 @@
+name: Narrative Sonar Diagnostic
+
+on:
+  push:
+    branches:
+      - feat/narrative-authoring-toolkit-clean
+
+permissions:
+  contents: read
+
+jobs:
+  sonar-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Query PR 108 Sonar issues
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${SONAR_TOKEN:-}"
+          curl --fail --silent --show-error \
+            --user "${SONAR_TOKEN}:" \
+            'https://sonarcloud.io/api/issues/search?componentKeys=Gustavaopere_minecraft-mod-factory&pullRequest=108&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true' \
+            -o /tmp/issues.json
+          python3 - <<'PY'
+          import json
+          data = json.load(open('/tmp/issues.json', encoding='utf-8'))
+          for issue in data.get('issues', []):
+              print(json.dumps({
+                  'rule': issue.get('rule'),
+                  'type': issue.get('type'),
+                  'severity': issue.get('severity'),
+                  'component': issue.get('component'),
+                  'line': issue.get('line'),
+                  'message': issue.get('message'),
+              }, ensure_ascii=False))
+          PY
