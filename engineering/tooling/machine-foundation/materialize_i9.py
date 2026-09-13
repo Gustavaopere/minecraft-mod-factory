@@ -16,7 +16,29 @@ GOLDEN_ROOT = REPO_ROOT / "engineering/tests/golden/i9-machine-foundation"
 MANIFEST_PATH = GOLDEN_ROOT / "manifest.json"
 OVERLAY_ROOT = GOLDEN_ROOT / "overlay"
 MAIN_CLASS_RELATIVE = "src/main/java/dev/example/i9machine/I9MachineMod.java"
-CANONICAL_OVERLAY_FILES = (("README.md", "I9-MACHINE-FOUNDATION.md"),)
+CANONICAL_OVERLAY_FILES = (
+    ("README.md", "I9-MACHINE-FOUNDATION.md"),
+    (
+        "src/main/java/dev/example/i9machine/machine/I9MachineContent.java",
+        "src/main/java/dev/example/i9machine/machine/I9MachineContent.java",
+    ),
+    (
+        "src/main/java/dev/example/i9machine/machine/MachineBlock.java",
+        "src/main/java/dev/example/i9machine/machine/MachineBlock.java",
+    ),
+    (
+        "src/main/java/dev/example/i9machine/machine/MachineEnergyStorage.java",
+        "src/main/java/dev/example/i9machine/machine/MachineEnergyStorage.java",
+    ),
+    (
+        "src/main/java/dev/example/i9machine/machine/MachineBlockEntity.java",
+        "src/main/java/dev/example/i9machine/machine/MachineBlockEntity.java",
+    ),
+    (
+        "src/main/java/dev/example/i9machine/machine/MachineMenu.java",
+        "src/main/java/dev/example/i9machine/machine/MachineMenu.java",
+    ),
+)
 CANONICAL_PATCH = {
     "path": MAIN_CLASS_RELATIVE,
     "anchor": "    public I9MachineMod(IEventBus modBus, ModContainer container) {\n    }\n",
