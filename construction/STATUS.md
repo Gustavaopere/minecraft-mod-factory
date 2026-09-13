@@ -1,7 +1,7 @@
 # STATUS — Construction
 
 UPDATED_AT=2026-09-12
-PHASE=C9_COMPLETE_POSTMERGE_VALIDATED
+PHASE=C10_COMPLETE_POSTMERGE_VALIDATED
 REPOSITORY=Gustavaopere/minecraft-mod-factory
 BRANCH=main
 C0_PR=19
@@ -467,6 +467,51 @@ C9_FINAL_SONAR_NEW_LINES=11
 C9_FINAL_SONAR_NEW_LINES_TO_COVER=0
 C9_FINAL_SONAR_NEW_UNCOVERED_LINES=0
 C9_CLOSEOUT_BASE_MAIN_SHA=2b955579b2e7a0151692b3153d6907634c2c98b4
+C10_PR=91
+C10_DESIGN=docs/superpowers/specs/2026-09-12-construction-c10-external-providers-design.md
+C10_PLAN=docs/superpowers/plans/2026-09-12-construction-c10-external-providers.md
+C10_INITIAL_RED_C10_RUN=34720181529
+C10_INITIAL_RED_SONAR_RUN=34720181549
+C10_INITIAL_RED_RESULT=56_TESTS_54_PASS_2_FAIL_EXPECTED_EP0_AND_MISSING_INPUT_OBJ
+C10_FINAL_PR_HEAD=945ca6b410558f103214f32d2055558857457733
+C10_FINAL_PR_RUN=34724986477
+C10_FINAL_PR_SONAR_RUN=34724986441
+C10_READY_SONAR_RUN=34725255028
+C10_MERGE_SHA=c30a76ca6d7f013037c506ba80e538b77dd290de
+C10_OBJTOSCHEMATIC_PROOF=EP1_HANDOFF_VERIFIED
+C10_OBJTOSCHEMATIC_PROFILE_SHA256=78d1b12ff8c6ec4de8411e87dc447230256e6ad379ab7498267a3c1d09e2612f
+C10_OBJTOSCHEMATIC_INPUT_SHA256=b6101561fb2594ce731ea8ecb02c0d25862ca24abdd776cfe10cac2fe088c4a9
+C10_OBJTOSCHEMATIC_REQUEST_ID=4ee4be7e0d3d89b0690aeb2da3794f28689dad61a246be873e7194b140d021de
+C10_OBJTOSCHEMATIC_FAILURE=UPLOAD_PREVIEW_FAIL_IMPORT_DISABLED_NO_PREVIEW
+C10_OBJTOSCHEMATIC_PROVIDER_OUTPUT_SHA256=NOT_PRODUCED
+C10_OBJTOSCHEMATIC_RECEIPT=NOT_PRODUCED
+C10_OBJTOSCHEMATIC_C6_VALIDATION=NOT_RUN_NO_PROVIDER_OUTPUT
+C10_BLOCKGPT_PROOF=EP1_HANDOFF_VERIFIED
+C10_BLOCKGPT_PROFILE_SHA256=b80322794f12e1fb88d9c56b39979896d6a853f1f683067fd1067a72a8585250
+C10_BLOCKGPT_INPUT_SHA256=48d733bcb320b57417c7c507d514c5470092baf2c9671586d8ea6fd7d448af8e
+C10_BLOCKGPT_REQUEST_ID=c3b7eb8c50ef4df484193cbc1c723ee4ca4c26551373bd342b0aed1eb81dd256
+C10_BLOCKGPT_FAILURE=UPLOAD_PREVIEW_FAIL_PAYMENT_REQUIRED_BEFORE_PREVIEW
+C10_STRUCTMATIC_PROOF=EP0_DISCOVERED
+C10_SCHEMATIC_HELPER_PROOF=EP0_DISCOVERED
+C10_API_AUTOMATION=NONE_UNVERIFIED_API
+C10_POSTMERGE_C0_RUN=34725351778
+C10_POSTMERGE_C1A_RUN=34725351751
+C10_POSTMERGE_C1B_RUN=34725351772
+C10_POSTMERGE_C2_RUN=34725351715
+C10_POSTMERGE_C3_RUN=34725351768
+C10_POSTMERGE_C4_RUN=34725351723
+C10_POSTMERGE_C5_RUN=34725351793
+C10_POSTMERGE_C6_RUN=34725351763
+C10_POSTMERGE_C7_RUN=34725351834
+C10_POSTMERGE_C8_RUN=34725351792
+C10_POSTMERGE_C9_RUN=34725351779
+C10_POSTMERGE_C10_RUN=34725351789
+C10_POSTMERGE_I2_RUN=34725351823
+C10_POSTMERGE_GOVERNANCE_RUN=34725351765
+C10_POSTMERGE_SONAR_RUN=34725351776
+C10_POSTMERGE_FULL_SKILL_MIGRATION_RUN=NOT_TRIGGERED
+C10_POSTMERGE_ALL_WORKFLOWS=31_SUCCESS_0_FAIL
+C10_CLOSEOUT_BASE_MAIN_SHA=62f12db450a1a54fe7def848b3986113bbab32b9
 HEAD_SHA=RESOLVE_FROM_GIT
 OPEN_CONSTRUCTION_IMPLEMENTATION_PR=NONE
 TARGET_MINECRAFT=1.21.1
@@ -476,7 +521,7 @@ CANONICAL_OUTPUT=SPONGE_SCHEMATIC_V3
 LATEST_MODLIST_SNAPSHOT=2026-09-09_595_TOP_LEVEL
 MANUAL_ACTION_REQUIRED=NO
 BLOCKERS=NONE_IN_CONSTRUCTION
-NEXT_ACTION=BEGIN_C10_EXTERNAL_PROVIDERS
+NEXT_ACTION=BEGIN_C11_COMPLEX_MODDED_GOLDEN
 
 ## C1A — Schematica preservation
 
@@ -1005,3 +1050,32 @@ Canonical final validation is `main@2b955579b2e7a0151692b3153d6907634c2c98b4`. O
 - [x] authenticated Sonar API independently reports `QUALITY_GATE_STATUS=OK`
 
 C9 is complete and post-merge validated. The next Construction slice is C10 — External Providers.
+
+## C10 — External Providers
+
+C10 establishes the Factory-owned manual-handoff-first boundary for external structure providers without introducing a second Construction authority or any unverified API automation. The canonical design is `docs/superpowers/specs/2026-09-12-construction-c10-external-providers-design.md`, and the executed plan is `docs/superpowers/plans/2026-09-12-construction-c10-external-providers.md`.
+
+The initial Task 8 RED isolated the promotion requirements before implementation: C10 run `34720181529` and Sonar run `34720181549` produced 54 passing C10 tests and the two expected failures for the still-EP0 ObjToSchematic profile and missing deterministic `input.obj`. The final implementation PR #91 used frozen head `945ca6b410558f103214f32d2055558857457733`, passed dedicated C10 run `34724986477`, Sonar run `34724986441`, the ready-for-review Sonar rerun `34725255028`, and all applicable inherited gates, then merged as `c30a76ca6d7f013037c506ba80e538b77dd290de`.
+
+ObjToSchematic remains `EP1_HANDOFF_VERIFIED`, `MANUAL_FILE_HANDOFF`, with `UNVERIFIED_API`. Its exact committed `input.obj` is 233 bytes with SHA-256 `b6101561fb2594ce731ea8ecb02c0d25862ca24abdd776cfe10cac2fe088c4a9`, bound to request `4ee4be7e0d3d89b0690aeb2da3794f28689dad61a246be873e7194b140d021de`. The real manual smoke failed before preview: the official editor accepted file selection, but Import remained disabled and no block preview appeared. No provider-output `.schem`, receipt, EP2 evidence or C6 validation exists, so C10 records `NOT_RUN_NO_PROVIDER_OUTPUT` rather than claiming format validation.
+
+BlockGPT also remains `EP1_HANDOFF_VERIFIED`, `MANUAL_FILE_HANDOFF`, with `UNVERIFIED_API`. Its exact committed reference image is 564 bytes with SHA-256 `48d733bcb320b57417c7c507d514c5470092baf2c9671586d8ea6fd7d448af8e`, bound to request `c3b7eb8c50ef4df484193cbc1c723ee4ca4c26551373bd342b0aed1eb81dd256`. The official UI accepted the image but required payment before generation or any 3D preview. No payment was made and no EP2/EP3 claim was created. Structmatic and Schematic Helper remain `EP0_DISCOVERED` research-only providers, and all four baseline providers retain `UNVERIFIED_API`.
+
+On exact merged `main@c30a76ca6d7f013037c506ba80e538b77dd290de`, every one of the 31 workflows triggered by the implementation merge completed successfully. This includes Construction C0-C10, both C1 upstream gates, Engineering I2, Governance and Sonar. Full Skill Migration was not triggered by this merge and is recorded as such rather than represented by an invented run id.
+
+### C10 acceptance
+
+- [x] external-provider boundary is manual-handoff-first and fail-closed
+- [x] no HTTP/browser/scraping provider automation was added
+- [x] ObjToSchematic is pinned at EP1 after real upload/preview failure evidence
+- [x] BlockGPT is pinned at EP1 after real paywall-before-preview evidence
+- [x] Structmatic and Schematic Helper remain EP0 research-only
+- [x] all baseline provider APIs remain unverified
+- [x] no provider output, receipt, EP2 or EP3 evidence is claimed for ObjToSchematic
+- [x] C6 validation is accurately recorded as not run because no provider output existed
+- [x] implementation PR #91 merged with frozen validated head
+- [x] exact merged main revalidates C10 evidence and fixture hashes
+- [x] all 31 workflows triggered by the implementation merge completed successfully
+- [x] closeout base is exact `main@62f12db450a1a54fe7def848b3986113bbab32b9`
+
+C10 is complete and post-merge validated. The next Construction slice is C11 — Complex Modded Golden.
