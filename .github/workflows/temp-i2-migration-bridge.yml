@@ -1,4 +1,4 @@
-name: Temporary I2 Provider Transport
+name: Temporary I2 Physical Evidence Transport
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  transport-provider:
+  transport-evidence:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,29 +19,37 @@ jobs:
           ref: chore/migrate-i2-modlist-authority
           fetch-depth: 0
 
-      - name: Fetch pinned historical provider catalog
+      - name: Fetch pinned historical evidence
         env:
           SOURCE_SHA: b4861c6146a95d8f02018d8e46caca543895b0be
         run: |
           set -euo pipefail
-          mkdir -p engineering/catalog/physical-modlist
-          url="https://raw.githubusercontent.com/Gustavaopere/neoforge-rpg-skilltree/${SOURCE_SHA}/PROJECT-INSTRUCTIONS/engineering/catalog/physical-modlist/providers-2026-09-09.json"
-          curl --fail --location --retry 3 --retry-all-errors "$url" -o engineering/catalog/physical-modlist/providers-2026-09-09.json
-          test "$(git hash-object engineering/catalog/physical-modlist/providers-2026-09-09.json)" = "f3df6f7e56b7060b0f5c790c27acae7003006139"
+          dir=engineering/catalog/physical-modlist
+          mkdir -p "$dir"
+          base="https://raw.githubusercontent.com/Gustavaopere/neoforge-rpg-skilltree/${SOURCE_SHA}/PROJECT-INSTRUCTIONS/engineering/catalog/physical-modlist"
+          curl --fail --location --retry 3 --retry-all-errors "$base/snapshot-2026-09-09.entries.0800-0899.json" -o "$dir/snapshot-2026-09-09.entries.0800-0899.json"
+          curl --fail --location --retry 3 --retry-all-errors "$base/snapshot-2026-09-09.entries.0900-0998.json" -o "$dir/snapshot-2026-09-09.entries.0900-0998.json"
+          curl --fail --location --retry 3 --retry-all-errors "$base/providers-2026-09-09.json" -o "$dir/providers-2026-09-09.json"
+          test "$(git hash-object "$dir/snapshot-2026-09-09.entries.0800-0899.json")" = "87d2f4ed6751ccbf5acb0a5f2829ebafc9d6552d"
+          test "$(git hash-object "$dir/snapshot-2026-09-09.entries.0900-0998.json")" = "c19b981378b719fe6630b5a141f3fb91f65f93bb"
+          test "$(git hash-object "$dir/providers-2026-09-09.json")" = "f3df6f7e56b7060b0f5c790c27acae7003006139"
 
-      - name: Validate committed physical snapshot with provider catalog
+      - name: Validate complete physical snapshot and providers
         run: |
           set -euo pipefail
           python3 engineering/tooling/import-physical-modlist.py \
             --check engineering/catalog/physical-modlist/snapshot-2026-09-09.json \
             --providers engineering/catalog/physical-modlist/providers-2026-09-09.json
 
-      - name: Commit provider blob into Factory object database
+      - name: Commit historical evidence blobs into Factory object database
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add engineering/catalog/physical-modlist/providers-2026-09-09.json
+          git add \
+            engineering/catalog/physical-modlist/snapshot-2026-09-09.entries.0800-0899.json \
+            engineering/catalog/physical-modlist/snapshot-2026-09-09.entries.0900-0998.json \
+            engineering/catalog/physical-modlist/providers-2026-09-09.json
           git diff --cached --quiet && exit 0
-          git commit -m "chore(engineering): transport historical I2 provider catalog"
+          git commit -m "chore(engineering): transport verified I2 physical evidence"
           git push origin HEAD:chore/migrate-i2-modlist-authority
