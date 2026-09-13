@@ -641,9 +641,11 @@ def _planned_operation(root: Path, path: str, content: str, role: str) -> dict[s
     }
 
 
-def plan_feature_set(project_root: Path | str, request: dict[str, Any]) -> dict[str, Any]:
-    root = _safe_project_root(project_root)
-    project, features = _validate_request(request)
+def _desired_file_specs(
+    root: Path,
+    project: dict[str, Any],
+    features: list[dict[str, Any]],
+) -> list[tuple[str, str, str]]:
     java_package = project["java_package"]
     mod_id = project["mod_id"]
     main_class = project["main_class"]
@@ -653,52 +655,38 @@ def plan_feature_set(project_root: Path | str, request: dict[str, Any]) -> dict[
     if not main_path.is_file():
         raise ValueError(f"target project does not match requested main class: {main_relative}")
 
-    operations: list[dict[str, Any]] = []
+    specs: list[tuple[str, str, str]] = []
     for feature in features:
         kind = feature["kind"]
         class_name = feature["class_name"]
         relative_package = _kind_package(kind)
         source_path = f"src/main/java/{package_path}/feature/{relative_package}/{class_name}.java"
         test_path = f"src/test/java/{package_path}/feature/{relative_package}/{class_name}GeneratedTest.java"
-        operations.append(
-            _planned_operation(
-                root,
-                source_path,
-                _feature_source(java_package, mod_id, feature),
-                "feature_source",
-            )
-        )
-        operations.append(
-            _planned_operation(
-                root,
-                test_path,
-                _generated_test(java_package, feature),
-                "generated_test",
-            )
-        )
+        specs.append((source_path, _feature_source(java_package, mod_id, feature), "feature_source"))
+        specs.append((test_path, _generated_test(java_package, feature), "generated_test"))
 
     registry_path = f"src/main/java/{package_path}/registry/FactoryGeneratedRegistries.java"
-    operations.append(
-        _planned_operation(
-            root,
-            registry_path,
-            _registry_source(java_package, main_class, features),
-            "registry",
-        )
-    )
+    specs.append((registry_path, _registry_source(java_package, main_class, features), "registry"))
     datagen_path = f"src/main/java/{package_path}/data/FactoryGeneratedData.java"
-    operations.append(
-        _planned_operation(root, datagen_path, _datagen_source(java_package, features), "datagen")
-    )
+    specs.append((datagen_path, _datagen_source(java_package, features), "datagen"))
     main_content = main_path.read_text(encoding="utf-8")
-    operations.append(
-        _planned_operation(
-            root,
+    specs.append(
+        (
             main_relative,
             _main_bootstrap_source(main_content, java_package, main_class),
             "bootstrap",
         )
     )
+    return specs
+
+
+def plan_feature_set(project_root: Path | str, request: dict[str, Any]) -> dict[str, Any]:
+    root = _safe_project_root(project_root)
+    project, features = _validate_request(request)
+    operations = [
+        _planned_operation(root, path, content, role)
+        for path, content, role in _desired_file_specs(root, project, features)
+    ]
     operations.sort(key=lambda operation: (operation["path"], operation["role"], operation["action"]))
     return {
         "schema_version": 1,
@@ -741,20 +729,29 @@ def _preflight_operation(root: Path, operation: dict[str, Any], *, confirm_modif
     return destination, content
 
 
-def _apply_generated_plan(root: Path, plan: dict[str, Any], *, confirm_modified: bool) -> list[Path]:
-    operations = plan.get("operations")
-    if plan.get("schema_version") != 1 or not isinstance(operations, list):
-        raise ValueError("generated plan is invalid")
+def apply_feature_set(
+    project_root: Path | str,
+    request: dict[str, Any],
+    *,
+    confirm_modified: bool = False,
+) -> list[Path]:
+    root = _safe_project_root(project_root)
+    project, features = _validate_request(request)
+    specs = _desired_file_specs(root, project, features)
 
     prepared: list[tuple[dict[str, Any], Path, str]] = []
     seen: set[Path] = set()
-    for raw_operation in operations:
-        operation = _require_mapping(raw_operation, "plan operation")
-        destination, content = _preflight_operation(root, operation, confirm_modified=confirm_modified)
+    for path, content, role in specs:
+        operation = _planned_operation(root, path, content, role)
+        destination, prepared_content = _preflight_operation(
+            root,
+            operation,
+            confirm_modified=confirm_modified,
+        )
         if destination in seen:
             raise ValueError(f"duplicate planned destination: {destination.relative_to(root)}")
         seen.add(destination)
-        prepared.append((operation, destination, content))
+        prepared.append((operation, destination, prepared_content))
 
     written: list[Path] = []
     for operation, destination, content in prepared:
@@ -764,17 +761,6 @@ def _apply_generated_plan(root: Path, plan: dict[str, Any], *, confirm_modified:
         destination.write_text(content, encoding="utf-8", newline="\n")
         written.append(destination)
     return written
-
-
-def apply_feature_set(
-    project_root: Path | str,
-    request: dict[str, Any],
-    *,
-    confirm_modified: bool = False,
-) -> list[Path]:
-    root = _safe_project_root(project_root)
-    plan = plan_feature_set(root, request)
-    return _apply_generated_plan(root, plan, confirm_modified=confirm_modified)
 
 
 def load_request(workspace: Path, relative_path: str) -> dict[str, Any]:
