@@ -41,6 +41,7 @@ jobs:
           engineering/tests/test_i10_multiblock_foundation.py
           engineering/tests/test_i10_multiblock_foundation_task5.py
           engineering/tests/test_i10_multiblock_foundation_handoff.py
+          engineering/tests/test_i10_multiblock_foundation_gametest.py
           engineering/tests/test_i10_multiblock_foundation_composition.py
 
       - name: Materialize I10 Golden
