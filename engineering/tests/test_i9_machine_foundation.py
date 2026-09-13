@@ -80,6 +80,44 @@ class I9MachineFoundationContractTest(unittest.TestCase):
         self.assertEqual([], missing, "I9 RED: registry/capability Java sources are missing")
         self.assertEqual([], missing_tokens, "I9 RED: registry/capability contract tokens are missing")
 
+    def test_i9_inventory_and_energy_contract_tokens(self):
+        block_entity = (MACHINE_SOURCE_ROOT / "MachineBlockEntity.java").read_text(encoding="utf-8")
+        energy = (MACHINE_SOURCE_ROOT / "MachineEnergyStorage.java").read_text(encoding="utf-8")
+
+        block_entity_tokens = (
+            "public static final int INPUT_SLOT = 0;",
+            "public static final int OUTPUT_SLOT = 1;",
+            "public static final int ENERGY_PER_TICK = 20;",
+            "public static final int MAX_PROGRESS = 100;",
+            "new ItemStackHandler(2)",
+            "onContentsChanged",
+            "isItemValid",
+            "RecipeType.SMELTING",
+            "SingleRecipeInput",
+            "getRecipeFor",
+            "this::setChanged",
+        )
+        energy_tokens = (
+            "public static final int ENERGY_CAPACITY = 10_000;",
+            "public static final int MAX_RECEIVE = 1_000;",
+            "private int energy;",
+            "consumeInternal",
+            "loadClamped",
+            "onChanged.run()",
+        )
+
+        missing = [
+            f"MachineBlockEntity.java:{token}"
+            for token in block_entity_tokens
+            if token not in block_entity
+        ]
+        missing.extend(
+            f"MachineEnergyStorage.java:{token}"
+            for token in energy_tokens
+            if token not in energy
+        )
+        self.assertEqual([], missing, "I9 RED: inventory/energy contract is incomplete")
+
 
 if __name__ == "__main__":
     unittest.main()
