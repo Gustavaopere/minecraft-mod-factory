@@ -2,8 +2,9 @@
 
 **Data:** 2026-09-13  
 **Repositório:** `Gustavaopere/minecraft-mod-factory`  
-**Main auditada:** `e7f92897f3492cc64e14c27b827b419a33bb2e5d`  
-**Tree base:** `88f3742bccba3cc5bd239fc316d4b7ea77c2c926`  
+**Main inicialmente auditada:** `e7f92897f3492cc64e14c27b827b419a33bb2e5d`  
+**Tree base inicial:** `88f3742bccba3cc5bd239fc316d4b7ea77c2c926`  
+**Main reconciliada durante o ciclo:** `8981771689535288e4792d1cba17a95b59c37a03`  
 **Alvo:** Minecraft 1.21.1 / NeoForge `21.1.248` / Java 21  
 **Modlist física disponível no projeto:** 595 entradas top-level; continua authority para presença/versão.
 
@@ -18,7 +19,9 @@
 - plano Repo Textura V5.1;
 - PRs abertas procurando trabalho equivalente de separação de planos.
 
-Nenhuma PR aberta equivalente foi encontrada para esta reorganização. PRs de outras frentes não foram reutilizadas.
+Na checagem inicial não havia PR equivalente visível. Durante a execução surgiu a PR #104, `docs(plans): organize roadmaps by domain`, baseada na mesma `main` inicial e tocando `plans/README.md`, `plans/mod-engineering/` e `plans/visual-assets/`. Ela foi tratada como trabalho concorrente relevante, não descartada.
+
+A PR #104 foi então mergeada em `main` por fluxo concorrente (`8981771689535288e4792d1cba17a95b59c37a03`). A branch desta reorganização foi sincronizada novamente com essa `main` e o conflito de topologia foi resolvido semanticamente: o roadmap de Engineering permaneceu em `plans/mod-engineering/` e o roadmap visual foi preservado integralmente sob `plans/textura/roadmap/`, evitando uma segunda authority artística fora da pasta canônica.
 
 ## Achado
 
@@ -38,7 +41,9 @@ Isso criava três problemas:
 - preservado o plano Engineering V1.1 misto integral em `docs/archive/plans/`;
 - reescrito o plano Engineering ativo como documento runtime-only no mesmo path para evitar quebrar referências existentes;
 - criada fronteira normativa Engineering ↔ Textura;
-- criado índice `plans/README.md`.
+- criado/reconciliado o índice `plans/README.md`;
+- preservado `plans/mod-engineering/` vindo da PR #104;
+- realocado, sem alterar conteúdo dos milestones, `plans/visual-assets/` para `plans/textura/roadmap/` após a PR #104 entrar em `main`.
 
 ## Classificação de authority
 
@@ -60,7 +65,15 @@ Nenhum conteúdo histórico foi descartado:
 
 - o plano artístico foi movido por referência ao mesmo blob Git;
 - o plano Engineering misto original foi arquivado pelo mesmo blob Git;
-- o plano ativo de Engineering contém somente a versão separada da responsabilidade técnica.
+- o plano ativo de Engineering contém somente a versão separada da responsabilidade técnica;
+- os roadmaps da PR #104 foram preservados, com o domínio visual apenas realocado para dentro de `plans/textura/`.
+
+## Sincronização Git
+
+- `main` inicial: `e7f92897f3492cc64e14c27b827b419a33bb2e5d`;
+- PR #104 head incorporado: `363deed4be9de8f74a07f4a3ec598f00c0f156dd`;
+- merge da PR #104 em `main`: `8981771689535288e4792d1cba17a95b59c37a03`;
+- branch de separação reconciliada com essa `main` sem rebase/force-push e preservando ambos os trabalhos.
 
 ## Alteração de runtime
 
