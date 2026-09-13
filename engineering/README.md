@@ -17,7 +17,7 @@ The Factory coordinates contracts, schemas, templates, generators, validators, c
 ## Canonical plans
 
 1. `../plans/PLANO-MESTRE-MINECRAFT-MOD-FACTORY-MOD-ENGINEERING-NEOFORGE-1.21.1-V1.1.md`
-   - SHA-256: `2e42fee77518c5cd14d39e079ad17a78a7912d4055d59d2b0f359ff8cd74659d`
+   - SHA-256: `cfefc392d0c1d74f42329fdc86e40b23419d27d870495e71b03efd7f0b9ecbfd`
 2. `../plans/textura/PLANO-MESTRE-UNIFICADO-MINECRAFT-MOD-FACTORY-REPO-TEXTURA-BLOCKBENCH-ASSET-MCP-V5.1.md`
    - SHA-256: `723bb083d5b646812cd44a03a1ef50e8505b366923b64aba5931ee4b7b63befb`
 
