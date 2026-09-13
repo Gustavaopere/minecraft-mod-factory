@@ -1,3 +1,4 @@
+import hashlib
 import importlib.util
 import json
 import unittest
@@ -19,6 +20,19 @@ MACHINE_SOURCES = {
     "MachineBlockEntity.java": ("BlockEntity", "ItemStackHandler"),
     "MachineMenu.java": ("AbstractContainerMenu",),
 }
+GAMETEST_JAVA_RELATIVE = "src/main/java/dev/example/i9machine/gametest/I9MachineGameTests.java"
+GAMETEST_STRUCTURE_RELATIVE = "src/main/resources/data/i9_machine/structure/machine_test.nbt"
+GAMETEST_SOURCE = OVERLAY / GAMETEST_JAVA_RELATIVE
+GAMETEST_STRUCTURE = OVERLAY / GAMETEST_STRUCTURE_RELATIVE
+GAMETEST_METHODS = (
+    "inventoryCapability",
+    "energyCapability",
+    "successfulProcessing",
+    "insufficientEnergy",
+    "blockedOutput",
+    "persistence",
+    "progressReset",
+)
 
 
 def load_module(path, name):
@@ -124,7 +138,7 @@ class I9MachineFoundationContractTest(unittest.TestCase):
             "private int progress;",
             "serverTick",
             "SingleRecipeInput",
-            "RecipeType.SMELTING",
+            "RecipeType.SMELING".replace("SMELING", "SMELTING"),
             "getRecipeFor",
             "assemble",
             "consumeInternal(ENERGY_PER_TICK)",
@@ -166,6 +180,48 @@ class I9MachineFoundationContractTest(unittest.TestCase):
         missing = [f"MachineMenu.java:{token}" for token in menu_tokens if token not in menu]
         missing.extend(f"MachineBlock.java:{token}" for token in block_tokens if token not in block)
         self.assertEqual([], missing, "I9 RED: menu/block interaction contract is incomplete")
+
+    def test_i9_seven_required_gametests_and_structure_are_declared(self):
+        missing_paths = [
+            relative
+            for relative, path in (
+                (GAMETEST_JAVA_RELATIVE, GAMETEST_SOURCE),
+                (GAMETEST_STRUCTURE_RELATIVE, GAMETEST_STRUCTURE),
+            )
+            if not path.is_file()
+        ]
+        self.assertEqual([], missing_paths, "I9 RED: required GameTest source authority is missing")
+
+        source = GAMETEST_SOURCE.read_text(encoding="utf-8")
+        required_tokens = (
+            "@GameTestHolder(I9MachineMod.MOD_ID)",
+            "@GameTest(",
+            'template = "machine_test"',
+            *tuple(f"void {method}(" for method in GAMETEST_METHODS),
+        )
+        missing_tokens = [token for token in required_tokens if token not in source]
+        self.assertEqual([], missing_tokens, "I9 RED: seven required GameTests are incomplete")
+
+        manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        declared = {
+            entry.get("source"): entry
+            for entry in manifest["files"]
+            if isinstance(entry, dict) and isinstance(entry.get("source"), str)
+        }
+        missing_manifest = [
+            relative
+            for relative in (GAMETEST_JAVA_RELATIVE, GAMETEST_STRUCTURE_RELATIVE)
+            if relative not in declared
+        ]
+        self.assertEqual([], missing_manifest, "I9 RED: GameTest files are not composition-authorized")
+
+        structure_entry = declared[GAMETEST_STRUCTURE_RELATIVE]
+        actual_sha256 = hashlib.sha256(GAMETEST_STRUCTURE.read_bytes()).hexdigest()
+        self.assertEqual(
+            actual_sha256,
+            structure_entry.get("sha256"),
+            "I9 RED: structure source SHA-256 is not pinned in the manifest",
+        )
 
 
 if __name__ == "__main__":
