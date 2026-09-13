@@ -40,6 +40,7 @@ jobs:
           python3 -m unittest
           engineering/tests/test_i10_multiblock_foundation.py
           engineering/tests/test_i10_multiblock_foundation_task5.py
+          engineering/tests/test_i10_multiblock_foundation_handoff.py
           engineering/tests/test_i10_multiblock_foundation_composition.py
 
       - name: Materialize I10 Golden
