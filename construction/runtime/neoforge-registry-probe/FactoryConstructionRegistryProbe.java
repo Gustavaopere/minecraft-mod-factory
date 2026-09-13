@@ -21,6 +21,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
@@ -29,7 +30,7 @@ import net.neoforged.neoforge.event.server.ServerStartedEvent;
 public final class FactoryConstructionRegistryProbe {
     public static final String MOD_ID = "factory_construction_registry_probe";
     private static final String MINECRAFT_VERSION = "1.21.1";
-    private static final String NEOFORGE_VERSION = "21.1.248";
+    private static final String NEOFORGE_VERSION = "21.1.250";
     private static final String OUTPUT_PROPERTY = "factory.construction.registryOutput";
     private static final String PHYSICAL_SHA_PROPERTY = "factory.construction.physicalSnapshotSha256";
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
@@ -41,7 +42,8 @@ public final class FactoryConstructionRegistryProbe {
     private void onServerStarted(ServerStartedEvent event) {
         Path output = requiredOutputPath();
         String physicalSnapshotSha256 = requiredPhysicalSnapshotSha256();
-        JsonObject root = buildRuntimeSnapshot(physicalSnapshotSha256);
+        String loadedNeoForgeVersion = requiredLoadedNeoForgeVersion();
+        JsonObject root = buildRuntimeSnapshot(physicalSnapshotSha256, loadedNeoForgeVersion);
         try {
             Path parent = output.getParent();
             if (parent != null) {
@@ -53,7 +55,7 @@ public final class FactoryConstructionRegistryProbe {
         }
     }
 
-    private static JsonObject buildRuntimeSnapshot(String physicalSnapshotSha256) {
+    private static JsonObject buildRuntimeSnapshot(String physicalSnapshotSha256, String loadedNeoForgeVersion) {
         JsonObject root = new JsonObject();
         root.addProperty("schema_version", 1);
         root.addProperty("captured_at", Instant.now().toString());
@@ -62,7 +64,7 @@ public final class FactoryConstructionRegistryProbe {
         JsonObject target = new JsonObject();
         target.addProperty("minecraft", MINECRAFT_VERSION);
         target.addProperty("loader", "neoforge");
-        target.addProperty("loader_version", NEOFORGE_VERSION);
+        target.addProperty("loader_version", loadedNeoForgeVersion);
         root.add("target", target);
 
         JsonArray blocks = new JsonArray();
@@ -114,5 +116,21 @@ public final class FactoryConstructionRegistryProbe {
             throw new IllegalStateException("Missing or invalid required SHA-256 system property: " + PHYSICAL_SHA_PROPERTY);
         }
         return value.toLowerCase(Locale.ROOT);
+    }
+
+    private static String requiredLoadedNeoForgeVersion() {
+        ModList modList = ModList.get();
+        if (modList == null) {
+            throw new IllegalStateException("NeoForge runtime version mismatch: ModList is unavailable");
+        }
+        String loadedVersion = modList
+                .getModContainerById("neoforge")
+                .orElseThrow(() -> new IllegalStateException("NeoForge runtime version mismatch: neoforge mod container is unavailable"))
+                .getModInfo().getVersion().toString();
+        if (!NEOFORGE_VERSION.equals(loadedVersion)) {
+            throw new IllegalStateException(
+                    "NeoForge runtime version mismatch: expected " + NEOFORGE_VERSION + ", got " + loadedVersion);
+        }
+        return loadedVersion;
     }
 }
