@@ -37,6 +37,19 @@ def _load_runtime_snapshot(path: Path) -> dict:
         raise ValueError(f"runtime snapshot is not valid JSON: {exc}") from exc
 
 
+def _workspace_output_path(value: Path) -> Path:
+    workspace = Path.cwd().resolve()
+    raw = Path(value)
+    candidate = raw.resolve() if raw.is_absolute() else (workspace / raw).resolve()
+    try:
+        candidate.relative_to(workspace)
+    except ValueError as exc:
+        raise ValueError(f"output must stay inside workspace: {workspace}") from exc
+    if candidate == workspace:
+        raise ValueError("output must identify a path inside workspace, not the workspace root")
+    return candidate
+
+
 def compose_registry(
     physical_modlist: Path,
     mods_dir: Path,
@@ -88,10 +101,11 @@ def main() -> int:
         captured_at=args.captured_at,
     )
     c4 = load_c4_registry()
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_bytes(c4.canonical_json_bytes(registry))
+    output = _workspace_output_path(args.output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_bytes(c4.canonical_json_bytes(registry))
 
-    written = json.loads(args.output.read_text(encoding="utf-8"))
+    written = json.loads(output.read_text(encoding="utf-8"))
     errors = c4.validate_modpack_registry(written)
     if errors:
         raise ValueError("written C4 registry failed validation: " + "; ".join(errors))
