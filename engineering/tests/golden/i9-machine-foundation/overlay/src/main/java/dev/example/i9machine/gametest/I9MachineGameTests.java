@@ -37,9 +37,9 @@ public final class I9MachineGameTests {
         }
 
         ItemStack invalidInput = items.insertItem(
-                MachineBlockEntity.INPUT_SLOT, new ItemStack(Items.COBBLESTONE), true);
+                MachineBlockEntity.INPUT_SLOT, new ItemStack(Items.DIAMOND), true);
         if (invalidInput.isEmpty()) {
-            helper.fail("Expected non-smeltable cobblestone to be rejected by the input slot", MACHINE_POS);
+            helper.fail("Expected non-smeltable diamond to be rejected by the input slot", MACHINE_POS);
         }
 
         ItemStack rejectedOutput = items.insertItem(
@@ -186,7 +186,7 @@ public final class I9MachineGameTests {
                 helper.fail("Expected processing progress before invalidating input", MACHINE_POS);
             }
             machine.itemHandler().setStackInSlot(
-                    MachineBlockEntity.INPUT_SLOT, new ItemStack(Items.COBBLESTONE));
+                    MachineBlockEntity.INPUT_SLOT, new ItemStack(Items.DIAMOND));
         });
 
         helper.runAtTickTime(7, () -> {
