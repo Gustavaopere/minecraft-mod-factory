@@ -18,6 +18,8 @@ CAPTURE_PATH = FIXTURE / "capture_registry.py"
 CAPTURE_STATE_PATH = FIXTURE / "capture-state.json"
 C4_PATH = ROOT / "construction" / "core" / "modpack_registry.py"
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "factory-construction-c11-complex-modded-golden.yml"
+README_PATH = ROOT / "construction" / "README.md"
+ARCHITECTURE_PATH = ROOT / "construction" / "docs" / "ARCHITECTURE.md"
 PHYSICAL_MODLIST_SHA256 = "7c0a23d6013101383d196526e4b6ba6940fb54a0fed10eaed5956ab015cfcc00"
 
 CAPTURE_SAMPLE = """Mods count: 2
@@ -108,6 +110,16 @@ class ConstructionC11ComplexModdedGoldenTest(unittest.TestCase):
         self.assertIn("actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065", workflow)
         self.assertIn("actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3", workflow)
         self.assertIn("actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f", workflow)
+
+    def test_docs_define_deferred_c11_boundary(self) -> None:
+        for path in (README_PATH, ARCHITECTURE_PATH):
+            text = path.read_text(encoding="utf-8")
+            self.assertIn("C11 Complex Modded Golden", text)
+            self.assertIn("MANUAL_URGENT_PENDING_MODLIST_STABILIZATION", text)
+            self.assertIn("real C4 capture is deferred until the physical modlist stabilizes", text)
+            self.assertIn("preflight green is readiness evidence, not C11 completion", text)
+            self.assertIn("C12 Runtime Acceptance", text)
+            self.assertIn("STATUS does not advance", text)
 
     def test_real_c4_registry_fixture_exists_and_is_canonical(self) -> None:
         self.assertTrue(
