@@ -13,6 +13,8 @@ MANIFEST = ROOT / "engineering/tests/golden/i10-multiblock-foundation/manifest.j
 SPEC = ROOT / "docs/superpowers/specs/2026-09-13-i10-multiblock-foundation-reference-design.md"
 PLAN = ROOT / "docs/superpowers/plans/2026-09-13-i10-multiblock-foundation-reference.md"
 I3_BUILD_TEMPLATE = ROOT / "engineering/templates/neoforge-mod/build.gradle.tmpl"
+I3_GRADLE_PROPERTIES_TEMPLATE = ROOT / "engineering/templates/neoforge-mod/gradle.properties.tmpl"
+I3_GRADLE_LOCK_TEMPLATE = ROOT / "engineering/templates/neoforge-mod/gradle.lockfile.tmpl"
 
 
 def load_materializer():
@@ -47,6 +49,15 @@ class I10MultiblockFoundationCompositionTest(unittest.TestCase):
     def test_design_and_plan_exist(self):
         self.assertTrue(SPEC.is_file())
         self.assertTrue(PLAN.is_file())
+
+    def test_current_cycle_targets_neoforge_21_1_250(self):
+        properties = I3_GRADLE_PROPERTIES_TEMPLATE.read_text(encoding="utf-8")
+        lockfile = I3_GRADLE_LOCK_TEMPLATE.read_text(encoding="utf-8")
+        self.assertIn("neo_version=21.1.250", properties)
+        self.assertNotIn("neo_version=21.1.248", properties)
+        self.assertIn("net.neoforged:neoforge:21.1.250=sdk,testSdk", lockfile)
+        self.assertIn("ng_dummy_ng.net.neoforged:neoforge:21.1.250=", lockfile)
+        self.assertNotIn("21.1.248", lockfile)
 
     def test_output_is_contained_and_workspace_root_is_rejected(self):
         module = load_materializer()
