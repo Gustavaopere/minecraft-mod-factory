@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "updated": "2026-09-09",
+  "updated": "2026-09-13",
   "authority_order": [
     "runtime_mod_repository",
     "physical_runtime_artifact_or_jar",
@@ -64,7 +64,7 @@
       "state": "CONFIRMED",
       "locator": {
         "path": "plans/PLANO-MESTRE-MINECRAFT-MOD-FACTORY-MOD-ENGINEERING-NEOFORGE-1.21.1-V1.1.md",
-        "sha256": "29fc7f4b949b2b8dba327eb3f022f4cd84b11a352430ca821bdaec13072b8744"
+        "sha256": "2e42fee77518c5cd14d39e079ad17a78a7912d4055d59d2b0f359ff8cd74659d"
       }
     },
     {
@@ -73,7 +73,7 @@
       "authority_scope": "Canonical Minecraft Mod Factory visual and asset-pipeline plan.",
       "state": "CONFIRMED",
       "locator": {
-        "path": "plans/PLANO-MESTRE-UNIFICADO-MINECRAFT-MOD-FACTORY-REPO-TEXTURA-BLOCKBENCH-ASSET-MCP-V5.1.md",
+        "path": "plans/textura/PLANO-MESTRE-UNIFICADO-MINECRAFT-MOD-FACTORY-REPO-TEXTURA-BLOCKBENCH-ASSET-MCP-V5.1.md",
         "sha256": "723bb083d5b646812cd44a03a1ef50e8505b366923b64aba5931ee4b7b63befb"
       }
     }
