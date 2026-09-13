@@ -178,6 +178,95 @@ def _kind_package(kind: str) -> str:
     return kind
 
 
+def _parse_gradle_properties(root: Path) -> dict[str, str]:
+    properties_path = _project_child(root, "gradle.properties")
+    if not properties_path.is_file():
+        raise ValueError("target project is missing gradle.properties")
+    properties: dict[str, str] = {}
+    for raw_line in properties_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        properties[key.strip()] = value.strip()
+    return properties
+
+
+def _validate_physical_project(root: Path, project: dict[str, Any]) -> Path:
+    properties = _parse_gradle_properties(root)
+    expected_properties = {
+        "minecraft_version": EXPECTED_TARGET["minecraft"],
+        "neo_version": EXPECTED_TARGET["neoforge"],
+        "java_version": str(EXPECTED_TARGET["java"]),
+        "mod_id": project["mod_id"],
+    }
+    for key, expected in expected_properties.items():
+        if properties.get(key) != expected:
+            raise ValueError(
+                f"target project {key} mismatch: expected {expected!r}, got {properties.get(key)!r}"
+            )
+
+    java_package = project["java_package"]
+    main_class = project["main_class"]
+    package_path = _java_package_path(java_package)
+    main_relative = f"src/main/java/{package_path}/{main_class}.java"
+    main_path = _project_child(root, main_relative)
+    if not main_path.is_file():
+        raise ValueError(f"target project does not match requested main class: {main_relative}")
+    source = main_path.read_text(encoding="utf-8")
+    expected_markers = (
+        f"package {java_package};",
+        f"@Mod({main_class}.MOD_ID)",
+        f'public static final String MOD_ID = "{project["mod_id"]}";',
+    )
+    if any(marker not in source for marker in expected_markers):
+        raise ValueError("target main class identity does not match feature request")
+    return main_path
+
+
+def _existing_generated_feature_paths(root: Path, java_package: str) -> set[str]:
+    package_path = _java_package_path(java_package)
+    feature_root = _project_child(root, f"src/main/java/{package_path}/feature")
+    if not feature_root.exists():
+        return set()
+    if feature_root.is_symlink() or not feature_root.is_dir():
+        raise ValueError("generated feature root must be a regular directory")
+
+    generated: set[str] = set()
+    for kind in CORE_FEATURE_KINDS:
+        kind_root = feature_root / kind
+        if not kind_root.exists():
+            continue
+        if kind_root.is_symlink() or not kind_root.is_dir():
+            raise ValueError(f"generated feature kind path must be a regular directory: {kind}")
+        for candidate in sorted(kind_root.glob("*.java")):
+            if candidate.is_symlink() or not candidate.is_file():
+                raise ValueError(f"generated feature source must be a regular file: {candidate.name}")
+            source = candidate.read_text(encoding="utf-8")
+            marker = f'public static final String FEATURE_KIND = "{kind}";'
+            if marker in source and 'public static final String ID = "' in source:
+                generated.add(candidate.relative_to(root).as_posix())
+    return generated
+
+
+def _reject_non_cumulative_request(
+    root: Path,
+    java_package: str,
+    features: list[dict[str, Any]],
+) -> None:
+    package_path = _java_package_path(java_package)
+    requested_paths = {
+        f"src/main/java/{package_path}/feature/{_kind_package(feature['kind'])}/{feature['class_name']}.java"
+        for feature in features
+    }
+    missing = sorted(_existing_generated_feature_paths(root, java_package) - requested_paths)
+    if missing:
+        raise ValueError(
+            "feature request is non-cumulative and would orphan existing generated features: "
+            + ", ".join(missing)
+        )
+
+
 def _constant_name(feature_id: str) -> str:
     return feature_id.upper()
 
@@ -651,9 +740,8 @@ def _desired_file_specs(
     main_class = project["main_class"]
     package_path = _java_package_path(java_package)
     main_relative = f"src/main/java/{package_path}/{main_class}.java"
-    main_path = _project_child(root, main_relative)
-    if not main_path.is_file():
-        raise ValueError(f"target project does not match requested main class: {main_relative}")
+    main_path = _validate_physical_project(root, project)
+    _reject_non_cumulative_request(root, java_package, features)
 
     specs: list[tuple[str, str, str]] = []
     for feature in features:
@@ -723,8 +811,10 @@ def _preflight_operation(root: Path, operation: dict[str, Any], *, confirm_modif
         raise StalePlanError(f"planned file changed after planning: {path_value}")
     if action == "noop":
         return destination, current
-    if operation.get("requires_confirmation") is True and not confirm_modified:
-        diff = operation.get("diff", "")
+    diff = operation.get("diff")
+    if not isinstance(diff, str) or not diff:
+        raise ValueError("modify operation requires a non-empty diff")
+    if not confirm_modified:
         raise ConfirmationRequiredError(f"modified file requires explicit confirmation; diff follows:\n{diff}")
     return destination, content
 
