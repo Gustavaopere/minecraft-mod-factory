@@ -21,7 +21,7 @@ WORKFLOW_PATH = ROOT / ".github" / "workflows" / "factory-construction-c11-compl
 README_PATH = ROOT / "construction" / "README.md"
 ARCHITECTURE_PATH = ROOT / "construction" / "docs" / "ARCHITECTURE.md"
 PHYSICAL_MODLIST_SHA256 = "7c0a23d6013101383d196526e4b6ba6940fb54a0fed10eaed5956ab015cfcc00"
-PENDING_CAPTURE_STATUS = "MANUAL_URGENT_PENDING_MODLIST_STABILIZATION"
+CAPTURE_BLOCKED_STATUS = "MODLIST_STABILIZED_AWAITING_RUNTIME_CAPTURE"
 
 CAPTURE_SAMPLE = """Mods count: 2
 
@@ -74,17 +74,16 @@ class ConstructionC11ComplexModdedGoldenTest(unittest.TestCase):
     def test_deferred_capture_state_is_explicit_and_blocks_completion(self) -> None:
         self.assertTrue(
             CAPTURE_STATE_PATH.is_file(),
-            "C11 deferred physical capture state must be versioned explicitly",
+            "C11 physical capture state must be versioned explicitly",
         )
         state = json.loads(CAPTURE_STATE_PATH.read_text(encoding="utf-8"))
         self.assertEqual(
             {
                 "schema_version": 1,
-                "status": PENDING_CAPTURE_STATUS,
+                "status": CAPTURE_BLOCKED_STATUS,
                 "blocks_c11_completion": True,
-                "reason": "physical modlist changes are still pending; capture would be disposable evidence",
+                "reason": "physical modlist declared stable; runtime registry capture is still pending",
                 "required_before_completion": [
-                    "stabilize physical modlist",
                     "run the C4 registry probe on the stabilized modpack",
                     "produce c11-runtime-snapshot.json",
                     "compose and validate registry.json through C4",
@@ -95,7 +94,7 @@ class ConstructionC11ComplexModdedGoldenTest(unittest.TestCase):
                     "jar_sha256": "ea9d2b89b3ae774e6e3fcc0b9b8a4a48a62ffa95c961cd41becff45c6f9ed943",
                 },
                 "last_observed_physical_modlist_sha256": PHYSICAL_MODLIST_SHA256,
-                "requires_recapture_after_modlist_stabilizes": True,
+                "requires_recapture_after_modlist_stabilizes": False,
             },
             state,
         )
@@ -106,7 +105,7 @@ class ConstructionC11ComplexModdedGoldenTest(unittest.TestCase):
         self.assertIn("c11-preflight-contracts:", workflow)
         self.assertIn("c11-preflight-probe:", workflow)
         self.assertIn("c11-completion:", workflow)
-        self.assertIn("C11_COMPLETION_BLOCKED: MANUAL_URGENT_PENDING_MODLIST_STABILIZATION", workflow)
+        self.assertIn("C11_COMPLETION_BLOCKED: MODLIST_STABILIZED_AWAITING_RUNTIME_CAPTURE", workflow)
         self.assertIn("actions/checkout@11d5960a326750d5838078e36cf38b85af677262", workflow)
         self.assertIn("actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065", workflow)
         self.assertIn("actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3", workflow)
@@ -116,30 +115,30 @@ class ConstructionC11ComplexModdedGoldenTest(unittest.TestCase):
         for path in (README_PATH, ARCHITECTURE_PATH):
             text = path.read_text(encoding="utf-8")
             self.assertIn("C11 Complex Modded Golden", text)
-            self.assertIn(PENDING_CAPTURE_STATUS, text)
-            self.assertIn("real C4 capture is deferred until the physical modlist stabilizes", text)
+            self.assertIn(CAPTURE_BLOCKED_STATUS, text)
+            self.assertIn("physical modlist is stabilized and the real C4 runtime capture is pending", text)
             self.assertIn("preflight green is readiness evidence, not C11 completion", text)
             self.assertIn("C12 Runtime Acceptance", text)
             self.assertIn("STATUS does not advance", text)
 
     def test_pending_state_skips_completion_only_registry_assertion_in_aggregate_suites(self) -> None:
         state = json.loads(CAPTURE_STATE_PATH.read_text(encoding="utf-8"))
-        self.assertEqual(PENDING_CAPTURE_STATUS, state["status"])
+        self.assertEqual(CAPTURE_BLOCKED_STATUS, state["status"])
         result = unittest.TestResult()
         self.__class__("test_real_c4_registry_fixture_exists_and_is_canonical").run(result)
         self.assertEqual([], result.failures)
         self.assertEqual([], result.errors)
         self.assertEqual(1, len(result.skipped))
-        self.assertIn(PENDING_CAPTURE_STATUS, result.skipped[0][1])
+        self.assertIn(CAPTURE_BLOCKED_STATUS, result.skipped[0][1])
 
     def test_real_c4_registry_fixture_exists_and_is_canonical(self) -> None:
         if CAPTURE_STATE_PATH.is_file():
             state = json.loads(CAPTURE_STATE_PATH.read_text(encoding="utf-8"))
             if (
-                state.get("status") == PENDING_CAPTURE_STATUS
+                state.get("status") == CAPTURE_BLOCKED_STATUS
                 and state.get("blocks_c11_completion") is True
             ):
-                self.skipTest(PENDING_CAPTURE_STATUS)
+                self.skipTest(CAPTURE_BLOCKED_STATUS)
 
         self.assertTrue(
             REGISTRY_PATH.is_file(),
