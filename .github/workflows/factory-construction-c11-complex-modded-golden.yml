@@ -13,6 +13,7 @@ on:
       - 'engineering/tooling/import-physical-modlist.py'
       - 'construction/fixtures/complex-modded-golden/**'
       - 'construction/tests/test_c11_complex_modded_golden.py'
+      - 'construction/tests/test_c11_capture_path_security.py'
       - 'construction/core/modpack_registry.py'
       - 'construction/runtime/neoforge-registry-probe/**'
       - 'construction/scripts/prepare_neoforge_registry_probe.py'
@@ -57,12 +58,13 @@ jobs:
             construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_delegates_target_mismatch_to_c4 \
             construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_cli_writes_canonical_revalidated_registry \
             -v
+          python3 -m unittest construction/tests/test_c11_capture_path_security.py -v
 
       - name: Run shared Sonar governance contract
         run: python3 migration/full-skill-migration/test_sonar_ci_contract.py
 
       - name: Check C11 preflight whitespace
-        run: git diff --check HEAD^ HEAD -- .github/workflows/factory-construction-c11-complex-modded-golden.yml .github/workflows/factory-sonar-ci.yml construction/fixtures/complex-modded-golden construction/tests/test_c11_complex_modded_golden.py construction/README.md construction/docs/ARCHITECTURE.md migration/full-skill-migration/test_sonar_ci_contract.py docs/superpowers/specs docs/superpowers/plans
+        run: git diff --check HEAD^ HEAD -- .github/workflows/factory-construction-c11-complex-modded-golden.yml .github/workflows/factory-sonar-ci.yml construction/fixtures/complex-modded-golden construction/tests/test_c11_complex_modded_golden.py construction/tests/test_c11_capture_path_security.py construction/README.md construction/docs/ARCHITECTURE.md migration/full-skill-migration/test_sonar_ci_contract.py docs/superpowers/specs docs/superpowers/plans
 
   c11-preflight-probe:
     needs: c11-preflight-contracts
