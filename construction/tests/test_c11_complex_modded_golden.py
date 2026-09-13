@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import tempfile
 import unittest
 import zipfile
@@ -162,6 +163,24 @@ class ConstructionC11ComplexModdedGoldenTest(unittest.TestCase):
                     runtime_snapshot,
                     captured_at="2026-09-09",
                 )
+
+    def test_capture_helper_rejects_output_outside_workspace(self) -> None:
+        capture = load_path(CAPTURE_PATH, "construction_c11_capture_registry_output_path")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            outside = root / "outside.json"
+            previous = Path.cwd()
+            try:
+                os.chdir(workspace)
+                with self.assertRaisesRegex(
+                    ValueError,
+                    r"^output must stay inside workspace: ",
+                ):
+                    capture._workspace_output_path(outside)
+            finally:
+                os.chdir(previous)
 
 
 if __name__ == "__main__":
