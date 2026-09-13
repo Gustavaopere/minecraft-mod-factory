@@ -58,6 +58,10 @@ class I10MultiblockFoundationCompositionTest(unittest.TestCase):
         self.assertIn("net.neoforged:neoforge:21.1.250=sdk,testSdk", lockfile)
         self.assertIn("ng_dummy_ng.net.neoforged:neoforge:21.1.250=", lockfile)
         self.assertNotIn("21.1.248", lockfile)
+        self.assertIn("net.neoforged.fancymodloader:earlydisplay:4.0.44=", lockfile)
+        self.assertIn("net.neoforged.fancymodloader:loader:4.0.44=", lockfile)
+        self.assertNotIn("net.neoforged.fancymodloader:earlydisplay:4.0.43=", lockfile)
+        self.assertNotIn("net.neoforged.fancymodloader:loader:4.0.43=", lockfile)
 
     def test_output_is_contained_and_workspace_root_is_rejected(self):
         module = load_materializer()
