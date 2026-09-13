@@ -177,6 +177,23 @@ class SonarCiContractTest(unittest.TestCase):
             workflow.index(scanner),
         )
 
+    def test_ci_analysis_covers_c13_capability_router_before_scan(self) -> None:
+        workflow = SONAR_WORKFLOW.read_text(encoding="utf-8")
+        scanner = f"uses: SonarSource/sonarqube-scan-action@{SONAR_SCAN_SHA}"
+        required = (
+            "skills/scripts/capability_router.py",
+            "construction/tests/test_c13_skill_router_integration.py",
+            "construction/tests/test_c13_workflow_contract.py",
+            "--source=skills.scripts.capability_router",
+        )
+        for token in required:
+            with self.subTest(token=token):
+                self.assertIn(token, workflow)
+        self.assertLess(
+            workflow.index("skills/scripts/capability_router.py"),
+            workflow.index(scanner),
+        )
+
     def test_previous_version_new_code_uses_stable_ci_baseline_version(self) -> None:
         ci = parse_properties(CI_PROPERTIES)
         self.assertEqual(
