@@ -115,7 +115,7 @@ class I3ModScaffolderContractTest(unittest.TestCase):
             self.assertIn("neo_version=21.1.250", gradle_properties)
             self.assertIn("java_version=21", gradle_properties)
             self.assertIn("junit_version=5.14.3", gradle_properties)
-            self.assertIn("net.neoforged.gradle.userdev' version '7.1.26", build_gradle)
+            self.assertIn("net.neoforged.gradle.userdev' version '7.1.38", build_gradle)
             self.assertIn("JavaLanguageVersion.of(Integer.parseInt(java_version))", build_gradle)
             self.assertIn("gradle-8.14-bin.zip", wrapper)
             self.assertIn('modId="${mod_id}"', metadata)
