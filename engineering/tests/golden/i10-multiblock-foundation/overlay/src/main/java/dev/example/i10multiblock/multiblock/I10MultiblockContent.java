@@ -8,6 +8,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -48,6 +49,9 @@ public final class I10MultiblockContent {
     }
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        // Capability exposure is added by the Task 4 TDD slice.
+        event.registerBlockEntity(
+                Capabilities.ItemHandler.BLOCK,
+                MULTIBLOCK_IO_PORT_BLOCK_ENTITY.get(),
+                (blockEntity, side) -> blockEntity.itemHandler());
     }
 }
