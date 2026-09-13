@@ -4,7 +4,7 @@
 
 **Goal:** Build a reproducible NeoForge 1.21.1 Machine Foundation Golden that proves inventory, energy, vanilla-smelting recipe lookup, progress, persistence, sync, menu backend, GameTests, and dedicated-server compatibility without making I8 machine-aware.
 
-**Architecture:** Generate a fresh canonical I3 project, then apply a deterministic I9-owned overlay for a fixed synthetic mod identity (`i9_machine`, package `dev.example.i9machine`). Shared scaffold behavior remains owned by I3; the one known GameTest run-config defect is corrected in I3 first. I9 runtime is a single-block server-authoritative machine whose two-slot `ItemStackHandler`, bounded `IEnergyStorage`, menu `ContainerData`, and vanilla `minecraft:smelting` lookup are exercised by required GameTests.
+**Architecture:** Generate a fresh canonical I3 project, then apply a deterministic I9-owned overlay for a fixed synthetic mod identity (`i9_machine`, package `dev.example.i9machine`). Shared scaffold behavior remains owned by I3; the known GameTest run-config defect is corrected in I3 first. I9 runtime is a single-block server-authoritative machine whose two-slot `ItemStackHandler`, bounded `IEnergyStorage`, menu `ContainerData`, and vanilla `minecraft:smelting` lookup are exercised by required GameTests.
 
 **Tech Stack:** Java 21, Minecraft 1.21.1, NeoForge 21.1.248, NeoGradle userdev 7.1.26, Gradle 8.14, Python 3 unittest tooling, GitHub Actions, SonarQube Cloud.
 
@@ -13,13 +13,13 @@
 ## Global Constraints
 
 - Physical target is exactly Minecraft `1.21.1`, NeoForge `21.1.248`, Java `21`.
-- The physical modlist authority is the project-supplied snapshot with SHA-256 `7c0a23d6013101383d196526e4b6ba6940fb54a0fed10eaed5956ab015cfcc00`.
+- Physical modlist authority is the project-supplied snapshot with SHA-256 `7c0a23d6013101383d196526e4b6ba6940fb54a0fed10eaed5956ab015cfcc00`.
 - I9 is a dedicated Golden/reference capability; it is not injected into every generated mod.
 - I8 remains generic and is not extended with a `machine` feature in this PR.
 - No custom recipe serializer/type is introduced; use vanilla `minecraft:smelting` with `SingleRecipeInput`.
-- Canonical behavior constants: capacity `10_000`, max external receive `1_000`, external extraction `0`, cost `20` energy/tick, duration `100` server ticks.
-- Machine item slots are fixed: input `0`, output `1`.
-- Menu sync exposes exactly progress, max progress, and current energy through `ContainerData`; items sync through slots.
+- Canonical constants are capacity `10_000`, max external receive `1_000`, external extraction `0`, cost `20` energy/tick, duration `100` server ticks.
+- Machine item slots are input `0`, output `1`.
+- Menu sync exposes exactly progress, max progress, and current energy through `ContainerData`; item stacks sync through slots.
 - No `AbstractContainerScreen`, custom visual GUI, textures, VFX, multiblock, logistics, fluid, tiers, upgrades, side configuration, or release tooling in I9.
 - Existing files are never overwritten silently; generated-project mutations use exact anchors and fail closed on drift.
 - Required runtime gates are `test build`, `runGameTestServer`, and I5 dedicated-server smoke.
@@ -29,32 +29,32 @@
 
 Shared I3 correction:
 
-- Modify `engineering/tests/test_i3_mod_scaffolder.py` — add the run-config regression contract.
-- Modify `engineering/templates/neoforge-mod/build.gradle.tmpl` — add `setForceExit false` under `gameTestServer`.
-- Modify `engineering/tests/golden/i3-golden-mod/build.gradle` — keep checked-in I3 Golden byte-equivalent to scaffold output.
+- Modify `engineering/tests/test_i3_mod_scaffolder.py`.
+- Modify `engineering/templates/neoforge-mod/build.gradle.tmpl`.
+- Modify `engineering/tests/golden/i3-golden-mod/build.gradle`.
 
 I9 composition authority:
 
-- Create `engineering/tests/fixtures/i9-machine-mod-spec.json` — fixed synthetic mod spec targeting the canonical stack.
-- Create `engineering/tests/fixtures/i9-machine-scaffold-config.json` — fixed package/classes for the I9 generated project.
-- Create `engineering/tooling/machine-foundation/materialize_i9.py` — safe deterministic composition of I3 scaffold + I9 overlay + exact main-class wiring.
-- Create `engineering/tests/test_i9_machine_foundation.py` — structural, determinism, containment, ownership, and generated-source contracts.
-- Create `engineering/tests/golden/i9-machine-foundation/manifest.json` — closed list of I9-owned overlay files and the one declared generated-main wiring mutation.
+- Create `engineering/tests/fixtures/i9-machine-mod-spec.json`.
+- Create `engineering/tests/fixtures/i9-machine-scaffold-config.json`.
+- Create `engineering/tooling/machine-foundation/materialize_i9.py`.
+- Create `engineering/tests/test_i9_machine_foundation.py`.
+- Create `engineering/tests/golden/i9-machine-foundation/manifest.json`.
 
 I9 Java overlay:
 
-- Create `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/I9MachineContent.java` — registries and capability registration.
-- Create `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/MachineBlock.java` — block entity creation, server ticker, and menu opening.
-- Create `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/MachineEnergyStorage.java` — bounded external energy API plus internal consumption/load.
-- Create `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/MachineBlockEntity.java` — two-slot inventory, smelting lookup, processing, persistence, and `ContainerData`.
-- Create `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/MachineMenu.java` — backend slots, sync, validity, and shift-click.
-- Create `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/gametest/I9MachineGameTests.java` — seven required GameTests.
-- Create `engineering/tests/golden/i9-machine-foundation/overlay/src/main/resources/data/i9_machine/structure/machine_test.nbt` — minimal deterministic GameTest structure template.
+- Create `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/I9MachineContent.java`.
+- Create `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/MachineBlock.java`.
+- Create `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/MachineEnergyStorage.java`.
+- Create `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/MachineBlockEntity.java`.
+- Create `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/MachineMenu.java`.
+- Create `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/gametest/I9MachineGameTests.java`.
+- Create `engineering/tests/golden/i9-machine-foundation/overlay/src/main/resources/data/i9_machine/structure/machine_test.nbt`.
 
 CI:
 
-- Create `.github/workflows/factory-engineering-i9-machine-foundation.yml` — contract tests, dependency regressions, materialization, build, GameTest server, I5 dedicated server, and whitespace.
-- Modify `.github/workflows/factory-sonar-ci.yml` only if the new Python materializer is not covered automatically by current Python coverage collection; any change must be justified by a failing coverage gate first.
+- Create `.github/workflows/factory-engineering-i9-machine-foundation.yml`.
+- Modify `.github/workflows/factory-sonar-ci.yml` only if a failing branch Sonar run proves the new Python materializer is missing coverage ingestion.
 
 ---
 
@@ -66,8 +66,15 @@ CI:
 - Modify: `engineering/tests/golden/i3-golden-mod/build.gradle`
 
 **Interfaces:**
-- Consumes: `generate_project(mod_spec_path, scaffold_config_path, output_dir) -> Path` from I3.
-- Produces: every generated `build.gradle` contains `gameTestServer { ... setForceExit false ... }`.
+- Consumes: `generate_project(mod_spec_path: Path | str, scaffold_config_path: Path | str, output_dir: Path | str) -> Path`.
+- Produces this exact generated run block:
+
+```groovy
+gameTestServer {
+    systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+    setForceExit false
+}
+```
 
 - [ ] **Step 1: Write the failing I3 regression test**
 
@@ -88,30 +95,17 @@ def test_game_test_server_disables_neogradle_force_exit(self):
 
 - [ ] **Step 2: Run RED and record evidence**
 
-Run:
-
 ```bash
 python3 -m unittest engineering/tests/test_i3_mod_scaffolder.py
 ```
 
-Expected: exactly the new test fails because the current template has no `setForceExit false`; all prior I3 tests remain passing.
+Expected: the new test fails because the current canonical template does not contain `setForceExit false`; all earlier I3 tests pass.
 
 - [ ] **Step 3: Apply the owner-correct minimal fix**
 
-Change the canonical template block to:
-
-```groovy
-gameTestServer {
-    systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-    setForceExit false
-}
-```
-
-Make the identical textual change in `engineering/tests/golden/i3-golden-mod/build.gradle` so I3 byte-equivalence remains authoritative.
+Insert `setForceExit false` into the `gameTestServer` block in both `engineering/templates/neoforge-mod/build.gradle.tmpl` and `engineering/tests/golden/i3-golden-mod/build.gradle`.
 
 - [ ] **Step 4: Run GREEN plus I3 security regression**
-
-Run:
 
 ```bash
 python3 -m unittest \
@@ -119,7 +113,7 @@ python3 -m unittest \
   engineering/tests/test_i3_security_review.py
 ```
 
-Expected: PASS with zero failures.
+Expected: zero failures/errors.
 
 - [ ] **Step 5: Commit the I3 prerequisite**
 
@@ -142,12 +136,12 @@ git commit -m "fix(engineering): make I3 GameTest server exit cleanly"
 - Create: `engineering/tooling/machine-foundation/materialize_i9.py`
 
 **Interfaces:**
-- Consumes: canonical I3 `generate_project(...)`.
-- Produces: `materialize_i9(output_dir: Path | str) -> Path` for one fixed synthetic I9 Golden identity.
+- Consumes I3 `generate_project(mod_spec_path: Path | str, scaffold_config_path: Path | str, output_dir: Path | str) -> Path`.
+- Produces `materialize_i9(output_dir: Path | str) -> Path` for the fixed I9 identity.
 
-- [ ] **Step 1: Create fixed I9 fixtures**
+- [ ] **Step 1: Create the fixed I9 fixtures**
 
-Use this scaffold config exactly:
+`engineering/tests/fixtures/i9-machine-scaffold-config.json`:
 
 ```json
 {
@@ -164,13 +158,15 @@ Use this scaffold config exactly:
 }
 ```
 
-Create the mod spec by preserving the I3 schema shape while setting:
+`engineering/tests/fixtures/i9-machine-mod-spec.json`:
 
 ```json
 {
+  "schema_version": 1,
   "identity": {
     "name": "I9 Machine Foundation",
     "mod_id": "i9_machine",
+    "repository": "UNRESOLVED",
     "target": {
       "minecraft": "1.21.1",
       "loader": "neoforge",
@@ -178,19 +174,76 @@ Create the mod spec by preserving the I3 schema shape while setting:
       "java": 21
     }
   },
-  "dependencies": {"required": ["neoforge"], "optional": [], "incompatible": [], "profiles": []},
-  "systems": {"machines": ["single_block_smelting_machine"]},
-  "data": {"recipes": ["minecraft:smelting"]}
+  "purpose": {
+    "fantasy": "Synthetic Golden Project used only to verify the canonical I9 Machine Foundation reference.",
+    "player_problem": "Prove deterministic single-block machine composition on the canonical NeoForge target.",
+    "core_loop": ["Insert raw iron", "Supply energy", "Process", "Collect iron ingot"],
+    "non_goals": ["Production gameplay", "Custom visual GUI", "Multiblocks", "Logistics networks"]
+  },
+  "dependencies": {
+    "required": ["neoforge"],
+    "optional": [],
+    "incompatible": [],
+    "profiles": []
+  },
+  "systems": {
+    "blocks": ["machine"],
+    "items": ["machine_block_item"],
+    "machines": ["single_block_smelting_machine"],
+    "entities": [],
+    "worldgen": [],
+    "ui": ["machine_menu_backend"],
+    "networking": [],
+    "progression": [],
+    "integrations": []
+  },
+  "visual": {
+    "repo_textura_package": "UNRESOLVED",
+    "provider_profiles": [],
+    "required_assets": [],
+    "handoff_manifest": "UNRESOLVED"
+  },
+  "data": {
+    "persistence": ["machine_inventory", "machine_energy", "machine_progress"],
+    "recipes": ["minecraft:smelting"],
+    "tags": [],
+    "data_maps": [],
+    "configs": []
+  },
+  "testing": {
+    "unit": "REQUIRED",
+    "gametest": "REQUIRED",
+    "client": "NOT_REQUIRED_FOR_I9",
+    "dedicated_server": "REQUIRED",
+    "multiplayer": "NOT_REQUIRED_FOR_I9",
+    "performance": "NOT_REQUIRED_FOR_I9",
+    "manifest": "build/i5-test-harness/test-manifest.json"
+  },
+  "release": {
+    "versioning": "0.1.0",
+    "distribution": ["UNRESOLVED"],
+    "license": "MIT",
+    "state": "REFERENCE_ONLY"
+  },
+  "evidence": {
+    "state": "PENDING_I9_GATES",
+    "sources": ["synthetic I9 Golden fixture"],
+    "open_questions": []
+  }
 }
 ```
 
-All other required schema fields must remain explicit and synthetic, using the I3 fixture as the shape authority; no production repository/provider claims are added.
-
 - [ ] **Step 2: Write the structural RED**
 
-Start `test_i9_machine_foundation.py` with constants and tests:
+Create `engineering/tests/test_i9_machine_foundation.py` with:
 
 ```python
+import importlib.util
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
 ROOT = Path(__file__).resolve().parents[2]
 MATERIALIZER = ROOT / "engineering/tooling/machine-foundation/materialize_i9.py"
 OVERLAY = ROOT / "engineering/tests/golden/i9-machine-foundation/overlay"
@@ -205,24 +258,15 @@ class I9MachineFoundationContractTest(unittest.TestCase):
 
 - [ ] **Step 3: Run RED**
 
-Run:
-
 ```bash
 python3 -m unittest engineering/tests/test_i9_machine_foundation.py
 ```
 
-Expected: FAIL for the absent materializer/overlay/manifest.
+Expected: FAIL because the materializer, overlay directory, and manifest are absent.
 
 - [ ] **Step 4: Implement the safe composition entrypoint**
 
-`materialize_i9.py` must expose only:
-
-```python
-def materialize_i9(output_dir: Path | str) -> Path:
-    ...
-```
-
-Implementation requirements:
+`engineering/tooling/machine-foundation/materialize_i9.py` must define:
 
 ```python
 EXPECTED_TARGET = {
@@ -231,18 +275,27 @@ EXPECTED_TARGET = {
     "neoforge": "21.1.248",
     "java": 21,
 }
+
+class MaterializationError(RuntimeError):
+    pass
+
+def materialize_i9(output_dir: Path | str) -> Path:
+    output = _validated_workspace_output(output_dir)
+    project = _generate_i3_project(output)
+    manifest = _load_manifest()
+    _copy_overlay(project, manifest)
+    _wire_main_class(project)
+    return project
 ```
 
-The function must:
+Implement `_validated_workspace_output`, `_generate_i3_project`, `_load_manifest`, `_copy_overlay`, `_validated_relative_path`, and `_wire_main_class` with these closed rules:
 
-1. resolve `output_dir` under the current workspace and reject workspace root/outside paths;
-2. call I3 `generate_project(I9_MOD_SPEC, I9_SCAFFOLD_CONFIG, output_dir)`;
-3. load `manifest.json` and reject unknown keys, absolute paths, `..`, symlinks, duplicates, and targets outside the generated project;
-4. copy each overlay file byte-for-byte only when the destination does not already exist;
-5. patch only `src/main/java/dev/example/i9machine/I9MachineMod.java` by replacing the exact constructor anchor with registration calls; reject zero or multiple anchor matches;
-6. return the generated project path.
-
-The main-class mutation is exact and closed:
+- output must be inside the current workspace and not equal to workspace root;
+- I3 fixtures are the only scaffold inputs;
+- manifest root keys are exactly `schema_version`, `overlay_files`, and `main_class_patch`;
+- every overlay path is relative, contains no `..`, is unique, resolves inside overlay root, is not a symlink, and targets a path that does not already exist in the generated project;
+- the main class patch targets only `src/main/java/dev/example/i9machine/I9MachineMod.java`;
+- the exact empty constructor generated by I3 is replaced once with imports plus:
 
 ```java
 public I9MachineMod(IEventBus modBus) {
@@ -251,17 +304,21 @@ public I9MachineMod(IEventBus modBus) {
 }
 ```
 
+- zero or multiple exact-anchor matches raise `MaterializationError` before writing the main class.
+
 - [ ] **Step 5: Add determinism and containment tests**
 
-Tests must generate into two temp directories and assert byte-identical file maps, then separately prove traversal/symlink/unknown-manifest mutations fail before any I9 overlay write.
-
-Use assertions of this form:
+Add helpers that load the module and compare generated file bytes. Required assertions:
 
 ```python
 self.assertEqual(file_map(first), file_map(second))
 with self.assertRaises(module.MaterializationError):
     module._validated_relative_path("../escape.java")
+with self.assertRaises(module.MaterializationError):
+    module._validated_relative_path("/absolute/escape.java")
 ```
+
+Also mutate a copied manifest with an unknown root key and require fail-closed behavior before an overlay write.
 
 - [ ] **Step 6: Run GREEN**
 
@@ -272,12 +329,13 @@ python3 -m unittest \
   engineering/tests/test_i9_machine_foundation.py
 ```
 
-Expected: PASS.
+Expected: zero failures/errors.
 
 - [ ] **Step 7: Commit composition foundation**
 
 ```bash
-git add engineering/tests/fixtures/i9-machine-*.json \
+git add engineering/tests/fixtures/i9-machine-mod-spec.json \
+  engineering/tests/fixtures/i9-machine-scaffold-config.json \
   engineering/tests/test_i9_machine_foundation.py \
   engineering/tests/golden/i9-machine-foundation/manifest.json \
   engineering/tooling/machine-foundation/materialize_i9.py
@@ -298,13 +356,14 @@ git commit -m "test(engineering): establish I9 machine Golden contract"
 - Modify: `engineering/tests/test_i9_machine_foundation.py`
 
 **Interfaces:**
-- `I9MachineContent.register(IEventBus)` registers block/item/BE/menu.
-- `I9MachineContent.registerCapabilities(RegisterCapabilitiesEvent)` exposes item and energy block capabilities.
-- `MachineBlockEntity#getItemHandler() -> IItemHandler` and `getEnergyStorage() -> IEnergyStorage` are stable-lifetime capability instances.
+- `I9MachineContent.register(IEventBus modBus)`.
+- `I9MachineContent.registerCapabilities(RegisterCapabilitiesEvent event)`.
+- `MachineBlockEntity.getItemHandler() -> IItemHandler`.
+- `MachineBlockEntity.getEnergyStorage() -> IEnergyStorage`.
 
 - [ ] **Step 1: Extend structural tests before adding Java sources**
 
-Assert the exact required relative paths and required source tokens, including:
+Require these exact manifest paths:
 
 ```python
 required = {
@@ -317,7 +376,7 @@ required = {
 self.assertTrue(required.issubset(set(manifest["overlay_files"])))
 ```
 
-Source-token assertions must require `DeferredRegister`, `Capabilities.ItemHandler.BLOCK`, `Capabilities.EnergyStorage.BLOCK`, and `registerBlockEntity`.
+Require source tokens `DeferredRegister`, `Capabilities.ItemHandler.BLOCK`, `Capabilities.EnergyStorage.BLOCK`, and `registerBlockEntity`.
 
 - [ ] **Step 2: Run RED**
 
@@ -325,20 +384,13 @@ Source-token assertions must require `DeferredRegister`, `Capabilities.ItemHandl
 python3 -m unittest engineering/tests/test_i9_machine_foundation.py
 ```
 
-Expected: FAIL because Java overlay files do not exist.
+Expected: FAIL because the Java overlay files are absent.
 
 - [ ] **Step 3: Implement registry/capability authority**
 
-`I9MachineContent` owns four deferred registrations and the capability event:
+`I9MachineContent` owns deferred registers for blocks, items, block entity types, and menus. Use the target registry APIs and register exactly one `machine` block, one block item, one `MachineBlockEntity` type, and one `MachineMenu` type.
 
-```java
-public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(I9MachineMod.MOD_ID);
-public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(I9MachineMod.MOD_ID);
-public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, I9MachineMod.MOD_ID);
-public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, I9MachineMod.MOD_ID);
-```
-
-Register `machine`, `machine` block item, `machine` BlockEntity type, and `machine` menu type. Capability registration is:
+Capability registration is exactly:
 
 ```java
 public static void registerCapabilities(RegisterCapabilitiesEvent event) {
@@ -357,7 +409,7 @@ public static void registerCapabilities(RegisterCapabilitiesEvent event) {
 
 - [ ] **Step 4: Implement minimal compiling block/menu/BE shells**
 
-`MachineBlock` extends `BaseEntityBlock`; `newBlockEntity` returns `new MachineBlockEntity(pos, state)`. `MachineBlockEntity` extends `BlockEntity` and exposes stable handler fields. `MachineMenu` extends `AbstractContainerMenu` and initially only satisfies constructor/stillValid/quickMoveStack compile contracts.
+`MachineBlock` extends `BaseEntityBlock` and returns `new MachineBlockEntity(pos, state)` from `newBlockEntity`. `MachineBlockEntity` extends `BlockEntity` with stable handler fields. `MachineMenu` extends `AbstractContainerMenu` with real constructor signatures, `stillValid`, and `quickMoveStack` implementations that compile without screen code.
 
 - [ ] **Step 5: Materialize and run target-exact compile GREEN**
 
@@ -367,10 +419,10 @@ mkdir -p .factory-ci/i9
 python3 engineering/tooling/machine-foundation/materialize_i9.py --output .factory-ci/i9/generated
 chmod +x .factory-ci/i9/generated/gradlew
 cd .factory-ci/i9/generated
-GRADLE_USER_HOME="$OLDPWD/.factory-ci/i9/gradle-home" ./gradlew test build --no-daemon
+GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/i9/gradle-home" ./gradlew test build --no-daemon
 ```
 
-Expected: BUILD SUCCESSFUL. Any API mismatch is fixed against NeoForge 21.1.248, not guessed around.
+Expected: BUILD SUCCESSFUL. Fix any compile mismatch against NeoForge `21.1.248`; do not invent substitute APIs.
 
 - [ ] **Step 6: Commit registry/runtime surfaces**
 
@@ -385,18 +437,21 @@ git commit -m "feat(engineering): add I9 machine runtime surfaces"
 ### Task 4: Implement Inventory and Energy Contracts
 
 **Files:**
-- Modify: `.../MachineEnergyStorage.java`
-- Modify: `.../MachineBlockEntity.java`
-- Modify: `.../MachineMenu.java`
+- Modify: `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/MachineEnergyStorage.java`
+- Modify: `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/MachineBlockEntity.java`
+- Modify: `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/MachineMenu.java`
 - Modify: `engineering/tests/test_i9_machine_foundation.py`
 
 **Interfaces:**
-- `MachineEnergyStorage`: `receiveEnergy`, `extractEnergy`, `getEnergyStored`, `getMaxEnergyStored`, `canExtract`, `canReceive`, `consumeInternal(int)`, `setStoredEnergy(int)`.
-- `MachineBlockEntity`: slot constants `INPUT_SLOT = 0`, `OUTPUT_SLOT = 1`; `getItemHandler()`; `getEnergyStorage()`.
+- `MachineEnergyStorage.receiveEnergy(int maxReceive, boolean simulate)`.
+- `MachineEnergyStorage.extractEnergy(int maxExtract, boolean simulate)` always exposes zero external extraction.
+- `MachineEnergyStorage.consumeInternal(int amount)` performs machine-owned energy consumption.
+- `MachineEnergyStorage.setStoredEnergy(int value)` clamps to valid range.
+- `MachineBlockEntity.INPUT_SLOT = 0`, `OUTPUT_SLOT = 1`.
 
-- [ ] **Step 1: Add source-contract REDs for fixed constants and policies**
+- [ ] **Step 1: Add RED contracts for fixed constants and policies**
 
-Require exact constants in `MachineBlockEntity`:
+Require these exact constants in `MachineBlockEntity`:
 
 ```java
 public static final int ENERGY_CAPACITY = 10_000;
@@ -417,53 +472,43 @@ python3 -m unittest engineering/tests/test_i9_machine_foundation.py
 
 - [ ] **Step 3: Implement `MachineEnergyStorage`**
 
-Use a direct `IEnergyStorage` implementation so external and internal mutation paths are explicit:
+Use a direct `IEnergyStorage` implementation with fields `capacity`, `maxReceive`, `onChanged`, and `energy`. `receiveEnergy` returns `0` for non-positive requests; otherwise it accepts at most `min(maxReceive, capacity - energy)`. Real receives update state and call `onChanged`. `extractEnergy` returns `0`. `canExtract` returns `false`; `canReceive` returns `true`; `getMaxEnergyStored` returns `capacity`.
+
+Internal mutation code:
 
 ```java
-public final class MachineEnergyStorage implements IEnergyStorage {
-    private final int capacity;
-    private final int maxReceive;
-    private final Runnable onChanged;
-    private int energy;
+public boolean consumeInternal(int amount) {
+    if (amount <= 0 || this.energy < amount) {
+        return false;
+    }
+    this.energy -= amount;
+    this.onChanged.run();
+    return true;
+}
 
-    public boolean consumeInternal(int amount) {
-        if (amount <= 0 || this.energy < amount) return false;
-        this.energy -= amount;
+public void setStoredEnergy(int value) {
+    int clamped = Mth.clamp(value, 0, this.capacity);
+    if (clamped != this.energy) {
+        this.energy = clamped;
         this.onChanged.run();
-        return true;
-    }
-
-    public void setStoredEnergy(int value) {
-        int clamped = Mth.clamp(value, 0, this.capacity);
-        if (clamped != this.energy) {
-            this.energy = clamped;
-            this.onChanged.run();
-        }
-    }
-
-    @Override
-    public int extractEnergy(int maxExtract, boolean simulate) {
-        return 0;
     }
 }
 ```
 
-`receiveEnergy` clamps to both `maxReceive` and remaining capacity and invokes `onChanged` only on real mutation.
-
 - [ ] **Step 4: Implement two-slot item policy**
 
-Back with one stable `ItemStackHandler(2)` whose `onContentsChanged` calls `setChanged()`. Output slot `1` returns `false` from `isItemValid`. Input validity delegates to `MachineBlockEntity#canSmelt(ItemStack)` when a server level is available; before level attachment it fails closed for automation insertion.
+Back the machine with one stable `ItemStackHandler(2)` whose `onContentsChanged` calls `setChanged()`. Output slot `1` returns `false` from `isItemValid`. Input slot validity calls `MachineBlockEntity.canSmelt(ItemStack)` when a `ServerLevel` exists; before server-level attachment it rejects automation insertion.
 
 - [ ] **Step 5: Build GREEN**
 
-Run structural tests and then:
+Rematerialize and run:
 
 ```bash
 cd .factory-ci/i9/generated
-GRADLE_USER_HOME="$OLDPWD/.factory-ci/i9/gradle-home" ./gradlew clean test build --no-daemon
+GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/i9/gradle-home" ./gradlew clean test build --no-daemon
 ```
 
-Rematerialize first if overlay files changed.
+Expected: BUILD SUCCESSFUL.
 
 - [ ] **Step 6: Commit inventory/energy foundation**
 
@@ -478,17 +523,17 @@ git commit -m "feat(engineering): implement I9 inventory and energy"
 ### Task 5: Implement Smelting Processing, Persistence, and Menu Sync
 
 **Files:**
-- Modify: `.../MachineBlockEntity.java`
-- Modify: `.../MachineMenu.java`
+- Modify: `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/MachineBlockEntity.java`
+- Modify: `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/MachineMenu.java`
 - Modify: `engineering/tests/test_i9_machine_foundation.py`
 
 **Interfaces:**
-- `MachineBlockEntity.serverTick(Level, BlockPos, BlockState, MachineBlockEntity)` performs all machine mutation server-side.
-- `ContainerData` indices: `0=progress`, `1=maxProgress`, `2=energy`.
+- `MachineBlockEntity.serverTick(Level level, BlockPos pos, BlockState state, MachineBlockEntity blockEntity)` is the only tick mutation path.
+- `ContainerData` indices are `0=progress`, `1=maxProgress`, `2=energy`.
 
-- [ ] **Step 1: Add RED source contracts for recipe/persistence/sync**
+- [ ] **Step 1: Add RED source contracts**
 
-Tests must require `SingleRecipeInput`, `RecipeType.SMELTING`, `getRecipeFor`, `assemble`, `loadAdditional`, `saveAdditional`, `ContainerData`, and exactly three data values.
+Require `SingleRecipeInput`, `RecipeType.SMELTING`, `getRecipeFor`, `assemble`, `loadAdditional`, `saveAdditional`, `ContainerData`, and `getCount() == 3` behavior.
 
 - [ ] **Step 2: Run RED**
 
@@ -498,12 +543,14 @@ python3 -m unittest engineering/tests/test_i9_machine_foundation.py
 
 - [ ] **Step 3: Implement server-side recipe lookup**
 
-Use target 1.21.1 API shape:
+Use this target shape:
 
 ```java
 private Optional<RecipeHolder<? extends AbstractCookingRecipe>> findRecipe(ServerLevel level) {
     ItemStack inputStack = this.items.getStackInSlot(INPUT_SLOT);
-    if (inputStack.isEmpty()) return Optional.empty();
+    if (inputStack.isEmpty()) {
+        return Optional.empty();
+    }
     return level.getRecipeManager().getRecipeFor(
         RecipeType.SMELTING,
         new SingleRecipeInput(inputStack),
@@ -512,55 +559,38 @@ private Optional<RecipeHolder<? extends AbstractCookingRecipe>> findRecipe(Serve
 }
 ```
 
-Assemble with server registry access:
+Assemble with:
 
 ```java
-ItemStack result = holder.value().assemble(new SingleRecipeInput(inputStack), level.registryAccess());
+SingleRecipeInput recipeInput = new SingleRecipeInput(inputStack);
+ItemStack result = holder.value().assemble(recipeInput, level.registryAccess());
 ```
 
-If NeoForge 21.1.248 compilation resolves the generic cooking recipe type differently, change only the concrete generic declaration while preserving `RecipeType.SMELTING`, `SingleRecipeInput`, `getRecipeFor`, and server-only lookup.
+If target compilation changes only the concrete generic type returned by `RecipeType.SMELTING`, use the compiler-resolved vanilla cooking recipe class while preserving server-only `RecipeManager`, `SingleRecipeInput`, `RecipeType.SMELTING`, and `assemble` semantics.
 
-- [ ] **Step 4: Implement deterministic processing state machine**
+- [ ] **Step 4: Implement the processing state machine**
 
-`serverTick` must:
-
-```java
-if (!(level instanceof ServerLevel serverLevel)) return;
-```
-
-Then resolve recipe/result, verify output capacity, verify `ENERGY_PER_TICK`, consume exactly `20`, increment progress, complete at `100`, consume one input, insert one assembled result stack, reset to `0`, and reset progress to `0` whenever any precondition fails.
-
-No input is consumed and no output is created before the completion tick.
-
-- [ ] **Step 5: Implement persistence with bounds**
+Start with:
 
 ```java
-@Override
-protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-    super.saveAdditional(tag, registries);
-    tag.put("Items", this.items.serializeNBT(registries));
-    tag.putInt("Energy", this.energy.getEnergyStored());
-    tag.putInt("Progress", this.progress);
-}
-
-@Override
-protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-    super.loadAdditional(tag, registries);
-    this.items.deserializeNBT(registries, tag.getCompound("Items"));
-    this.energy.setStoredEnergy(Mth.clamp(tag.getInt("Energy"), 0, ENERGY_CAPACITY));
-    this.progress = Mth.clamp(tag.getInt("Progress"), 0, MAX_PROGRESS - 1);
+if (!(level instanceof ServerLevel serverLevel)) {
+    return;
 }
 ```
 
-If the exact `ItemStackHandler` 21.1.248 serialization signature differs, compilation is the authority; keep HolderLookup-aware serialization and the same bounds contract.
+Each valid server tick resolves recipe and result, verifies output compatibility, verifies `20` stored energy, consumes exactly `20`, increments progress by `1`, and completes at `100`. Completion consumes one input, inserts the assembled result, and resets progress to `0`. Any invalid precondition resets progress to `0` without consuming input or creating output.
+
+- [ ] **Step 5: Implement persistence bounds**
+
+Use `saveAdditional(CompoundTag, HolderLookup.Provider)` and `loadAdditional(CompoundTag, HolderLookup.Provider)`. Persist item handler contents, energy, and progress. On load clamp energy to `0..10_000` and progress to `0..99`. Call superclass methods. Use the actual HolderLookup-aware `ItemStackHandler` serialization methods exposed by NeoForge 21.1.248.
 
 - [ ] **Step 6: Implement three-value `ContainerData`**
 
-`get(0)` returns progress, `get(1)` returns `MAX_PROGRESS`, `get(2)` returns current energy; `getCount()` returns `3`. Setter accepts synchronized client values without mutating server-authoritative energy storage outside the client menu instance.
+Server data returns progress at index `0`, `MAX_PROGRESS` at index `1`, energy at index `2`, and count `3`. The menu client constructor uses `new SimpleContainerData(3)` so network-applied values do not mutate server-owned storage.
 
 - [ ] **Step 7: Build GREEN**
 
-Rematerialize, then run:
+Rematerialize and run:
 
 ```bash
 ./gradlew test build --no-daemon
@@ -581,18 +611,18 @@ git commit -m "feat(engineering): add I9 processing persistence and sync"
 ### Task 6: Complete Menu Backend and Block Interaction
 
 **Files:**
-- Modify: `.../MachineBlock.java`
-- Modify: `.../MachineBlockEntity.java`
-- Modify: `.../MachineMenu.java`
+- Modify: `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/MachineBlock.java`
+- Modify: `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/MachineBlockEntity.java`
+- Modify: `engineering/tests/golden/i9-machine-foundation/overlay/src/main/java/dev/example/i9machine/machine/MachineMenu.java`
 - Modify: `engineering/tests/test_i9_machine_foundation.py`
 
 **Interfaces:**
-- Client menu constructor: `MachineMenu(int containerId, Inventory playerInventory)`.
-- Server menu constructor: `MachineMenu(int containerId, Inventory playerInventory, IItemHandler machineItems, ContainerData data, ContainerLevelAccess access)`.
+- Client constructor: `MachineMenu(int containerId, Inventory playerInventory)`.
+- Server constructor: `MachineMenu(int containerId, Inventory playerInventory, IItemHandler machineItems, ContainerData data, ContainerLevelAccess access)`.
 
 - [ ] **Step 1: Add RED contracts for menu invariants**
 
-Require `SlotItemHandler`, `SimpleContainerData(3)`, `checkContainerDataCount(data, 3)`, `ContainerLevelAccess.NULL`, `AbstractContainerMenu.stillValid`, and non-stub `quickMoveStack`.
+Require `SlotItemHandler`, `new SimpleContainerData(3)`, `checkContainerDataCount(data, 3)`, `ContainerLevelAccess.NULL`, `AbstractContainerMenu.stillValid`, and a non-stub `quickMoveStack`.
 
 - [ ] **Step 2: Run RED**
 
@@ -616,13 +646,9 @@ public MachineMenu(int containerId, Inventory playerInventory) {
 }
 ```
 
-Server constructor adds machine slots first (`0` input, `1` output), then 27 player inventory slots, then 9 hotbar slots, and finally `addDataSlots(data)`.
-
-Output menu slot must override `mayPlace(ItemStack)` to return `false` even though the underlying handler already rejects insertion.
+Server constructor adds machine input slot `0`, machine output slot `1`, 27 player inventory slots, 9 hotbar slots, then `addDataSlots(data)`. The output `SlotItemHandler` overrides `mayPlace(ItemStack)` to return `false`.
 
 - [ ] **Step 4: Implement `stillValid` and `quickMoveStack`**
-
-Use:
 
 ```java
 @Override
@@ -631,28 +657,19 @@ public boolean stillValid(Player player) {
 }
 ```
 
-Index contract is exactly:
+Slot indexes are exactly `0` input, `1` output, `2..28` player inventory, `29..37` hotbar. Machine-to-player shift-click targets `[2, 38)`. Player-to-machine shift-click targets input `[0, 1)` only. Player inventory and hotbar can fall back between their own ranges but never target output slot `1`.
 
-```text
-0 input
-1 output
-2..28 player inventory
-29..37 hotbar
-```
+- [ ] **Step 5: Implement block interaction and ticker**
 
-Shift-click from machine slots moves to `[2, 38)`; player inventory/hotbar moves only to input `[0, 1)`, never to output. If input rejects the stack, fall back between player inventory and hotbar without touching output.
+`MachineBlock.getTicker` returns `MachineBlockEntity::serverTick` only for the registered machine BE type. `getMenuProvider` returns a `SimpleMenuProvider` whose server menu receives BE item handler, BE `ContainerData`, and `ContainerLevelAccess.create(level, pos)`. `useWithoutItem` opens the menu only on the logical server through `ServerPlayer.openMenu` and returns sided success.
 
-- [ ] **Step 5: Implement menu opening and server ticker**
-
-`MachineBlock#getTicker` returns the machine server ticker for the registered BE type. `getMenuProvider` creates a `SimpleMenuProvider` whose server menu receives the BE item handler, BE container data, and `ContainerLevelAccess.create(level, pos)`. `useWithoutItem` opens the menu only on the logical server and returns sided success.
-
-- [ ] **Step 6: Target-exact build GREEN**
-
-Rematerialize and run:
+- [ ] **Step 6: Run target-exact build GREEN**
 
 ```bash
 ./gradlew clean test build --no-daemon
 ```
+
+Expected: BUILD SUCCESSFUL.
 
 - [ ] **Step 7: Commit menu backend**
 
@@ -673,12 +690,12 @@ git commit -m "feat(engineering): complete I9 machine menu backend"
 - Modify: `engineering/tests/test_i9_machine_foundation.py`
 
 **Interfaces:**
-- `@GameTestHolder(I9MachineMod.MOD_ID)` owns all required tests.
-- All seven tests are required and use the same `machine_test` structure template.
+- `@GameTestHolder(I9MachineMod.MOD_ID)` owns the I9 GameTests.
+- Seven required tests use one `machine_test` structure template.
 
 - [ ] **Step 1: Add GameTest surface RED**
 
-Structural test requires seven method names:
+Require all method names:
 
 ```python
 for name in (
@@ -693,7 +710,7 @@ for name in (
     self.assertIn(f"void {name}(GameTestHelper helper)", source)
 ```
 
-Also require `@GameTestHolder(I9MachineMod.MOD_ID)` and the exact NBT resource path in the manifest.
+Also require `@GameTestHolder(I9MachineMod.MOD_ID)` and `src/main/resources/data/i9_machine/structure/machine_test.nbt` in the manifest.
 
 - [ ] **Step 2: Run RED**
 
@@ -701,49 +718,37 @@ Also require `@GameTestHolder(I9MachineMod.MOD_ID)` and the exact NBT resource p
 python3 -m unittest engineering/tests/test_i9_machine_foundation.py
 ```
 
-- [ ] **Step 3: Add deterministic minimal structure template**
+Expected: FAIL because GameTest Java and structure files are absent.
 
-Create a valid Minecraft structure NBT named `machine_test.nbt` under `data/i9_machine/structure`. The scene needs enough empty space for a single machine block placed by the test. The binary blob itself is the checked-in source authority; tests record its SHA-256 in `manifest.json` and fail on drift.
+- [ ] **Step 3: Add deterministic minimal structure binary**
 
-Manifest entry shape:
+Create a valid Minecraft structure NBT with empty space sufficient for one machine block placed by test setup. Save it at `engineering/tests/golden/i9-machine-foundation/overlay/src/main/resources/data/i9_machine/structure/machine_test.nbt`. Compute its SHA-256 with:
 
-```json
-{
-  "path": "src/main/resources/data/i9_machine/structure/machine_test.nbt",
-  "sha256": "COMPUTE_FROM_COMMITTED_BINARY_DURING_IMPLEMENTATION"
-}
+```bash
+sha256sum engineering/tests/golden/i9-machine-foundation/overlay/src/main/resources/data/i9_machine/structure/machine_test.nbt
 ```
 
-The implementation step must compute the real SHA-256 and replace `COMPUTE_FROM_COMMITTED_BINARY_DURING_IMPLEMENTATION` before the manifest is committed. This token is an explicit procedure marker in the plan, not allowed in production files.
+Insert the returned 64-hex digest into the manifest entry for that exact path. `test_i9_machine_foundation.py` recomputes the digest and fails on drift.
 
 - [ ] **Step 4: Implement capability GameTests**
 
-Inventory test queries:
-
-```java
-IItemHandler items = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, absolutePos, null);
-helper.assertTrue(items != null, "machine item capability missing");
-```
-
-Energy test queries `Capabilities.EnergyStorage.BLOCK`, verifies one receive call accepts at most `1_000`, total storage caps at `10_000`, and `extractEnergy(..., false)` returns `0`.
+Place the machine block at a fixed relative position, get its absolute position through `GameTestHelper.absolutePos`, then query block capabilities from the server level. Inventory test proves input accepts raw iron, output rejects insertion, and output allows extraction. Energy test proves one receive call accepts no more than `1_000`, total energy caps at `10_000`, and external extraction returns `0`.
 
 - [ ] **Step 5: Implement processing GameTests**
 
-Use `Items.RAW_IRON` input and assert `Items.IRON_INGOT` output. Supply at least `2_000` energy. Successful processing must succeed only after the 100-tick contract has elapsed. Other tests assert insufficient energy, blocked output, and input invalidation do not consume/create items and reset progress to `0`.
+Use `Items.RAW_IRON` input and assert `Items.IRON_INGOT` output. Supply at least `2_000` energy. Successful processing must only succeed after the 100-tick contract. Insufficient-energy, blocked-output, and progress-reset tests prove no premature input consumption/output creation and progress reset to `0`.
 
 - [ ] **Step 6: Implement persistence GameTest**
 
-Exercise BlockEntity serialization/load using the target registry provider and assert inventory, energy, and progress are restored with bounds. Do not substitute a pure Java field-copy test.
+Exercise real BlockEntity save/load serialization with the server registry provider and assert inventory, energy, and progress restore correctly. Also feed out-of-range numeric values through the serialization path and prove energy/progress bounds.
 
 - [ ] **Step 7: Run real GameTest Server GREEN**
-
-From a freshly materialized project:
 
 ```bash
 GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/i9/gradle-home" ./gradlew runGameTestServer --no-daemon
 ```
 
-Expected: Gradle exits `0`; all seven required I9 tests pass. The GameTest server must not be counted as PASS if Gradle exits nonzero.
+Expected: Gradle exit code `0` and seven required I9 GameTests pass.
 
 - [ ] **Step 8: Commit GameTests**
 
@@ -758,12 +763,12 @@ git commit -m "test(engineering): prove I9 machine behavior with GameTests"
 ### Task 8: Prove I5 Dedicated-Server Compatibility
 
 **Files:**
-- Modify: `engineering/tests/test_i9_machine_foundation.py` only if a materialization assertion is needed.
-- No change to `engineering/tooling/test-harness/run_test_harness.py` unless a reproducible I5 defect is found.
+- Modify `engineering/tests/test_i9_machine_foundation.py` only if a new materialization assertion is needed.
+- Do not modify `engineering/tooling/test-harness/run_test_harness.py` unless a reproducible I5 defect is demonstrated by a new failing I5 regression.
 
 **Interfaces:**
-- Consumes: I5 `run_harness(project_root)` with suites `test`, `runGameTestServer`, `runServer`.
-- Produces: I5 manifest with `overall_state == "PASS"` for the materialized I9 project.
+- Consumes I5 `run_harness(project_root)` with unit, gametest, and dedicated-server suites.
+- Produces `build/i5-test-harness/test-manifest.json` with `overall_state` equal to `PASS`.
 
 - [ ] **Step 1: Prepare only the controlled fixture EULA**
 
@@ -772,7 +777,7 @@ mkdir -p .factory-ci/i9/generated/run/server
 printf 'eula=true\n' > .factory-ci/i9/generated/run/server/eula.txt
 ```
 
-This is CI-fixture setup only; do not add a repository-wide EULA file.
+Do not add a repository-wide EULA file.
 
 - [ ] **Step 2: Run I5 harness**
 
@@ -781,28 +786,29 @@ python3 engineering/tooling/test-harness/run_test_harness.py \
   --project .factory-ci/i9/generated
 ```
 
-Expected: `I5 test harness: PASS` and `build/i5-test-harness/test-manifest.json` records PASS for unit, gametest, and dedicated_server.
+Expected: terminal output `I5 test harness: PASS` and the manifest records PASS for unit, gametest, and dedicated_server.
 
-- [ ] **Step 3: If blocked, fix only the demonstrated owner**
+- [ ] **Step 3: Fix only demonstrated ownership defects**
 
-A machine runtime defect is fixed in I9. A generic harness defect requires a separate I5 RED in `engineering/tests/test_i5_test_harness.py` before changing I5. Do not weaken timeouts, EULA checks, target identity, or server-ready detection to force PASS.
+If machine runtime fails, fix I9 through a new I9 RED. If generic harness behavior fails, first add a failing regression in `engineering/tests/test_i5_test_harness.py`; do not weaken EULA, target identity, timeouts, or server-ready detection.
 
-- [ ] **Step 4: Re-run I5 regression tests**
+- [ ] **Step 4: Run I5 regression suite**
 
 ```bash
 python3 -m unittest engineering/tests/test_i5_test_harness.py
 ```
 
-Expected: PASS.
+Expected: zero failures/errors.
 
-- [ ] **Step 5: Commit only if Task 8 required source changes**
+- [ ] **Step 5: Commit only when Task 8 changes source**
+
+Stage only files actually changed and commit with:
 
 ```bash
-git add engineering/tests/test_i9_machine_foundation.py engineering/tests/test_i5_test_harness.py engineering/tooling/test-harness/run_test_harness.py
 git commit -m "fix(engineering): reconcile I9 with canonical test harness"
 ```
 
-Skip this commit when Task 8 required no source change.
+No empty commit is created when no source change is required.
 
 ---
 
@@ -811,25 +817,26 @@ Skip this commit when Task 8 required no source change.
 **Files:**
 - Create: `.github/workflows/factory-engineering-i9-machine-foundation.yml`
 - Modify: `.github/workflows/factory-sonar-ci.yml` only after a failing coverage gate proves it necessary.
+- Modify: `engineering/tests/test_i9_machine_foundation.py`
 
 **Interfaces:**
-- Produces: branch/PR workflow named `Factory Engineering I9 Machine Foundation`.
+- Produces workflow `Factory Engineering I9 Machine Foundation`.
 
-- [ ] **Step 1: Write workflow contract before workflow implementation**
+- [ ] **Step 1: Write workflow-contract RED**
 
-Add test assertions in `test_i9_machine_foundation.py` that the workflow exists, watches I9 plus consumed I3/I5 surfaces, uses Java 21, runs I9/I3/I5 regressions, materializes the Golden, executes `test build`, executes `runGameTestServer`, prepares only fixture EULA, runs I5 harness, and runs `git diff --check`.
+Add assertions that `.github/workflows/factory-engineering-i9-machine-foundation.yml` exists, watches I9 and consumed I3/I5 surfaces, uses Java 21, runs I9/I3/I5 regressions, materializes I9, runs `test build`, runs `runGameTestServer`, creates only fixture EULA, runs I5 harness, and runs `git diff --check`.
 
-- [ ] **Step 2: Run workflow-contract RED**
+- [ ] **Step 2: Run RED**
 
 ```bash
 python3 -m unittest engineering/tests/test_i9_machine_foundation.py
 ```
 
-Expected: FAIL because the workflow is absent.
+Expected: FAIL because the workflow file is absent.
 
 - [ ] **Step 3: Implement workflow**
 
-Required job sequence:
+Workflow header:
 
 ```yaml
 name: Factory Engineering I9 Machine Foundation
@@ -837,7 +844,7 @@ permissions:
   contents: read
 ```
 
-Steps must include:
+Regression command:
 
 ```bash
 python3 -m unittest \
@@ -849,9 +856,9 @@ python3 -m unittest \
   engineering/tests/test_i8_feature_generator_neoforge.py
 ```
 
-Then materialize into `.factory-ci/i9/generated`, run `./gradlew test build --no-daemon`, run `./gradlew runGameTestServer --no-daemon`, create only `.factory-ci/i9/generated/run/server/eula.txt`, execute I5 harness, and finish with `git diff --check`.
+Then materialize `.factory-ci/i9/generated`, run `./gradlew test build --no-daemon`, run `./gradlew runGameTestServer --no-daemon`, create `.factory-ci/i9/generated/run/server/eula.txt` with `eula=true`, run the I5 harness, and finish with `git diff --check`.
 
-- [ ] **Step 4: Run complete local/static regression set**
+- [ ] **Step 4: Run complete Python regression set**
 
 ```bash
 python3 -m unittest \
@@ -873,8 +880,8 @@ rm -rf .factory-ci/i9/generated
 python3 engineering/tooling/machine-foundation/materialize_i9.py --output .factory-ci/i9/generated
 chmod +x .factory-ci/i9/generated/gradlew
 cd .factory-ci/i9/generated
-./gradlew clean test build --no-daemon
-./gradlew runGameTestServer --no-daemon
+GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/i9/gradle-home" ./gradlew clean test build --no-daemon
+GRADLE_USER_HOME="$GITHUB_WORKSPACE/.factory-ci/i9/gradle-home" ./gradlew runGameTestServer --no-daemon
 mkdir -p run/server
 printf 'eula=true\n' > run/server/eula.txt
 cd "$GITHUB_WORKSPACE"
@@ -882,40 +889,42 @@ python3 engineering/tooling/test-harness/run_test_harness.py --project .factory-
 git diff --check
 ```
 
-Record exact test counts, Gradle outcomes, GameTest result, and I5 manifest state in the PR body.
+Record exact Python test counts, Gradle results, GameTest result, and I5 manifest state.
 
 - [ ] **Step 6: Verify Sonar coverage registration**
 
-Run the branch Sonar workflow. If Quality Gate fails because `materialize_i9.py` has no imported coverage, first add direct unit coverage from `test_i9_machine_foundation.py` to `.github/workflows/factory-sonar-ci.yml`, rerun, and require Quality Gate PASS. Do not change Sonar exclusions merely to hide new I9 production Python.
+Run branch Sonar. If Quality Gate fails specifically because `engineering/tooling/machine-foundation/materialize_i9.py` lacks imported coverage, update `.github/workflows/factory-sonar-ci.yml` to execute `engineering/tests/test_i9_machine_foundation.py` under the existing coverage process, then rerun. Do not hide I9 production Python with exclusions.
 
 - [ ] **Step 7: Commit CI**
 
 ```bash
 git add .github/workflows/factory-engineering-i9-machine-foundation.yml \
-  .github/workflows/factory-sonar-ci.yml \
   engineering/tests/test_i9_machine_foundation.py
-git commit -m "ci(engineering): gate I9 machine foundation"
 ```
 
-Only stage `.github/workflows/factory-sonar-ci.yml` if it actually changed.
+If `.github/workflows/factory-sonar-ci.yml` changed for proven coverage reasons, add it explicitly. Commit:
+
+```bash
+git commit -m "ci(engineering): gate I9 machine foundation"
+```
 
 ---
 
 ### Task 10: Review, PR, Merge, and Post-Merge Closure
 
 **Files:**
-- No implementation files unless review findings produce a new RED.
-- `STATUS.md` is modified only after implementation PR post-merge evidence is complete, in a dedicated closeout PR.
+- No implementation files unless a review finding first produces a failing regression.
+- Modify `STATUS.md` only in a separate closeout PR after implementation merge SHA gates are complete.
 
 **Interfaces:**
-- Pre-merge evidence: all required branch/PR workflows terminal successful, Sonar Quality Gate PASS, review threads resolved.
-- Post-merge evidence: all workflows for the merge SHA terminal successful and main Sonar Quality Gate PASS.
+- Pre-merge: all required branch/PR workflows terminal successful, Sonar Quality Gate PASS, review threads resolved.
+- Post-merge: all workflows for the merge SHA terminal successful and main Sonar Quality Gate PASS.
 
 - [ ] **Step 1: Revalidate concurrency immediately before PR**
 
-Confirm current `main`, open PRs, and branch base. If main moved, compare/rebase only after checking whether the new commits intersect I3/I5/I8/I9 surfaces.
+Confirm current `main`, open PRs, and branch base. If main moved, compare the new commits against I3/I5/I8/I9 surfaces before rebasing or merging main.
 
-- [ ] **Step 2: Open the implementation PR**
+- [ ] **Step 2: Open implementation PR**
 
 Title:
 
@@ -923,43 +932,36 @@ Title:
 feat(engineering): implement I9 machine foundation reference
 ```
 
-Body must include RED evidence, final test counts, `test build`, `runGameTestServer`, I5 dedicated-server manifest, Sonar metrics, exact target, and explicit I10/I11/I12/I13/I14 non-goals.
+Body includes RED evidence, final test counts, `test build`, `runGameTestServer`, I5 manifest, Sonar metrics, exact target, and explicit I10/I11/I12/I13/I14 non-goals.
 
 - [ ] **Step 3: Resolve review findings through TDD**
 
-For every correctness/security finding, add or tighten a regression first, record RED, implement minimal fix, rerun affected runtime gates, then resolve the thread. Do not resolve findings based only on code inspection.
+For each correctness/security finding: add or tighten a regression first, record RED, implement minimal fix, rerun affected gates, then resolve the thread.
 
 - [ ] **Step 4: Final pre-merge verification**
 
-Require:
+Require all of these simultaneously:
 
 ```text
 mergeable = true
-open competing PRs = none affecting I9 surfaces
-required workflows = terminal success
-I9 workflow = success
-Sonar Quality Gate = PASS
-review threads = resolved
+no competing PR affects I9 surfaces
+all required workflows terminal success
+I9 workflow success
+Sonar Quality Gate PASS
+all review threads resolved
 ```
 
 - [ ] **Step 5: Merge with expected head SHA**
 
-Use regular merge unless repository policy observed at merge time requires another strategy. Preserve implementation history.
+Use regular merge unless repository policy observed at merge time requires another strategy.
 
-- [ ] **Step 6: Poll the merge SHA until every workflow is terminal**
+- [ ] **Step 6: Verify implementation merge SHA**
 
-Do not infer success from a subset. Require zero queued, zero in-progress, zero failure, zero cancelled, zero null conclusion, and inspect the main Sonar job log for `QUALITY GATE STATUS: PASSED`.
+Poll until every workflow for the merge SHA is terminal. Require zero queued, zero in-progress, zero failure, zero cancelled, zero null conclusion. Inspect main Sonar job log for `QUALITY GATE STATUS: PASSED`.
 
-- [ ] **Step 7: Create dedicated STATUS closeout branch/PR**
+- [ ] **Step 7: Create STATUS closeout branch and PR**
 
-Update only the current frontier/evidence fields needed to record:
-
-```text
-I9_STATE=PASS
-NEXT_ACTION=BEGIN_I10_MULTIBLOCK_FOUNDATION
-```
-
-Also record implementation PR/head/merge SHA, RED runs, final branch/PR runtime gates, post-merge workflow count, and post-merge Sonar result truthfully.
+Update only the current frontier/evidence fields needed to record `I9_STATE=PASS`, implementation PR/head/merge SHA, RED runs, final branch/PR gates, post-merge workflow counts, post-merge Sonar result, and `NEXT_ACTION=BEGIN_I10_MULTIBLOCK_FOUNDATION`.
 
 - [ ] **Step 8: Merge STATUS closeout and verify its merge SHA**
 
