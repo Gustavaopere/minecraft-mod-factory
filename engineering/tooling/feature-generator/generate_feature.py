@@ -126,6 +126,18 @@ def _validate_request(request: dict[str, Any]) -> tuple[dict[str, Any], list[dic
         seen_ids.add(feature_id)
         seen_classes.add(class_name)
         features.append(dict(feature))
+
+    block_ids = {feature["id"] for feature in features if feature["kind"] == "block"}
+    for feature in features:
+        if feature["kind"] != "block_entity":
+            continue
+        block_id = _require_nonempty_string(feature, "block_id", f"block_entity {feature['id']}")
+        if not FEATURE_ID_RE.fullmatch(block_id):
+            raise ValueError(f"invalid block_id for block entity {feature['id']}: {block_id}")
+        if block_id not in block_ids:
+            raise ValueError(
+                f"block entity {feature['id']} requires block_id {block_id} in the same feature request"
+            )
     return project, features
 
 
@@ -135,6 +147,10 @@ def _java_package_path(java_package: str) -> str:
 
 def _kind_package(kind: str) -> str:
     return kind
+
+
+def _constant_name(feature_id: str) -> str:
+    return feature_id.upper()
 
 
 def _identity_fields(kind: str, feature_id: str) -> str:
@@ -173,35 +189,48 @@ def _item_source(package: str, class_name: str, feature_id: str) -> str:
     )
 
 
-def _block_entity_source(package: str, class_name: str, feature_id: str) -> str:
+def _block_entity_source(
+    java_package: str,
+    package: str,
+    class_name: str,
+    feature_id: str,
+) -> str:
+    registry_constant = _constant_name(feature_id)
     return (
         f"package {package};\n\n"
+        f"import {java_package}.registry.FactoryGeneratedRegistries;\n"
         "import net.minecraft.core.BlockPos;\n"
         "import net.minecraft.world.level.block.entity.BlockEntity;\n"
-        "import net.minecraft.world.level.block.entity.BlockEntityType;\n"
         "import net.minecraft.world.level.block.state.BlockState;\n\n"
         f"public final class {class_name} extends BlockEntity {{\n"
         + _identity_fields("block_entity", feature_id)
         + "\n"
-        f"    public {class_name}(BlockEntityType<?> type, BlockPos pos, BlockState state) {{\n"
-        "        super(type, pos, state);\n"
+        f"    public {class_name}(BlockPos pos, BlockState state) {{\n"
+        f"        super(FactoryGeneratedRegistries.{registry_constant}.get(), pos, state);\n"
         "    }\n"
         "}\n"
     )
 
 
-def _menu_source(package: str, class_name: str, feature_id: str) -> str:
+def _menu_source(
+    java_package: str,
+    package: str,
+    class_name: str,
+    feature_id: str,
+) -> str:
+    registry_constant = _constant_name(feature_id)
     return (
         f"package {package};\n\n"
+        f"import {java_package}.registry.FactoryGeneratedRegistries;\n"
+        "import net.minecraft.world.entity.player.Inventory;\n"
         "import net.minecraft.world.entity.player.Player;\n"
         "import net.minecraft.world.inventory.AbstractContainerMenu;\n"
-        "import net.minecraft.world.inventory.MenuType;\n"
         "import net.minecraft.world.item.ItemStack;\n\n"
         f"public final class {class_name} extends AbstractContainerMenu {{\n"
         + _identity_fields("menu", feature_id)
         + "\n"
-        f"    public {class_name}(MenuType<?> type, int containerId) {{\n"
-        "        super(type, containerId);\n"
+        f"    public {class_name}(int containerId, Inventory playerInventory) {{\n"
+        f"        super(FactoryGeneratedRegistries.{registry_constant}.get(), containerId);\n"
         "    }\n\n"
         "    @Override\n"
         "    public ItemStack quickMoveStack(Player player, int index) {\n"
@@ -292,9 +321,9 @@ def _feature_source(java_package: str, mod_id: str, feature: dict[str, Any]) -> 
     if kind == "item":
         return _item_source(package, class_name, feature_id)
     if kind == "block_entity":
-        return _block_entity_source(package, class_name, feature_id)
+        return _block_entity_source(java_package, package, class_name, feature_id)
     if kind == "menu":
-        return _menu_source(package, class_name, feature_id)
+        return _menu_source(java_package, package, class_name, feature_id)
     if kind == "network_payload":
         return _network_payload_source(package, class_name, feature_id, mod_id)
     if kind == "recipe":
@@ -322,34 +351,222 @@ def _generated_test(java_package: str, feature: dict[str, Any]) -> str:
     )
 
 
-def _registry_source(java_package: str, features: list[dict[str, Any]]) -> str:
-    entries = ",\n".join(f'        "{feature["kind"]}:{feature["id"]}"' for feature in features)
+def _feature_import(java_package: str, feature: dict[str, Any]) -> str:
     return (
-        f"package {java_package}.registry;\n\n"
-        "import java.util.List;\n\n"
-        "public final class FactoryGeneratedFeatures {\n"
-        "    public static final List<String> FEATURES = List.of(\n"
-        f"{entries}\n"
-        "    );\n\n"
-        "    private FactoryGeneratedFeatures() {\n"
-        "    }\n"
-        "}\n"
+        f"import {java_package}.feature.{_kind_package(feature['kind'])}."
+        f"{feature['class_name']};"
     )
+
+
+def _registry_source(java_package: str, main_class: str, features: list[dict[str, Any]]) -> str:
+    by_kind = {kind: [feature for feature in features if feature["kind"] == kind] for kind in CORE_FEATURE_KINDS}
+    feature_by_id = {feature["id"]: feature for feature in features}
+
+    imports = {
+        f"import {java_package}.{main_class};",
+        "import net.neoforged.bus.api.IEventBus;",
+        "import net.neoforged.neoforge.registries.DeferredRegister;",
+        "import java.util.function.Supplier;",
+    }
+    for feature in features:
+        if feature["kind"] != "network_payload":
+            imports.add(_feature_import(java_package, feature))
+    if by_kind["block"]:
+        imports.add("import net.minecraft.world.level.block.state.BlockBehaviour;")
+    if by_kind["item"]:
+        imports.add("import net.minecraft.world.item.Item;")
+    if by_kind["block_entity"] or by_kind["menu"] or by_kind["recipe"]:
+        imports.add("import net.minecraft.core.registries.Registries;")
+    if by_kind["block_entity"]:
+        imports.add("import net.minecraft.world.level.block.entity.BlockEntityType;")
+    if by_kind["menu"]:
+        imports.add("import net.minecraft.world.flag.FeatureFlags;")
+        imports.add("import net.minecraft.world.inventory.MenuType;")
+    if by_kind["recipe"]:
+        imports.add("import net.minecraft.world.item.crafting.RecipeType;")
+
+    lines = [f"package {java_package}.registry;", ""]
+    lines.extend(sorted(imports))
+    lines.extend(["", "public final class FactoryGeneratedRegistries {"])
+
+    registrar_names: list[str] = []
+    if by_kind["block"]:
+        lines.append(
+            f"    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks({main_class}.MOD_ID);"
+        )
+        registrar_names.append("BLOCKS")
+    if by_kind["item"]:
+        lines.append(
+            f"    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems({main_class}.MOD_ID);"
+        )
+        registrar_names.append("ITEMS")
+    if by_kind["block_entity"]:
+        lines.append(
+            "    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES ="
+        )
+        lines.append(
+            f"            DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, {main_class}.MOD_ID);"
+        )
+        registrar_names.append("BLOCK_ENTITY_TYPES")
+    if by_kind["menu"]:
+        lines.append("    public static final DeferredRegister<MenuType<?>> MENUS =")
+        lines.append(f"            DeferredRegister.create(Registries.MENU, {main_class}.MOD_ID);")
+        registrar_names.append("MENUS")
+    if by_kind["recipe"]:
+        lines.append("    public static final DeferredRegister<RecipeType<?>> RECIPE_TYPES =")
+        lines.append(f"            DeferredRegister.create(Registries.RECIPE_TYPE, {main_class}.MOD_ID);")
+        registrar_names.append("RECIPE_TYPES")
+
+    if registrar_names:
+        lines.append("")
+
+    for feature in by_kind["block"]:
+        constant = _constant_name(feature["id"])
+        lines.append(
+            f"    public static final Supplier<{feature['class_name']}> {constant} = BLOCKS.registerBlock("
+        )
+        lines.append(f"            \"{feature['id']}\", {feature['class_name']}::new, BlockBehaviour.Properties.of());")
+        lines.append("")
+
+    for feature in by_kind["item"]:
+        constant = _constant_name(feature["id"])
+        lines.append(
+            f"    public static final Supplier<{feature['class_name']}> {constant} = ITEMS.registerItem("
+        )
+        lines.append(f"            \"{feature['id']}\", {feature['class_name']}::new, new Item.Properties());")
+        lines.append("")
+
+    for feature in by_kind["block_entity"]:
+        constant = _constant_name(feature["id"])
+        block_feature = feature_by_id[feature["block_id"]]
+        block_constant = _constant_name(block_feature["id"])
+        lines.append(
+            f"    public static final Supplier<BlockEntityType<{feature['class_name']}>> {constant} ="
+        )
+        lines.append(f"            BLOCK_ENTITY_TYPES.register(\"{feature['id']}\", () -> BlockEntityType.Builder.of(")
+        lines.append(f"                    {feature['class_name']}::new, {block_constant}.get()).build(null));")
+        lines.append("")
+
+    for feature in by_kind["menu"]:
+        constant = _constant_name(feature["id"])
+        lines.append(f"    public static final Supplier<MenuType<{feature['class_name']}>> {constant} =")
+        lines.append(
+            f"            MENUS.register(\"{feature['id']}\", () -> new MenuType<>("
+            f"{feature['class_name']}::new, FeatureFlags.DEFAULT_FLAGS));"
+        )
+        lines.append("")
+
+    for feature in by_kind["recipe"]:
+        constant = _constant_name(feature["id"])
+        lines.append(f"    public static final Supplier<RecipeType<{feature['class_name']}>> {constant} =")
+        lines.append(f"            RECIPE_TYPES.register(\"{feature['id']}\", RecipeType::simple);")
+        lines.append("")
+
+    lines.append("    public static void register(IEventBus modBus) {")
+    for registrar_name in registrar_names:
+        lines.append(f"        {registrar_name}.register(modBus);")
+    lines.extend(
+        [
+            "    }",
+            "",
+            "    private FactoryGeneratedRegistries() {",
+            "    }",
+            "}",
+            "",
+        ]
+    )
+    return "\n".join(lines)
 
 
 def _datagen_source(java_package: str, features: list[dict[str, Any]]) -> str:
-    entries = ",\n".join(f'        "{feature["id"]}"' for feature in features)
-    return (
-        f"package {java_package}.data;\n\n"
-        "import java.util.List;\n\n"
-        "public final class FactoryGeneratedFeatureData {\n"
-        "    public static final List<String> FEATURE_IDS = List.of(\n"
-        f"{entries}\n"
-        "    );\n\n"
-        "    private FactoryGeneratedFeatureData() {\n"
-        "    }\n"
-        "}\n"
+    has_recipe = any(feature["kind"] == "recipe" for feature in features)
+    lines = [f"package {java_package}.data;", ""]
+    if has_recipe:
+        lines.extend(
+            [
+                "import java.util.concurrent.CompletableFuture;",
+                "import net.minecraft.core.HolderLookup;",
+                "import net.minecraft.data.DataGenerator;",
+                "import net.minecraft.data.PackOutput;",
+                "import net.minecraft.data.recipes.RecipeOutput;",
+                "import net.minecraft.data.recipes.RecipeProvider;",
+                "import net.neoforged.neoforge.data.event.GatherDataEvent;",
+                "",
+                "public final class FactoryGeneratedData {",
+                "    public static void gatherData(GatherDataEvent event) {",
+                "        DataGenerator generator = event.getGenerator();",
+                "        PackOutput output = generator.getPackOutput();",
+                "        generator.addProvider(",
+                "                event.includeServer(),",
+                "                new FactoryGeneratedRecipeProvider(output, event.getLookupProvider())",
+                "        );",
+                "    }",
+                "",
+                "    public static final class FactoryGeneratedRecipeProvider extends RecipeProvider {",
+                "        public FactoryGeneratedRecipeProvider(",
+                "                PackOutput output,",
+                "                CompletableFuture<HolderLookup.Provider> lookupProvider",
+                "        ) {",
+                "            super(output, lookupProvider);",
+                "        }",
+                "",
+                "        @Override",
+                "        protected void buildRecipes(RecipeOutput output) {",
+                "        }",
+                "    }",
+                "",
+                "    private FactoryGeneratedData() {",
+                "    }",
+                "}",
+                "",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                "import net.neoforged.neoforge.data.event.GatherDataEvent;",
+                "",
+                "public final class FactoryGeneratedData {",
+                "    public static void gatherData(GatherDataEvent event) {",
+                "    }",
+                "",
+                "    private FactoryGeneratedData() {",
+                "    }",
+                "}",
+                "",
+            ]
+        )
+    return "\n".join(lines)
+
+
+def _main_bootstrap_source(existing: str, java_package: str, main_class: str) -> str:
+    registry_import = f"import {java_package}.registry.FactoryGeneratedRegistries;"
+    datagen_import = f"import {java_package}.data.FactoryGeneratedData;"
+    registry_call = "        FactoryGeneratedRegistries.register(modBus);"
+    datagen_call = "        modBus.addListener(FactoryGeneratedData::gatherData);"
+    markers = (registry_import, datagen_import, registry_call, datagen_call)
+    present = [marker in existing for marker in markers]
+    if all(present):
+        return existing
+    if any(present):
+        raise ValueError("target main class contains partial I8 bootstrap wiring")
+
+    package_marker = f"package {java_package};\n\n"
+    constructor_marker = f"    public {main_class}(IEventBus modBus, ModContainer container) {{\n"
+    if package_marker not in existing or constructor_marker not in existing:
+        raise ValueError("target main class does not match canonical I3 bootstrap shape")
+
+    updated = existing.replace(
+        package_marker,
+        package_marker + datagen_import + "\n" + registry_import + "\n",
+        1,
     )
+    updated = updated.replace(
+        constructor_marker,
+        constructor_marker + registry_call + "\n" + datagen_call + "\n",
+        1,
+    )
+    return updated
 
 
 def _unified_diff(path: str, before: str, after: str) -> str:
@@ -403,8 +620,10 @@ def plan_feature_set(project_root: Path | str, request: dict[str, Any]) -> dict[
     project, features = _validate_request(request)
     java_package = project["java_package"]
     mod_id = project["mod_id"]
+    main_class = project["main_class"]
     package_path = _java_package_path(java_package)
-    main_path = root / "src/main/java" / package_path / f"{project['main_class']}.java"
+    main_relative = f"src/main/java/{package_path}/{main_class}.java"
+    main_path = root / main_relative
     if not main_path.is_file():
         raise ValueError(f"target project does not match requested main class: {main_path.relative_to(root)}")
 
@@ -415,13 +634,45 @@ def plan_feature_set(project_root: Path | str, request: dict[str, Any]) -> dict[
         relative_package = _kind_package(kind)
         source_path = f"src/main/java/{package_path}/feature/{relative_package}/{class_name}.java"
         test_path = f"src/test/java/{package_path}/feature/{relative_package}/{class_name}GeneratedTest.java"
-        operations.append(_planned_operation(root, source_path, _feature_source(java_package, mod_id, feature), "feature_source"))
-        operations.append(_planned_operation(root, test_path, _generated_test(java_package, feature), "generated_test"))
+        operations.append(
+            _planned_operation(
+                root,
+                source_path,
+                _feature_source(java_package, mod_id, feature),
+                "feature_source",
+            )
+        )
+        operations.append(
+            _planned_operation(
+                root,
+                test_path,
+                _generated_test(java_package, feature),
+                "generated_test",
+            )
+        )
 
-    registry_path = f"src/main/java/{package_path}/registry/FactoryGeneratedFeatures.java"
-    operations.append(_planned_operation(root, registry_path, _registry_source(java_package, features), "registry"))
-    datagen_path = f"src/main/java/{package_path}/data/FactoryGeneratedFeatureData.java"
-    operations.append(_planned_operation(root, datagen_path, _datagen_source(java_package, features), "datagen"))
+    registry_path = f"src/main/java/{package_path}/registry/FactoryGeneratedRegistries.java"
+    operations.append(
+        _planned_operation(
+            root,
+            registry_path,
+            _registry_source(java_package, main_class, features),
+            "registry",
+        )
+    )
+    datagen_path = f"src/main/java/{package_path}/data/FactoryGeneratedData.java"
+    operations.append(
+        _planned_operation(root, datagen_path, _datagen_source(java_package, features), "datagen")
+    )
+    main_content = main_path.read_text(encoding="utf-8")
+    operations.append(
+        _planned_operation(
+            root,
+            main_relative,
+            _main_bootstrap_source(main_content, java_package, main_class),
+            "bootstrap",
+        )
+    )
 
     operations.sort(key=lambda operation: (operation["path"], operation["role"], operation["action"]))
     return {
