@@ -163,11 +163,11 @@ C10 defines the external-provider evidence and handoff boundary without expandin
 
 ## C11 scope
 
-C11 Complex Modded Golden remains an evidence-gated offline Golden frontier. Its completion requires a real C4 registry captured from the exact stabilized physical modpack before any modded palette, Build IR, C7/C8 evidence, Sponge v3 artifact or final manifest can be frozen.
+C11 Complex Modded Golden remains an evidence-gated offline Golden frontier over the existing I2/C4/C5/C2/C7/C8/C6 authorities. The current state is `SUPER_HYPER_URGENT_FINAL_CONSTRUCTION_PHYSICAL_ACCEPTANCE`. C11 completion is blocked, C12 acceptance is blocked, C13 final acceptance is blocked, and Construction final closeout is blocked.
 
-The current state is `MODLIST_STABILIZED_AWAITING_RUNTIME_CAPTURE`: the physical modlist is stabilized and the real C4 runtime capture is pending. The Factory may continue capture-helper, probe, governance, Sonar and documentation work, but C11 remains blocked until runtime evidence is collected and the canonical C4 registry is composed.
+C12 implementation/preflight may continue and C13 implementation/preflight may continue while the blocker exists. Their preflight surfaces must propagate deferred acceptance honestly: preflight green is readiness evidence, not final acceptance. No synthetic registry, inferred block ID, placeholder palette or fabricated Golden artifact may replace the required physical evidence.
 
-C11 preflight green is readiness evidence, not C11 completion. No synthetic registry, inferred block ID, placeholder palette or fabricated Golden artifact may replace the required physical C4 evidence. C12 Runtime Acceptance remains the separate authority for full-modpack boot, live placement and runtime visual fidelity. STATUS does not advance until C11 completion is proven and validated post-merge.
+final physical acceptance re-audits and re-hashes the physical modlist, performs a fresh C4 runtime capture against that exact environment, and then freezes evidence-backed C5 palette, C2 Build IR, C7 structural evidence, C8 preview/review evidence, and C6 Sponge v3 bytes before C12 live/runtime acceptance and C13 final routing validation. Closeout order remains `C11 -> C12 -> C13 -> Construction`. `construction/STATUS.md` does not advance until each evidence-gated post-merge closeout is actually proven.
 
 ## Planned pipeline
 
