@@ -35,7 +35,8 @@ def resolve_workspace_path(path: str | Path, workspace_root: str | Path) -> Path
 
 
 def load_profile(path: str | Path, workspace_root: str | Path | None = None) -> NarrativeProfile:
-    profile_path = Path(path).resolve(strict=True) if workspace_root is None else resolve_workspace_path(path, workspace_root)
+    workspace = Path.cwd() if workspace_root is None else workspace_root
+    profile_path = resolve_workspace_path(path, workspace)
     data = json.loads(profile_path.read_text(encoding='utf-8'))
     if not isinstance(data, dict):
         raise ValueError('profile root must be an object')

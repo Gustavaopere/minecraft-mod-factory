@@ -6,7 +6,7 @@ import sys
 from typing import NamedTuple
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from profile import NarrativeProfile, load_profile
+from profile import NarrativeProfile, load_profile, resolve_workspace_path
 
 
 class Issue(NamedTuple):
@@ -106,7 +106,7 @@ def exit_code(issues: list[Issue], strict_references: bool = False) -> int:
     return 0
 
 
-def main(argv=None) -> int:
+def main(argv=None, workspace_root=None) -> int:
     import argparse
 
     parser = argparse.ArgumentParser(description='Validate profile-driven narrative Markdown records.')
@@ -116,8 +116,13 @@ def main(argv=None) -> int:
     parser.add_argument('--reveal', action='store_true', help='show IDs/paths/lines for editorial debugging')
     args = parser.parse_args(argv)
 
-    profile = load_profile(args.profile)
-    root = pathlib.Path(args.root or profile.story_root)
+    workspace = pathlib.Path(workspace_root or pathlib.Path.cwd()).resolve(strict=True)
+    try:
+        profile = load_profile(args.profile, workspace)
+        root = resolve_workspace_path(args.root or profile.story_root, workspace)
+    except (OSError, ValueError):
+        print('ERROR workspace-path: profile/root must resolve inside the trusted workspace')
+        return 2
     issues = validate(root, profile)
     if issues:
         if args.reveal:

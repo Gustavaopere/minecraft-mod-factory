@@ -8,7 +8,7 @@ from collections import Counter
 from typing import NamedTuple
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from profile import NarrativeProfile, load_profile
+from profile import NarrativeProfile, load_profile, resolve_workspace_path
 
 
 class Record(NamedTuple):
@@ -94,15 +94,20 @@ def render_markdown(records, root):
     return '\n'.join(lines) + '\n'
 
 
-def main(argv=None):
+def main(argv=None, workspace_root=None):
     import argparse
     parser = argparse.ArgumentParser(description='Inventory profile-driven narrative records.')
     parser.add_argument('--profile', required=True)
     parser.add_argument('--root', help='story root override; defaults to profile story_root')
     parser.add_argument('--format', choices=('markdown', 'json'), default='markdown')
     args = parser.parse_args(argv)
-    profile = load_profile(args.profile)
-    root = pathlib.Path(args.root or profile.story_root)
+    workspace = pathlib.Path(workspace_root or pathlib.Path.cwd()).resolve(strict=True)
+    try:
+        profile = load_profile(args.profile, workspace)
+        root = resolve_workspace_path(args.root or profile.story_root, workspace)
+    except (OSError, ValueError):
+        print('ERROR workspace-path: profile/root must resolve inside the trusted workspace')
+        return 2
     records = inventory(root, profile)
     print(render_json(records, root) if args.format == 'json' else render_markdown(records, root), end='')
     return 0

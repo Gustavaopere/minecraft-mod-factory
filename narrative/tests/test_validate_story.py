@@ -43,21 +43,21 @@ class StoryValidationTests(unittest.TestCase):
         mod = load_module()
         self.write('NPC-0001-a.md', '# NPC-0001 — A\n\n## Editorial state\nDRAFT STRUCTURED\n\nQuest QST-0001\n')
         self.write('QST-0001-q.md', '# QST-0001 — Q\n\n## Editorial state\nCANON\n\nNPC NPC-0001\n')
-        issues = mod.validate(self.root / 'story', mod.load_profile(self.profile))
+        issues = mod.validate(self.root / 'story', mod.load_profile(self.profile, self.root))
         self.assertEqual([], issues)
 
     def test_duplicate_id_is_fatal(self):
         mod = load_module()
         self.write('a.md', '# NPC-0001 — A\n')
         self.write('b.md', '# NPC-0001 — B\n')
-        issues = mod.validate(self.root / 'story', mod.load_profile(self.profile))
+        issues = mod.validate(self.root / 'story', mod.load_profile(self.profile, self.root))
         self.assertTrue(any(i.code == 'duplicate-id' for i in issues))
         self.assertEqual(1, mod.exit_code(issues))
 
     def test_filename_heading_mismatch_is_fatal(self):
         mod = load_module()
         self.write('NPC-0002-wrong.md', '# NPC-0001 — A\n')
-        issues = mod.validate(self.root / 'story', mod.load_profile(self.profile))
+        issues = mod.validate(self.root / 'story', mod.load_profile(self.profile, self.root))
         self.assertTrue(any(i.code == 'filename-id-mismatch' for i in issues))
         self.assertEqual(1, mod.exit_code(issues))
 
@@ -65,13 +65,13 @@ class StoryValidationTests(unittest.TestCase):
         mod = load_module()
         self.write('NPC-0001-main.md', '# NPC-0001 — A\n')
         self.write('NPC-0001-notes.md', '# Authoring sheet — NPC-0001 — A\n')
-        issues = mod.validate(self.root / 'story', mod.load_profile(self.profile))
+        issues = mod.validate(self.root / 'story', mod.load_profile(self.profile, self.root))
         self.assertFalse(any(i.code == 'duplicate-id' for i in issues))
 
     def test_unresolved_ref_warns_unless_strict(self):
         mod = load_module()
         self.write('NPC-0001-a.md', '# NPC-0001 — A\n\nQuest QST-9999\n')
-        issues = mod.validate(self.root / 'story', mod.load_profile(self.profile))
+        issues = mod.validate(self.root / 'story', mod.load_profile(self.profile, self.root))
         self.assertTrue(any(i.code == 'unresolved-ref' for i in issues))
         self.assertEqual(0, mod.exit_code(issues, strict_references=False))
         self.assertEqual(1, mod.exit_code(issues, strict_references=True))
@@ -79,7 +79,7 @@ class StoryValidationTests(unittest.TestCase):
     def test_transient_editorial_state_is_fatal(self):
         mod = load_module()
         self.write('NPC-0001-a.md', '# NPC-0001 — A\n\n## Editorial state\nPROPOSED UNTIL MERGE\n')
-        issues = mod.validate(self.root / 'story', mod.load_profile(self.profile))
+        issues = mod.validate(self.root / 'story', mod.load_profile(self.profile, self.root))
         self.assertTrue(any(i.code == 'invalid-editorial-state' for i in issues))
         self.assertEqual(1, mod.exit_code(issues))
 
@@ -88,14 +88,14 @@ class StoryValidationTests(unittest.TestCase):
         self.write('NPC-0001-a.md', '# NPC-0001 — A\n\nQuest QST-9999\n')
         out = StringIO()
         with redirect_stdout(out):
-            code = mod.main(['--profile', str(self.profile), '--root', str(self.root / 'story')])
+            code = mod.main(['--profile', str(self.profile), '--root', str(self.root / 'story')], workspace_root=self.root)
         text = out.getvalue()
         self.assertEqual(0, code)
         self.assertIn('WARN unresolved-ref: 1', text)
         self.assertNotIn('QST-9999', text)
         out = StringIO()
         with redirect_stdout(out):
-            mod.main(['--profile', str(self.profile), '--root', str(self.root / 'story'), '--reveal'])
+            mod.main(['--profile', str(self.profile), '--root', str(self.root / 'story'), '--reveal'], workspace_root=self.root)
         self.assertIn('QST-9999', out.getvalue())
 
 
@@ -127,13 +127,13 @@ class StoryValidationAdditionalTests(unittest.TestCase):
     def test_profile_driven_portuguese_state_heading_is_validated(self):
         mod = load_module()
         self.write('NPC-0001-a.md', '# NPC-0001 — A\n\n## Estado editorial\nPROPOSTO ATÉ MERGE\n')
-        issues = mod.validate(self.story, mod.load_profile(self.profile))
+        issues = mod.validate(self.story, mod.load_profile(self.profile, self.root))
         self.assertTrue(any(i.code == 'invalid-editorial-state' for i in issues))
 
     def test_missing_editorial_state_value_is_fatal(self):
         mod = load_module()
         self.write('NPC-0001-a.md', '# NPC-0001 — A\n\n## Estado editorial\n\n## Outra\nX\n')
-        issues = mod.validate(self.story, mod.load_profile(self.profile))
+        issues = mod.validate(self.story, mod.load_profile(self.profile, self.root))
         self.assertTrue(any(i.code == 'missing-editorial-state-value' for i in issues))
         self.assertEqual(1, mod.exit_code(issues))
 
@@ -141,12 +141,12 @@ class StoryValidationAdditionalTests(unittest.TestCase):
         mod = load_module()
         self.write('TEMPLATE-NPC.md', '# NPC-#### — Nome\n\nQuest QST-####\n')
         self.write('NPC-0001-a.md', '# NPC-0001 — A\n')
-        self.assertEqual([], mod.validate(self.story, mod.load_profile(self.profile)))
+        self.assertEqual([], mod.validate(self.story, mod.load_profile(self.profile, self.root)))
 
     def test_declaration_reference_is_not_unresolved(self):
         mod = load_module()
         self.write('NPC-0001-a.md', '# NPC-0001 — A\n')
-        issues = mod.validate(self.story, mod.load_profile(self.profile))
+        issues = mod.validate(self.story, mod.load_profile(self.profile, self.root))
         self.assertFalse(any(i.code == 'unresolved-ref' for i in issues))
 
     def test_strict_cli_reports_unresolved_as_error_without_reveal(self):
@@ -154,7 +154,7 @@ class StoryValidationAdditionalTests(unittest.TestCase):
         self.write('NPC-0001-a.md', '# NPC-0001 — A\n\nQST-9999\n')
         out = StringIO()
         with redirect_stdout(out):
-            code = mod.main(['--profile', str(self.profile), '--root', str(self.story), '--strict-references'])
+            code = mod.main(['--profile', str(self.profile), '--root', str(self.story), '--strict-references'], workspace_root=self.root)
         self.assertEqual(1, code)
         self.assertIn('ERROR unresolved-ref: 1', out.getvalue())
         self.assertNotIn('QST-9999', out.getvalue())
@@ -162,5 +162,5 @@ class StoryValidationAdditionalTests(unittest.TestCase):
     def test_stable_state_can_have_qualifier(self):
         mod = load_module()
         self.write('NPC-0001-a.md', '# NPC-0001 — A\n\n## Estado editorial\nRASCUNHO ESTRUTURADO / BLOQUEADO\n')
-        issues = mod.validate(self.story, mod.load_profile(self.profile))
+        issues = mod.validate(self.story, mod.load_profile(self.profile, self.root))
         self.assertFalse(any(i.code.startswith('invalid-editorial') for i in issues))

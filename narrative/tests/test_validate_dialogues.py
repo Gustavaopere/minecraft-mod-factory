@@ -43,12 +43,12 @@ class DialogueValidationTests(unittest.TestCase):
         (self.dialogues / 'DLG-0001-test.md').write_text(
             '# DLG-0001 — Test\n\n## Editorial state\nDRAFT\n\n## Participants\n- NPC\n\n## Context\nTest\n\n## QA\n- [x] checked\n',
             encoding='utf-8')
-        self.assertEqual([], mod.validate(self.dialogues, mod.load_profile(self.profile_path)))
+        self.assertEqual([], mod.validate(self.dialogues, mod.load_profile(self.profile_path, self.root)))
 
     def test_missing_required_section_is_reported(self):
         mod = load_module()
         (self.dialogues / 'DLG-0001-test.md').write_text('# DLG-0001 — Test\n', encoding='utf-8')
-        issues = mod.validate(self.dialogues, mod.load_profile(self.profile_path))
+        issues = mod.validate(self.dialogues, mod.load_profile(self.profile_path, self.root))
         self.assertTrue(any(i.code == 'missing-section' and i.detail == 'participants' for i in issues))
 
     def test_placeholder_id_is_reported(self):
@@ -56,7 +56,7 @@ class DialogueValidationTests(unittest.TestCase):
         (self.dialogues / 'DLG-0001-test.md').write_text(
             '# DLG-0001 — Test\n\n## Editorial state\nDRAFT\n\n## Participants\nNPC-####\n\n## Context\nX\n\n## QA\n- [x] checked\n',
             encoding='utf-8')
-        issues = mod.validate(self.dialogues, mod.load_profile(self.profile_path))
+        issues = mod.validate(self.dialogues, mod.load_profile(self.profile_path, self.root))
         self.assertTrue(any(i.code == 'placeholder-id' for i in issues))
 
 
@@ -94,26 +94,26 @@ class DialogueValidationAdditionalTests(unittest.TestCase):
         mod = load_module()
         text = self.valid.replace('## Entrada padrão — início', '## Abertura')
         (self.dialogues / 'DLG-0001-test.md').write_text(text, encoding='utf-8')
-        self.assertEqual([], mod.validate(self.dialogues, mod.load_profile(self.profile_path)))
+        self.assertEqual([], mod.validate(self.dialogues, mod.load_profile(self.profile_path, self.root)))
 
     def test_empty_participants_is_reported(self):
         mod = load_module()
         text = self.valid.replace('## Participantes\n- NPC-0001', '## Participantes\n')
         (self.dialogues / 'DLG-0001-test.md').write_text(text, encoding='utf-8')
-        issues = mod.validate(self.dialogues, mod.load_profile(self.profile_path))
+        issues = mod.validate(self.dialogues, mod.load_profile(self.profile_path, self.root))
         self.assertTrue(any(i.code == 'empty-section' and i.detail == 'participants' for i in issues))
 
     def test_qa_requires_checkbox(self):
         mod = load_module()
         text = self.valid.replace('- [x] ok', 'ok')
         (self.dialogues / 'DLG-0001-test.md').write_text(text, encoding='utf-8')
-        issues = mod.validate(self.dialogues, mod.load_profile(self.profile_path))
+        issues = mod.validate(self.dialogues, mod.load_profile(self.profile_path, self.root))
         self.assertTrue(any(i.code == 'qa-without-checkbox' for i in issues))
 
     def test_non_dialogue_markdown_is_ignored(self):
         mod = load_module()
         (self.dialogues / 'README.md').write_text('# Dialogues\n', encoding='utf-8')
-        self.assertEqual([], mod.validate(self.dialogues, mod.load_profile(self.profile_path)))
+        self.assertEqual([], mod.validate(self.dialogues, mod.load_profile(self.profile_path, self.root)))
 
     def test_default_cli_hides_section_and_filename(self):
         mod = load_module()
@@ -123,7 +123,7 @@ class DialogueValidationAdditionalTests(unittest.TestCase):
         from io import StringIO
         out = StringIO()
         with redirect_stdout(out):
-            code = mod.main(['--profile', str(self.profile_path), '--root', str(self.dialogues)])
+            code = mod.main(['--profile', str(self.profile_path), '--root', str(self.dialogues)], workspace_root=self.root)
         rendered = out.getvalue()
         self.assertEqual(1, code)
         self.assertIn('ERROR missing-section: 1', rendered)
@@ -138,7 +138,7 @@ class DialogueValidationAdditionalTests(unittest.TestCase):
         from io import StringIO
         out = StringIO()
         with redirect_stdout(out):
-            code = mod.main(['--profile', str(self.profile_path), '--root', str(self.dialogues), '--reveal'])
+            code = mod.main(['--profile', str(self.profile_path), '--root', str(self.dialogues), '--reveal'], workspace_root=self.root)
         self.assertEqual(1, code)
         self.assertIn('ERROR missing-section knowledge', out.getvalue())
         self.assertIn('DLG-0001-secret.md', out.getvalue())

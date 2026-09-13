@@ -7,7 +7,7 @@ import unicodedata
 from typing import NamedTuple
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from profile import NarrativeProfile, load_profile
+from profile import NarrativeProfile, load_profile, resolve_workspace_path
 
 
 CHECKBOX_RE = re.compile(r'(?m)^\s*-\s*\[[ xX]\]\s+')
@@ -98,15 +98,20 @@ def validate(root: pathlib.Path, profile: NarrativeProfile) -> list[Issue]:
     return sorted(issues, key=lambda i: (str(i.path), i.line, i.code, i.detail))
 
 
-def main(argv=None) -> int:
+def main(argv=None, workspace_root=None) -> int:
     import argparse
     parser = argparse.ArgumentParser(description='Validate profile-driven dialogue Markdown structure.')
     parser.add_argument('--profile', required=True)
     parser.add_argument('--root', help='dialogue root override; defaults to profile dialogue_root')
     parser.add_argument('--reveal', action='store_true')
     args = parser.parse_args(argv)
-    profile = load_profile(args.profile)
-    root = pathlib.Path(args.root or profile.dialogue_root)
+    workspace = pathlib.Path(workspace_root or pathlib.Path.cwd()).resolve(strict=True)
+    try:
+        profile = load_profile(args.profile, workspace)
+        root = resolve_workspace_path(args.root or profile.dialogue_root, workspace)
+    except (OSError, ValueError):
+        print('ERROR workspace-path: profile/root must resolve inside the trusted workspace')
+        return 2
     issues = validate(root, profile)
     if issues and args.reveal:
         for issue in issues:
