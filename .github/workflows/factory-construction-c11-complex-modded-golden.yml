@@ -9,6 +9,7 @@ on:
       - main
     paths:
       - '.github/workflows/factory-construction-c11-complex-modded-golden.yml'
+      - '.github/workflows/factory-sonar-ci.yml'
       - 'engineering/tooling/import-physical-modlist.py'
       - 'construction/fixtures/complex-modded-golden/**'
       - 'construction/tests/test_c11_complex_modded_golden.py'
@@ -17,6 +18,7 @@ on:
       - 'construction/scripts/prepare_neoforge_registry_probe.py'
       - 'construction/README.md'
       - 'construction/docs/ARCHITECTURE.md'
+      - 'migration/full-skill-migration/test_sonar_ci_contract.py'
       - 'docs/superpowers/specs/2026-09-12-construction-c11-complex-modded-golden-design.md'
       - 'docs/superpowers/specs/2026-09-13-construction-c11-registry-deferral-amendment.md'
       - 'docs/superpowers/plans/2026-09-12-construction-c11-complex-modded-golden.md'
@@ -54,8 +56,11 @@ jobs:
             construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_cli_writes_canonical_revalidated_registry \
             -v
 
+      - name: Run shared Sonar governance contract
+        run: python3 migration/full-skill-migration/test_sonar_ci_contract.py
+
       - name: Check C11 preflight whitespace
-        run: git diff --check HEAD^ HEAD -- .github/workflows/factory-construction-c11-complex-modded-golden.yml construction/fixtures/complex-modded-golden construction/tests/test_c11_complex_modded_golden.py docs/superpowers/specs docs/superpowers/plans
+        run: git diff --check HEAD^ HEAD -- .github/workflows/factory-construction-c11-complex-modded-golden.yml .github/workflows/factory-sonar-ci.yml construction/fixtures/complex-modded-golden construction/tests/test_c11_complex_modded_golden.py migration/full-skill-migration/test_sonar_ci_contract.py docs/superpowers/specs docs/superpowers/plans
 
   c11-preflight-probe:
     needs: c11-preflight-contracts
