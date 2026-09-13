@@ -16,7 +16,7 @@ from pathlib import Path
 
 
 TARGET_MINECRAFT = "1.21.1"
-TARGET_NEOFORGE = "21.1.248"
+TARGET_NEOFORGE = "21.1.250"
 TARGET_JAVA = 21
 MOD_ID_RE = re.compile(r"^[a-z][a-z0-9_]{1,63}$")
 OUTPUT_RELATIVE = Path("build/i5-test-harness")
