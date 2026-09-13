@@ -11,6 +11,14 @@ MOD_SPEC = ROOT / "engineering" / "tests" / "fixtures" / "i9-machine-mod-spec.js
 SCAFFOLD_CONFIG = ROOT / "engineering" / "tests" / "fixtures" / "i9-machine-scaffold-config.json"
 I1_VALIDATOR = ROOT / "engineering" / "tooling" / "validate-i1-foundation.py"
 SCHEMA = ROOT / "engineering" / "schemas" / "mod-spec.schema.json"
+MACHINE_SOURCE_ROOT = OVERLAY / "src/main/java/dev/example/i9machine/machine"
+MACHINE_SOURCES = {
+    "I9MachineContent.java": ("DeferredRegister", "registerBlockEntity", "Capabilities.ItemHandler.BLOCK", "Capabilities.EnergyStorage.BLOCK"),
+    "MachineBlock.java": ("BaseEntityBlock", "newBlockEntity"),
+    "MachineEnergyStorage.java": ("IEnergyStorage",),
+    "MachineBlockEntity.java": ("BlockEntity", "ItemStackHandler"),
+    "MachineMenu.java": ("AbstractContainerMenu",),
+}
 
 
 def load_module(path, name):
@@ -56,6 +64,21 @@ class I9MachineFoundationContractTest(unittest.TestCase):
             missing,
             "I9 RED: composition authority is intentionally absent before GREEN",
         )
+
+    def test_i9_registry_and_capability_sources_exist_with_required_contract_tokens(self):
+        missing = []
+        missing_tokens = []
+        for filename, tokens in MACHINE_SOURCES.items():
+            source = MACHINE_SOURCE_ROOT / filename
+            if not source.is_file():
+                missing.append(source.relative_to(ROOT).as_posix())
+                continue
+            text = source.read_text(encoding="utf-8")
+            for token in tokens:
+                if token not in text:
+                    missing_tokens.append(f"{filename}:{token}")
+        self.assertEqual([], missing, "I9 RED: registry/capability Java sources are missing")
+        self.assertEqual([], missing_tokens, "I9 RED: registry/capability contract tokens are missing")
 
 
 if __name__ == "__main__":
