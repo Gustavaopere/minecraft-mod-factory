@@ -73,8 +73,10 @@ CANONICAL_RUN_SERVER_STDIN_PATCH = {
         "tasks.withType(JavaCompile).configureEach {\n"
         "    options.encoding = 'UTF-8'\n"
         "}\n\n"
-        "tasks.named('runServer').configure {\n"
-        "    standardInput = System.in\n"
+        "tasks.configureEach { task ->\n"
+        "    if (task.name == 'runServer') {\n"
+        "        task.standardInput = System.in\n"
+        "    }\n"
         "}\n"
     ),
 }
