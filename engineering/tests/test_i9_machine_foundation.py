@@ -12,6 +12,7 @@ MOD_SPEC = ROOT / "engineering" / "tests" / "fixtures" / "i9-machine-mod-spec.js
 SCAFFOLD_CONFIG = ROOT / "engineering" / "tests" / "fixtures" / "i9-machine-scaffold-config.json"
 I1_VALIDATOR = ROOT / "engineering" / "tooling" / "validate-i1-foundation.py"
 SCHEMA = ROOT / "engineering" / "schemas" / "mod-spec.schema.json"
+I9_WORKFLOW = ROOT / ".github" / "workflows" / "factory-engineering-i9-machine-foundation.yml"
 MACHINE_SOURCE_ROOT = OVERLAY / "src/main/java/dev/example/i9machine/machine"
 MACHINE_SOURCES = {
     "I9MachineContent.java": ("DeferredRegister", "registerBlockEntity", "Capabilities.ItemHandler.BLOCK", "Capabilities.EnergyStorage.BLOCK"),
@@ -222,6 +223,19 @@ class I9MachineFoundationContractTest(unittest.TestCase):
             actual_sha256,
             structure_entry.get("sha256"),
             "I9 RED: structure source SHA-256 is not pinned in the manifest",
+        )
+
+    def test_i9_workflow_runs_authoritative_gametest_server_gate(self):
+        workflow = I9_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn(
+            "./gradlew runGameTestServer --no-daemon",
+            workflow,
+            "I9 RED: permanent workflow must execute the target-exact GameTest server",
+        )
+        self.assertNotIn(
+            "setForceExit",
+            workflow,
+            "I9 workflow must not reintroduce the unsupported NeoGradle setForceExit directive",
         )
 
 
