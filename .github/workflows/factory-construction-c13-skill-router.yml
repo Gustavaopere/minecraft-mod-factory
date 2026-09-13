@@ -6,7 +6,20 @@ on:
       - feat/construction-c13-skill-router-preflight
     paths:
       - '.github/workflows/factory-construction-c13-skill-router.yml'
+      - '.github/workflows/factory-sonar-ci.yml'
       - 'construction/tests/test_c13_*.py'
+      - 'construction/tests/test_c9_agent_mcp.py'
+      - 'construction/tests/test_c9_mcp_stdio.py'
+      - 'construction/tests/test_c10_*.py'
+      - 'construction/tests/test_c12_*.py'
+      - 'construction/tests/test_construction_final_physical_acceptance_gate.py'
+      - 'construction/fixtures/complex-modded-golden/capture-state.json'
+      - 'construction/fixtures/complex-modded-golden/c12-runtime-acceptance-report.json'
+      - 'construction/runtime/c12_*.py'
+      - 'construction/mcp/**'
+      - 'construction/providers/**'
+      - 'construction/upstream/harness/schematica-test-lock.txt'
+      - 'construction/upstream/harness/c9-mcp-lock.txt'
       - 'skills/capabilities/**'
       - 'skills/scripts/capability_router.py'
       - 'skills/scripts/validate_skill_repository.py'
@@ -15,12 +28,26 @@ on:
       - 'skills/VERSION-AUTHORITY.md'
       - 'skills/USER-GUIDED-WORKFLOW.md'
       - 'engineering/REPO-ROUTING.md'
+      - 'migration/full-skill-migration/test_sonar_ci_contract.py'
   pull_request:
     branches:
       - feat/construction-c12-runtime-acceptance-preflight
     paths:
       - '.github/workflows/factory-construction-c13-skill-router.yml'
+      - '.github/workflows/factory-sonar-ci.yml'
       - 'construction/tests/test_c13_*.py'
+      - 'construction/tests/test_c9_agent_mcp.py'
+      - 'construction/tests/test_c9_mcp_stdio.py'
+      - 'construction/tests/test_c10_*.py'
+      - 'construction/tests/test_c12_*.py'
+      - 'construction/tests/test_construction_final_physical_acceptance_gate.py'
+      - 'construction/fixtures/complex-modded-golden/capture-state.json'
+      - 'construction/fixtures/complex-modded-golden/c12-runtime-acceptance-report.json'
+      - 'construction/runtime/c12_*.py'
+      - 'construction/mcp/**'
+      - 'construction/providers/**'
+      - 'construction/upstream/harness/schematica-test-lock.txt'
+      - 'construction/upstream/harness/c9-mcp-lock.txt'
       - 'skills/capabilities/**'
       - 'skills/scripts/capability_router.py'
       - 'skills/scripts/validate_skill_repository.py'
@@ -29,6 +56,7 @@ on:
       - 'skills/VERSION-AUTHORITY.md'
       - 'skills/USER-GUIDED-WORKFLOW.md'
       - 'engineering/REPO-ROUTING.md'
+      - 'migration/full-skill-migration/test_sonar_ci_contract.py'
 
 permissions:
   contents: read
@@ -53,6 +81,13 @@ jobs:
         with:
           node-version: '20.20.2'
 
+      - name: Install hash-pinned Construction regression environment
+        run: |
+          python3 -m pip install --require-hashes --no-deps -r construction/upstream/harness/schematica-test-lock.txt
+          python3 -m pip install --require-hashes --no-deps -r construction/upstream/harness/c9-mcp-lock.txt
+          python3 -m pip check
+          python3 -c 'from importlib.metadata import version; assert version("mcp") == "2.2.0"'
+
       - name: Run C13 router integration contracts
         run: |
           python3 -m unittest construction/tests/test_c13_skill_router_integration.py -v
@@ -61,5 +96,94 @@ jobs:
       - name: Run existing Factory skill repository validator
         run: python3 skills/scripts/validate_skill_repository.py
 
+      - name: Run C9 routing boundary regressions
+        run: |
+          python3 -m unittest construction/tests/test_c9_agent_mcp.py -v
+          python3 -m unittest construction/tests/test_c9_mcp_stdio.py -v
+
+      - name: Run C10 provider boundary regressions
+        run: |
+          python3 -m unittest \
+            construction/tests/test_c10_provider_profiles.py \
+            construction/tests/test_c10_handoff_request.py \
+            construction/tests/test_c10_handoff_receipt.py \
+            construction/tests/test_c10_security.py \
+            construction/tests/test_c10_workflow_contract.py \
+            -v
+
+      - name: Run C12 acceptance-boundary regressions
+        run: |
+          python3 -m unittest construction/tests/test_c12_runtime_acceptance.py -v
+          python3 -m unittest construction/tests/test_c12_runtime_acceptance_security.py -v
+          python3 -m unittest construction/tests/test_c12_workflow_contract.py -v
+
+      - name: Run final physical acceptance blocker regression
+        run: python3 -m unittest construction/tests/test_construction_final_physical_acceptance_gate.py -v
+
+      - name: Run shared Sonar governance contract
+        run: python3 -m unittest migration/full-skill-migration/test_sonar_ci_contract.py -v
+
       - name: Check C13 authority integration whitespace
         run: git diff --check
+
+  c13-final-acceptance:
+    needs: c13-router-preflight
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout with preserved upstreams
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          submodules: recursive
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+
+      - name: Require final physical acceptance chain to be authoritative
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          from construction.runtime.c12_runtime_acceptance import validate_runtime_acceptance_report
+          from skills.scripts.capability_router import (
+              load_capability_index,
+              resolve_intent,
+              validate_capability_index,
+          )
+
+          blocker = "SUPER_HYPER_URGENT_FINAL_CONSTRUCTION_PHYSICAL_ACCEPTANCE"
+          state_path = Path("construction/fixtures/complex-modded-golden/capture-state.json")
+          state = json.loads(state_path.read_text(encoding="utf-8"))
+          if state.get("status") == blocker and state.get("blocks_c13_final_acceptance") is True:
+              raise SystemExit("C13_FINAL_ACCEPTANCE_BLOCKED: SUPER_HYPER_URGENT_FINAL_CONSTRUCTION_PHYSICAL_ACCEPTANCE")
+
+          c12_report_path = Path("construction/fixtures/complex-modded-golden/c12-runtime-acceptance-report.json")
+          if not c12_report_path.is_file():
+              raise SystemExit("C13_FINAL_ACCEPTANCE_BLOCKED: missing final C12 physical runtime acceptance report")
+          report = json.loads(c12_report_path.read_text(encoding="utf-8"))
+          report_errors = validate_runtime_acceptance_report(report)
+          if report_errors:
+              raise SystemExit("C13_FINAL_ACCEPTANCE_BLOCKED: invalid C12 final report: " + "; ".join(report_errors))
+          if report.get("mode") != "PHYSICAL_ACCEPTANCE":
+              raise SystemExit("C13_FINAL_ACCEPTANCE_BLOCKED: C12 report is not PHYSICAL_ACCEPTANCE")
+          if report.get("overall_acceptance") != "PASS":
+              raise SystemExit("C13_FINAL_ACCEPTANCE_BLOCKED: C12 report is not accepted")
+
+          index_path = Path("skills/capabilities/capability-index.json")
+          index = load_capability_index(index_path)
+          index_errors = validate_capability_index(index, repo_root=Path("."))
+          if index_errors:
+              raise SystemExit("C13_FINAL_ACCEPTANCE_BLOCKED: invalid capability index: " + "; ".join(index_errors))
+
+          for intent in (
+              "construction.complex_modded_golden",
+              "construction.runtime_acceptance",
+              "construction.skill_router_integration",
+          ):
+              route = resolve_intent(index, intent)
+              if route.get("readiness") != "AVAILABLE" or route.get("acceptance") != "ACCEPTED":
+                  raise SystemExit(f"C13_FINAL_ACCEPTANCE_BLOCKED: route not accepted: {intent}")
+          PY
