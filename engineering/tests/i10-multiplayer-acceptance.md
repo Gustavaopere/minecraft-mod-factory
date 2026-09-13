@@ -60,7 +60,7 @@ Perform the sequence in this order. Evidence from another order does not close t
 4. From the dedicated-server console, server-authoritatively break one required casing using the I10 acceptance command `i10probe break_required_part`. Retain the corresponding `I10_PROBE` line in the server log.
 5. Wait for revalidation. Verify that both clients observe UNFORMED and no port IO is available. Capture `a-unformed-after-break.png` and `b-unformed-after-break.png`. The server log must show the invalidated state and `capability=false`; no client-side inference may override the server state.
 6. While Client A remains connected, disconnect Client B completely from the server.
-7. Reconnect Client B to the same dedicated server and world without rebuilding or reforming the structure.
+7. Without rebuilding or reforming the structure, reconnect Client B to the same dedicated server and world.
 8. Verify that Client B receives the current UNFORMED state without historical replay of the prior formed state. Capture `b-unformed-after-reconnect.png` and retain the reconnect section of the Client B log.
 9. Stop both clients and the server cleanly and preserve the complete evidence directory unchanged for review.
 
