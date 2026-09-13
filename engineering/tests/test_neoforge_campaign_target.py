@@ -11,6 +11,8 @@ TEST_MANIFEST_SCHEMA = ROOT / "engineering/schemas/test-manifest.schema.json"
 COMPATIBILITY_SCHEMA = ROOT / "engineering/schemas/compatibility-matrix.schema.json"
 SCAFFOLDER = ROOT / "engineering/tooling/scaffolder/scaffold_mod.py"
 I5_HARNESS = ROOT / "engineering/tooling/test-harness/run_test_harness.py"
+I8_GENERATOR = ROOT / "engineering/tooling/feature-generator/generate_feature.py"
+I8_FEATURE_SET = ROOT / "engineering/tests/fixtures/i8-feature-set.json"
 GRADLE_PROPERTIES_TEMPLATE = ROOT / "engineering/templates/neoforge-mod/gradle.properties.tmpl"
 PROBE_MOD_SPEC = ROOT / "construction/runtime/neoforge-registry-probe/mod-spec.json"
 PROBE_SOURCE = ROOT / "construction/runtime/neoforge-registry-probe/FactoryConstructionRegistryProbe.java"
@@ -95,17 +97,20 @@ class NeoForgeCampaignTargetContractTest(unittest.TestCase):
                 self.assertEqual(target["neoforge"], node["neoforge"]["const"])
                 self.assertEqual(target["java"], node["java"]["const"])
 
-    def test_scaffolder_i5_and_template_match_campaign_pin(self):
+    def test_scaffolder_i5_i8_and_template_match_campaign_pin(self):
         baseline = self.require_baseline()
         target = baseline["target"]
         scaffolder = SCAFFOLDER.read_text(encoding="utf-8")
         harness = I5_HARNESS.read_text(encoding="utf-8")
+        generator = I8_GENERATOR.read_text(encoding="utf-8")
         template = GRADLE_PROPERTIES_TEMPLATE.read_text(encoding="utf-8")
         self.assertIn("target-baseline.json", scaffolder)
         self.assertIn("target-baseline.json", harness)
+        self.assertIn("target-baseline.json", generator)
         self.assertIn(f"neo_version={target['neoforge']}", template)
         self.assertNotIn("21.1.248", scaffolder)
         self.assertNotIn("21.1.248", harness)
+        self.assertNotIn("21.1.248", generator)
         self.assertNotIn("neo_version=21.1.248", template)
 
     def test_live_engineering_fixtures_match_campaign_pin(self):
@@ -121,6 +126,7 @@ class NeoForgeCampaignTargetContractTest(unittest.TestCase):
             ROOT / "engineering/examples/compatibility-matrix.example.json",
             ROOT / "engineering/tests/fixtures/i3-golden-mod-spec.json",
             ROOT / "engineering/tests/fixtures/i4-golden-mod-spec.json",
+            I8_FEATURE_SET,
             ROOT / "engineering/tests/fixtures/i9-machine-mod-spec.json",
         )
         for path in json_targets:
