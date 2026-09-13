@@ -206,13 +206,11 @@ ObjToSchematic remains a candidate manual smoke until fresh official evidence an
 
 ## 12. C11 Complex Modded Golden boundary
 
-C11 Complex Modded Golden is the offline integration Golden over the existing C2/C4/C5/C6/C7/C8 authorities. It does not create a new registry, palette engine, renderer, exporter, provider runtime or live-world acceptance authority.
+C11 Complex Modded Golden is the offline integration Golden over the existing C2/C4/C5/C6/C7/C8 authorities. The final physical gate coordinates those authorities; it does not create a new registry, palette engine, renderer, exporter, provider runtime, QA authority or live-world acceptance authority.
 
-The current execution state is `MODLIST_STABILIZED_AWAITING_RUNTIME_CAPTURE`: the physical modlist is stabilized and the real C4 runtime capture is pending. While that state exists, capture-helper/probe/CI/governance work may continue, but no C5 palette, Canonical Build IR, C7/C8 Golden evidence, C6 Sponge v3 artifact or final manifest may be frozen.
+The current execution state is `SUPER_HYPER_URGENT_FINAL_CONSTRUCTION_PHYSICAL_ACCEPTANCE`. C11 completion is blocked, C12 acceptance is blocked, C13 final acceptance is blocked, and Construction final closeout is blocked. No final C5 palette, Canonical Build IR, C7/C8 Golden evidence, C6 Sponge v3 artifact or final C11 manifest may be frozen from fabricated registry evidence.
 
-A preflight green is readiness evidence, not C11 completion. C11 completion remains fail-closed until a real stabilized C4 registry is captured, validated and frozen; only then may C5 palette resolution, Canonical Build IR, C7 structural evidence, C8 preview/review evidence, C6 Sponge v3 bytes and the final manifest be frozen.
-
-C12 Runtime Acceptance remains a separate later boundary for full-modpack boot, live placement and runtime visual fidelity. STATUS does not advance while C11 is waiting for runtime capture; advancement occurs only after completed C11 evidence is merged and its exact post-merge gates are validated.
+C12 implementation/preflight may continue and C13 implementation/preflight may continue while the blocker exists. preflight green is readiness evidence, not final acceptance. final physical acceptance re-audits and re-hashes the physical modlist, performs a fresh C4 capture against that exact environment, and regenerates every downstream artifact whose input changed. Closeout order remains `C11 -> C12 -> C13 -> Construction`; STATUS advances only through evidence-gated post-merge closeouts.
 
 ## 13. Runtime/worldgen boundary
 
