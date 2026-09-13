@@ -1,0 +1,53 @@
+name: Queue Control Materialize
+
+on:
+  push:
+    branches:
+      - ci/queue-control
+    paths:
+      - 'engineering/tooling/ci/apply_queue_control.py'
+      - 'engineering/tooling/ci/queue-control-policy.json'
+      - '.github/workflows/queue-control-materialize.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout queue-control branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Materialize scoped triggers and safe concurrency
+        run: python3 engineering/tooling/ci/apply_queue_control.py
+
+      - name: Validate queue-control policy after materialization
+        run: python3 engineering/tooling/ci/validate_queue_control.py
+
+      - name: Run queue-control contract tests
+        run: python3 -m unittest engineering/tests/test_ci_queue_control.py -v
+
+      - name: Check generated diff whitespace
+        run: git diff --check
+
+      - name: Commit workflow batch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add .github/workflows/factory-*.yml
+          if git diff --cached --quiet; then
+            echo 'No workflow materialization changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'ci: scope and deduplicate factory validations'
+          git push origin HEAD:ci/queue-control
