@@ -26,8 +26,7 @@ STOP_TIMEOUT_SECONDS = 20
 ALLOWED_SERVER_COMMANDS = frozenset(
     {
         "forceload add 159 160 161 160",
-        "forceload remove 161 160",
-        "forceload add 161 160",
+        "forceload remove 159 160 161 160",
         "i10probe setup",
         "i10probe status",
         "i10probe break_required_part",
@@ -342,15 +341,15 @@ def _formed(marker: dict[str, object], revision: int | None = None) -> bool:
     )
 
 
-def _pending_unavailable(marker: dict[str, object], revision: int) -> bool:
+def _fully_unloaded(marker: dict[str, object]) -> bool:
     return (
         marker["validation"] == "UNAVAILABLE"
-        and marker["runtime"] == "PENDING_REVALIDATION"
-        and marker["revision"] == revision
-        and marker["sentinel"] == "minecraft:diamond"
-        and marker["count"] == 1
+        and marker["runtime"] == "UNFORMED"
+        and marker["revision"] == 0
+        and marker["sentinel"] == "empty"
+        and marker["count"] == 0
         and marker["capability"] is False
-        and marker["last_known_formed"] is True
+        and marker["last_known_formed"] is False
     )
 
 
@@ -409,18 +408,19 @@ def run_acceptance(project_root: Path | str, workspace: Path | str | None = None
             if revision <= 0:
                 raise AcceptanceError(f"phase1: formation revision must be positive: {setup}")
 
-            session.send("forceload remove 161 160")
-            unavailable = session.poll_status(
-                lambda marker: _pending_unavailable(marker, revision),
-                "UNAVAILABLE + PENDING_REVALIDATION after adjacent chunk unload",
+            session.send("save-all flush")
+            session.send("forceload remove 159 160 161 160")
+            unloaded = session.poll_status(
+                _fully_unloaded,
+                "physical unload of the complete multiblock footprint",
             )
-            session.send("forceload add 161 160")
+            session.send("forceload add 159 160 161 160")
             recovered = session.poll_status(
                 lambda marker: _formed(marker, revision),
-                "FORMED recovery with same revision/sentinel after adjacent chunk reload",
+                "FORMED recovery with same revision/sentinel after real footprint reload",
             )
             session.send("save-all flush")
-            return revision, {"setup": setup, "unavailable": unavailable, "recovered": recovered}
+            return revision, {"setup": setup, "unloaded": unloaded, "recovered": recovered}
 
         revision, phase1_data = _run_phase(project, output, "phase1-unload-reload", phase1)
         summary["phases"].append({"phase": "unload_reload", **phase1_data})
