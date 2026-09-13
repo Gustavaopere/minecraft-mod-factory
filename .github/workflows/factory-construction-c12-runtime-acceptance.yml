@@ -40,7 +40,8 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Run C12 RED runtime acceptance contracts
+      - name: Run C12 preflight contracts
         run: |
           python3 -m unittest construction/tests/test_c12_runtime_acceptance.py -v
           python3 -m unittest construction/tests/test_c12_runtime_acceptance_security.py -v
+          python3 -m unittest construction/tests/test_c12_workflow_contract.py -v
