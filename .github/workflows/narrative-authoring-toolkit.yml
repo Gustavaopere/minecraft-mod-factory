@@ -1,0 +1,32 @@
+name: Narrative Authoring Toolkit
+
+on:
+  pull_request:
+    paths:
+      - 'narrative/**'
+      - 'skills/README.md'
+      - 'skills/ROUTER.md'
+      - '.github/workflows/narrative-authoring-toolkit.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'narrative/**'
+      - 'skills/README.md'
+      - 'skills/ROUTER.md'
+      - '.github/workflows/narrative-authoring-toolkit.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  narrative-tooling:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Unit tests
+        run: python3 -m unittest discover -s narrative/tests -p 'test_*.py' -v
+      - name: Example profile smoke
+        run: |
+          python3 narrative/tooling/validate_story.py --profile narrative/profiles/example.json --root narrative/templates
+          python3 narrative/tooling/story_inventory.py --profile narrative/profiles/example.json --root narrative/templates --format json > /tmp/narrative-inventory.json
