@@ -1,10 +1,9 @@
 {
   "schema_version": 1,
-  "status": "MANUAL_URGENT_PENDING_MODLIST_STABILIZATION",
+  "status": "MODLIST_STABILIZED_AWAITING_RUNTIME_CAPTURE",
   "blocks_c11_completion": true,
-  "reason": "physical modlist changes are still pending; capture would be disposable evidence",
+  "reason": "physical modlist declared stable; runtime registry capture is still pending",
   "required_before_completion": [
-    "stabilize physical modlist",
     "run the C4 registry probe on the stabilized modpack",
     "produce c11-runtime-snapshot.json",
     "compose and validate registry.json through C4"
@@ -15,5 +14,5 @@
     "jar_sha256": "ea9d2b89b3ae774e6e3fcc0b9b8a4a48a62ffa95c961cd41becff45c6f9ed943"
   },
   "last_observed_physical_modlist_sha256": "7c0a23d6013101383d196526e4b6ba6940fb54a0fed10eaed5956ab015cfcc00",
-  "requires_recapture_after_modlist_stabilizes": true
+  "requires_recapture_after_modlist_stabilizes": false
 }
