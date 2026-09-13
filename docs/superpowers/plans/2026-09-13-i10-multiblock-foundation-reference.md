@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build an independent I10 Golden proving controller, parts, orientation, formation, invalidation, unload/reload, IO capability, visual formed state, I6 asset handoff, GameTest, persistence, and multiplayer on Minecraft 1.21.1 / NeoForge 21.1.248 / Java 21.
+**Goal:** Build an independent I10 Golden proving controller, parts, orientation, formation, invalidation, unload/reload, IO capability, visual formed state, I6 asset handoff, GameTest, persistence, and multiplayer on Minecraft 1.21.1 / Java 21 with the cycle-resolved stable NeoForge 21.1.x target (`21.1.250` for this implementation cycle).
 
 **Architecture:** Generate a fresh I3 scaffold for `i10_multiblock` (`dev.example.i10multiblock`) and apply an I10-owned deterministic overlay. The controller is the sole gameplay/storage authority. A fixed 3×3×3 hollow pattern uses one canonical rotation transform. A rear IO port delegates controller-owned item capability only while controller/revision/state are valid. Runtime state is `UNFORMED`, `PENDING_REVALIDATION`, or `FORMED`; unavailable chunks suspend operation instead of dissolving the structure. I6 schema v2 remains the only asset-handoff schema.
 
-**Tech Stack:** Python 3 unittest/tooling; Java 21; Minecraft 1.21.1; NeoForge 21.1.248; NeoGradle userdev 7.1.26 inherited from I3; NeoForge BlockEntity/item capabilities; GameTest; existing I5 harness; existing I6 validator; GitHub Actions.
+**Tech Stack:** Python 3 unittest/tooling; Java 21; Minecraft 1.21.1; latest stable NeoForge 21.1.x compatible with Minecraft 1.21.1, resolved and pinned exactly per implementation/validation cycle (`21.1.250` for this cycle); NeoGradle userdev 7.1.26 inherited from I3; NeoForge BlockEntity/item capabilities; GameTest; existing I5 harness; existing I6 validator; GitHub Actions.
 
 **Spec:** `docs/superpowers/specs/2026-09-13-i10-multiblock-foundation-reference-design.md`
 
