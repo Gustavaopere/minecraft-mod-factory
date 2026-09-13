@@ -27,6 +27,16 @@ def load_c4_registry():
     return _load_path(C4_REGISTRY, "construction_c11_c4_registry")
 
 
+def _load_runtime_snapshot(path: Path) -> dict:
+    path = Path(path)
+    if not path.is_file():
+        raise ValueError(f"runtime snapshot does not exist: {path}")
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"runtime snapshot is not valid JSON: {exc}") from exc
+
+
 def compose_registry(
     physical_modlist: Path,
     mods_dir: Path,
@@ -50,8 +60,8 @@ def compose_registry(
     if missing:
         raise ValueError("missing physical top-level JARs: " + ", ".join(missing))
 
+    runtime = _load_runtime_snapshot(runtime_snapshot)
     static_indexes = [c4.index_jar_file(mods_dir / name) for name in jar_names]
-    runtime = json.loads(runtime_snapshot.read_text(encoding="utf-8"))
     registry = c4.build_modpack_registry(physical, static_indexes, runtime)
     errors = c4.validate_modpack_registry(registry)
     if errors:
