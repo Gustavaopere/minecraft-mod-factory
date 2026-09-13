@@ -1,0 +1,32 @@
+name: Mod Engineering I2 Modlist Catalog
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'engineering/catalog/physical-modlist/**'
+      - 'engineering/tooling/import-physical-modlist.py'
+      - 'engineering/tests/test_i2_modlist_catalog.py'
+      - 'engineering/tests/fixtures/modlist-i2-sample.txt'
+      - '.github/workflows/mod-engineering-i2-modlist-catalog.yml'
+  pull_request:
+    paths:
+      - 'engineering/catalog/physical-modlist/**'
+      - 'engineering/tooling/import-physical-modlist.py'
+      - 'engineering/tests/test_i2_modlist_catalog.py'
+      - 'engineering/tests/fixtures/modlist-i2-sample.txt'
+      - '.github/workflows/mod-engineering-i2-modlist-catalog.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  modlist-catalog-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run I2 contract tests
+        run: python3 -m unittest engineering/tests/test_i2_modlist_catalog.py
+      - name: Validate normalized physical snapshot and provider catalog
+        run: python3 engineering/tooling/import-physical-modlist.py --check engineering/catalog/physical-modlist/snapshot-2026-09-09.json --providers engineering/catalog/physical-modlist/providers-2026-09-09.json
