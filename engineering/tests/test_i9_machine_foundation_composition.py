@@ -106,7 +106,7 @@ class I9MachineFoundationCompositionTest(unittest.TestCase):
 
     def test_zero_and_multiple_constructor_anchor_matches_fail_closed(self):
         module = load_materializer()
-        cases = (("missing-constructor-anchor", "replacement"), ("    }\n", "    }\n"))
+        cases = (("missing-constructor-anchor", "replacement"), ("\n", "\n"))
         for anchor, replacement in cases:
             with self.subTest(anchor=anchor):
                 manifest = canonical_manifest()
