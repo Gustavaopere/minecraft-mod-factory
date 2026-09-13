@@ -208,11 +208,11 @@ ObjToSchematic remains a candidate manual smoke until fresh official evidence an
 
 C11 Complex Modded Golden is the offline integration Golden over the existing C2/C4/C5/C6/C7/C8 authorities. It does not create a new registry, palette engine, renderer, exporter, provider runtime or live-world acceptance authority.
 
-The current execution state is `MANUAL_URGENT_PENDING_MODLIST_STABILIZATION`: real C4 capture is deferred until the physical modlist stabilizes. While that state exists, only preflight/tooling work may advance: capture-helper hardening, C4 probe build, CI separation, governance/Sonar coverage and documentation.
+The current execution state is `MODLIST_STABILIZED_AWAITING_RUNTIME_CAPTURE`: the physical modlist is stabilized and the real C4 runtime capture is pending. While that state exists, capture-helper/probe/CI/governance work may continue, but no C5 palette, Canonical Build IR, C7/C8 Golden evidence, C6 Sponge v3 artifact or final manifest may be frozen.
 
 A preflight green is readiness evidence, not C11 completion. C11 completion remains fail-closed until a real stabilized C4 registry is captured, validated and frozen; only then may C5 palette resolution, Canonical Build IR, C7 structural evidence, C8 preview/review evidence, C6 Sponge v3 bytes and the final manifest be frozen.
 
-C12 Runtime Acceptance remains a separate later boundary for full-modpack boot, live placement and runtime visual fidelity. STATUS does not advance while C11 is in the deferred preflight state; advancement occurs only after completed C11 evidence is merged and its exact post-merge gates are validated.
+C12 Runtime Acceptance remains a separate later boundary for full-modpack boot, live placement and runtime visual fidelity. STATUS does not advance while C11 is waiting for runtime capture; advancement occurs only after completed C11 evidence is merged and its exact post-merge gates are validated.
 
 ## 13. Runtime/worldgen boundary
 
