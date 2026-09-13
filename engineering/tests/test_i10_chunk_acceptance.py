@@ -18,8 +18,7 @@ WORKFLOW = REPO / ".github/workflows/factory-engineering-i10-multiblock-foundati
 EXPECTED_COMMANDS = frozenset(
     {
         "forceload add 159 160 161 160",
-        "forceload remove 161 160",
-        "forceload add 161 160",
+        "forceload remove 159 160 161 160",
         "i10probe setup",
         "i10probe status",
         "i10probe break_required_part",
@@ -77,7 +76,10 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
 
     def test_server_console_commands_are_closed_allowlist(self) -> None:
         module = load_harness()
+        text = HARNESS.read_text(encoding="utf-8")
         self.assertEqual(EXPECTED_COMMANDS, frozenset(module.ALLOWED_SERVER_COMMANDS))
+        self.assertIn('session.send("forceload remove 159 160 161 160")', text)
+        self.assertNotIn('session.send("forceload remove 161 160")', text)
         self.assertTrue(module.is_allowed_server_command("i10probe status"))
         self.assertFalse(module.is_allowed_server_command("op somebody"))
         self.assertFalse(module.is_allowed_server_command("forceload add 0 0"))
