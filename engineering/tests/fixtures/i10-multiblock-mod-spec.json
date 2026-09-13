@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "identity": {
+    "name": "I10 Multiblock Foundation",
+    "mod_id": "i10_multiblock",
+    "repository": "UNRESOLVED",
+    "target": {
+      "minecraft": "1.21.1",
+      "loader": "neoforge",
+      "neoforge": "21.1.248",
+      "java": 21
+    }
+  },
+  "purpose": {
+    "fantasy": "Synthetic Golden Project used only to verify the canonical I10 Multiblock Foundation reference.",
+    "player_problem": "Prove deterministic fixed-footprint multiblock composition and lifecycle on the canonical NeoForge target.",
+    "core_loop": ["Build structure", "Form controller", "Use rear IO port", "Invalidate and recover structure"],
+    "non_goals": ["Production gameplay", "Recipe processing", "Logistics networks", "Provider-specific animated rendering"]
+  },
+  "dependencies": {
+    "required": ["neoforge"],
+    "optional": [],
+    "incompatible": [],
+    "profiles": []
+  },
+  "systems": {
+    "blocks": ["multiblock_controller", "multiblock_casing", "multiblock_io_port"],
+    "items": ["multiblock_controller_item", "multiblock_casing_item", "multiblock_io_port_item"],
+    "machines": ["fixed_multiblock_reference"],
+    "entities": [],
+    "worldgen": [],
+    "ui": [],
+    "networking": [],
+    "progression": [],
+    "integrations": []
+  },
+  "visual": {
+    "repo_textura_package": "art/golden-samples/i10-multiblock-visual",
+    "provider_profiles": ["java_block_item"],
+    "required_assets": ["controller", "casing", "io_port"],
+    "handoff_manifest": "engineering/tests/golden/i10-multiblock-foundation/asset-handoff.json"
+  },
+  "data": {
+    "persistence": ["controller_formed_history", "formation_revision", "controller_item_storage", "io_port_binding"],
+    "recipes": [],
+    "tags": [],
+    "data_maps": [],
+    "configs": []
+  },
+  "testing": {
+    "unit": "PENDING",
+    "gametest": "PENDING",
+    "client": "PENDING",
+    "dedicated_server": "PENDING",
+    "multiplayer": "PENDING",
+    "performance": "PENDING",
+    "manifest": "UNRESOLVED"
+  },
+  "release": {
+    "versioning": "0.1.0",
+    "distribution": ["UNRESOLVED"],
+    "license": "MIT",
+    "state": "UNRESOLVED"
+  },
+  "evidence": {
+    "state": "UNRESOLVED",
+    "sources": ["synthetic I10 Golden fixture"],
+    "open_questions": ["Runtime repository remains unresolved because this is a reference Golden, not a production mod."]
+  }
+}
