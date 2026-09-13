@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import shutil
@@ -18,6 +19,9 @@ MANIFEST_PATH = GOLDEN_ROOT / "manifest.json"
 HANDOFF_PATH = GOLDEN_ROOT / "asset-handoff.json"
 OVERLAY_ROOT = GOLDEN_ROOT / "overlay"
 MAIN_CLASS_RELATIVE = "src/main/java/dev/example/i10multiblock/I10MultiblockMod.java"
+GAMETEST_STRUCTURE_RELATIVE = "src/main/resources/data/i10_multiblock/structure/multiblock_test.nbt"
+GAMETEST_STRUCTURE_SHA256 = "75b23fb80317d88bbde1a2aff7121cfd903b8a1010878e0327ce26fd4d3f1c99"
+
 CANONICAL_OVERLAY_FILES = (
     ("README.md", "I10-MULTIBLOCK-FOUNDATION.md"),
     ("src/main/java/dev/example/i10multiblock/multiblock/I10MultiblockContent.java", "src/main/java/dev/example/i10multiblock/multiblock/I10MultiblockContent.java"),
@@ -30,10 +34,15 @@ CANONICAL_OVERLAY_FILES = (
     ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlockEntity.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockControllerBlockEntity.java"),
     ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlock.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlock.java"),
     ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlockEntity.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPortBlockEntity.java"),
+    ("src/main/java/dev/example/i10multiblock/gametest/I10MultiblockGameTests.java", "src/main/java/dev/example/i10multiblock/gametest/I10MultiblockGameTests.java"),
     ("src/main/resources/assets/i10_multiblock/blockstates/multiblock_controller.json", "src/main/resources/assets/i10_multiblock/blockstates/multiblock_controller.json"),
     ("src/main/resources/assets/i10_multiblock/blockstates/multiblock_io_port.json", "src/main/resources/assets/i10_multiblock/blockstates/multiblock_io_port.json"),
     ("src/main/resources/assets/i10_multiblock/blockstates/multiblock_casing.json", "src/main/resources/assets/i10_multiblock/blockstates/multiblock_casing.json"),
+    (GAMETEST_STRUCTURE_RELATIVE, GAMETEST_STRUCTURE_RELATIVE),
 )
+CANONICAL_FILE_SHA256 = {
+    GAMETEST_STRUCTURE_RELATIVE: GAMETEST_STRUCTURE_SHA256,
+}
 CANONICAL_ART_FILES = (
     ("art/golden-samples/i10-multiblock-visual/models/controller_unformed.json", "src/main/resources/assets/i10_multiblock/models/block/controller_unformed.json"),
     ("art/golden-samples/i10-multiblock-visual/models/controller_formed.json", "src/main/resources/assets/i10_multiblock/models/block/controller_formed.json"),
@@ -126,13 +135,20 @@ def _validate_manifest() -> tuple[list[tuple[PurePosixPath, PurePosixPath]], dic
     for index, entry in enumerate(files):
         if not isinstance(entry, dict):
             raise MaterializationError(f"I10 manifest files[{index}] must be an object")
-        _closed_keys(entry, {"source", "destination"}, label=f"I10 manifest files[{index}]")
+        source_hint = entry.get("source")
+        expected_sha256 = CANONICAL_FILE_SHA256.get(source_hint) if isinstance(source_hint, str) else None
+        expected_keys = {"source", "destination"}
+        if expected_sha256 is not None:
+            expected_keys.add("sha256")
+        _closed_keys(entry, expected_keys, label=f"I10 manifest files[{index}]")
         source = _safe_relative(entry["source"], label=f"I10 manifest files[{index}].source")
         destination = _safe_relative(entry["destination"], label=f"I10 manifest files[{index}].destination")
         source_key = source.as_posix()
         destination_key = destination.as_posix()
         if source_key in seen_sources or destination_key in seen_destinations:
             raise MaterializationError("I10 manifest overlay paths must be unique")
+        if expected_sha256 is not None and entry.get("sha256") != expected_sha256:
+            raise MaterializationError(f"I10 manifest SHA-256 mismatch for canonical source: {source_key}")
         seen_sources.add(source_key)
         seen_destinations.add(destination_key)
         declared.append((source_key, destination_key))
@@ -164,7 +180,6 @@ def _validate_handoff_art_files() -> list[tuple[PurePosixPath, PurePosixPath]]:
     artifacts = handoff.get("artifacts")
     if not isinstance(artifacts, list):
         raise MaterializationError("I10 asset handoff artifacts must be an array")
-
     declared: list[tuple[str, str]] = []
     for index, artifact in enumerate(artifacts):
         if not isinstance(artifact, dict):
@@ -178,10 +193,8 @@ def _validate_handoff_art_files() -> list[tuple[PurePosixPath, PurePosixPath]]:
             label=f"I10 asset handoff artifacts[{index}].delivery_path",
         )
         declared.append((source.as_posix(), destination.as_posix()))
-
     if tuple(declared) != CANONICAL_ART_FILES:
         raise MaterializationError("I10 asset handoff cannot delegate art delivery authority")
-
     return [
         (PurePosixPath(source), PurePosixPath(destination))
         for source, destination in CANONICAL_ART_FILES
@@ -202,6 +215,11 @@ def _validate_overlay_source(relative: PurePosixPath) -> Path:
     resolved = current.resolve(strict=True)
     if not _is_within(resolved, overlay_root):
         raise MaterializationError(f"I10 overlay source escapes overlay root: {relative.as_posix()}")
+    expected_sha256 = CANONICAL_FILE_SHA256.get(relative.as_posix())
+    if expected_sha256 is not None:
+        actual_sha256 = hashlib.sha256(resolved.read_bytes()).hexdigest()
+        if actual_sha256 != expected_sha256:
+            raise MaterializationError(f"I10 overlay source SHA-256 mismatch: {relative.as_posix()}")
     return resolved
 
 

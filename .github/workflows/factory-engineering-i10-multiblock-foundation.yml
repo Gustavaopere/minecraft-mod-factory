@@ -56,6 +56,11 @@ jobs:
           cd .factory-ci/i10/generated
           ./gradlew test build --no-daemon
 
+      - name: Run I10 GameTest server
+        run: |
+          cd .factory-ci/i10/generated
+          ./gradlew runGameTestServer --no-daemon
+
       - name: Check whitespace
         if: always()
         run: git diff --check HEAD^
