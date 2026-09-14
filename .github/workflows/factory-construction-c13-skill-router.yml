@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/factory-construction-c13-skill-router.yml'
       - '.github/workflows/factory-sonar-ci.yml'
+      - 'engineering/contracts/target-baseline.json'
       - 'construction/tests/test_c13_*.py'
       - 'construction/tests/test_c9_agent_mcp.py'
       - 'construction/tests/test_c9_mcp_stdio.py'
@@ -35,6 +36,7 @@ on:
     paths:
       - '.github/workflows/factory-construction-c13-skill-router.yml'
       - '.github/workflows/factory-sonar-ci.yml'
+      - 'engineering/contracts/target-baseline.json'
       - 'construction/tests/test_c13_*.py'
       - 'construction/tests/test_c9_agent_mcp.py'
       - 'construction/tests/test_c9_mcp_stdio.py'
