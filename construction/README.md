@@ -161,6 +161,14 @@ C10 defines the external-provider evidence and handoff boundary without expandin
 - ObjToSchematic remains only a candidate manual smoke path until the required fresh official evidence and manual handoff evidence are captured. Discovery alone is not execution proof.
 - C11 remains the complex-modded Golden frontier, C12 remains live/full-modpack runtime acceptance and C13 remains Skill/Router integration. C10 does not pre-empt those authorities.
 
+## C11 scope
+
+C11 Complex Modded Golden remains an evidence-gated offline Golden frontier over the existing I2/C4/C5/C2/C7/C8/C6 authorities. The current state is `SUPER_HYPER_URGENT_FINAL_CONSTRUCTION_PHYSICAL_ACCEPTANCE`. C11 completion is blocked, C12 acceptance is blocked, C13 final acceptance is blocked, and Construction final closeout is blocked.
+
+C12 implementation/preflight may continue and C13 implementation/preflight may continue while the blocker exists. Their preflight surfaces must propagate deferred acceptance honestly: preflight green is readiness evidence, not final acceptance. No synthetic registry, inferred block ID, placeholder palette or fabricated Golden artifact may replace the required physical evidence.
+
+final physical acceptance re-audits and re-hashes the physical modlist, performs a fresh C4 runtime capture against that exact environment, and then freezes evidence-backed C5 palette, C2 Build IR, C7 structural evidence, C8 preview/review evidence, and C6 Sponge v3 bytes before C12 live/runtime acceptance and C13 final routing validation. Closeout order remains `C11 -> C12 -> C13 -> Construction`. `construction/STATUS.md` does not advance until each evidence-gated post-merge closeout is actually proven.
+
 ## Planned pipeline
 
 ```text

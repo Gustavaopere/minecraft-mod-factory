@@ -14,13 +14,23 @@ TEMPLATE_ROOT = REPO_ROOT / "engineering" / "templates" / "neoforge-mod"
 WRAPPER_AUTHORITY = Path(__file__).resolve().parent / "wrapper-authority"
 I1_VALIDATOR = REPO_ROOT / "engineering" / "tooling" / "validate-i1-foundation.py"
 MOD_SPEC_SCHEMA = REPO_ROOT / "engineering" / "schemas" / "mod-spec.schema.json"
+TARGET_BASELINE = REPO_ROOT / "engineering" / "contracts" / "target-baseline.json"
 
-EXPECTED_TARGET = {
-    "minecraft": "1.21.1",
-    "loader": "neoforge",
-    "neoforge": "21.1.248",
-    "java": 21,
-}
+
+def _load_expected_target() -> dict[str, Any]:
+    baseline = json.loads(TARGET_BASELINE.read_text(encoding="utf-8"))
+    target = baseline.get("target")
+    if not isinstance(target, dict):
+        raise ValueError(f"campaign target baseline is invalid: {TARGET_BASELINE}")
+    return {
+        "minecraft": target.get("minecraft"),
+        "loader": target.get("loader"),
+        "neoforge": target.get("neoforge"),
+        "java": target.get("java"),
+    }
+
+
+EXPECTED_TARGET = _load_expected_target()
 REQUIRED_CONFIG_KEYS = (
     "project_name",
     "java_package",

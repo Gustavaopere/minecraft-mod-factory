@@ -1,0 +1,25 @@
+{
+  "schema_version": 2,
+  "status": "SUPER_HYPER_URGENT_FINAL_CONSTRUCTION_PHYSICAL_ACCEPTANCE",
+  "blocks_c11_completion": true,
+  "blocks_c12_acceptance": true,
+  "blocks_c13_final_acceptance": true,
+  "blocks_construction_final_acceptance": true,
+  "reason": "Construction implementation/preflight may continue, but final physical modpack evidence is deferred to the final acceptance campaign",
+  "required_before_final_acceptance": [
+    "re-audit and re-hash the exact physical modlist",
+    "run the C4 registry probe against that exact physical environment",
+    "freeze evidence-backed C5/C2/C7/C8/C6 C11 outputs",
+    "execute C12 full physical runtime acceptance",
+    "validate C13 routing against accepted C11/C12 capabilities",
+    "close C11 then C12 then C13 then Construction with post-merge evidence"
+  ],
+  "probe": {
+    "artifact_name": "c11-registry-probe",
+    "workflow_run_id": 34735133220,
+    "jar_sha256": "ea9d2b89b3ae774e6e3fcc0b9b8a4a48a62ffa95c961cd41becff45c6f9ed943"
+  },
+  "last_observed_physical_modlist_sha256": "7c0a23d6013101383d196526e4b6ba6940fb54a0fed10eaed5956ab015cfcc00",
+  "final_gate_requires_fresh_physical_modlist_rehash": true,
+  "final_gate_requires_fresh_c4_runtime_capture": true
+}

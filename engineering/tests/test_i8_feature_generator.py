@@ -107,7 +107,13 @@ class I8FeatureGeneratorCoreContractTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 module.plan_feature_set(project, request)
 
-            properties.write_text(original.replace("neo_version=21.1.248", "neo_version=21.1.247"), encoding="utf-8")
+            expected_neoforge = request["target"]["neoforge"]
+            mismatched = original.replace(
+                f"neo_version={expected_neoforge}",
+                "neo_version=0.0.0",
+            )
+            self.assertNotEqual(original, mismatched)
+            properties.write_text(mismatched, encoding="utf-8")
             with self.assertRaises(ValueError):
                 module.plan_feature_set(project, request)
 

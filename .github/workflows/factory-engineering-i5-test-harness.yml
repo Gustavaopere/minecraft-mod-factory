@@ -6,6 +6,7 @@ on:
       - main
       - feat/f5-e5-i5-test-harness-migration
     paths:
+      - 'engineering/contracts/target-baseline.json'
       - 'engineering/tests/test_i5_test_harness.py'
       - 'engineering/tooling/test-harness/**'
       - 'engineering/tooling/validate-i1-foundation.py'
@@ -17,6 +18,7 @@ on:
     branches:
       - main
     paths:
+      - 'engineering/contracts/target-baseline.json'
       - 'engineering/tests/test_i5_test_harness.py'
       - 'engineering/tooling/test-harness/**'
       - 'engineering/tooling/validate-i1-foundation.py'
@@ -44,6 +46,7 @@ jobs:
         run: >-
           git diff --check HEAD^ --
           .github/workflows/factory-engineering-i5-test-harness.yml
+          engineering/contracts/target-baseline.json
           engineering/tests/test_i5_test_harness.py
           engineering/tooling/test-harness
           engineering/tooling/validate-i1-foundation.py

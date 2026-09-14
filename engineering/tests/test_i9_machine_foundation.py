@@ -13,6 +13,7 @@ SCAFFOLD_CONFIG = ROOT / "engineering" / "tests" / "fixtures" / "i9-machine-scaf
 I1_VALIDATOR = ROOT / "engineering" / "tooling" / "validate-i1-foundation.py"
 SCHEMA = ROOT / "engineering" / "schemas" / "mod-spec.schema.json"
 I9_WORKFLOW = ROOT / ".github" / "workflows" / "factory-engineering-i9-machine-foundation.yml"
+TARGET_BASELINE = ROOT / "engineering" / "contracts" / "target-baseline.json"
 MACHINE_SOURCE_ROOT = OVERLAY / "src/main/java/dev/example/i9machine/machine"
 MACHINE_SOURCES = {
     "I9MachineContent.java": ("DeferredRegister", "registerBlockEntity", "Capabilities.ItemHandler.BLOCK", "Capabilities.EnergyStorage.BLOCK"),
@@ -48,15 +49,9 @@ class I9MachineFoundationContractTest(unittest.TestCase):
     def test_i9_fixtures_target_exact_canonical_stack(self):
         mod_spec = json.loads(MOD_SPEC.read_text(encoding="utf-8"))
         config = json.loads(SCAFFOLD_CONFIG.read_text(encoding="utf-8"))
-        self.assertEqual(
-            {
-                "minecraft": "1.21.1",
-                "loader": "neoforge",
-                "neoforge": "21.1.248",
-                "java": 21,
-            },
-            mod_spec["identity"]["target"],
-        )
+        baseline = json.loads(TARGET_BASELINE.read_text(encoding="utf-8"))["target"]
+        expected_target = {key: value for key, value in baseline.items() if key != "neoforge_line"}
+        self.assertEqual(expected_target, mod_spec["identity"]["target"])
         self.assertEqual("i9_machine", mod_spec["identity"]["mod_id"])
         self.assertEqual("dev.example.i9machine", config["java_package"])
         self.assertEqual("I9MachineMod", config["main_class"])

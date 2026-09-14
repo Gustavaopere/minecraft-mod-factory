@@ -5,6 +5,7 @@ import sys
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+TARGET_BASELINE = ROOT / "engineering/contracts/target-baseline.json"
 
 EXPECTED_FILES = [
     "engineering/README.md",
@@ -13,6 +14,7 @@ EXPECTED_FILES = [
     "engineering/DIAGNOSTICS.md",
     "engineering/TESTING.md",
     "engineering/catalog/sources/SOURCE-REGISTRY.json",
+    "engineering/contracts/target-baseline.json",
     "engineering/tooling/validate-e1-s1-governance.py",
     "skills/README.md",
     "skills/ROUTER.md",
@@ -47,11 +49,13 @@ class GovernanceMigrationTests(unittest.TestCase):
         )
         self.assertEqual("art/", art["locator"]["authority_root"])
 
-    def test_version_authority_matches_physical_baseline(self):
+    def test_version_authority_matches_campaign_baseline(self):
+        baseline = json.loads(TARGET_BASELINE.read_text(encoding="utf-8"))["target"]
         text = (ROOT / "skills/VERSION-AUTHORITY.md").read_text(encoding="utf-8")
-        self.assertIn("Minecraft: **1.21.1**", text)
-        self.assertIn("NeoForge: **21.1.248**", text)
-        self.assertIn("Java: **21**", text)
+        self.assertIn(f"Minecraft: **{baseline['minecraft']}**", text)
+        self.assertIn(f"NeoForge: **{baseline['neoforge']}**", text)
+        self.assertIn(f"Java: **{baseline['java']}**", text)
+        self.assertIn("latest-compatible-at-campaign-start", text)
         self.assertIn("modlist física", text)
 
     def test_routing_keeps_runtime_outside_factory(self):

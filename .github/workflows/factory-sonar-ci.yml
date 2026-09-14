@@ -64,11 +64,79 @@ jobs:
           set -euo pipefail
           coverage_started=0
 
-          if [[ -f engineering/tooling/provider-catalog/validate_provider_catalog.py && -f engineering/tests/test_i7_provider_catalog.py ]]; then
+          if [[ -f engineering/tooling/resolve-neoforge-campaign-target.py && -f engineering/tests/test_neoforge_campaign_target.py ]]; then
             python3 -m coverage run \
               --branch \
-              --source=engineering/tooling/provider-catalog \
-              -m unittest engineering/tests/test_i7_provider_catalog.py
+              --include=engineering/tooling/resolve-neoforge-campaign-target.py \
+              -m unittest engineering/tests/test_neoforge_campaign_target.py
+            coverage_started=1
+          fi
+
+          if [[ -f engineering/tooling/validate-e1-s1-governance.py && -f engineering/tests/test_e1_s1_governance.py ]]; then
+            if [[ "$coverage_started" -eq 0 ]]; then
+              python3 -m coverage run \
+                --branch \
+                --include=engineering/tooling/validate-e1-s1-governance.py \
+                -m unittest engineering/tests/test_e1_s1_governance.py
+            else
+              python3 -m coverage run \
+                --append \
+                --branch \
+                --include=engineering/tooling/validate-e1-s1-governance.py \
+                -m unittest engineering/tests/test_e1_s1_governance.py
+            fi
+            coverage_started=1
+          fi
+
+          if [[ -f engineering/tooling/scaffolder/scaffold_mod.py && -f engineering/tests/test_i3_mod_scaffolder.py && -f engineering/tests/test_i3_security_review.py ]]; then
+            if [[ "$coverage_started" -eq 0 ]]; then
+              python3 -m coverage run \
+                --branch \
+                --source=engineering/tooling/scaffolder \
+                -m unittest \
+                engineering/tests/test_i3_mod_scaffolder.py \
+                engineering/tests/test_i3_security_review.py
+            else
+              python3 -m coverage run \
+                --append \
+                --branch \
+                --source=engineering/tooling/scaffolder \
+                -m unittest \
+                engineering/tests/test_i3_mod_scaffolder.py \
+                engineering/tests/test_i3_security_review.py
+            fi
+            coverage_started=1
+          fi
+
+          if [[ -f engineering/tooling/test-harness/run_test_harness.py && -f engineering/tests/test_i5_test_harness.py ]]; then
+            if [[ "$coverage_started" -eq 0 ]]; then
+              python3 -m coverage run \
+                --branch \
+                --source=engineering/tooling/test-harness \
+                -m unittest engineering/tests/test_i5_test_harness.py
+            else
+              python3 -m coverage run \
+                --append \
+                --branch \
+                --source=engineering/tooling/test-harness \
+                -m unittest engineering/tests/test_i5_test_harness.py
+            fi
+            coverage_started=1
+          fi
+
+          if [[ -f engineering/tooling/provider-catalog/validate_provider_catalog.py && -f engineering/tests/test_i7_provider_catalog.py ]]; then
+            if [[ "$coverage_started" -eq 0 ]]; then
+              python3 -m coverage run \
+                --branch \
+                --source=engineering/tooling/provider-catalog \
+                -m unittest engineering/tests/test_i7_provider_catalog.py
+            else
+              python3 -m coverage run \
+                --append \
+                --branch \
+                --source=engineering/tooling/provider-catalog \
+                -m unittest engineering/tests/test_i7_provider_catalog.py
+            fi
             coverage_started=1
           fi
 
@@ -156,6 +224,40 @@ jobs:
                 --branch \
                 --source=narrative/tooling \
                 -m unittest discover -s narrative/tests -p 'test_*.py' -v
+            fi
+            coverage_started=1
+          fi
+
+          if [[ -f construction/fixtures/complex-modded-golden/capture_registry.py && -f construction/tests/test_c11_complex_modded_golden.py && -f construction/tests/test_c11_capture_path_security.py ]]; then
+            if [[ "$coverage_started" -eq 0 ]]; then
+              python3 -m coverage run \
+                --branch \
+                --source=construction/fixtures/complex-modded-golden \
+                -m unittest \
+                construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_requires_every_physical_top_level_jar \
+                construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_rejects_missing_runtime_snapshot_stably \
+                construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_rejects_malformed_runtime_json_stably \
+                construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_rejects_output_outside_workspace \
+                construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_delegates_physical_sha_mismatch_to_c4 \
+                construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_delegates_target_mismatch_to_c4 \
+                construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_cli_writes_canonical_revalidated_registry \
+                construction.tests.test_c11_capture_path_security.ConstructionC11CapturePathSecurityTest.test_cli_rejects_physical_modlist_parent_traversal \
+                construction.tests.test_c11_capture_path_security.ConstructionC11CapturePathSecurityTest.test_cli_rejects_runtime_snapshot_parent_traversal
+            else
+              python3 -m coverage run \
+                --append \
+                --branch \
+                --source=construction/fixtures/complex-modded-golden \
+                -m unittest \
+                construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_requires_every_physical_top_level_jar \
+                construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_rejects_missing_runtime_snapshot_stably \
+                construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_rejects_malformed_runtime_json_stably \
+                construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_rejects_output_outside_workspace \
+                construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_delegates_physical_sha_mismatch_to_c4 \
+                construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_helper_delegates_target_mismatch_to_c4 \
+                construction.tests.test_c11_complex_modded_golden.ConstructionC11ComplexModdedGoldenTest.test_capture_cli_writes_canonical_revalidated_registry \
+                construction.tests.test_c11_capture_path_security.ConstructionC11CapturePathSecurityTest.test_cli_rejects_physical_modlist_parent_traversal \
+                construction.tests.test_c11_capture_path_security.ConstructionC11CapturePathSecurityTest.test_cli_rejects_runtime_snapshot_parent_traversal
             fi
             coverage_started=1
           fi
