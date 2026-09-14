@@ -60,6 +60,19 @@ class C12RuntimeAcceptanceTest(unittest.TestCase):
     def test_runtime_target_matches_campaign_authority(self):
         self.assertEqual(C12_TARGET, TARGET)
 
+    def test_schema_target_matches_campaign_authority(self):
+        schema = json.loads(
+            (ROOT / "construction/schemas/runtime-acceptance-report.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        properties = schema["properties"]["target"]["properties"]
+        schema_target = {
+            key: properties[key]["const"]
+            for key in ("minecraft", "loader", "neoforge", "java")
+        }
+        self.assertEqual(schema_target, TARGET)
+
     def test_preflight_ready_is_not_acceptance(self):
         report = _preflight_report()
         self.assertEqual(report["overall_readiness"], "PREFLIGHT_READY")
