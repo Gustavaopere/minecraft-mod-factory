@@ -145,19 +145,9 @@ def main() -> int:
         description="Resolve the latest stable NeoForge release compatible with a supported Minecraft campaign target."
     )
     parser.add_argument("--minecraft", default="1.21.1")
-    parser.add_argument(
-        "--metadata-file",
-        help="Optional local Maven metadata XML for deterministic/offline verification instead of network resolution.",
-    )
     args = parser.parse_args()
 
-    if args.metadata_file:
-        with open(args.metadata_file, "r", encoding="utf-8") as handle:
-            versions = parse_maven_versions(handle.read())
-        version = select_latest_compatible(versions, args.minecraft)
-    else:
-        version = resolve_latest(args.minecraft)
-
+    version = resolve_latest(args.minecraft)
     line = MINECRAFT_NEOFORGE_LINES[args.minecraft]
     print(
         json.dumps(
