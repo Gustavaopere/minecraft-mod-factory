@@ -97,6 +97,40 @@ class NpcVisualAssetManifestTest(unittest.TestCase):
             self.assertTrue(any("policy height 128" in error for error in errors))
             self.assertTrue(any("native_target_resolution=true" in error for error in errors))
 
+    def test_final_portrait_is_checked_against_master_policy_even_when_final_flag_is_false(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            asset_root = root / "campaign" / "assets" / "npcs"
+            asset_root.mkdir(parents=True)
+            image = asset_root / "npc.png"
+            write_png(image, 64, 64)
+            manifest = {
+                "schema_version": 1,
+                "asset_root": "campaign/assets/npcs",
+                "policy": {
+                    "portrait_master": {"width": 128, "height": 128, "format": "PNG", "require_native_target_resolution": True}
+                },
+                "assets": [
+                    {
+                        "asset_kind": "portrait",
+                        "status": "FINAL",
+                        "path": "campaign/assets/npcs/npc.png",
+                        "width": 64,
+                        "height": 64,
+                        "format": "PNG",
+                        "sha256": digest(image),
+                        "native_target_resolution": False,
+                        "final_asset": False,
+                    }
+                ],
+            }
+            manifest_path = root / "manifest.json"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            errors = validator.validate_manifest(manifest_path, root)
+            self.assertTrue(any("policy width 128" in error for error in errors))
+            self.assertTrue(any("policy height 128" in error for error in errors))
+            self.assertTrue(any("native_target_resolution=true" in error for error in errors))
+
     def test_asset_path_cannot_escape_asset_root(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -124,6 +158,50 @@ class NpcVisualAssetManifestTest(unittest.TestCase):
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
             errors = validator.validate_manifest(manifest_path, root)
             self.assertTrue(any("path must stay under asset_root" in error for error in errors))
+
+    def test_absolute_asset_root_is_rejected_even_when_inside_repo_root(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            asset_root = root / "campaign" / "assets" / "npcs"
+            asset_root.mkdir(parents=True)
+            manifest = {
+                "schema_version": 1,
+                "asset_root": str(asset_root),
+                "assets": [],
+            }
+            manifest_path = root / "manifest.json"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            errors = validator.validate_manifest(manifest_path, root)
+            self.assertTrue(any("asset_root must be repository-relative" in error for error in errors))
+
+    def test_absolute_asset_path_is_rejected_even_when_inside_asset_root(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            asset_root = root / "campaign" / "assets" / "npcs"
+            asset_root.mkdir(parents=True)
+            image = asset_root / "npc.png"
+            write_png(image, 16, 16)
+            manifest = {
+                "schema_version": 1,
+                "asset_root": "campaign/assets/npcs",
+                "assets": [
+                    {
+                        "asset_kind": "portrait",
+                        "status": "CANDIDATE",
+                        "path": str(image),
+                        "width": 16,
+                        "height": 16,
+                        "format": "PNG",
+                        "sha256": digest(image),
+                        "native_target_resolution": False,
+                        "final_asset": False,
+                    }
+                ],
+            }
+            manifest_path = root / "manifest.json"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            errors = validator.validate_manifest(manifest_path, root)
+            self.assertTrue(any("path must be repository-relative" in error for error in errors))
 
 
 if __name__ == "__main__":
