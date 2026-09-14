@@ -55,6 +55,7 @@ dependencies {
 
 dependencyLocking {
     lockAllConfigurations()
+    ignoredDependencies.add('io.netty:netty-transport-native-epoll')
 }
 
 tasks.named('wrapper', Wrapper).configure {
