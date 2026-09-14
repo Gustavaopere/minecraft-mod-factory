@@ -187,18 +187,6 @@ Current preflight proves only contract readiness: target/I5/evidence-packaging m
 
 The final physical report authority is `construction/fixtures/complex-modded-golden/c12-runtime-acceptance-report.json`. It may become accepted only after C11 is physically accepted, the shared blocker is cleared, every required physical fingerprint is present, every required C12 stage passes, and the evidence is produced by the exact Minecraft 1.21.1 / NeoForge 21.1.248 / Java 21 environment. Until then, `construction/STATUS.md` remains at the last completed Construction phase.
 
-## C13 scope
-
-C13 integrates Construction into the existing shared Factory skill/router authority without creating a second router. `skills/ROUTER.md` remains the canonical human-facing router, `engineering/REPO-ROUTING.md` remains the repository/authority boundary contract, `skills/VERSION-AUTHORITY.md` remains the fail-closed version-evidence order, and `skills/USER-GUIDED-WORKFLOW.md` remains authority for one verifiable manual action at a time.
-
-The machine-readable routing layer is `skills/capabilities/capability-index.json` with its closed schema and `skills/scripts/capability_router.py` validator/resolver. The index records deterministic intent routes, owning authorities, canonical entrypoints, evidence requirements, readiness and acceptance independently, blocker propagation, version-proof requirements, fallback policy and forbidden promotions. It is routing metadata only; it does not duplicate mutable C11/C12 evidence or supersede the existing skill validator.
-
-C13 preflight is intentionally allowed to become green while final acceptance remains blocked. Proven offline routes may remain `AVAILABLE / ACCEPTED`; C11, C12 and C13 routes remain `PREFLIGHT_READY / BLOCKED` while `SUPER_HYPER_URGENT_FINAL_CONSTRUCTION_PHYSICAL_ACCEPTANCE` is active. Unsupported or version-unproven provider behavior fails closed instead of silently selecting a provider, converting source formats or promoting physical presence into API proof.
-
-`.github/workflows/factory-construction-c13-skill-router.yml` separates `c13-router-preflight` from `c13-final-acceptance`. The preflight validates schema/index determinism, capability-path integrity, `REFERENCE_ONLY` protection, provider/version evidence semantics, the existing skill repository, C9/C10/C12 regressions, the shared final blocker, Sonar governance and whitespace. The final job checks the shared blocker state-first before consulting the C12 final report or requiring accepted C11/C12/C13 routes.
-
-A green C13 preflight is readiness evidence only. C13 final acceptance requires the final physical blocker to be cleared authoritatively, C11 completion and C12 physical runtime acceptance to be accepted, the current capability index to validate against those accepted authorities, required routes to be `AVAILABLE / ACCEPTED`, governance/Sonar to pass, and post-merge validation to complete. Until then, `construction/STATUS.md` remains at the last actually completed Construction phase.
-
 ## Planned pipeline
 
 ```text

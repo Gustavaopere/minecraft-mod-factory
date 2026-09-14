@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "resolution_policy": "latest-compatible-at-campaign-start",
+  "resolution_source": "https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml",
+  "target": {
+    "minecraft": "1.21.1",
+    "loader": "neoforge",
+    "neoforge_line": "21.1",
+    "neoforge": "21.1.250",
+    "java": 21
+  }
+}

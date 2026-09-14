@@ -33,7 +33,7 @@
           "properties": {
             "minecraft": {"type": "string", "const": "1.21.1"},
             "loader": {"type": "string", "const": "neoforge"},
-            "neoforge": {"type": "string", "const": "21.1.248"},
+            "neoforge": {"type": "string", "const": "21.1.250"},
             "java": {"type": "integer", "const": 21}
           }
         }

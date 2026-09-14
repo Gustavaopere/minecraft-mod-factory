@@ -64,11 +64,79 @@ jobs:
           set -euo pipefail
           coverage_started=0
 
-          if [[ -f engineering/tooling/provider-catalog/validate_provider_catalog.py && -f engineering/tests/test_i7_provider_catalog.py ]]; then
+          if [[ -f engineering/tooling/resolve-neoforge-campaign-target.py && -f engineering/tests/test_neoforge_campaign_target.py ]]; then
             python3 -m coverage run \
               --branch \
-              --source=engineering/tooling/provider-catalog \
-              -m unittest engineering/tests/test_i7_provider_catalog.py
+              --include=engineering/tooling/resolve-neoforge-campaign-target.py \
+              -m unittest engineering/tests/test_neoforge_campaign_target.py
+            coverage_started=1
+          fi
+
+          if [[ -f engineering/tooling/validate-e1-s1-governance.py && -f engineering/tests/test_e1_s1_governance.py ]]; then
+            if [[ "$coverage_started" -eq 0 ]]; then
+              python3 -m coverage run \
+                --branch \
+                --include=engineering/tooling/validate-e1-s1-governance.py \
+                -m unittest engineering/tests/test_e1_s1_governance.py
+            else
+              python3 -m coverage run \
+                --append \
+                --branch \
+                --include=engineering/tooling/validate-e1-s1-governance.py \
+                -m unittest engineering/tests/test_e1_s1_governance.py
+            fi
+            coverage_started=1
+          fi
+
+          if [[ -f engineering/tooling/scaffolder/scaffold_mod.py && -f engineering/tests/test_i3_mod_scaffolder.py && -f engineering/tests/test_i3_security_review.py ]]; then
+            if [[ "$coverage_started" -eq 0 ]]; then
+              python3 -m coverage run \
+                --branch \
+                --source=engineering/tooling/scaffolder \
+                -m unittest \
+                engineering/tests/test_i3_mod_scaffolder.py \
+                engineering/tests/test_i3_security_review.py
+            else
+              python3 -m coverage run \
+                --append \
+                --branch \
+                --source=engineering/tooling/scaffolder \
+                -m unittest \
+                engineering/tests/test_i3_mod_scaffolder.py \
+                engineering/tests/test_i3_security_review.py
+            fi
+            coverage_started=1
+          fi
+
+          if [[ -f engineering/tooling/test-harness/run_test_harness.py && -f engineering/tests/test_i5_test_harness.py ]]; then
+            if [[ "$coverage_started" -eq 0 ]]; then
+              python3 -m coverage run \
+                --branch \
+                --source=engineering/tooling/test-harness \
+                -m unittest engineering/tests/test_i5_test_harness.py
+            else
+              python3 -m coverage run \
+                --append \
+                --branch \
+                --source=engineering/tooling/test-harness \
+                -m unittest engineering/tests/test_i5_test_harness.py
+            fi
+            coverage_started=1
+          fi
+
+          if [[ -f engineering/tooling/provider-catalog/validate_provider_catalog.py && -f engineering/tests/test_i7_provider_catalog.py ]]; then
+            if [[ "$coverage_started" -eq 0 ]]; then
+              python3 -m coverage run \
+                --branch \
+                --source=engineering/tooling/provider-catalog \
+                -m unittest engineering/tests/test_i7_provider_catalog.py
+            else
+              python3 -m coverage run \
+                --append \
+                --branch \
+                --source=engineering/tooling/provider-catalog \
+                -m unittest engineering/tests/test_i7_provider_catalog.py
+            fi
             coverage_started=1
           fi
 
@@ -112,6 +180,22 @@ jobs:
             coverage_started=1
           fi
 
+          if [[ -f migration/full-skill-migration/check_whitespace.py && -f migration/full-skill-migration/test_markdown_whitespace_policy.py ]]; then
+            if [[ "$coverage_started" -eq 0 ]]; then
+              python3 -m coverage run \
+                --branch \
+                --include=migration/full-skill-migration/check_whitespace.py \
+                migration/full-skill-migration/test_markdown_whitespace_policy.py
+            else
+              python3 -m coverage run \
+                --append \
+                --branch \
+                --include=migration/full-skill-migration/check_whitespace.py \
+                migration/full-skill-migration/test_markdown_whitespace_policy.py
+            fi
+            coverage_started=1
+          fi
+
           if compgen -G 'construction/tests/test_c10_*.py' >/dev/null && [[ -d construction/providers && -d construction/scripts ]]; then
             if [[ "$coverage_started" -eq 0 ]]; then
               python3 -m coverage run \
@@ -124,6 +208,22 @@ jobs:
                 --branch \
                 --source=construction/providers,construction/scripts \
                 -m unittest discover -s construction/tests -p 'test_c10_*.py' -v
+            fi
+            coverage_started=1
+          fi
+
+          if [[ -d narrative/tooling && -d narrative/tests ]]; then
+            if [[ "$coverage_started" -eq 0 ]]; then
+              python3 -m coverage run \
+                --branch \
+                --source=narrative/tooling \
+                -m unittest discover -s narrative/tests -p 'test_*.py' -v
+            else
+              python3 -m coverage run \
+                --append \
+                --branch \
+                --source=narrative/tooling \
+                -m unittest discover -s narrative/tests -p 'test_*.py' -v
             fi
             coverage_started=1
           fi
@@ -180,26 +280,6 @@ jobs:
                 construction/tests/test_c12_runtime_acceptance.py \
                 construction/tests/test_c12_runtime_acceptance_security.py \
                 construction/tests/test_c12_workflow_contract.py
-            fi
-            coverage_started=1
-          fi
-
-          if [[ -f skills/scripts/capability_router.py && -f construction/tests/test_c13_skill_router_integration.py && -f construction/tests/test_c13_workflow_contract.py ]]; then
-            if [[ "$coverage_started" -eq 0 ]]; then
-              python3 -m coverage run \
-                --branch \
-                --source=skills.scripts.capability_router \
-                -m unittest \
-                construction/tests/test_c13_skill_router_integration.py \
-                construction/tests/test_c13_workflow_contract.py
-            else
-              python3 -m coverage run \
-                --append \
-                --branch \
-                --source=skills.scripts.capability_router \
-                -m unittest \
-                construction/tests/test_c13_skill_router_integration.py \
-                construction/tests/test_c13_workflow_contract.py
             fi
             coverage_started=1
           fi
