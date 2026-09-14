@@ -26,7 +26,7 @@
       "properties": {
         "minecraft": {"const": "1.21.1"},
         "loader": {"const": "neoforge"},
-        "neoforge": {"const": "21.1.248"},
+        "neoforge": {"const": "21.1.250"},
         "java": {"const": 21}
       }
     },
