@@ -229,7 +229,17 @@ The workflow `.github/workflows/factory-construction-c12-runtime-acceptance.yml`
 
 While the blocker is active, a green C12 preflight means `PREFLIGHT_READY` with `overall_acceptance=BLOCKED`; it is readiness evidence only. Final C12 acceptance requires C11 physical acceptance first, a cleared blocker, all physical fingerprints, all required runtime stages passing, and evidence from the exact physical environment. C12 cannot advance `construction/STATUS.md` during preflight.
 
-## 14. Runtime/worldgen boundary
+## 14. C13 skill/router integration boundary
+
+C13 adds deterministic machine-readable routing metadata over the existing Factory authorities without creating a second router or duplicating their runtime facts. `skills/ROUTER.md` remains the canonical human-facing router, `engineering/REPO-ROUTING.md` remains the repository/authority boundary contract, `skills/VERSION-AUTHORITY.md` remains the version-sensitive fail-closed evidence order, and `skills/USER-GUIDED-WORKFLOW.md` remains authority for one verifiable manual action at a time.
+
+`skills/capabilities/capability-index.json` declares stable intent routes, owning authorities, canonical entrypoints, evidence requirements, independent readiness and acceptance states, active blockers, version-proof requirements, fallback policy and forbidden promotions. `skills/scripts/capability_router.py` validates that index against the live repository and resolves only declared deterministic intents. Missing paths, unknown authorities, duplicate or ambiguous routes, target drift, unproven provider/API semantics, invalid readiness/acceptance combinations and attempted activation of `REFERENCE_ONLY` material fail closed.
+
+C13 does not replace C2/C4/C5/C6/C7/C8/C9/C10/C11/C12, Engineering, Repo Textura or individual mod runtime authority. It references those authorities and exposes whether a route is implementation-ready and whether it is finally accepted. While `SUPER_HYPER_URGENT_FINAL_CONSTRUCTION_PHYSICAL_ACCEPTANCE` remains active, C11, C12 and C13 are explicitly `PREFLIGHT_READY / BLOCKED`; proven offline routes may remain `AVAILABLE / ACCEPTED` only within their already-proven boundaries.
+
+The workflow `.github/workflows/factory-construction-c13-skill-router.yml` separates `c13-router-preflight` from `c13-final-acceptance`. Preflight validates schema/index determinism, capability-path integrity, provider/version proof, blocker propagation, the existing skill repository, C9/C10/C12 regressions, Sonar governance and whitespace. The final job checks the shared blocker state-first, then requires an authoritative C12 `PHYSICAL_ACCEPTANCE/PASS` report and accepted C11/C12/C13 routes. A green preflight therefore proves readiness only and cannot advance `construction/STATUS.md`.
+
+## 15. Runtime/worldgen boundary
 
 Construction may produce reusable structure assets, references and canonical voxel data. Runtime placement, structure sets, biome tags, spacing/separation, processor rules, loot and spawn behavior remain owned by the individual mod runtime and its Mod Engineering worldgen gates.
 
@@ -237,6 +247,6 @@ The C4 NeoForge probe is evidence-gathering infrastructure only. Compiling that 
 
 The visual pipeline may consume structures as reference material, including `.nbt` analysis, without turning a complete build into a runtime entity model by default.
 
-## 15. Current non-goals
+## 16. Current non-goals
 
-Through C12 preflight, Construction owns canonical Build IR validation, modpack registry evidence, semantic palette resolution, deterministic Sponge v3 serialization, conservative offline structural QA, deterministic evidence-gated offline Visual QA, the capability-limited local stdio MCP façade over those authorities, the fail-closed external-provider profile/handoff evidence boundary, and the fail-closed runtime-acceptance orchestration contract over Engineering I5. It still does not infer provider-specific support/traversal semantics without explicit authority, execute unverified provider APIs, grant external bytes Construction authority by provenance, claim C11 or C12 physical acceptance while the final blocker exists, or implement the C13 Skill/Router layer.
+Through C13 preflight, Construction owns canonical Build IR validation, modpack registry evidence, semantic palette resolution, deterministic Sponge v3 serialization, conservative offline structural QA, deterministic evidence-gated offline Visual QA, the capability-limited local stdio MCP façade over those authorities, the fail-closed external-provider profile/handoff evidence boundary, the fail-closed runtime-acceptance orchestration contract over Engineering I5, and deterministic capability routing metadata over the existing Factory authorities. It still does not infer provider-specific support/traversal semantics without explicit authority, execute unverified provider APIs, grant external bytes Construction authority by provenance, claim C11/C12/C13 physical/final acceptance while the final blocker exists, or supersede the established skills, Engineering, art or individual-mod runtime authorities.
