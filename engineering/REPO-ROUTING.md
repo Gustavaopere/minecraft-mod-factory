@@ -14,6 +14,14 @@ Status: canonical routing contract for the Minecraft Mod Factory.
 | Exact installed mod/provider presence and version | Latest physical modlist/JAR evidence |
 | Exact third-party API behavior | Exact target source/JAR plus matching official documentation |
 
+## C13 capability metadata
+
+`skills/capabilities/capability-index.json` is machine-readable routing metadata consumed by the shared router integration. It does not create a new repository or domain authority.
+
+The capability index não substitui runtime authority of an individual mod, não substitui evidência física from the current modlist/JARs, and não prova API de provider merely because a provider name or profile is present. Version-sensitive provider behavior remains subject to `skills/VERSION-AUTHORITY.md` and exact target evidence.
+
+Readiness and acceptance are independent routing axes. `PREFLIGHT_READY / BLOCKED` must remain blocked for final claims until the owning authority supplies its required evidence. C13 may point to an authority; it cannot promote or rewrite that authority's evidence.
+
 ## Routing rules
 
 1. The Factory is a control plane, not the default runtime repository for generated mods.
@@ -25,3 +33,4 @@ Status: canonical routing contract for the Minecraft Mod Factory.
 7. Historical RPG infrastructure is a migration source only for reusable capabilities. RPG-specific runtime, gameplay and the physical modlist corpus stay in the RPG repository.
 8. Paths described in plans are conceptual until reconciled with the live Factory tree.
 9. Before writes, inspect current branches/PRs and never overwrite concurrent work.
+10. C13 capability routing metadata cannot override the authority matrix above.

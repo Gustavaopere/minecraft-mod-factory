@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://minecraft-mod-factory.local/schemas/capability-index.schema.json",
+  "title": "Minecraft Mod Factory Capability Index",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "target", "capabilities"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minecraft", "loader", "neoforge", "java"],
+      "properties": {
+        "minecraft": {"const": "1.21.1"},
+        "loader": {"const": "neoforge"},
+        "neoforge": {"const": "21.1.250"},
+        "java": {"const": 21}
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "capability_id",
+          "intent",
+          "authority",
+          "entrypoint",
+          "required_evidence",
+          "readiness",
+          "acceptance",
+          "blocker",
+          "version_proof",
+          "fallback_policy",
+          "forbidden_promotions"
+        ],
+        "properties": {
+          "capability_id": {"type": "string", "minLength": 1},
+          "intent": {"type": "string", "minLength": 1},
+          "authority": {
+            "enum": ["C2", "C4", "C5", "C6", "C7", "C8", "C10", "C11", "C12", "C13", "ENGINEERING", "ART"]
+          },
+          "entrypoint": {"type": "string", "minLength": 1},
+          "required_evidence": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {"type": "string", "minLength": 1}
+          },
+          "readiness": {"enum": ["AVAILABLE", "PREFLIGHT_READY", "UNAVAILABLE"]},
+          "acceptance": {"enum": ["ACCEPTED", "BLOCKED", "NOT_APPLICABLE"]},
+          "blocker": {"type": ["string", "null"]},
+          "version_proof": {"enum": ["NOT_REQUIRED", "REQUIRED_PHYSICAL", "REQUIRED_EXACT_API"]},
+          "fallback_policy": {"enum": ["NONE", "EXPLICIT_EQUIVALENT_ONLY"]},
+          "forbidden_promotions": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "NO_PREFLIGHT_TO_FINAL_ACCEPTANCE",
+                "NO_STATIC_TO_RUNTIME_CONFIRMED",
+                "NO_OFFLINE_VISUAL_TO_RUNTIME_FIDELITY",
+                "NO_PROVIDER_PRESENCE_TO_API_SUPPORT",
+                "NO_REFERENCE_ONLY_TO_ACTIVE_AUTHORITY"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

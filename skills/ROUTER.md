@@ -2,6 +2,16 @@
 
 Leia `VERSION-AUTHORITY.md` antes de escolher uma skill. Se houver ação manual do usuário, aplique também `USER-GUIDED-WORKFLOW.md`.
 
+## Capability index machine-readable
+
+skills/ROUTER.md permanece o router canônico para seleção humana de skills e authorities compartilhadas.
+
+`capabilities/capability-index.json` é metadado de roteamento machine-readable, não uma segunda authority. `scripts/capability_router.py` valida paths, evidência exigida, blockers e rotas determinísticas sem substituir `VERSION-AUTHORITY.md`, `USER-GUIDED-WORKFLOW.md`, `engineering/REPO-ROUTING.md`, as authorities Construction existentes ou os repositórios runtime dos mods.
+
+readiness não implica acceptance. Uma capability pode estar `PREFLIGHT_READY / BLOCKED`; essa distinção deve ser preservada no roteamento e nenhuma fixture sintética, preview offline ou build isolado pode ser promovido silenciosamente a evidência física/final.
+
+Fallback só é permitido quando a declaração machine-readable o autoriza explicitamente e a alternativa mantém a mesma semântica e authority. Provider, formato-fonte, evidência física e API version-sensitive nunca recebem fallback implícito.
+
 ## Engenharia NeoForge 1.21.1
 
 Preferência:
@@ -24,18 +34,6 @@ Para asset visual project-owned:
 7. opcionalmente `../art/golden-samples/model-asset/`, sempre `REFERENCE-ONLY`.
 
 O domínio `art/` da Factory é a authority da infraestrutura visual comum. Um export é handoff; o runtime do mod permanece no repositório do próprio mod.
-
-## Autoria narrativa
-
-Para lore, NPCs, quests, facções, locais, eventos, evidências, diálogos, relações, macroprogressão ou epílogos:
-1. leia o profile/instruções do repositório consumidor;
-2. use `../narrative/skills/minecraft-narrative-authoring/SKILL.md`;
-3. use `../narrative/templates/` como scaffolds genéricos;
-4. valide com `../narrative/tooling/validate_story.py` e `validate_dialogues.py`;
-5. use `story_inventory.py` antes de criar IDs novos;
-6. mantenha todo conteúdo/cânone resultante no repositório consumidor.
-
-A Factory não substitui Campaign Bible ou outra authority de lore definida pelo projeto consumidor. O profile local define famílias de ID, estados e seções; o tooling não hardcodeia a campanha. Se a tarefa narrativa depender de mecânica/provider, a versão e capability continuam sujeitas a `VERSION-AUTHORITY.md`.
 
 ## VFX, spells e áudio
 
