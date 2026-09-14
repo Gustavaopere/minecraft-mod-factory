@@ -47,6 +47,7 @@ Project-specific authority order is configuration, not a Factory global.
 - Do not use a transient workflow phrase such as "proposed until merge" as a stable editorial state when the project defines stable categories.
 - Do not expose spoilers in status/validation output by default.
 - Do not make paid APIs or temporary trials a required authoring dependency unless the consumer project explicitly opts in.
+- Do not copy reusable skills, validators, templates or visual-production contracts into a consumer campaign tree; extend the appropriate Factory domain and leave only consumer configuration/content there.
 
 ## Visual handoff
 
@@ -55,5 +56,8 @@ For NPC concepts/skins/models, hand off to the Factory art domain:
 - `../../../art/skills/minecraft-asset-art-direction/SKILL.md`
 - `../../../art/skills/minecraft-blockbench-geckolib/SKILL.md`
 - `../../../art/skills/minecraft-visual-qa/SKILL.md`
+- `../../../art/standards/NPC-VISUAL-ASSET-CONTRACT.md` for portrait/skin provenance and consumer manifests.
+
+The consumer repository may keep NPC-specific briefs, manifest data and actual campaign-owned art. Reusable asset rules and validators remain in the Factory.
 
 Concept art is not a final Minecraft asset.
