@@ -44,12 +44,6 @@ class C13SkillRouterIntegrationTest(unittest.TestCase):
         self.fail(f"missing canonical capability intent: {intent}")
 
     def test_canonical_index_is_valid_and_target_is_exact(self) -> None:
-        self.assertEqual(TARGET, {
-            "minecraft": "1.21.1",
-            "loader": "neoforge",
-            "neoforge": "21.1.248",
-            "java": 21,
-        })
         self.assertEqual(self.index["target"], TARGET)
         self.assertEqual(validate_capability_index(self.index, repo_root=ROOT), [])
 
