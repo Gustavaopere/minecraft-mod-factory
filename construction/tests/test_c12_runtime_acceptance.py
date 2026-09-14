@@ -59,11 +59,10 @@ class C12RuntimeAcceptanceTest(unittest.TestCase):
         baseline = json.loads(
             (ROOT / "engineering/contracts/target-baseline.json").read_text(encoding="utf-8")
         )
+        authority_target = baseline["target"]
         expected = {
-            "minecraft": baseline["minecraft"],
-            "loader": "neoforge",
-            "neoforge": baseline["neoforge"],
-            "java": baseline["java"],
+            key: authority_target[key]
+            for key in ("minecraft", "loader", "neoforge", "java")
         }
         self.assertEqual(C12_TARGET, expected)
 
