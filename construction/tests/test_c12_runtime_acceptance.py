@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import copy
+import json
 import unittest
 from pathlib import Path
 
 from construction.runtime.c12_runtime_acceptance import (
     C12Error,
+    TARGET as C12_TARGET,
     build_runtime_acceptance_report,
     validate_i5_manifest,
     validate_runtime_acceptance_report,
@@ -53,6 +55,18 @@ def _preflight_report(**overrides):
 
 
 class C12RuntimeAcceptanceTest(unittest.TestCase):
+    def test_runtime_target_matches_campaign_authority(self):
+        baseline = json.loads(
+            (ROOT / "engineering/contracts/target-baseline.json").read_text(encoding="utf-8")
+        )
+        expected = {
+            "minecraft": baseline["minecraft"],
+            "loader": "neoforge",
+            "neoforge": baseline["neoforge"],
+            "java": baseline["java"],
+        }
+        self.assertEqual(C12_TARGET, expected)
+
     def test_preflight_ready_is_not_acceptance(self):
         report = _preflight_report()
         self.assertEqual(report["overall_readiness"], "PREFLIGHT_READY")
