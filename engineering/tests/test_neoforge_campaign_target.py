@@ -2,9 +2,8 @@ import importlib.util
 import io
 import json
 import sys
-import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -165,19 +164,15 @@ class NeoForgeCampaignTargetContractTest(unittest.TestCase):
             self.assertEqual("21.1.250", resolver.resolve_latest("1.21.1"))
         fetch.assert_called_once_with()
 
-    def test_main_metadata_file_emits_machine_readable_resolution(self):
+    def test_main_rejects_metadata_file_override(self):
         resolver = self.require_resolver()
-        with tempfile.TemporaryDirectory() as temp_dir:
-            metadata_path = Path(temp_dir) / "maven-metadata.xml"
-            metadata_path.write_text(SAMPLE_METADATA, encoding="utf-8")
-            stdout = io.StringIO()
-            with patch.object(sys, "argv", ["resolver", "--minecraft", "1.21.1", "--metadata-file", str(metadata_path)]):
-                with redirect_stdout(stdout):
-                    self.assertEqual(0, resolver.main())
-        payload = json.loads(stdout.getvalue())
-        self.assertEqual("21.1.250", payload["neoforge"])
-        self.assertEqual("21.1", payload["neoforge_line"])
-        self.assertEqual(EXPECTED_SOURCE, payload["resolution_source"])
+        stderr = io.StringIO()
+        with patch.object(sys, "argv", ["resolver", "--metadata-file", "maven-metadata.xml"]):
+            with redirect_stderr(stderr):
+                with self.assertRaises(SystemExit) as raised:
+                    resolver.main()
+        self.assertEqual(2, raised.exception.code)
+        self.assertIn("unrecognized arguments: --metadata-file", stderr.getvalue())
 
     def test_main_network_mode_uses_resolver_and_emits_machine_readable_resolution(self):
         resolver = self.require_resolver()
