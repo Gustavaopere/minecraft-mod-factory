@@ -1,0 +1,25 @@
+import pathlib
+import unittest
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+TEMPLATES = ROOT / 'templates'
+
+
+class TemplateTests(unittest.TestCase):
+    def test_expected_generic_templates_exist(self):
+        expected = {
+            'TEMPLATE-HISTORY.md','TEMPLATE-ARC.md','TEMPLATE-NPC.md','TEMPLATE-NPC-AUTHORING.md',
+            'TEMPLATE-QUEST.md','TEMPLATE-QUEST-LIFECYCLE.md','TEMPLATE-FACTION.md','TEMPLATE-SETTLEMENT.md',
+            'TEMPLATE-LOCATION.md','TEMPLATE-EVENT.md','TEMPLATE-EVIDENCE.md','TEMPLATE-DIALOGUE.md',
+            'TEMPLATE-RELATION.md','TEMPLATE-EPILOGUE.md'
+        }
+        self.assertEqual(expected, {p.name for p in TEMPLATES.glob('*.md')})
+
+    def test_templates_do_not_embed_rpg_specific_ids_or_stage08(self):
+        joined = '\n'.join(p.read_text(encoding='utf-8') for p in TEMPLATES.glob('*.md'))
+        for forbidden in ('NPC-0001', 'QST-0001', 'Stage 08', 'Grimoire/TTRPG.bot'):
+            self.assertNotIn(forbidden, joined)
+
+
+if __name__ == '__main__':
+    unittest.main()

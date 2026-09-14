@@ -156,27 +156,6 @@ class SonarCiContractTest(unittest.TestCase):
         )
         self.assertLess(workflow.index(c11_source), workflow.index(scanner))
 
-    def test_ci_analysis_covers_c12_preflight_before_scan(self) -> None:
-        workflow = SONAR_WORKFLOW.read_text(encoding="utf-8")
-        scanner = f"uses: SonarSource/sonarqube-scan-action@{SONAR_SCAN_SHA}"
-        required = (
-            "construction/runtime/c12_runtime_acceptance.py",
-            "construction/runtime/c12_evidence.py",
-            "construction/runtime/run_c12_preflight.py",
-            "construction/tests/test_c12_runtime_acceptance.py",
-            "construction/tests/test_c12_runtime_acceptance_security.py",
-            "construction/tests/test_c12_workflow_contract.py",
-            "--source=construction/runtime",
-        )
-        for token in required:
-            with self.subTest(token=token):
-                self.assertIn(token, workflow)
-        self.assertNotIn("c12-runtime-acceptance-report.json -v", workflow)
-        self.assertLess(
-            workflow.index("construction/runtime/c12_runtime_acceptance.py"),
-            workflow.index(scanner),
-        )
-
     def test_previous_version_new_code_uses_stable_ci_baseline_version(self) -> None:
         ci = parse_properties(CI_PROPERTIES)
         self.assertEqual(

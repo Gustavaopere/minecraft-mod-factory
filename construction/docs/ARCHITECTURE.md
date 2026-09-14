@@ -212,24 +212,7 @@ The current execution state is `SUPER_HYPER_URGENT_FINAL_CONSTRUCTION_PHYSICAL_A
 
 C12 implementation/preflight may continue and C13 implementation/preflight may continue while the blocker exists. preflight green is readiness evidence, not final acceptance. final physical acceptance re-audits and re-hashes the physical modlist, performs a fresh C4 capture against that exact environment, and regenerates every downstream artifact whose input changed. Closeout order remains `C11 -> C12 -> C13 -> Construction`; STATUS advances only through evidence-gated post-merge closeouts.
 
-## 13. C12 runtime-acceptance boundary
-
-C12 is an orchestration and evidence boundary over the established Engineering I5 harness. It does not fork or replace I5. The shared Engineering harness remains authority for the reusable `unit`, `gametest` and `dedicated_server` baseline, while C12 adds the Construction-specific runtime evidence required after the offline C11 Golden has been physically accepted.
-
-C12 has two deliberately separate execution modes:
-
-- `PREFLIGHT` proves that the closed report contract, target checks, I5-manifest consumption, evidence packaging, CI wiring and final-blocker propagation are ready;
-- `PHYSICAL_ACCEPTANCE` is reserved for the authoritative campaign against the exact physical modpack and cannot be inferred from preflight results.
-
-The exact runtime target is Minecraft 1.21.1 / NeoForge 21.1.248 / Java 21. The exact stage set is `target_environment`, `i5_baseline`, `client_smoke`, `live_placement`, `runtime_visual_fidelity`, `multiplayer`, `full_modpack` and `evidence_packaging`. A physical PASS also requires SHA-256 bindings to the I2 physical snapshot, C4 registry, C11 manifest, C6 schematic, C7 report and C8 report.
-
-`construction/runtime/c12_runtime_acceptance.py` owns the report validation and promotion rules. `construction/runtime/c12_evidence.py` owns bounded deterministic evidence packaging. `construction/runtime/run_c12_preflight.py` is intentionally synthetic-only: it accepts only fixtures explicitly marked `SYNTHETIC_PREFLIGHT_ONLY`, keeps physical fingerprints null, defers live/runtime stages, writes only inside the repository workspace and rejects the canonical final physical report path.
-
-The workflow `.github/workflows/factory-construction-c12-runtime-acceptance.yml` separates `c12-preflight` from `c12-acceptance`. The acceptance job checks `SUPER_HYPER_URGENT_FINAL_CONSTRUCTION_PHYSICAL_ACCEPTANCE` state-first, before reading `construction/fixtures/complex-modded-golden/c12-runtime-acceptance-report.json`. Therefore the accidental presence of a report cannot bypass the shared blocker.
-
-While the blocker is active, a green C12 preflight means `PREFLIGHT_READY` with `overall_acceptance=BLOCKED`; it is readiness evidence only. Final C12 acceptance requires C11 physical acceptance first, a cleared blocker, all physical fingerprints, all required runtime stages passing, and evidence from the exact physical environment. C12 cannot advance `construction/STATUS.md` during preflight.
-
-## 14. Runtime/worldgen boundary
+## 13. Runtime/worldgen boundary
 
 Construction may produce reusable structure assets, references and canonical voxel data. Runtime placement, structure sets, biome tags, spacing/separation, processor rules, loot and spawn behavior remain owned by the individual mod runtime and its Mod Engineering worldgen gates.
 
@@ -237,6 +220,6 @@ The C4 NeoForge probe is evidence-gathering infrastructure only. Compiling that 
 
 The visual pipeline may consume structures as reference material, including `.nbt` analysis, without turning a complete build into a runtime entity model by default.
 
-## 15. Current non-goals
+## 14. Current non-goals
 
-Through C12 preflight, Construction owns canonical Build IR validation, modpack registry evidence, semantic palette resolution, deterministic Sponge v3 serialization, conservative offline structural QA, deterministic evidence-gated offline Visual QA, the capability-limited local stdio MCP façade over those authorities, the fail-closed external-provider profile/handoff evidence boundary, and the fail-closed runtime-acceptance orchestration contract over Engineering I5. It still does not infer provider-specific support/traversal semantics without explicit authority, execute unverified provider APIs, grant external bytes Construction authority by provenance, claim C11 or C12 physical acceptance while the final blocker exists, or implement the C13 Skill/Router layer.
+Through C10, Construction now owns canonical Build IR validation, modpack registry evidence, semantic palette resolution, deterministic Sponge v3 serialization, conservative offline structural QA, deterministic evidence-gated offline Visual QA, the capability-limited local stdio MCP façade over those authorities, and the fail-closed external-provider profile/handoff evidence boundary. It still does not infer provider-specific support/traversal semantics without explicit authority, execute unverified provider APIs, grant external bytes Construction authority by provenance, claim C12 full-modpack/in-game/worldgen/runtime-visual compatibility, or implement the C13 Skill/Router layer.

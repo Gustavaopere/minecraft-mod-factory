@@ -1,0 +1,25 @@
+{
+  "story_root": "story",
+  "dialogue_root": "story/dialogues",
+  "entity_types": ["HIST", "ARC", "NPC", "QST", "FAC", "SET", "LOC", "EVT", "EVD", "END", "DLG"],
+  "editorial_state_prefixes": ["CANON", "DRAFT", "EXPERIMENTAL", "OBSOLETE"],
+  "editorial_state_headings": ["Editorial state"],
+  "dialogue_entity_type": "DLG",
+  "dialogue_required_sections": {
+    "editorial-state": ["editorial state"],
+    "participants": ["participants"],
+    "context": ["context"],
+    "preconditions": ["preconditions"],
+    "knowledge": ["required knowledge"],
+    "relations-state": ["relevant relations/state"],
+    "opening": ["opening", "default entry"],
+    "branches": ["branches"],
+    "outputs": ["dialogue outputs"],
+    "intents": ["requested intents/consequences"],
+    "related-content": ["related content"],
+    "invariants": ["invariants"],
+    "voice-notes": ["voice notes"],
+    "qa": ["qa"],
+    "internal-spoilers": ["internal spoilers"]
+  }
+}

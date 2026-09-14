@@ -10,6 +10,7 @@ on:
       - main
     paths:
       - 'engineering/**'
+      - 'skills/VERSION-AUTHORITY.md'
       - '.github/workflows/factory-engineering-i1-foundation.yml'
 
 permissions:
@@ -33,7 +34,10 @@ jobs:
         run: python3 engineering/tooling/validate-i1-foundation.py
 
       - name: Run I1 contract tests
-        run: python3 -m unittest engineering/tests/test_i1_foundation.py
+        run: >-
+          python3 -m unittest
+          engineering/tests/test_i1_foundation.py
+          engineering/tests/test_neoforge_campaign_target.py
 
       - name: Check I1 engineering whitespace
-        run: git diff --check HEAD^ -- engineering .github/workflows/factory-engineering-i1-foundation.yml
+        run: git diff --check HEAD^ -- engineering skills/VERSION-AUTHORITY.md .github/workflows/factory-engineering-i1-foundation.yml

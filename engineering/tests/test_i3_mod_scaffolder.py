@@ -112,7 +112,7 @@ class I3ModScaffolderContractTest(unittest.TestCase):
             wrapper = (generated / "gradle/wrapper/gradle-wrapper.properties").read_text(encoding="utf-8")
             metadata = (generated / "src/main/resources/META-INF/neoforge.mods.toml").read_text(encoding="utf-8")
             self.assertIn("minecraft_version=1.21.1", gradle_properties)
-            self.assertIn("neo_version=21.1.248", gradle_properties)
+            self.assertIn("neo_version=21.1.250", gradle_properties)
             self.assertIn("java_version=21", gradle_properties)
             self.assertIn("junit_version=5.14.3", gradle_properties)
             self.assertIn("net.neoforged.gradle.userdev' version '7.1.26", build_gradle)

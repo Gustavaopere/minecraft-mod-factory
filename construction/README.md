@@ -169,24 +169,6 @@ C12 implementation/preflight may continue and C13 implementation/preflight may c
 
 final physical acceptance re-audits and re-hashes the physical modlist, performs a fresh C4 runtime capture against that exact environment, and then freezes evidence-backed C5 palette, C2 Build IR, C7 structural evidence, C8 preview/review evidence, and C6 Sponge v3 bytes before C12 live/runtime acceptance and C13 final routing validation. Closeout order remains `C11 -> C12 -> C13 -> Construction`. `construction/STATUS.md` does not advance until each evidence-gated post-merge closeout is actually proven.
 
-## C12 scope
-
-C12 adds the runtime-acceptance orchestration layer without creating a second Engineering test harness. The canonical I5 harness remains authority for the reusable `unit`, `gametest` and `dedicated_server` baseline. Construction consumes that manifest and adds the acceptance stages needed to prove the structure in the exact physical environment.
-
-The C12 implementation is split deliberately:
-
-- `construction/runtime/c12_runtime_acceptance.py` owns the closed report contract, exact target validation and fail-closed promotion rules;
-- `construction/runtime/c12_evidence.py` packages bounded regular-file evidence with deterministic SHA-256 identities and rejects traversal, symlinks, directories, missing files and duplicate paths;
-- `construction/runtime/run_c12_preflight.py` accepts only fixtures marked `SYNTHETIC_PREFLIGHT_ONLY`, writes only a workspace-local preflight report and is forbidden from writing the final physical report path;
-- `construction/schemas/runtime-acceptance-report.schema.json` defines the machine-readable report envelope;
-- `.github/workflows/factory-construction-c12-runtime-acceptance.yml` separates `c12-preflight` from `c12-acceptance` and checks the shared final blocker before reading any final physical report.
-
-The exact C12 stage set is `target_environment`, `i5_baseline`, `client_smoke`, `live_placement`, `runtime_visual_fidelity`, `multiplayer`, `full_modpack` and `evidence_packaging`. Physical acceptance also requires non-null lowercase SHA-256 fingerprints for the I2 physical snapshot, C4 registry, C11 manifest, C6 schematic, C7 report and C8 report.
-
-Current preflight proves only contract readiness: target/I5/evidence-packaging may pass from controlled synthetic evidence while client smoke, live placement, runtime visual fidelity, multiplayer and full-modpack stages remain deferred. `PREFLIGHT_READY` is therefore not final acceptance. `overall_acceptance=PASS` is impossible in `PREFLIGHT` mode and remains blocked while `SUPER_HYPER_URGENT_FINAL_CONSTRUCTION_PHYSICAL_ACCEPTANCE` is active.
-
-The final physical report authority is `construction/fixtures/complex-modded-golden/c12-runtime-acceptance-report.json`. It may become accepted only after C11 is physically accepted, the shared blocker is cleared, every required physical fingerprint is present, every required C12 stage passes, and the evidence is produced by the exact Minecraft 1.21.1 / NeoForge 21.1.248 / Java 21 environment. Until then, `construction/STATUS.md` remains at the last completed Construction phase.
-
 ## Planned pipeline
 
 ```text

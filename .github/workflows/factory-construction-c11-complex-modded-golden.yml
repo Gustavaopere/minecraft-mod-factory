@@ -10,7 +10,25 @@ on:
     paths:
       - '.github/workflows/factory-construction-c11-complex-modded-golden.yml'
       - '.github/workflows/factory-sonar-ci.yml'
+      - 'engineering/contracts/target-baseline.json'
+      - 'engineering/contracts/MOD-SPEC-CONTRACT.md'
+      - 'engineering/schemas/mod-spec.schema.json'
+      - 'engineering/schemas/test-manifest.schema.json'
+      - 'engineering/schemas/compatibility-matrix.schema.json'
+      - 'engineering/templates/neoforge-mod/**'
       - 'engineering/tooling/import-physical-modlist.py'
+      - 'engineering/tooling/resolve-neoforge-campaign-target.py'
+      - 'engineering/tooling/scaffolder/**'
+      - 'engineering/tooling/test-harness/**'
+      - 'engineering/tests/test_neoforge_campaign_target.py'
+      - 'engineering/tests/fixtures/i3-golden-mod-spec.json'
+      - 'engineering/tests/fixtures/i4-golden-mod-spec.json'
+      - 'engineering/tests/fixtures/i9-machine-mod-spec.json'
+      - 'engineering/tests/golden/i3-golden-mod/**'
+      - 'engineering/examples/mod-spec.example.json'
+      - 'engineering/examples/test-manifest.example.json'
+      - 'engineering/examples/compatibility-matrix.example.json'
+      - 'skills/VERSION-AUTHORITY.md'
       - 'construction/fixtures/complex-modded-golden/**'
       - 'construction/tests/test_c11_complex_modded_golden.py'
       - 'construction/tests/test_c11_capture_path_security.py'
@@ -21,6 +39,7 @@ on:
       - 'construction/README.md'
       - 'construction/docs/ARCHITECTURE.md'
       - 'migration/full-skill-migration/test_sonar_ci_contract.py'
+      - 'migration/full-skill-migration/test_sonar_campaign_target_coverage.py'
       - 'docs/superpowers/specs/2026-09-12-construction-c11-complex-modded-golden-design.md'
       - 'docs/superpowers/specs/2026-09-13-construction-c11-registry-deferral-amendment.md'
       - 'docs/superpowers/plans/2026-09-12-construction-c11-complex-modded-golden.md'
@@ -46,6 +65,9 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Run NeoForge campaign target contract
+        run: python3 -m unittest engineering/tests/test_neoforge_campaign_target.py -v
+
       - name: Run C11 deferred preflight contracts
         run: |
           python3 -m unittest \
@@ -65,10 +87,45 @@ jobs:
           python3 -m unittest construction/tests/test_construction_final_physical_acceptance_gate.py -v
 
       - name: Run shared Sonar governance contract
-        run: python3 migration/full-skill-migration/test_sonar_ci_contract.py
+        run: >-
+          python3 -m unittest
+          migration/full-skill-migration/test_sonar_ci_contract.py
+          migration/full-skill-migration/test_sonar_campaign_target_coverage.py
+          -v
 
       - name: Check C11 preflight whitespace
-        run: git diff --check HEAD^ HEAD -- .github/workflows/factory-construction-c11-complex-modded-golden.yml .github/workflows/factory-sonar-ci.yml construction/fixtures/complex-modded-golden construction/tests/test_c11_complex_modded_golden.py construction/tests/test_c11_capture_path_security.py construction/tests/test_construction_final_physical_acceptance_gate.py construction/README.md construction/docs/ARCHITECTURE.md migration/full-skill-migration/test_sonar_ci_contract.py docs/superpowers/specs docs/superpowers/plans
+        run: >-
+          git diff --check HEAD^ HEAD --
+          .github/workflows/factory-construction-c11-complex-modded-golden.yml
+          .github/workflows/factory-sonar-ci.yml
+          engineering/contracts/target-baseline.json
+          engineering/contracts/MOD-SPEC-CONTRACT.md
+          engineering/schemas/mod-spec.schema.json
+          engineering/schemas/test-manifest.schema.json
+          engineering/schemas/compatibility-matrix.schema.json
+          engineering/templates/neoforge-mod
+          engineering/tooling/resolve-neoforge-campaign-target.py
+          engineering/tooling/scaffolder
+          engineering/tooling/test-harness
+          engineering/tests/test_neoforge_campaign_target.py
+          engineering/tests/fixtures/i3-golden-mod-spec.json
+          engineering/tests/fixtures/i4-golden-mod-spec.json
+          engineering/tests/fixtures/i9-machine-mod-spec.json
+          engineering/tests/golden/i3-golden-mod
+          engineering/examples/mod-spec.example.json
+          engineering/examples/test-manifest.example.json
+          engineering/examples/compatibility-matrix.example.json
+          skills/VERSION-AUTHORITY.md
+          construction/fixtures/complex-modded-golden
+          construction/tests/test_c11_complex_modded_golden.py
+          construction/tests/test_c11_capture_path_security.py
+          construction/tests/test_construction_final_physical_acceptance_gate.py
+          construction/README.md
+          construction/docs/ARCHITECTURE.md
+          migration/full-skill-migration/test_sonar_ci_contract.py
+          migration/full-skill-migration/test_sonar_campaign_target_coverage.py
+          docs/superpowers/specs
+          docs/superpowers/plans
 
   c11-preflight-probe:
     needs: c11-preflight-contracts

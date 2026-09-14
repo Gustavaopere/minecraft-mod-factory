@@ -16,6 +16,7 @@ I1_VALIDATOR = ROOT / "engineering/tooling/validate-i1-foundation.py"
 TEST_MANIFEST_SCHEMA = ROOT / "engineering/schemas/test-manifest.schema.json"
 TEMPLATE_BUILD = ROOT / "engineering/templates/neoforge-mod/build.gradle.tmpl"
 GOLDEN_BUILD = ROOT / "engineering/tests/golden/i3-golden-mod/build.gradle"
+TARGET_BASELINE = ROOT / "engineering/contracts/target-baseline.json"
 
 EXPECTED_COMMANDS = [
     "./gradlew --no-daemon test",
@@ -37,6 +38,10 @@ def load_module(path: Path, name: str):
     return module
 
 
+def campaign_neoforge() -> str:
+    return json.loads(TARGET_BASELINE.read_text(encoding="utf-8"))["target"]["neoforge"]
+
+
 def write_fake_project(root: Path) -> Path:
     root.mkdir(parents=True)
     (root / "gradle.properties").write_text(
@@ -44,7 +49,7 @@ def write_fake_project(root: Path) -> Path:
             [
                 "mod_id=i5_fixture",
                 "minecraft_version=1.21.1",
-                "neo_version=21.1.248",
+                f"neo_version={campaign_neoforge()}",
                 "java_version=21",
             ]
         )

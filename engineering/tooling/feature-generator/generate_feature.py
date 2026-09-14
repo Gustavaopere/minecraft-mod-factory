@@ -10,6 +10,23 @@ from pathlib import Path
 from typing import Any
 
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+TARGET_BASELINE = REPO_ROOT / "engineering" / "contracts" / "target-baseline.json"
+
+
+def _load_expected_target() -> dict[str, Any]:
+    baseline = json.loads(TARGET_BASELINE.read_text(encoding="utf-8"))
+    target = baseline.get("target")
+    if not isinstance(target, dict):
+        raise ValueError(f"campaign target baseline is invalid: {TARGET_BASELINE}")
+    return {
+        "minecraft": target.get("minecraft"),
+        "loader": target.get("loader"),
+        "neoforge": target.get("neoforge"),
+        "java": target.get("java"),
+    }
+
+
 CORE_FEATURE_KINDS = (
     "block",
     "item",
@@ -18,12 +35,7 @@ CORE_FEATURE_KINDS = (
     "network_payload",
     "recipe",
 )
-EXPECTED_TARGET = {
-    "minecraft": "1.21.1",
-    "loader": "neoforge",
-    "neoforge": "21.1.248",
-    "java": 21,
-}
+EXPECTED_TARGET = _load_expected_target()
 MOD_ID_RE = re.compile(r"^[a-z][a-z0-9_]{1,63}$")
 JAVA_PACKAGE_RE = re.compile(r"^[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*$")
 CLASS_RE = re.compile(r"^[A-Z][A-Za-z0-9_]*$")

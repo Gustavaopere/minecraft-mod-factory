@@ -5,6 +5,7 @@ import pathlib
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+TARGET_BASELINE = ROOT / "engineering/contracts/target-baseline.json"
 
 REQUIRED = [
     "engineering/README.md",
@@ -13,6 +14,7 @@ REQUIRED = [
     "engineering/DIAGNOSTICS.md",
     "engineering/TESTING.md",
     "engineering/catalog/sources/SOURCE-REGISTRY.json",
+    "engineering/contracts/target-baseline.json",
     "skills/README.md",
     "skills/ROUTER.md",
     "skills/VERSION-AUTHORITY.md",
@@ -62,10 +64,33 @@ if registry_path.is_file():
     except (ValueError, KeyError, TypeError) as exc:
         errors.append(f"invalid source registry: {exc}")
 
+campaign_target = None
+if TARGET_BASELINE.is_file():
+    try:
+        baseline = json.loads(TARGET_BASELINE.read_text(encoding="utf-8"))
+        target = baseline.get("target")
+        if not isinstance(target, dict):
+            raise ValueError("target must be an object")
+        required_target = ("minecraft", "loader", "neoforge", "java")
+        if any(key not in target for key in required_target):
+            raise ValueError("target is missing required fields")
+        if target.get("loader") != "neoforge":
+            raise ValueError("loader must be neoforge")
+        campaign_target = target
+    except (ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+        errors.append(f"invalid campaign target baseline: {exc}")
+
 version_path = ROOT / "skills/VERSION-AUTHORITY.md"
-if version_path.is_file():
+if version_path.is_file() and campaign_target is not None:
     version_text = version_path.read_text(encoding="utf-8")
-    for token in ("Minecraft: **1.21.1**", "NeoForge: **21.1.248**", "Java: **21**", "modlist física"):
+    tokens = (
+        f"Minecraft: **{campaign_target['minecraft']}**",
+        f"NeoForge: **{campaign_target['neoforge']}**",
+        f"Java: **{campaign_target['java']}**",
+        "latest-compatible-at-campaign-start",
+        "modlist física",
+    )
+    for token in tokens:
         if token not in version_text:
             errors.append(f"version authority missing token: {token}")
 
