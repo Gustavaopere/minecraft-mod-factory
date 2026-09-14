@@ -138,12 +138,17 @@ def validate_manifest(manifest_path: Path, repo_root: Path) -> list[str]:
         errors.append("manifest asset_root must be a non-empty repository-relative path")
         asset_root_raw = "."
 
-    asset_root = (repo_root / asset_root_raw).resolve()
-    try:
-        asset_root.relative_to(repo_root)
-    except ValueError:
-        errors.append(f"asset_root escapes repo root: {asset_root_raw}")
+    asset_root_literal = Path(asset_root_raw)
+    if asset_root_literal.is_absolute():
+        errors.append(f"manifest asset_root must be repository-relative: {asset_root_raw}")
         asset_root = repo_root
+    else:
+        asset_root = (repo_root / asset_root_literal).resolve()
+        try:
+            asset_root.relative_to(repo_root)
+        except ValueError:
+            errors.append(f"asset_root escapes repo root: {asset_root_raw}")
+            asset_root = repo_root
 
     policy = manifest.get("policy", {})
     if not isinstance(policy, dict):
@@ -170,7 +175,12 @@ def validate_manifest(manifest_path: Path, repo_root: Path) -> list[str]:
             errors.append(f"{prefix}: duplicate path {rel_path}")
         seen_paths.add(rel_path)
 
-        path = (repo_root / rel_path).resolve()
+        path_literal = Path(rel_path)
+        if path_literal.is_absolute():
+            errors.append(f"{prefix}: path must be repository-relative: {rel_path}")
+            continue
+
+        path = (repo_root / path_literal).resolve()
         try:
             path.relative_to(asset_root)
         except ValueError:
@@ -222,7 +232,7 @@ def validate_manifest(manifest_path: Path, repo_root: Path) -> list[str]:
         if is_final and status != "FINAL":
             errors.append(f"{prefix}: final_asset=true requires status=FINAL")
 
-        if kind == "portrait" and (status == "APPROVED MASTER" or is_final):
+        if kind == "portrait" and status in {"APPROVED MASTER", "FINAL"}:
             portrait_policy = policy.get("portrait_master")
             if not isinstance(portrait_policy, dict):
                 errors.append(f"{prefix}: approved/final portrait requires policy.portrait_master")
