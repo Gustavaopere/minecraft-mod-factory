@@ -90,6 +90,7 @@ jobs:
 
       - name: Run C13 router integration contracts
         run: |
+          python3 -m unittest construction/tests/test_c13_campaign_target.py -v
           python3 -m unittest construction/tests/test_c13_skill_router_integration.py -v
           python3 -m unittest construction/tests/test_c13_workflow_contract.py -v
 
