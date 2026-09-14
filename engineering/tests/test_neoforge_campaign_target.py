@@ -91,6 +91,22 @@ class NeoForgeCampaignTargetContractTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unsafe XML declaration"):
             resolver.parse_maven_versions(metadata)
 
+    def test_resolver_does_not_use_stdlib_xml_parsers_for_remote_metadata(self):
+        source = RESOLVER.read_text(encoding="utf-8")
+        forbidden = (
+            "xml.etree",
+            "xml.dom",
+            "xml.sax",
+            "xml.parsers",
+        )
+        for token in forbidden:
+            with self.subTest(token=token):
+                self.assertNotIn(
+                    token,
+                    source,
+                    "remote Maven metadata must not enter a stdlib XML parser surface",
+                )
+
     def test_live_schemas_use_the_campaign_pin(self):
         baseline = self.require_baseline()
         target = baseline["target"]
