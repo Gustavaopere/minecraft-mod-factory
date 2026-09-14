@@ -68,6 +68,7 @@ jobs:
           engineering/tests/test_i10_multiblock_foundation.py
           engineering/tests/test_i10_multiblock_foundation_task5.py
           engineering/tests/test_i10_multiblock_foundation_handoff.py
+          engineering/tests/test_i10_multiblock_foundation_client_resources.py
           engineering/tests/test_i10_multiblock_foundation_gametest.py
           engineering/tests/test_i10_multiblock_foundation_provider.py
           engineering/tests/test_i10_chunk_acceptance.py
