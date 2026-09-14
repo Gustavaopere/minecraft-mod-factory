@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import copy
+import json
 import unittest
 from pathlib import Path
 
 from construction.runtime.c12_runtime_acceptance import (
     C12Error,
+    TARGET as C12_TARGET,
     build_runtime_acceptance_report,
     validate_i5_manifest,
     validate_runtime_acceptance_report,
@@ -13,11 +15,13 @@ from construction.runtime.c12_runtime_acceptance import (
 from construction.runtime.run_c12_preflight import run_preflight
 
 ROOT = Path(__file__).resolve().parents[2]
+BASELINE = json.loads(
+    (ROOT / "engineering/contracts/target-baseline.json").read_text(encoding="utf-8")
+)
+AUTHORITY_TARGET = BASELINE["target"]
 TARGET = {
-    "minecraft": "1.21.1",
-    "loader": "neoforge",
-    "neoforge": "21.1.248",
-    "java": 21,
+    key: AUTHORITY_TARGET[key]
+    for key in ("minecraft", "loader", "neoforge", "java")
 }
 BLOCKER = "SUPER_HYPER_URGENT_FINAL_CONSTRUCTION_PHYSICAL_ACCEPTANCE"
 FINGERPRINTS = {
@@ -53,6 +57,22 @@ def _preflight_report(**overrides):
 
 
 class C12RuntimeAcceptanceTest(unittest.TestCase):
+    def test_runtime_target_matches_campaign_authority(self):
+        self.assertEqual(C12_TARGET, TARGET)
+
+    def test_schema_target_matches_campaign_authority(self):
+        schema = json.loads(
+            (ROOT / "construction/schemas/runtime-acceptance-report.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        properties = schema["properties"]["target"]["properties"]
+        schema_target = {
+            key: properties[key]["const"]
+            for key in ("minecraft", "loader", "neoforge", "java")
+        }
+        self.assertEqual(schema_target, TARGET)
+
     def test_preflight_ready_is_not_acceptance(self):
         report = _preflight_report()
         self.assertEqual(report["overall_readiness"], "PREFLIGHT_READY")

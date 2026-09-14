@@ -1,15 +1,29 @@
 from __future__ import annotations
 
 import copy
+import json
 import re
+from pathlib import Path
 from typing import Any
 
-TARGET = {
-    "minecraft": "1.21.1",
-    "loader": "neoforge",
-    "neoforge": "21.1.248",
-    "java": 21,
-}
+REPO_ROOT = Path(__file__).resolve().parents[2]
+TARGET_BASELINE = REPO_ROOT / "engineering" / "contracts" / "target-baseline.json"
+
+
+def _load_campaign_target() -> dict[str, object]:
+    baseline = json.loads(TARGET_BASELINE.read_text(encoding="utf-8"))
+    target = baseline.get("target")
+    if not isinstance(target, dict):
+        raise RuntimeError(f"invalid campaign target baseline: {TARGET_BASELINE}")
+    return {
+        "minecraft": target.get("minecraft"),
+        "loader": target.get("loader"),
+        "neoforge": target.get("neoforge"),
+        "java": target.get("java"),
+    }
+
+
+TARGET = _load_campaign_target()
 FINAL_BLOCKER = "SUPER_HYPER_URGENT_FINAL_CONSTRUCTION_PHYSICAL_ACCEPTANCE"
 MODES = frozenset({"PREFLIGHT", "PHYSICAL_ACCEPTANCE"})
 STAGE_IDS = (

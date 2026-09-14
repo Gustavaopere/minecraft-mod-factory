@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/factory-construction-c12-runtime-acceptance.yml'
       - '.github/workflows/factory-sonar-ci.yml'
+      - 'engineering/contracts/target-baseline.json'
       - 'construction/README.md'
       - 'construction/docs/ARCHITECTURE.md'
       - 'construction/runtime/c12_*.py'
@@ -25,6 +26,7 @@ on:
     paths:
       - '.github/workflows/factory-construction-c12-runtime-acceptance.yml'
       - '.github/workflows/factory-sonar-ci.yml'
+      - 'engineering/contracts/target-baseline.json'
       - 'construction/README.md'
       - 'construction/docs/ARCHITECTURE.md'
       - 'construction/runtime/c12_*.py'

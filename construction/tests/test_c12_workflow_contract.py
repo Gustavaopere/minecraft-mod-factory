@@ -19,6 +19,10 @@ class C12WorkflowContractTest(unittest.TestCase):
         self.assertIn("  c12-acceptance:", self.text)
         self.assertIn("needs: c12-preflight", self.text)
 
+    def test_workflow_runs_when_campaign_target_changes(self):
+        token = "'engineering/contracts/target-baseline.json'"
+        self.assertGreaterEqual(self.text.count(token), 2)
+
     def test_preflight_runs_c12_i5_final_gate_sonar_and_whitespace_regressions(self):
         required = (
             "construction/tests/test_c12_runtime_acceptance.py",
