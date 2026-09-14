@@ -1,5 +1,6 @@
 import contextlib
 import importlib.util
+import io
 import json
 import tempfile
 import unittest
@@ -207,6 +208,28 @@ class I10MultiblockFoundationCompositionTest(unittest.TestCase):
             self.assertNotIn("materialize_i9", text)
             self.assertNotIn("i9-machine-foundation", text)
             self.assertNotIn("dev.example.i9machine", text)
+
+    def test_materializer_cli_main_contract(self):
+        module = load_materializer()
+
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            self.assertEqual(2, module.main([]))
+        self.assertIn("usage: materialize_i10.py OUTPUT_DIR", stderr.getvalue())
+
+        stderr = io.StringIO()
+        with mock.patch.object(
+            module,
+            "materialize_i10",
+            side_effect=module.MaterializationError("synthetic failure"),
+        ):
+            with contextlib.redirect_stderr(stderr):
+                self.assertEqual(1, module.main(["generated"]))
+        self.assertIn("I10 materialization failed: synthetic failure", stderr.getvalue())
+
+        with mock.patch.object(module, "materialize_i10", return_value=Path("generated")) as materialize:
+            self.assertEqual(0, module.main(["generated"]))
+        materialize.assert_called_once_with("generated")
 
 
 if __name__ == "__main__":
