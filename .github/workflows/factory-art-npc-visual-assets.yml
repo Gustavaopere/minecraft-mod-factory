@@ -1,0 +1,49 @@
+name: Factory Art NPC Visual Assets
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'art/standards/NPC-VISUAL-ASSET-CONTRACT.md'
+      - 'art/tooling/validate_npc_visual_assets.py'
+      - 'art/tests/test_npc_visual_asset_manifest.py'
+      - 'art/skills/minecraft-asset-art-direction/SKILL.md'
+      - '.github/workflows/factory-art-npc-visual-assets.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'art/standards/NPC-VISUAL-ASSET-CONTRACT.md'
+      - 'art/tooling/validate_npc_visual_assets.py'
+      - 'art/tests/test_npc_visual_asset_manifest.py'
+      - 'art/skills/minecraft-asset-art-direction/SKILL.md'
+      - '.github/workflows/factory-art-npc-visual-assets.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  npc-visual-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run NPC visual asset validator tests
+        run: python3 -m unittest art/tests/test_npc_visual_asset_manifest.py
+
+      - name: Check whitespace
+        run: >-
+          git diff --check HEAD^ --
+          art/standards/NPC-VISUAL-ASSET-CONTRACT.md
+          art/tooling/validate_npc_visual_assets.py
+          art/tests/test_npc_visual_asset_manifest.py
+          art/skills/minecraft-asset-art-direction/SKILL.md
+          .github/workflows/factory-art-npc-visual-assets.yml
