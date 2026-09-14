@@ -262,6 +262,28 @@ jobs:
             coverage_started=1
           fi
 
+          if [[ -f construction/runtime/c12_runtime_acceptance.py && -f construction/runtime/c12_evidence.py && -f construction/runtime/run_c12_preflight.py && -f construction/tests/test_c12_runtime_acceptance.py && -f construction/tests/test_c12_runtime_acceptance_security.py && -f construction/tests/test_c12_workflow_contract.py ]]; then
+            if [[ "$coverage_started" -eq 0 ]]; then
+              python3 -m coverage run \
+                --branch \
+                --source=construction/runtime \
+                -m unittest \
+                construction/tests/test_c12_runtime_acceptance.py \
+                construction/tests/test_c12_runtime_acceptance_security.py \
+                construction/tests/test_c12_workflow_contract.py
+            else
+              python3 -m coverage run \
+                --append \
+                --branch \
+                --source=construction/runtime \
+                -m unittest \
+                construction/tests/test_c12_runtime_acceptance.py \
+                construction/tests/test_c12_runtime_acceptance_security.py \
+                construction/tests/test_c12_workflow_contract.py
+            fi
+            coverage_started=1
+          fi
+
           if [[ "$coverage_started" -eq 1 ]]; then
             python3 -m coverage xml -o coverage.xml
             test -s coverage.xml

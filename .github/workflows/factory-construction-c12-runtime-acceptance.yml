@@ -1,0 +1,128 @@
+name: Factory Construction C12 Runtime Acceptance
+
+on:
+  push:
+    branches:
+      - feat/construction-c12-runtime-acceptance-preflight
+    paths:
+      - '.github/workflows/factory-construction-c12-runtime-acceptance.yml'
+      - '.github/workflows/factory-sonar-ci.yml'
+      - 'engineering/contracts/target-baseline.json'
+      - 'construction/README.md'
+      - 'construction/docs/ARCHITECTURE.md'
+      - 'construction/runtime/c12_*.py'
+      - 'construction/runtime/run_c12_preflight.py'
+      - 'construction/tests/test_c12_*.py'
+      - 'construction/schemas/runtime-acceptance-report.schema.json'
+      - 'construction/tests/fixtures/c12-preflight/**'
+      - 'construction/fixtures/complex-modded-golden/capture-state.json'
+      - 'construction/fixtures/complex-modded-golden/c12-runtime-acceptance-report.json'
+      - 'engineering/tooling/test-harness/**'
+      - 'engineering/tests/test_i5_test_harness.py'
+      - 'migration/full-skill-migration/test_sonar_ci_contract.py'
+  pull_request:
+    branches:
+      - feat/construction-c11-complex-modded-golden
+    paths:
+      - '.github/workflows/factory-construction-c12-runtime-acceptance.yml'
+      - '.github/workflows/factory-sonar-ci.yml'
+      - 'engineering/contracts/target-baseline.json'
+      - 'construction/README.md'
+      - 'construction/docs/ARCHITECTURE.md'
+      - 'construction/runtime/c12_*.py'
+      - 'construction/runtime/run_c12_preflight.py'
+      - 'construction/tests/test_c12_*.py'
+      - 'construction/schemas/runtime-acceptance-report.schema.json'
+      - 'construction/tests/fixtures/c12-preflight/**'
+      - 'construction/fixtures/complex-modded-golden/capture-state.json'
+      - 'construction/fixtures/complex-modded-golden/c12-runtime-acceptance-report.json'
+      - 'engineering/tooling/test-harness/**'
+      - 'engineering/tests/test_i5_test_harness.py'
+      - 'migration/full-skill-migration/test_sonar_ci_contract.py'
+
+permissions:
+  contents: read
+
+jobs:
+  c12-preflight:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout with preserved upstreams
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          submodules: recursive
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+
+      - name: Run C12 runtime acceptance contracts
+        run: |
+          python3 -m unittest construction/tests/test_c12_runtime_acceptance.py -v
+          python3 -m unittest construction/tests/test_c12_runtime_acceptance_security.py -v
+          python3 -m unittest construction/tests/test_c12_workflow_contract.py -v
+
+      - name: Run Engineering I5 regression
+        run: python3 -m unittest engineering/tests/test_i5_test_harness.py -v
+
+      - name: Run final physical acceptance blocker regression
+        run: python3 -m unittest construction/tests/test_construction_final_physical_acceptance_gate.py -v
+
+      - name: Materialize synthetic C12 preflight report
+        run: |
+          python3 construction/runtime/run_c12_preflight.py \
+            --i5-manifest construction/tests/fixtures/c12-preflight/i5-manifest.json \
+            --blocker-state construction/fixtures/complex-modded-golden/capture-state.json \
+            --evidence-root construction/tests/fixtures/c12-preflight/evidence \
+            --output build/c12-runtime-acceptance/preflight-report.json
+
+      - name: Run shared Sonar governance contract
+        run: python3 -m unittest migration/full-skill-migration/test_sonar_ci_contract.py -v
+
+      - name: Check C12 preflight whitespace
+        run: git diff --check
+
+  c12-acceptance:
+    needs: c12-preflight
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout with preserved upstreams
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          submodules: recursive
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+
+      - name: Require final physical acceptance gate to be cleared
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          from construction.runtime.c12_runtime_acceptance import validate_runtime_acceptance_report
+
+          blocker = "SUPER_HYPER_URGENT_FINAL_CONSTRUCTION_PHYSICAL_ACCEPTANCE"
+          state_path = Path("construction/fixtures/complex-modded-golden/capture-state.json")
+          state = json.loads(state_path.read_text(encoding="utf-8"))
+          if state.get("status") == blocker and state.get("blocks_c12_acceptance") is True:
+              raise SystemExit("C12_ACCEPTANCE_BLOCKED: SUPER_HYPER_URGENT_FINAL_CONSTRUCTION_PHYSICAL_ACCEPTANCE")
+
+          final_report_path = Path("construction/fixtures/complex-modded-golden/c12-runtime-acceptance-report.json")
+          if not final_report_path.is_file():
+              raise SystemExit("C12_ACCEPTANCE_BLOCKED: missing final physical runtime acceptance report")
+
+          report = json.loads(final_report_path.read_text(encoding="utf-8"))
+          errors = validate_runtime_acceptance_report(report)
+          if errors:
+              raise SystemExit("C12_ACCEPTANCE_BLOCKED: invalid final report: " + "; ".join(errors))
+          if report.get("mode") != "PHYSICAL_ACCEPTANCE":
+              raise SystemExit("C12_ACCEPTANCE_BLOCKED: final report is not PHYSICAL_ACCEPTANCE")
+          if report.get("overall_acceptance") != "PASS":
+              raise SystemExit("C12_ACCEPTANCE_BLOCKED: final report is not accepted")
+          PY
