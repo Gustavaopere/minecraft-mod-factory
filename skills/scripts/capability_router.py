@@ -7,12 +7,25 @@ import re
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-TARGET = {
-    "minecraft": "1.21.1",
-    "loader": "neoforge",
-    "neoforge": "21.1.248",
-    "java": 21,
-}
+REPO_ROOT = Path(__file__).resolve().parents[2]
+TARGET_BASELINE = REPO_ROOT / "engineering" / "contracts" / "target-baseline.json"
+
+
+def _load_campaign_target() -> dict[str, object]:
+    baseline = json.loads(TARGET_BASELINE.read_text(encoding="utf-8"))
+    target = baseline.get("target")
+    if not isinstance(target, dict):
+        raise RuntimeError(f"invalid campaign target baseline: {TARGET_BASELINE}")
+    try:
+        return {
+            key: target[key]
+            for key in ("minecraft", "loader", "neoforge", "java")
+        }
+    except KeyError as exc:
+        raise RuntimeError(f"incomplete campaign target baseline: {TARGET_BASELINE}") from exc
+
+
+TARGET = _load_campaign_target()
 READINESS = frozenset({"AVAILABLE", "PREFLIGHT_READY", "UNAVAILABLE"})
 ACCEPTANCE = frozenset({"ACCEPTED", "BLOCKED", "NOT_APPLICABLE"})
 VERSION_PROOF = frozenset({"NOT_REQUIRED", "REQUIRED_PHYSICAL", "REQUIRED_EXACT_API"})
