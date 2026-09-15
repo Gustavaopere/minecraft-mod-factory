@@ -1,18 +1,13 @@
-import importlib.util
 import json
 import pathlib
+import sys
 import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-PROFILE_MODULE = ROOT / 'tooling' / 'profile.py'
-
-
-def load_profile_module():
-    spec = importlib.util.spec_from_file_location('narrative_profile_reference_rules', PROFILE_MODULE)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
+TOOLING = ROOT / 'tooling'
+sys.path.insert(0, str(TOOLING))
+import profile as profile_module
 
 
 class DialogueReferenceRuleProfileTests(unittest.TestCase):
@@ -41,8 +36,7 @@ class DialogueReferenceRuleProfileTests(unittest.TestCase):
         self.addCleanup(self.td.cleanup)
 
     def test_profile_loads_dialogue_reference_rule(self):
-        mod = load_profile_module()
-        profile = mod.load_profile(self.profile_path, self.root)
+        profile = profile_module.load_profile(self.profile_path, self.root)
         rule = profile.dialogue_reference_rules['participants']
         self.assertEqual(('NPC',), rule.allowed_types)
         self.assertEqual(1, rule.min_references)
