@@ -23,6 +23,8 @@ FATAL_CODES = {
     'missing-editorial-state-value',
     'missing-required-section',
     'empty-required-section',
+    'missing-entity-section-reference',
+    'invalid-entity-reference-type',
 }
 
 
@@ -114,6 +116,73 @@ def _required_section_issues(
     return issues
 
 
+def _entity_reference_issues(
+    path: pathlib.Path,
+    lines: list[str],
+    record_id: str,
+    required_sections: dict[str, tuple[str, ...]],
+    reference_rules,
+    id_re,
+) -> list[Issue]:
+    if not reference_rules:
+        return []
+
+    aliases_by_key = {
+        key: {alias.strip().casefold() for alias in aliases}
+        for key, aliases in required_sections.items()
+    }
+    heading_locations: dict[str, list[int]] = {key: [] for key in reference_rules}
+
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped.startswith('## '):
+            continue
+        heading = stripped[3:].strip().casefold()
+        for key in reference_rules:
+            if heading in aliases_by_key.get(key, set()):
+                heading_locations[key].append(index)
+
+    issues: list[Issue] = []
+    for key, rule in reference_rules.items():
+        locations = heading_locations[key]
+        if not locations:
+            continue
+
+        populated = False
+        references: set[str] = set()
+        for heading_index in locations:
+            for candidate_index in range(heading_index + 1, len(lines)):
+                stripped = lines[candidate_index].strip()
+                if stripped.startswith('## '):
+                    break
+                if not stripped:
+                    continue
+                populated = True
+                references.update(id_re.findall(lines[candidate_index]))
+
+        if not populated:
+            continue
+        line_no = locations[0] + 1
+        if len(references) < rule.min_references:
+            issues.append(Issue(
+                'missing-entity-section-reference',
+                f'{record_id}:{key}',
+                path,
+                line_no,
+            ))
+        for ref in sorted(references):
+            entity_type = ref.split('-', 1)[0]
+            if entity_type not in rule.allowed_types:
+                issues.append(Issue(
+                    'invalid-entity-reference-type',
+                    f'{record_id}:{key}:{ref}',
+                    path,
+                    line_no,
+                ))
+
+    return issues
+
+
 def validate(root: pathlib.Path, profile: NarrativeProfile) -> list[Issue]:
     root = pathlib.Path(root)
     id_re, decl_re, filename_id_re = _patterns(profile)
@@ -143,12 +212,21 @@ def validate(root: pathlib.Path, profile: NarrativeProfile) -> list[Issue]:
 
         if first_declared_id is not None and first_declaration_line is not None:
             entity_type = first_declared_id.split('-', 1)[0]
+            required_sections = profile.entity_required_sections.get(entity_type, {})
             issues.extend(_required_section_issues(
                 path,
                 lines,
                 first_declared_id,
                 first_declaration_line,
-                profile.entity_required_sections.get(entity_type, {}),
+                required_sections,
+            ))
+            issues.extend(_entity_reference_issues(
+                path,
+                lines,
+                first_declared_id,
+                required_sections,
+                profile.entity_reference_rules.get(entity_type, {}),
+                id_re,
             ))
 
     for ref, locations in sorted(declarations.items()):
