@@ -40,6 +40,9 @@ CANONICAL_OVERLAY_FILES = (
     ("src/main/resources/assets/i10_multiblock/blockstates/multiblock_controller.json", "src/main/resources/assets/i10_multiblock/blockstates/multiblock_controller.json"),
     ("src/main/resources/assets/i10_multiblock/blockstates/multiblock_io_port.json", "src/main/resources/assets/i10_multiblock/blockstates/multiblock_io_port.json"),
     ("src/main/resources/assets/i10_multiblock/blockstates/multiblock_casing.json", "src/main/resources/assets/i10_multiblock/blockstates/multiblock_casing.json"),
+    ("src/main/resources/assets/i10_multiblock/models/item/multiblock_controller.json", "src/main/resources/assets/i10_multiblock/models/item/multiblock_controller.json"),
+    ("src/main/resources/assets/i10_multiblock/models/item/multiblock_casing.json", "src/main/resources/assets/i10_multiblock/models/item/multiblock_casing.json"),
+    ("src/main/resources/assets/i10_multiblock/models/item/multiblock_io_port.json", "src/main/resources/assets/i10_multiblock/models/item/multiblock_io_port.json"),
     (GAMETEST_STRUCTURE_RELATIVE, GAMETEST_STRUCTURE_RELATIVE),
 )
 CANONICAL_FILE_SHA256 = {
