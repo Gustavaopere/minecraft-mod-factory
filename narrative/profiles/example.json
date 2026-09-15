@@ -20,6 +20,23 @@
       }
     }
   },
+  "auxiliary_document_contracts": {
+    "quest-lifecycle": {
+      "include": ["quests/**/*-lifecycle.md"],
+      "required_sections": {
+        "availability": ["Availability"],
+        "discovery": ["Discovery"],
+        "engagement": ["Engagement"],
+        "resolution": ["Resolution"]
+      },
+      "reference_rules": {
+        "discovery": {
+          "allowed_types": ["NPC", "FAC", "LOC"],
+          "min_references": 0
+        }
+      }
+    }
+  },
   "dialogue_entity_type": "DLG",
   "dialogue_required_sections": {
     "editorial-state": ["editorial state"],
