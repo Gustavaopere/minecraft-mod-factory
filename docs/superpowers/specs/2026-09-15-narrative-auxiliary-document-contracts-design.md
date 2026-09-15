@@ -69,8 +69,10 @@ Names such as `quest-lifecycle` are logical contract identifiers only. They do n
 ### `include`
 
 - required non-empty list of non-empty relative glob strings;
-- patterns are interpreted relative to `story_root`;
-- absolute paths and traversal outside the trusted story root are invalid;
+- patterns are interpreted relative to `story_root` using the recursive glob semantics of `Path.glob`, so `**` is the recursive segment operator;
+- profile patterns use `/` as the separator and are normalized for the host platform before matching;
+- absolute paths and any pattern containing a `..` path segment are invalid;
+- matched paths must resolve inside the trusted `story_root`; a path that resolves outside the root is rejected rather than validated;
 - a document matching multiple contracts receives each matching contract independently.
 
 ### `required_sections`
@@ -91,11 +93,13 @@ Names such as `quest-lifecycle` are logical contract identifiers only. They do n
 
 ## Validation model
 
-`validate_story.py` continues its current entity declaration pass unchanged. Auxiliary validation is an additional pass over Markdown files under `story_root`.
+`validate_story.py` keeps the current entity declaration pass authoritative. Auxiliary validation is an additional pass over Markdown files under `story_root`, but only for files that do **not** contain an H1 entity declaration recognized by the existing declaration regex.
 
-For each file:
+This means a true record such as `# QST-0001 — ...` remains an entity record even if an `include` glob also matches its path. A note such as `# Lifecycle editorial de QST-0001 — ...` remains auxiliary because the H1 does not declare `QST-0001` as the record identity.
 
-1. derive a normalized path relative to `story_root`;
+For each non-entity Markdown file:
+
+1. derive its normalized path relative to `story_root`;
 2. find matching auxiliary contracts from `include` patterns;
 3. locate configured `##` headings using aliases;
 4. emit structural issues for missing or empty required sections;
@@ -103,7 +107,7 @@ For each file:
 6. apply per-section allowed-type and distinct minimum-reference rules;
 7. leave global ID resolution to the existing story graph logic.
 
-Auxiliary validation does not create declarations. An ID mentioned in an auxiliary H1 or body remains a reference unless separately declared by a true entity record.
+Auxiliary validation never creates declarations. An ID mentioned in an auxiliary H1 or body remains a reference unless separately declared by a true entity record.
 
 ## Issue codes
 
@@ -124,7 +128,7 @@ Issue refs should identify the logical contract and section, plus the offending 
 - blank contract names;
 - non-object/empty contract definitions;
 - missing or invalid `include` lists;
-- absolute/traversal patterns;
+- absolute patterns or patterns containing a `..` path segment;
 - missing/empty `required_sections`;
 - blank section keys or empty alias lists;
 - `reference_rules` keys not present in that contract's `required_sections`;
@@ -157,8 +161,10 @@ Create tests before production changes. RED must demonstrate:
 - an empty section is not currently detected;
 - invalid reference types and minimum distinct reference counts are not currently enforced;
 - auxiliary files do not accidentally become declarations;
+- a true entity record matched by the same glob remains governed only by entity semantics;
 - unmatched auxiliary files remain unaffected;
-- old profiles remain backward-compatible.
+- old profiles remain backward-compatible;
+- unsafe absolute/traversal patterns are rejected.
 
 GREEN will implement only the minimum parser/model and validator behavior required by those tests. Documentation/example changes follow after the minimal functional GREEN is observed.
 
@@ -184,9 +190,11 @@ The Factory change is accepted when:
 4. configured typed references are validated per section;
 5. unmatched documents are unaffected;
 6. auxiliary documents never create entity declarations;
-7. missing/empty sections do not produce duplicate reference-cardinality errors;
-8. the full Narrative Authoring Toolkit test suite passes;
-9. Factory repository checks pass on the final PR SHA;
-10. the post-merge Factory SHA is certified before the RPG pins it.
+7. true entity records are not reclassified as auxiliary by path matching;
+8. missing/empty sections do not produce duplicate reference-cardinality errors;
+9. unsafe glob patterns or resolved matches outside `story_root` fail closed;
+10. the full Narrative Authoring Toolkit test suite passes;
+11. Factory repository checks pass on the final PR SHA;
+12. the post-merge Factory SHA is certified before the RPG pins it.
 
 The consumer integration is accepted when its real narrative corpus passes the pinned Factory validator without content fabrication or semantic weakening.
