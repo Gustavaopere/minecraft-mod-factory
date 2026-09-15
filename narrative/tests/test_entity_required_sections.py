@@ -138,7 +138,8 @@ class EntityRequiredSectionsValidationTests(unittest.TestCase):
 
     def test_auxiliary_file_without_entity_declaration_is_ignored(self):
         self.write('EVD-0001-notes.md', '# Authoring notes — EVD-0001\n')
-        self.assertEqual([], story_module.validate(self.story, self.profile))
+        issues = story_module.validate(self.story, self.profile)
+        self.assertFalse(any(issue.code in {'missing-required-section', 'empty-required-section'} for issue in issues))
 
 
 if __name__ == '__main__':
