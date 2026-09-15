@@ -12,6 +12,14 @@
       "reliability": ["Reliability/uncertainty"]
     }
   },
+  "entity_reference_rules": {
+    "EVD": {
+      "provenance": {
+        "allowed_types": ["NPC", "FAC", "SET", "LOC"],
+        "min_references": 0
+      }
+    }
+  },
   "dialogue_entity_type": "DLG",
   "dialogue_required_sections": {
     "editorial-state": ["editorial state"],
