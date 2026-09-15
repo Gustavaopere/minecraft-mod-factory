@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 
 @dataclass(frozen=True)
@@ -18,6 +18,19 @@ class EntityReferenceRule:
 
 
 @dataclass(frozen=True)
+class AuxiliaryReferenceRule:
+    allowed_types: tuple[str, ...]
+    min_references: int
+
+
+@dataclass(frozen=True)
+class AuxiliaryDocumentContract:
+    include: tuple[str, ...]
+    required_sections: dict[str, tuple[str, ...]]
+    reference_rules: dict[str, AuxiliaryReferenceRule]
+
+
+@dataclass(frozen=True)
 class NarrativeProfile:
     story_root: str
     dialogue_root: str
@@ -29,6 +42,7 @@ class NarrativeProfile:
     dialogue_reference_rules: dict[str, DialogueReferenceRule]
     entity_required_sections: dict[str, dict[str, tuple[str, ...]]]
     entity_reference_rules: dict[str, dict[str, EntityReferenceRule]]
+    auxiliary_document_contracts: dict[str, AuxiliaryDocumentContract]
 
 
 def _strings(value, field: str) -> tuple[str, ...]:
@@ -138,6 +152,87 @@ def _entity_reference_rules(
     return rules
 
 
+def _auxiliary_document_contracts(
+    data,
+    entity_types: tuple[str, ...],
+) -> dict[str, AuxiliaryDocumentContract]:
+    raw_contracts = data.get('auxiliary_document_contracts', {})
+    if not isinstance(raw_contracts, dict):
+        raise ValueError('auxiliary_document_contracts must be an object')
+
+    contracts: dict[str, AuxiliaryDocumentContract] = {}
+    for raw_name, raw_contract in raw_contracts.items():
+        if not isinstance(raw_name, str) or not raw_name.strip():
+            raise ValueError('auxiliary_document_contracts keys must be non-empty strings')
+        name = raw_name.strip()
+        if name in contracts:
+            raise ValueError('auxiliary_document_contracts keys must be unique after trimming')
+        if not isinstance(raw_contract, dict) or not raw_contract:
+            raise ValueError(f'auxiliary_document_contracts.{name} must be a non-empty object')
+
+        include = _strings(raw_contract.get('include'), f'auxiliary_document_contracts.{name}.include')
+        for pattern in include:
+            pure = PurePosixPath(pattern)
+            if '\\' in pattern or pure.is_absolute() or '..' in pure.parts:
+                raise ValueError(
+                    f'auxiliary_document_contracts.{name}.include patterns must be relative, use / separators, and not contain ..'
+                )
+
+        raw_sections = raw_contract.get('required_sections')
+        if not isinstance(raw_sections, dict) or not raw_sections:
+            raise ValueError(f'auxiliary_document_contracts.{name}.required_sections must be a non-empty object')
+        required_sections: dict[str, tuple[str, ...]] = {}
+        for raw_key, aliases in raw_sections.items():
+            if not isinstance(raw_key, str) or not raw_key.strip():
+                raise ValueError(
+                    f'auxiliary_document_contracts.{name}.required_sections keys must be non-empty strings'
+                )
+            key = raw_key.strip()
+            required_sections[key] = _strings(
+                aliases,
+                f'auxiliary_document_contracts.{name}.required_sections.{key}',
+            )
+
+        raw_rules = raw_contract.get('reference_rules', {})
+        if not isinstance(raw_rules, dict):
+            raise ValueError(f'auxiliary_document_contracts.{name}.reference_rules must be an object')
+        reference_rules: dict[str, AuxiliaryReferenceRule] = {}
+        for raw_key, raw_rule in raw_rules.items():
+            if not isinstance(raw_key, str) or raw_key not in required_sections:
+                raise ValueError(
+                    f'auxiliary_document_contracts.{name}.reference_rules keys must name required_sections'
+                )
+            key = raw_key
+            if not isinstance(raw_rule, dict):
+                raise ValueError(f'auxiliary_document_contracts.{name}.reference_rules.{key} must be an object')
+            allowed_types = _strings(
+                raw_rule.get('allowed_types'),
+                f'auxiliary_document_contracts.{name}.reference_rules.{key}.allowed_types',
+            )
+            if any(allowed_type not in entity_types for allowed_type in allowed_types):
+                raise ValueError(
+                    f'auxiliary_document_contracts.{name}.reference_rules.{key}.allowed_types must be entity_types'
+                )
+            min_references = raw_rule.get('min_references', 0)
+            if isinstance(min_references, bool) or not isinstance(min_references, int) or min_references < 0:
+                raise ValueError(
+                    f'auxiliary_document_contracts.{name}.reference_rules.{key}.min_references '
+                    'must be a non-negative integer'
+                )
+            reference_rules[key] = AuxiliaryReferenceRule(
+                allowed_types=allowed_types,
+                min_references=min_references,
+            )
+
+        contracts[name] = AuxiliaryDocumentContract(
+            include=include,
+            required_sections=required_sections,
+            reference_rules=reference_rules,
+        )
+
+    return contracts
+
+
 def load_profile(path: str | Path, workspace_root: str | Path | None = None) -> NarrativeProfile:
     workspace = Path.cwd() if workspace_root is None else workspace_root
     profile_path = resolve_workspace_path(path, workspace)
@@ -167,6 +262,7 @@ def load_profile(path: str | Path, workspace_root: str | Path | None = None) -> 
     reference_rules = _reference_rules(data, sections, entity_types)
     entity_sections = _entity_required_sections(data, entity_types)
     entity_reference_rules = _entity_reference_rules(data, entity_sections, entity_types)
+    auxiliary_contracts = _auxiliary_document_contracts(data, entity_types)
     return NarrativeProfile(
         story_root=story_root.strip(),
         dialogue_root=dialogue_root.strip(),
@@ -178,4 +274,5 @@ def load_profile(path: str | Path, workspace_root: str | Path | None = None) -> 
         dialogue_reference_rules=reference_rules,
         entity_required_sections=entity_sections,
         entity_reference_rules=entity_reference_rules,
+        auxiliary_document_contracts=auxiliary_contracts,
     )

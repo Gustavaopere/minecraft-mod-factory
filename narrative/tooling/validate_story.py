@@ -25,6 +25,10 @@ FATAL_CODES = {
     'empty-required-section',
     'missing-entity-section-reference',
     'invalid-entity-reference-type',
+    'missing-auxiliary-required-section',
+    'empty-auxiliary-required-section',
+    'missing-auxiliary-section-reference',
+    'invalid-auxiliary-reference-type',
 }
 
 
@@ -183,12 +187,73 @@ def _entity_reference_issues(
     return issues
 
 
+def _remap_issue_codes(issues: list[Issue], mapping: dict[str, str]) -> list[Issue]:
+    return [
+        Issue(mapping.get(issue.code, issue.code), issue.ref, issue.path, issue.line)
+        for issue in issues
+    ]
+
+
+def _auxiliary_contract_matches(root: pathlib.Path, profile: NarrativeProfile):
+    if not profile.auxiliary_document_contracts:
+        return {}
+
+    trusted_root = root.resolve(strict=True)
+    matches: dict[str, list[tuple[str, object]]] = {}
+    for contract_name, contract in profile.auxiliary_document_contracts.items():
+        seen: set[str] = set()
+        for pattern in contract.include:
+            for candidate in root.glob(pattern):
+                if not candidate.is_file() or candidate.suffix.casefold() != '.md':
+                    continue
+                resolved = candidate.resolve(strict=True)
+                try:
+                    resolved.relative_to(trusted_root)
+                except ValueError as exc:
+                    raise ValueError('auxiliary document resolved outside trusted story_root') from exc
+                relative = candidate.relative_to(root).as_posix()
+                if relative in seen:
+                    continue
+                seen.add(relative)
+                matches.setdefault(relative, []).append((contract_name, contract))
+    return matches
+
+
+def _auxiliary_contract_issues(path, lines, contract_name, contract, id_re) -> list[Issue]:
+    structural = _required_section_issues(
+        path,
+        lines,
+        contract_name,
+        1,
+        contract.required_sections,
+    )
+    structural = _remap_issue_codes(structural, {
+        'missing-required-section': 'missing-auxiliary-required-section',
+        'empty-required-section': 'empty-auxiliary-required-section',
+    })
+
+    references = _entity_reference_issues(
+        path,
+        lines,
+        contract_name,
+        contract.required_sections,
+        contract.reference_rules,
+        id_re,
+    )
+    references = _remap_issue_codes(references, {
+        'missing-entity-section-reference': 'missing-auxiliary-section-reference',
+        'invalid-entity-reference-type': 'invalid-auxiliary-reference-type',
+    })
+    return structural + references
+
+
 def validate(root: pathlib.Path, profile: NarrativeProfile) -> list[Issue]:
     root = pathlib.Path(root)
     id_re, decl_re, filename_id_re = _patterns(profile)
     declarations: dict[str, list[tuple[pathlib.Path, int]]] = {}
     references: list[tuple[str, pathlib.Path, int]] = []
     issues: list[Issue] = []
+    auxiliary_matches = _auxiliary_contract_matches(root, profile)
 
     for path in _markdown_files(root):
         text = path.read_text(encoding='utf-8')
@@ -228,6 +293,16 @@ def validate(root: pathlib.Path, profile: NarrativeProfile) -> list[Issue]:
                 profile.entity_reference_rules.get(entity_type, {}),
                 id_re,
             ))
+        else:
+            relative = path.relative_to(root).as_posix()
+            for contract_name, contract in auxiliary_matches.get(relative, []):
+                issues.extend(_auxiliary_contract_issues(
+                    path,
+                    lines,
+                    contract_name,
+                    contract,
+                    id_re,
+                ))
 
     for ref, locations in sorted(declarations.items()):
         if len(locations) > 1:
@@ -267,10 +342,10 @@ def main(argv=None, workspace_root=None) -> int:
     try:
         profile = load_profile(args.profile, workspace)
         root = resolve_workspace_path(args.root or profile.story_root, workspace)
+        issues = validate(root, profile)
     except (OSError, ValueError):
         print('ERROR workspace-path: profile/root must resolve inside the trusted workspace')
         return 2
-    issues = validate(root, profile)
     if issues:
         if args.reveal:
             for issue in issues:

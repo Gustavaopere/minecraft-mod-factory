@@ -23,7 +23,7 @@ A Factory é responsável por capability reutilizável: skill, workflow de autor
 - [08 - Entity Structural Contracts ✅](./08%20-%20Entity%20Structural%20Contracts%20✅.md)
 - [09 - Dialogue Typed Reference Rules ✅](./09%20-%20Dialogue%20Typed%20Reference%20Rules%20✅.md)
 - [10 - Entity Typed Reference Rules ✅](./10%20-%20Entity%20Typed%20Reference%20Rules%20✅.md)
-- [11 - Auxiliary Document Contracts 🔄](./11%20-%20Auxiliary%20Document%20Contracts%20🔄.md)
+- [11 - Auxiliary Document Contracts ✅](./11%20-%20Auxiliary%20Document%20Contracts%20✅.md)
 - [12 - Knowledge Evidence and Provenance Contracts ⬜](./12%20-%20Knowledge%20Evidence%20and%20Provenance%20Contracts%20⬜.md)
 - [13 - Relationships Memory and Autonomy Contracts ⬜](./13%20-%20Relationships%20Memory%20and%20Autonomy%20Contracts%20⬜.md)
 - [14 - Chronology and Causality Graph Checks ⬜](./14%20-%20Chronology%20and%20Causality%20Graph%20Checks%20⬜.md)

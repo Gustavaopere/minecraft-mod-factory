@@ -29,6 +29,7 @@ O profile JSON define:
 - headings aceitos para estado editorial;
 - opcionalmente, seções estruturais obrigatórias por família de entidade em `entity_required_sections`;
 - opcionalmente, regras tipadas de referência nessas seções em `entity_reference_rules`;
+- opcionalmente, contratos estruturais para documentos auxiliares em `auxiliary_document_contracts`;
 - tipo de diálogo;
 - aliases semânticos das seções obrigatórias de diálogo;
 - opcionalmente, regras tipadas de referência por seção em `dialogue_reference_rules`.
@@ -81,6 +82,48 @@ Exemplo conceitual:
 A chave lógica precisa existir em `entity_required_sections` para o mesmo tipo. Se a seção estiver ausente ou vazia, `validate_story.py` mantém somente o erro estrutural correspondente e não duplica o problema com um erro de cardinalidade. Quando a seção está preenchida, o validator conta IDs distintos e rejeita famílias não permitidas.
 
 A regra continua estritamente estrutural: ela não conclui que uma referência prova autoria, conhecimento, causalidade, veracidade ou cânone. A existência global do ID continua sendo validada pelo grafo de `validate_story.py`; `--strict-references` permanece responsável por promover referências não resolvidas a falha de CLI.
+
+### Contratos de documentos auxiliares
+
+`auxiliary_document_contracts` permite aplicar estrutura e referências tipadas a Markdown auxiliar que **não** declara uma entidade própria no H1. O consumidor seleciona os arquivos por glob relativo a `story_root` e define `required_sections` e, opcionalmente, `reference_rules`.
+
+Exemplo:
+
+```json
+{
+  "auxiliary_document_contracts": {
+    "quest-lifecycle": {
+      "include": ["quests/**/*-lifecycle.md"],
+      "required_sections": {
+        "availability": ["Availability"],
+        "discovery": ["Discovery"],
+        "engagement": ["Engagement"],
+        "resolution": ["Resolution"]
+      },
+      "reference_rules": {
+        "discovery": {
+          "allowed_types": ["NPC", "FAC", "LOC"],
+          "min_references": 0
+        }
+      }
+    }
+  }
+}
+```
+
+Regras da seleção:
+
+- `include` é uma lista não vazia de globs relativos a `story_root`;
+- os padrões usam `/`, aceitam `**` para recursão e não podem ser absolutos nem conter segmento `..`;
+- um match que resolva fisicamente fora de `story_root` falha fechado;
+- se mais de um contrato casar com o mesmo arquivo, cada contrato é aplicado independentemente;
+- somente Markdown é validado por essa capability.
+
+Precedência de identidade: um arquivo que contenha uma declaração H1 reconhecida como `# TYPE-#### ...` continua sendo um entity record, mesmo que o glob auxiliar case com seu caminho. Um H1 como `# Lifecycle editorial de QST-0001 ...` continua auxiliar; `QST-0001` ali é referência, não declaração.
+
+A semântica de `required_sections` e `reference_rules` é a mesma dos contratos de entidade: aliases case-insensitive, seção precisa ter conteúdo não vazio, referências são IDs estáveis distintos, e seção ausente/vazia não gera erro duplicado de cardinalidade. Os issue codes auxiliares são `missing-auxiliary-required-section`, `empty-auxiliary-required-section`, `missing-auxiliary-section-reference` e `invalid-auxiliary-reference-type`.
+
+Esses checks continuam estritamente estruturais. Eles não inferem verdade, cânone, causalidade, legitimidade de conhecimento, qualidade narrativa ou mecânicas de mods/providers.
 
 ### Referências tipadas de diálogo
 
