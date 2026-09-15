@@ -4,7 +4,7 @@
     "name": "Example Mod",
     "mod_id": "example_mod",
     "repository": "UNRESOLVED",
-    "target": {"minecraft": "1.21.1", "loader": "neoforge", "neoforge": "21.1.248", "java": 21}
+    "target": {"minecraft": "1.21.1", "loader": "neoforge", "neoforge": "21.1.250", "java": 21}
   },
   "purpose": {
     "fantasy": "Example-only contract fixture; not a production mod specification.",

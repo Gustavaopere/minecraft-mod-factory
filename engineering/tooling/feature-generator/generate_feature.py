@@ -21,7 +21,7 @@ CORE_FEATURE_KINDS = (
 EXPECTED_TARGET = {
     "minecraft": "1.21.1",
     "loader": "neoforge",
-    "neoforge": "21.1.248",
+    "neoforge": "21.1.250",
     "java": 21,
 }
 MOD_ID_RE = re.compile(r"^[a-z][a-z0-9_]{1,63}$")

@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "i10_multiblock:block/casing"
+    }
+  }
+}
