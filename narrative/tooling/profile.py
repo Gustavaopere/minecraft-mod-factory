@@ -21,6 +21,7 @@ class NarrativeProfile:
     dialogue_required_sections: dict[str, tuple[str, ...]]
     dialogue_entity_type: str
     dialogue_reference_rules: dict[str, DialogueReferenceRule]
+    entity_required_sections: dict[str, dict[str, tuple[str, ...]]]
 
 
 def _strings(value, field: str) -> tuple[str, ...]:
@@ -61,6 +62,29 @@ def _reference_rules(data, sections: dict[str, tuple[str, ...]], entity_types: t
     return rules
 
 
+def _entity_required_sections(data, entity_types: tuple[str, ...]) -> dict[str, dict[str, tuple[str, ...]]]:
+    raw_types = data.get('entity_required_sections', {})
+    if not isinstance(raw_types, dict):
+        raise ValueError('entity_required_sections must be an object')
+    required: dict[str, dict[str, tuple[str, ...]]] = {}
+    for entity_type, raw_sections in raw_types.items():
+        if not isinstance(entity_type, str) or entity_type not in entity_types:
+            raise ValueError('entity_required_sections keys must be entity_types')
+        if not isinstance(raw_sections, dict) or not raw_sections:
+            raise ValueError(f'entity_required_sections.{entity_type} must be a non-empty object')
+        sections: dict[str, tuple[str, ...]] = {}
+        for key, aliases in raw_sections.items():
+            if not isinstance(key, str) or not key.strip():
+                raise ValueError(f'entity_required_sections.{entity_type} keys must be non-empty strings')
+            normalized_key = key.strip()
+            sections[normalized_key] = _strings(
+                aliases,
+                f'entity_required_sections.{entity_type}.{normalized_key}',
+            )
+        required[entity_type] = sections
+    return required
+
+
 def load_profile(path: str | Path, workspace_root: str | Path | None = None) -> NarrativeProfile:
     workspace = Path.cwd() if workspace_root is None else workspace_root
     profile_path = resolve_workspace_path(path, workspace)
@@ -88,6 +112,7 @@ def load_profile(path: str | Path, workspace_root: str | Path | None = None) -> 
     if dialogue_entity_type not in entity_types:
         raise ValueError('dialogue_entity_type must be one of entity_types')
     reference_rules = _reference_rules(data, sections, entity_types)
+    entity_sections = _entity_required_sections(data, entity_types)
     return NarrativeProfile(
         story_root=story_root.strip(),
         dialogue_root=dialogue_root.strip(),
@@ -97,4 +122,5 @@ def load_profile(path: str | Path, workspace_root: str | Path | None = None) -> 
         dialogue_required_sections=sections,
         dialogue_entity_type=dialogue_entity_type,
         dialogue_reference_rules=reference_rules,
+        entity_required_sections=entity_sections,
     )

@@ -27,9 +27,33 @@ O profile JSON define:
 - famílias de IDs (`entity_types`);
 - prefixes de estados editoriais estáveis;
 - headings aceitos para estado editorial;
+- opcionalmente, seções estruturais obrigatórias por família de entidade em `entity_required_sections`;
 - tipo de diálogo;
 - aliases semânticos das seções obrigatórias de diálogo;
 - opcionalmente, regras tipadas de referência por seção em `dialogue_reference_rules`.
+
+### Seções obrigatórias por tipo de entidade
+
+`entity_required_sections` é um contrato opt-in de estrutura Markdown. Cada chave de primeiro nível deve ser uma família já presente em `entity_types`; dentro dela, cada chave lógica declara um ou mais aliases aceitos para um heading `##`.
+
+Exemplo conceitual:
+
+```json
+{
+  "entity_required_sections": {
+    "EVD": {
+      "provenance": ["Provenance", "Origem/proveniência"],
+      "limits": ["What it does NOT prove"]
+    }
+  }
+}
+```
+
+Para um registro que realmente declare um ID `EVD-####` no H1, `validate_story.py` exige que cada seção configurada exista e contenha pelo menos uma linha não vazia antes do próximo heading `##`. Aliases são comparados sem distinguir maiúsculas/minúsculas. Tipos não configurados e arquivos auxiliares sem declaração de entidade não recebem essa exigência estrutural.
+
+A validação é deliberadamente sintática: presença e conteúdo não vazio. Ela não decide se a prosa é verdadeira, suficiente, coerente ou canônica; essas decisões permanecem no processo editorial do consumidor.
+
+### Referências tipadas de diálogo
 
 Cada regra de referência aponta para uma chave já presente em `dialogue_required_sections` e pode declarar:
 

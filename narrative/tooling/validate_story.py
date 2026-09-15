@@ -16,7 +16,14 @@ class Issue(NamedTuple):
     line: int
 
 
-FATAL_CODES = {'duplicate-id', 'filename-id-mismatch', 'invalid-editorial-state', 'missing-editorial-state-value'}
+FATAL_CODES = {
+    'duplicate-id',
+    'filename-id-mismatch',
+    'invalid-editorial-state',
+    'missing-editorial-state-value',
+    'missing-required-section',
+    'empty-required-section',
+}
 
 
 def _patterns(profile: NarrativeProfile):
@@ -57,6 +64,56 @@ def _editorial_state_issues(path: pathlib.Path, lines: list[str], headings: tupl
     return issues
 
 
+def _required_section_issues(
+    path: pathlib.Path,
+    lines: list[str],
+    record_id: str,
+    declaration_line: int,
+    required_sections: dict[str, tuple[str, ...]],
+) -> list[Issue]:
+    if not required_sections:
+        return []
+
+    aliases_by_key = {
+        key: {alias.strip().casefold() for alias in aliases}
+        for key, aliases in required_sections.items()
+    }
+    heading_locations: dict[str, list[int]] = {key: [] for key in required_sections}
+
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped.startswith('## '):
+            continue
+        heading = stripped[3:].strip().casefold()
+        for key, aliases in aliases_by_key.items():
+            if heading in aliases:
+                heading_locations[key].append(index)
+
+    issues: list[Issue] = []
+    for key in required_sections:
+        locations = heading_locations[key]
+        if not locations:
+            issues.append(Issue('missing-required-section', f'{record_id}:{key}', path, declaration_line))
+            continue
+
+        populated = False
+        for heading_index in locations:
+            for candidate_index in range(heading_index + 1, len(lines)):
+                stripped = lines[candidate_index].strip()
+                if stripped.startswith('## '):
+                    break
+                if stripped:
+                    populated = True
+                    break
+            if populated:
+                break
+
+        if not populated:
+            issues.append(Issue('empty-required-section', f'{record_id}:{key}', path, locations[0] + 1))
+
+    return issues
+
+
 def validate(root: pathlib.Path, profile: NarrativeProfile) -> list[Issue]:
     root = pathlib.Path(root)
     id_re, decl_re, filename_id_re = _patterns(profile)
@@ -70,6 +127,7 @@ def validate(root: pathlib.Path, profile: NarrativeProfile) -> list[Issue]:
         issues.extend(_editorial_state_issues(path, lines, profile.editorial_state_headings, profile.editorial_state_prefixes))
         filename_match = filename_id_re.match(path.name)
         first_declared_id = None
+        first_declaration_line = None
         for line_no, line in enumerate(lines, start=1):
             decl = decl_re.match(line)
             if decl:
@@ -77,10 +135,21 @@ def validate(root: pathlib.Path, profile: NarrativeProfile) -> list[Issue]:
                 declarations.setdefault(ref, []).append((path, line_no))
                 if first_declared_id is None:
                     first_declared_id = ref
+                    first_declaration_line = line_no
                     if filename_match and filename_match.group(1) != ref:
                         issues.append(Issue('filename-id-mismatch', ref, path, line_no))
             for ref in id_re.findall(line):
                 references.append((ref, path, line_no))
+
+        if first_declared_id is not None and first_declaration_line is not None:
+            entity_type = first_declared_id.split('-', 1)[0]
+            issues.extend(_required_section_issues(
+                path,
+                lines,
+                first_declared_id,
+                first_declaration_line,
+                profile.entity_required_sections.get(entity_type, {}),
+            ))
 
     for ref, locations in sorted(declarations.items()):
         if len(locations) > 1:

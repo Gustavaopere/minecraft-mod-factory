@@ -4,6 +4,14 @@
   "entity_types": ["HIST", "ARC", "NPC", "QST", "FAC", "SET", "LOC", "EVT", "EVD", "END", "DLG"],
   "editorial_state_prefixes": ["CANON", "DRAFT", "EXPERIMENTAL", "OBSOLETE"],
   "editorial_state_headings": ["Editorial state"],
+  "entity_required_sections": {
+    "EVD": {
+      "provenance": ["Provenance"],
+      "supports": ["What it supports"],
+      "limits": ["What it does NOT prove"],
+      "reliability": ["Reliability/uncertainty"]
+    }
+  },
   "dialogue_entity_type": "DLG",
   "dialogue_required_sections": {
     "editorial-state": ["editorial state"],
