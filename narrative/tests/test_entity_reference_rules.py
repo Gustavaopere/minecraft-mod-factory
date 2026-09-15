@@ -67,8 +67,23 @@ class EntityReferenceRuleProfileTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             profile_module.load_profile(self.profile_path, self.root)
 
+    def test_entity_reference_rules_reject_empty_type_contract(self):
+        self.write_profile({'EVD': {}})
+        with self.assertRaises(ValueError):
+            profile_module.load_profile(self.profile_path, self.root)
+
     def test_entity_reference_rules_require_declared_required_section(self):
         self.write_profile({'EVD': {'provenance': {'allowed_types': ['NPC']}}})
+        with self.assertRaises(ValueError):
+            profile_module.load_profile(self.profile_path, self.root)
+
+    def test_entity_reference_rules_reject_non_object_rule(self):
+        self.write_profile({'EVD': {'known-by': ['NPC']}})
+        with self.assertRaises(ValueError):
+            profile_module.load_profile(self.profile_path, self.root)
+
+    def test_entity_reference_rules_reject_empty_allowed_types(self):
+        self.write_profile({'EVD': {'known-by': {'allowed_types': []}}})
         with self.assertRaises(ValueError):
             profile_module.load_profile(self.profile_path, self.root)
 
@@ -108,7 +123,7 @@ class EntityReferenceRuleValidationTests(unittest.TestCase):
             'dialogue_required_sections': {'state': ['editorial state'], 'qa': ['qa']},
             'entity_required_sections': {
                 'EVD': {
-                    'known-by': ['Known by'],
+                    'known-by': ['Known by', 'Initial knowers'],
                     'supports': ['What it supports'],
                 },
             },
@@ -147,6 +162,16 @@ class EntityReferenceRuleValidationTests(unittest.TestCase):
         self.write_evidence('NPC-0001')
         self.assertEqual([], story_module.validate(self.story, self.profile))
 
+    def test_populated_alias_satisfies_reference_rule(self):
+        self.write(
+            'EVD-0001-record.md',
+            '# EVD-0001 — Record\n\n'
+            '## Known by\n\n'
+            '## Initial knowers\nNPC-0001\n\n'
+            '## What it supports\nQST-0001\n',
+        )
+        self.assertEqual([], story_module.validate(self.story, self.profile))
+
     def test_missing_minimum_section_reference_is_fatal(self):
         self.write_evidence('The local witnesses')
         issues = story_module.validate(self.story, self.profile)
@@ -175,6 +200,27 @@ class EntityReferenceRuleValidationTests(unittest.TestCase):
         self.write_evidence('NPC-0001 and NPC-0001')
         issues = story_module.validate(self.story, profile)
         self.assertTrue(any(issue.code == 'missing-entity-section-reference' for issue in issues))
+
+    def test_missing_required_section_does_not_duplicate_reference_error(self):
+        self.write(
+            'EVD-0001-record.md',
+            '# EVD-0001 — Record\n\n'
+            '## What it supports\nQST-0001\n',
+        )
+        issues = story_module.validate(self.story, self.profile)
+        self.assertTrue(any(issue.code == 'missing-required-section' and issue.ref == 'EVD-0001:known-by' for issue in issues))
+        self.assertFalse(any(issue.code == 'missing-entity-section-reference' for issue in issues))
+
+    def test_empty_required_section_does_not_duplicate_reference_error(self):
+        self.write(
+            'EVD-0001-record.md',
+            '# EVD-0001 — Record\n\n'
+            '## Known by\n\n'
+            '## What it supports\nQST-0001\n',
+        )
+        issues = story_module.validate(self.story, self.profile)
+        self.assertTrue(any(issue.code == 'empty-required-section' and issue.ref == 'EVD-0001:known-by' for issue in issues))
+        self.assertFalse(any(issue.code == 'missing-entity-section-reference' for issue in issues))
 
     def test_unconfigured_entity_types_are_not_reference_constrained(self):
         self.write('QST-0002-other.md', '# QST-0002 — Other\n\n## Known by\nEVD-9999\n')
