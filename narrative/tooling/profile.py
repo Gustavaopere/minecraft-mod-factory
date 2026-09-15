@@ -6,6 +6,12 @@ from pathlib import Path
 
 
 @dataclass(frozen=True)
+class DialogueReferenceRule:
+    allowed_types: tuple[str, ...]
+    min_references: int
+
+
+@dataclass(frozen=True)
 class NarrativeProfile:
     story_root: str
     dialogue_root: str
@@ -14,6 +20,7 @@ class NarrativeProfile:
     editorial_state_headings: tuple[str, ...]
     dialogue_required_sections: dict[str, tuple[str, ...]]
     dialogue_entity_type: str
+    dialogue_reference_rules: dict[str, DialogueReferenceRule]
 
 
 def _strings(value, field: str) -> tuple[str, ...]:
@@ -32,6 +39,26 @@ def resolve_workspace_path(path: str | Path, workspace_root: str | Path) -> Path
     except ValueError as exc:
         raise ValueError('path is outside the trusted workspace') from exc
     return resolved
+
+
+def _reference_rules(data, sections: dict[str, tuple[str, ...]], entity_types: tuple[str, ...]) -> dict[str, DialogueReferenceRule]:
+    raw_rules = data.get('dialogue_reference_rules', {})
+    if not isinstance(raw_rules, dict):
+        raise ValueError('dialogue_reference_rules must be an object')
+    rules: dict[str, DialogueReferenceRule] = {}
+    for key, raw_rule in raw_rules.items():
+        if not isinstance(key, str) or key not in sections:
+            raise ValueError('dialogue_reference_rules keys must name dialogue_required_sections')
+        if not isinstance(raw_rule, dict):
+            raise ValueError(f'dialogue_reference_rules.{key} must be an object')
+        allowed_types = _strings(raw_rule.get('allowed_types'), f'dialogue_reference_rules.{key}.allowed_types')
+        if any(entity_type not in entity_types for entity_type in allowed_types):
+            raise ValueError(f'dialogue_reference_rules.{key}.allowed_types must be entity_types')
+        min_references = raw_rule.get('min_references', 0)
+        if isinstance(min_references, bool) or not isinstance(min_references, int) or min_references < 0:
+            raise ValueError(f'dialogue_reference_rules.{key}.min_references must be a non-negative integer')
+        rules[key] = DialogueReferenceRule(allowed_types=allowed_types, min_references=min_references)
+    return rules
 
 
 def load_profile(path: str | Path, workspace_root: str | Path | None = None) -> NarrativeProfile:
@@ -60,6 +87,7 @@ def load_profile(path: str | Path, workspace_root: str | Path | None = None) -> 
     dialogue_entity_type = data.get('dialogue_entity_type', 'DLG')
     if dialogue_entity_type not in entity_types:
         raise ValueError('dialogue_entity_type must be one of entity_types')
+    reference_rules = _reference_rules(data, sections, entity_types)
     return NarrativeProfile(
         story_root=story_root.strip(),
         dialogue_root=dialogue_root.strip(),
@@ -68,4 +96,5 @@ def load_profile(path: str | Path, workspace_root: str | Path | None = None) -> 
         editorial_state_headings=state_headings,
         dialogue_required_sections=sections,
         dialogue_entity_type=dialogue_entity_type,
+        dialogue_reference_rules=reference_rules,
     )

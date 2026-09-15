@@ -21,5 +21,15 @@
     "voice-notes": ["voice notes"],
     "qa": ["qa"],
     "internal-spoilers": ["internal spoilers"]
+  },
+  "dialogue_reference_rules": {
+    "participants": {
+      "allowed_types": ["NPC"],
+      "min_references": 1
+    },
+    "related-content": {
+      "allowed_types": ["ARC", "QST"],
+      "min_references": 0
+    }
   }
 }
