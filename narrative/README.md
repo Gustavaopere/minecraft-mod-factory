@@ -28,6 +28,7 @@ O profile JSON define:
 - prefixes de estados editoriais estáveis;
 - headings aceitos para estado editorial;
 - opcionalmente, seções estruturais obrigatórias por família de entidade em `entity_required_sections`;
+- opcionalmente, regras tipadas de referência nessas seções em `entity_reference_rules`;
 - tipo de diálogo;
 - aliases semânticos das seções obrigatórias de diálogo;
 - opcionalmente, regras tipadas de referência por seção em `dialogue_reference_rules`.
@@ -52,6 +53,34 @@ Exemplo conceitual:
 Para um registro que realmente declare um ID `EVD-####` no H1, `validate_story.py` exige que cada seção configurada exista e contenha pelo menos uma linha não vazia antes do próximo heading `##`. Aliases são comparados sem distinguir maiúsculas/minúsculas. Tipos não configurados e arquivos auxiliares sem declaração de entidade não recebem essa exigência estrutural.
 
 A validação é deliberadamente sintática: presença e conteúdo não vazio. Ela não decide se a prosa é verdadeira, suficiente, coerente ou canônica; essas decisões permanecem no processo editorial do consumidor.
+
+### Referências tipadas por seção de entidade
+
+`entity_reference_rules` é um contrato opt-in adicional para seções já declaradas em `entity_required_sections`. A estrutura é `tipo de entidade -> chave lógica da seção -> regra`.
+
+Cada regra pode declarar:
+
+- `allowed_types`: famílias de IDs estáveis aceitas naquela seção, todas pertencentes a `entity_types`;
+- `min_references`: quantidade mínima de IDs estáveis **distintos** exigida na seção, com padrão `0`.
+
+Exemplo conceitual:
+
+```json
+{
+  "entity_reference_rules": {
+    "EVD": {
+      "provenance": {
+        "allowed_types": ["NPC", "FAC", "LOC"],
+        "min_references": 0
+      }
+    }
+  }
+}
+```
+
+A chave lógica precisa existir em `entity_required_sections` para o mesmo tipo. Se a seção estiver ausente ou vazia, `validate_story.py` mantém somente o erro estrutural correspondente e não duplica o problema com um erro de cardinalidade. Quando a seção está preenchida, o validator conta IDs distintos e rejeita famílias não permitidas.
+
+A regra continua estritamente estrutural: ela não conclui que uma referência prova autoria, conhecimento, causalidade, veracidade ou cânone. A existência global do ID continua sendo validada pelo grafo de `validate_story.py`; `--strict-references` permanece responsável por promover referências não resolvidas a falha de CLI.
 
 ### Referências tipadas de diálogo
 

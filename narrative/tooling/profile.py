@@ -12,6 +12,12 @@ class DialogueReferenceRule:
 
 
 @dataclass(frozen=True)
+class EntityReferenceRule:
+    allowed_types: tuple[str, ...]
+    min_references: int
+
+
+@dataclass(frozen=True)
 class NarrativeProfile:
     story_root: str
     dialogue_root: str
@@ -22,6 +28,7 @@ class NarrativeProfile:
     dialogue_entity_type: str
     dialogue_reference_rules: dict[str, DialogueReferenceRule]
     entity_required_sections: dict[str, dict[str, tuple[str, ...]]]
+    entity_reference_rules: dict[str, dict[str, EntityReferenceRule]]
 
 
 def _strings(value, field: str) -> tuple[str, ...]:
@@ -85,6 +92,52 @@ def _entity_required_sections(data, entity_types: tuple[str, ...]) -> dict[str, 
     return required
 
 
+def _entity_reference_rules(
+    data,
+    required_sections: dict[str, dict[str, tuple[str, ...]]],
+    entity_types: tuple[str, ...],
+) -> dict[str, dict[str, EntityReferenceRule]]:
+    raw_types = data.get('entity_reference_rules', {})
+    if not isinstance(raw_types, dict):
+        raise ValueError('entity_reference_rules must be an object')
+    rules: dict[str, dict[str, EntityReferenceRule]] = {}
+    for entity_type, raw_rules in raw_types.items():
+        if not isinstance(entity_type, str) or entity_type not in entity_types:
+            raise ValueError('entity_reference_rules keys must be entity_types')
+        if not isinstance(raw_rules, dict) or not raw_rules:
+            raise ValueError(f'entity_reference_rules.{entity_type} must be a non-empty object')
+        declared_sections = required_sections.get(entity_type, {})
+        typed_rules: dict[str, EntityReferenceRule] = {}
+        for key, raw_rule in raw_rules.items():
+            if not isinstance(key, str) or key not in declared_sections:
+                raise ValueError(
+                    f'entity_reference_rules.{entity_type} keys must name '
+                    f'entity_required_sections.{entity_type}'
+                )
+            if not isinstance(raw_rule, dict):
+                raise ValueError(f'entity_reference_rules.{entity_type}.{key} must be an object')
+            allowed_types = _strings(
+                raw_rule.get('allowed_types'),
+                f'entity_reference_rules.{entity_type}.{key}.allowed_types',
+            )
+            if any(allowed_type not in entity_types for allowed_type in allowed_types):
+                raise ValueError(
+                    f'entity_reference_rules.{entity_type}.{key}.allowed_types must be entity_types'
+                )
+            min_references = raw_rule.get('min_references', 0)
+            if isinstance(min_references, bool) or not isinstance(min_references, int) or min_references < 0:
+                raise ValueError(
+                    f'entity_reference_rules.{entity_type}.{key}.min_references '
+                    'must be a non-negative integer'
+                )
+            typed_rules[key] = EntityReferenceRule(
+                allowed_types=allowed_types,
+                min_references=min_references,
+            )
+        rules[entity_type] = typed_rules
+    return rules
+
+
 def load_profile(path: str | Path, workspace_root: str | Path | None = None) -> NarrativeProfile:
     workspace = Path.cwd() if workspace_root is None else workspace_root
     profile_path = resolve_workspace_path(path, workspace)
@@ -113,6 +166,7 @@ def load_profile(path: str | Path, workspace_root: str | Path | None = None) -> 
         raise ValueError('dialogue_entity_type must be one of entity_types')
     reference_rules = _reference_rules(data, sections, entity_types)
     entity_sections = _entity_required_sections(data, entity_types)
+    entity_reference_rules = _entity_reference_rules(data, entity_sections, entity_types)
     return NarrativeProfile(
         story_root=story_root.strip(),
         dialogue_root=dialogue_root.strip(),
@@ -123,4 +177,5 @@ def load_profile(path: str | Path, workspace_root: str | Path | None = None) -> 
         dialogue_entity_type=dialogue_entity_type,
         dialogue_reference_rules=reference_rules,
         entity_required_sections=entity_sections,
+        entity_reference_rules=entity_reference_rules,
     )
