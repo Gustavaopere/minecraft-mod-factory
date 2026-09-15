@@ -48,8 +48,23 @@ class EntityRequiredSectionsProfileTests(unittest.TestCase):
         profile = profile_module.load_profile(self.profile_path, self.root)
         self.assertEqual({}, profile.entity_required_sections)
 
+    def test_entity_required_sections_reject_non_object_root(self):
+        self.write_profile(['EVD'])
+        with self.assertRaises(ValueError):
+            profile_module.load_profile(self.profile_path, self.root)
+
     def test_entity_required_sections_reject_unknown_entity_type(self):
         self.write_profile({'ARC': {'premise': ['Premise']}})
+        with self.assertRaises(ValueError):
+            profile_module.load_profile(self.profile_path, self.root)
+
+    def test_entity_required_sections_reject_empty_type_contract(self):
+        self.write_profile({'EVD': {}})
+        with self.assertRaises(ValueError):
+            profile_module.load_profile(self.profile_path, self.root)
+
+    def test_entity_required_sections_reject_blank_logical_key(self):
+        self.write_profile({'EVD': {'  ': ['Provenance']}})
         with self.assertRaises(ValueError):
             profile_module.load_profile(self.profile_path, self.root)
 
@@ -121,6 +136,17 @@ class EntityRequiredSectionsValidationTests(unittest.TestCase):
         issues = story_module.validate(self.story, self.profile)
         self.assertTrue(any(issue.code == 'empty-required-section' and issue.ref == 'EVD-0001:supports' for issue in issues))
         self.assertEqual(1, story_module.exit_code(issues))
+
+    def test_one_populated_alias_section_satisfies_contract(self):
+        self.write(
+            'EVD-0001-record.md',
+            '# EVD-0001 — Record\n\n'
+            '## Provenance\n\n'
+            '## Origem/proveniência\nRecovered from the archive.\n\n'
+            '## What it supports\nSupports the date of the evacuation.\n\n'
+            '## What it does NOT prove\nDoes not identify the saboteur.\n',
+        )
+        self.assertEqual([], story_module.validate(self.story, self.profile))
 
     def test_section_aliases_are_case_insensitive(self):
         self.write(
