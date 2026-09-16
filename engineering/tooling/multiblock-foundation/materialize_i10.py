@@ -25,6 +25,7 @@ GAMETEST_STRUCTURE_SHA256 = "75b23fb80317d88bbde1a2aff7121cfd903b8a1010878e0327c
 
 CANONICAL_OVERLAY_FILES = (
     ("README.md", "I10-MULTIBLOCK-FOUNDATION.md"),
+    ("run-i10-multiplayer-acceptance.py", "run-i10-multiplayer-acceptance.py"),
     ("src/main/java/dev/example/i10multiblock/multiblock/I10MultiblockContent.java", "src/main/java/dev/example/i10multiblock/multiblock/I10MultiblockContent.java"),
     ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockPattern.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPattern.java"),
     ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockValidationResult.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockValidationResult.java"),
@@ -79,6 +80,16 @@ CANONICAL_RUN_SERVER_STDIN_PATCH = {
         "tasks.configureEach { task ->\n"
         "    if (task.name == 'runServer') {\n"
         "        task.standardInput = System.in\n"
+        "    }\n"
+        "}\n\n"
+        "runs {\n"
+        "    clientA {\n"
+        "        run 'client'\n"
+        "        programArguments.addAll '--username', 'I10ClientA', '--quickPlayMultiplayer', '127.0.0.1:25565'\n"
+        "    }\n"
+        "    clientB {\n"
+        "        run 'client'\n"
+        "        programArguments.addAll '--username', 'I10ClientB', '--quickPlayMultiplayer', '127.0.0.1:25565'\n"
         "    }\n"
         "}\n"
     ),
