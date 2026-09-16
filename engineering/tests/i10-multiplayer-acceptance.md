@@ -34,7 +34,34 @@ build/i10-multiplayer-acceptance/
     └── b-unformed-after-reconnect.png
 ```
 
+Additional raw runtime logs and screenshots may be retained under `build/i10-multiplayer-acceptance/raw/`; they complement but do not replace the canonical evidence files above.
+
 `metadata.json` must record the commit SHA, Minecraft `1.21.1`, NeoForge `21.1.250`, Java `21`, the dedicated-server world identity, Client A identity, Client B identity, and the start/end timestamps of the acceptance session. The two client identities must be different.
+
+## Startup automation
+
+Every fresh I10 materialization includes `run-i10-multiplayer-acceptance.py` to remove repetitive operator setup while preserving the physical multiplayer gate.
+
+The launcher is allowed to:
+
+- start the materialized `runServer`, `runClientA`, and `runClientB` tasks as three distinct processes;
+- configure the dedicated development server for offline login and accept the EULA;
+- prepare the canonical `VALID + UNFORMED + capability=false + last_known_formed=false` baseline using the already-tested server commands;
+- start Client A as `I10ClientA` and Client B as `I10ClientB` from separate NeoGradle run directories;
+- connect both clients to `127.0.0.1:25565` using Minecraft quick play;
+- move both clients to the canonical structure area and place them in Creative mode;
+- capture complete process output into `server.log`, `client-a.log`, and `client-b.log` and retain underlying Minecraft logs/screenshots under `raw/`;
+- forward explicit operator server commands such as `i10probe status` and `i10probe break_required_part` while the session remains active.
+
+The launcher does **not** close the multiplayer gate by itself. It must not synthesize the Client A formation action, screenshots, client-visible observations, reconnect observation, or a PASS result. Client A must still form through normal in-game interaction, both real clients must still visibly converge on the required states, Client B must still disconnect/reconnect, and the final evidence set must still be reviewed.
+
+Run the launcher from the root of the exact materialized project with:
+
+```text
+python run-i10-multiplayer-acceptance.py
+```
+
+If the materialized project is no longer inside the source Git worktree, provide the exact accepted commit explicitly with `--commit <40-hex-sha>`.
 
 ## Preconditions
 
@@ -50,6 +77,8 @@ build/i10-multiplayer-acceptance/
 6. Start Client A and Client B from the same materialization/target and retain each complete client output independently as the Client A log and Client B log. If unsigned NeoGradle development clients are used, configure the dedicated test server for offline development login before connecting them; this does not relax the requirement for two distinct real client processes and identities.
 7. Connect both clients to the same dedicated server and the same world before the multiplayer observations begin, and move both clients so the controller/port are loaded and visible.
 
+The startup launcher may satisfy preconditions 3, 4, 6, and 7 mechanically when its logs prove that it did so. Preconditions 1, 2, and 5 remain hard acceptance boundaries.
+
 ## Required physical sequence
 
 Perform the sequence in this order. Evidence from another order does not close the gate.
@@ -57,7 +86,7 @@ Perform the sequence in this order. Evidence from another order does not close t
 1. With Client A and Client B connected to the same world, verify that both clients observe UNFORMED. Capture `a-unformed-before-form.png` and `b-unformed-before-form.png` while both clients are online.
 2. Client A forms through normal interaction with the controller. The interaction must originate from Client A in the running Minecraft client; a server command, fake player, GameTest helper, direct NBT edit, or synthetic state mutation does not count as the formation action.
 3. Wait for the server-authoritative blockstate update and verify that both clients observe FORMED. Capture `a-formed.png` and `b-formed.png` before any invalidation action.
-4. From the dedicated-server console, server-authoritatively break one required casing using the I10 acceptance command `i10probe break_required_part`. Retain the corresponding `I10_PROBE` line in the server log.
+4. From the dedicated-server console, server-authoritatively break one required casing using the I10 acceptance command `i10probe break_required_part`. Retain the corresponding `I10_PROBE` line in the server log. The launcher's `break` command is only a convenience alias for this dedicated-server command and is acceptable.
 5. Wait for revalidation. Verify that both clients observe UNFORMED and no port IO is available. Capture `a-unformed-after-break.png` and `b-unformed-after-break.png`. The server log must show the invalidated state and `capability=false`; no client-side inference may override the server state.
 6. While Client A remains connected, disconnect Client B completely from the server.
 7. Without rebuilding or reforming the structure, reconnect Client B to the same dedicated server and world.
@@ -86,4 +115,4 @@ Any missing, ambiguous, synthetic, replayed, single-client, server-only, or mism
 
 ## Execution rule
 
-If manual execution is required, guide the operator through one manual action at a time and wait for the result before continuing. Do not change this protocol's acceptance state merely because the written procedure exists; only the real two-client evidence set can authorize the later closeout.
+If manual execution is required, guide the operator through one manual action at a time and wait for the result before continuing. Do not change this protocol's acceptance state merely because the written procedure or startup launcher exists; only the real two-client evidence set can authorize the later closeout.
