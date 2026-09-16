@@ -71,7 +71,6 @@ jobs:
           set -euo pipefail
           python3 narrative/tooling/visual_handoff.py \
             --manifest narrative/golden/v1/visual-handoff.json \
-            --root . \
             --check-files
       - name: Profile contract compatibility
         shell: bash

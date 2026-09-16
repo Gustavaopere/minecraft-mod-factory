@@ -8,7 +8,7 @@
       "entity_id": "NPC-0001",
       "assets": [
         {
-          "id": "ART-NPC-0001-CONCEPT-01",
+          "asset_id": "npc-0001-concept-01",
           "kind": "concept-art",
           "path": "narrative/golden/v1/art/concepts/npc-0001.svg",
           "approved": false,
