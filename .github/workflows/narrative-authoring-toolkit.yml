@@ -65,6 +65,14 @@ jobs:
           test "$STORY_NEG" -eq 1
           test "$ADV_NEG" -eq 1
           python3 narrative/tooling/golden_check.py --manifest narrative/golden/v1/manifest.json
+      - name: Visual handoff fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 narrative/tooling/visual_handoff.py \
+            --manifest narrative/golden/v1/visual-handoff.json \
+            --root . \
+            --check-files
       - name: Profile contract compatibility
         shell: bash
         run: |
