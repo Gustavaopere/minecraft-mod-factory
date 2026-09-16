@@ -91,6 +91,9 @@ class I10MultiplayerAcceptanceGuard(unittest.TestCase):
                 "last_known_formed=false",
                 "online-mode",
                 "quickPlayMultiplayer",
+                "reconnect-b",
+                "client_b_reconnects",
+                "appended to client-b.log",
             )
             missing_launcher = [token for token in required_launcher_tokens if token not in launcher_text]
             self.assertEqual([], missing_launcher, f"I10 multiplayer launcher is incomplete: {missing_launcher}")
