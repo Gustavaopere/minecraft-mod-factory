@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "asset_roots": [
+    "narrative/golden/v1/art"
+  ],
+  "records": [
+    {
+      "entity_id": "NPC-0001",
+      "assets": [
+        {
+          "asset_id": "npc-0001-concept-01",
+          "kind": "concept-art",
+          "path": "narrative/golden/v1/art/concepts/npc-0001.svg",
+          "approved": false,
+          "provenance": {
+            "source": "factory-golden-fixture",
+            "revision": "1"
+          }
+        }
+      ]
+    }
+  ]
+}

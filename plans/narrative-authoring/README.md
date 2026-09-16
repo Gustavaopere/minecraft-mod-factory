@@ -6,8 +6,8 @@ A Factory é responsável por capability reutilizável: skill, workflow de autor
 
 ## Legenda
 
-- ✅ — capability implementada e presente na `main`.
-- 🔄 — capability em design/implementação; ainda não concluída.
+- ✅ — capability implementada e com gates de conclusão satisfeitos no conjunto de mudanças. Quando estiver em feature branch/PR, a disponibilidade em `main` depende do merge.
+- 🔄 — capability em design/implementação; ainda não concluiu seus gates.
 - ⬜ — capability planejada, ainda não implementada.
 
 ## Roadmap
@@ -24,15 +24,15 @@ A Factory é responsável por capability reutilizável: skill, workflow de autor
 - [09 - Dialogue Typed Reference Rules ✅](./09%20-%20Dialogue%20Typed%20Reference%20Rules%20✅.md)
 - [10 - Entity Typed Reference Rules ✅](./10%20-%20Entity%20Typed%20Reference%20Rules%20✅.md)
 - [11 - Auxiliary Document Contracts ✅](./11%20-%20Auxiliary%20Document%20Contracts%20✅.md)
-- [12 - Knowledge Evidence and Provenance Contracts ⬜](./12%20-%20Knowledge%20Evidence%20and%20Provenance%20Contracts%20⬜.md)
-- [13 - Relationships Memory and Autonomy Contracts ⬜](./13%20-%20Relationships%20Memory%20and%20Autonomy%20Contracts%20⬜.md)
-- [14 - Chronology and Causality Graph Checks ⬜](./14%20-%20Chronology%20and%20Causality%20Graph%20Checks%20⬜.md)
-- [15 - External Authority Reconciliation Hooks ⬜](./15%20-%20External%20Authority%20Reconciliation%20Hooks%20⬜.md)
-- [16 - Narrative and Visual Asset Handoff ⬜](./16%20-%20Narrative%20and%20Visual%20Asset%20Handoff%20⬜.md)
-- [17 - Golden Corpus Release and Compatibility ⬜](./17%20-%20Golden%20Corpus%20Release%20and%20Compatibility%20⬜.md)
+- [12 - Knowledge Evidence and Provenance Contracts ✅](./12%20-%20Knowledge%20Evidence%20and%20Provenance%20Contracts%20✅.md)
+- [13 - Relationships Memory and Autonomy Contracts ✅](./13%20-%20Relationships%20Memory%20and%20Autonomy%20Contracts%20✅.md)
+- [14 - Chronology and Causality Graph Checks ✅](./14%20-%20Chronology%20and%20Causality%20Graph%20Checks%20✅.md)
+- [15 - External Authority Reconciliation Hooks ✅](./15%20-%20External%20Authority%20Reconciliation%20Hooks%20✅.md)
+- [16 - Narrative and Visual Asset Handoff ✅](./16%20-%20Narrative%20and%20Visual%20Asset%20Handoff%20✅.md)
+- [17 - Golden Corpus Release and Compatibility ✅](./17%20-%20Golden%20Corpus%20Release%20and%20Compatibility%20✅.md)
 
 ## Authorities
 
-O estado ✅ deve ser sustentado por implementação existente na `main`, testes/gates e, quando aplicável, PRs já integradas. Um plano futuro não deve ser marcado como concluído só porque existe um design ou template.
+O estado ✅ deve ser sustentado por implementação existente, testes/gates e, quando aplicável, integração de consumidor. Em feature branch/PR, `✅` registra que a capability e seus gates estão concluídos naquele conjunto de mudanças; ela só passa a integrar a release de `main` após merge explícito.
 
 O plano histórico [`2026-09-13-narrative-authoring-migration.md`](../2026-09-13-narrative-authoring-migration.md) permanece como registro da migração inicial da capability para a Factory.

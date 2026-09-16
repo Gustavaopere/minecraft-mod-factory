@@ -1,0 +1,21 @@
+{
+  "profile_contract_revision": 1,
+  "required_keys": [
+    "story_root",
+    "dialogue_root",
+    "entity_types",
+    "editorial_state_prefixes",
+    "dialogue_required_sections"
+  ],
+  "optional_keys": [
+    "editorial_state_headings",
+    "dialogue_entity_type",
+    "dialogue_reference_rules",
+    "entity_required_sections",
+    "entity_reference_rules",
+    "auxiliary_document_contracts",
+    "knowledge_evidence_contracts",
+    "relationship_memory_contracts",
+    "chronology_contract"
+  ]
+}

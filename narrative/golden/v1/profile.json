@@ -1,0 +1,70 @@
+{
+  "profile_contract_revision": 1,
+  "story_root": "narrative/golden/v1/story",
+  "dialogue_root": "narrative/golden/v1/story/dialogues",
+  "entity_types": ["NPC", "EVT", "EVD", "DLG"],
+  "editorial_state_prefixes": ["CANON", "DRAFT"],
+  "editorial_state_headings": ["Editorial state"],
+  "dialogue_entity_type": "DLG",
+  "dialogue_required_sections": {
+    "state": ["Editorial state"]
+  },
+  "knowledge_evidence_contracts": {
+    "field-knowledge": {
+      "include": ["knowledge/**/*.md"],
+      "required_sections": {
+        "origin": ["Origin"],
+        "holder": ["Holder"],
+        "evidence": ["Evidence"],
+        "reliability": ["Reliability"],
+        "limits": ["Limits"]
+      },
+      "knowledge_state_sections": {
+        "observed": ["Observed"],
+        "heard": ["Heard"],
+        "confirmed": ["Confirmed"]
+      },
+      "reference_rules": {
+        "holder": {"allowed_types": ["NPC"], "min_references": 1},
+        "evidence": {"allowed_types": ["EVD"], "min_references": 1}
+      }
+    }
+  },
+  "relationship_memory_contracts": {
+    "actor-memory": {
+      "include": ["relationships/**/*.md"],
+      "required_sections": {
+        "source": ["Source actor"],
+        "target": ["Target actor"],
+        "memory": ["Memory event"],
+        "kind": ["Kind"],
+        "autonomy": ["Autonomy"]
+      },
+      "dimension_sections": {
+        "trust": ["Trust"],
+        "respect": ["Respect"]
+      },
+      "reference_rules": {
+        "source": {"allowed_types": ["NPC"], "min_references": 1},
+        "target": {"allowed_types": ["NPC"], "min_references": 1},
+        "memory": {"allowed_types": ["EVT"], "min_references": 1}
+      },
+      "source_actor_section": "source",
+      "target_actor_section": "target",
+      "memory_event_section": "memory",
+      "kind_section": "kind",
+      "allowed_kinds": ["grievance", "favor", "debt"],
+      "autonomy_section": "autonomy",
+      "allowed_autonomy_states": ["available", "independent", "committed"],
+      "allow_self_relation": false
+    }
+  },
+  "chronology_contract": {
+    "event_types": ["EVT"],
+    "before_headings": ["Before"],
+    "after_headings": ["After"],
+    "causes_headings": ["Causes"],
+    "caused_by_headings": ["Caused by"],
+    "causality_acyclic": true
+  }
+}

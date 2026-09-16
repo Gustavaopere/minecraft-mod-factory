@@ -1,6 +1,6 @@
-# 13 — Relationships Memory and Autonomy Contracts ⬜
+# 13 — Relationships Memory and Autonomy Contracts ✅
 
-Status: planejado.
+Status: concluído na branch de implementação; release em `main` depende do merge do PR #118.
 
 ## Objetivo
 
@@ -23,3 +23,10 @@ Dar suporte estrutural mais forte a relações entre atores, memórias persisten
 ## Gate de conclusão
 
 TDD, documentação, fixtures positivas/negativas e integração em corpus real sem reduzir relações multidimensionais a um valor único.
+
+## Evidência de conclusão
+
+- implementação: `advanced_contracts.py`/`validate_advanced.py`;
+- tests positivos/negativos: `test_advanced_contracts.py` e golden corpus v1;
+- o profile consumidor exercita `NPC-0001-aren.md` e suas relações sistêmicas sem gerar score agregado;
+- consumer run `35058474136` e Factory run `35058398971`, ambos `success`.
