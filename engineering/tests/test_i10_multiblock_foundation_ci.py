@@ -71,9 +71,11 @@ class I10PermanentCIContract(unittest.TestCase):
     def test_physical_acceptance_handoff_is_published_after_gates(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         required = (
-            "Checkout exact I10 source revision",
-            "I10_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}",
-            "ref: ${{ github.event.pull_request.head.sha || github.sha }}",
+            "Resolve exact I10 source revision",
+            "git rev-parse 'HEAD^2'",
+            "git rev-parse HEAD",
+            "^[0-9a-f]{40}$",
+            'git checkout --detach "$I10_SOURCE_SHA"',
             "Materialize physical acceptance handoff",
             "I10-SOURCE-COMMIT.txt",
             'printf \'%s\\n\' "$I10_SOURCE_SHA"',
@@ -82,11 +84,16 @@ class I10PermanentCIContract(unittest.TestCase):
             "PHYSICAL-ACCEPTANCE-README.txt",
             "run-i10-multiplayer-acceptance.py --commit",
             "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
-            "i10-physical-acceptance-${{ github.event.pull_request.head.sha || github.sha }}",
+            "name: i10-physical-acceptance",
             "if-no-files-found: error",
         )
         for token in required:
             self.assertIn(token, text, f"I10 physical acceptance handoff is missing token: {token}")
+        self.assertNotIn(
+            "github.event.pull_request.head.sha",
+            text,
+            "physical handoff provenance must be derived from the checked-out Git graph, not interpolated PR context",
+        )
         self.assertGreater(
             text.index("Materialize physical acceptance handoff"),
             text.index("Run I10 real chunk acceptance"),
