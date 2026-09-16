@@ -135,3 +135,49 @@ jobs:
       - name: Check whitespace
         if: always()
         run: git diff --check HEAD^
+
+      - name: Materialize physical acceptance handoff
+        run: |
+          rm -rf .factory-ci/i10/physical
+          python3 engineering/tooling/multiblock-foundation/materialize_i10.py .factory-ci/i10/physical
+          printf '%s\n' '${{ github.sha }}' > .factory-ci/i10/physical/I10-SOURCE-COMMIT.txt
+          cat > .factory-ci/i10/physical/START-I10-MULTIPLAYER.bat <<'BAT'
+          @echo off
+          setlocal
+          cd /d "%~dp0"
+          for /f "usebackq delims=" %%S in ("I10-SOURCE-COMMIT.txt") do set "I10_COMMIT=%%S"
+          where py >nul 2>nul
+          if %errorlevel%==0 (
+            py -3 run-i10-multiplayer-acceptance.py --commit "%I10_COMMIT%"
+          ) else (
+            python run-i10-multiplayer-acceptance.py --commit "%I10_COMMIT%"
+          )
+          pause
+          BAT
+          cat > .factory-ci/i10/physical/START-I10-MULTIPLAYER.sh <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          cd "$(dirname "$0")"
+          chmod +x gradlew
+          commit="$(tr -d '\r\n' < I10-SOURCE-COMMIT.txt)"
+          exec python3 run-i10-multiplayer-acceptance.py --commit "$commit"
+          SH
+          chmod +x .factory-ci/i10/physical/START-I10-MULTIPLAYER.sh
+          chmod +x .factory-ci/i10/physical/gradlew
+          cat > .factory-ci/i10/physical/PHYSICAL-ACCEPTANCE-README.txt <<'TXT'
+          I10 physical multiplayer acceptance package.
+
+          Windows: double-click START-I10-MULTIPLAYER.bat
+          Linux/macOS: run ./START-I10-MULTIPLAYER.sh
+
+          The launcher starts the dedicated server, Client A, and Client B, prepares the canonical UNFORMED baseline, connects both real clients, and records complete logs under build/i10-multiplayer-acceptance/.
+          Physical formation and visual observations remain required by the acceptance protocol.
+          TXT
+
+      - name: Upload physical acceptance handoff
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: i10-physical-acceptance-${{ github.sha }}
+          path: .factory-ci/i10/physical
+          if-no-files-found: error
+          retention-days: 7
