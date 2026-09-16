@@ -168,8 +168,16 @@ class LoggedProcess:
         self.lines: list[str] = []
         self.condition = threading.Condition()
         self.reader: threading.Thread | None = None
+        self.launch_count = 0
 
     def start(self) -> None:
+        if self.process is not None and self.process.poll() is None:
+            raise AcceptanceError(f"{self.name} is already running")
+        if self.reader is not None and self.reader.is_alive():
+            self.reader.join(timeout=5)
+            if self.reader.is_alive():
+                raise AcceptanceError(f"{self.name} previous log reader is still active")
+
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
         kwargs: dict = {
             "cwd": PROJECT_ROOT,
@@ -185,15 +193,27 @@ class LoggedProcess:
             kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
         else:
             kwargs["start_new_session"] = True
+
         self.process = subprocess.Popen(self.command, **kwargs)
-        self.reader = threading.Thread(target=self._pump, name=f"i10-{self.name}-log", daemon=True)
+        self.launch_count += 1
+        process = self.process
+        mode = "w" if self.launch_count == 1 else "a"
+        launch_number = self.launch_count
+        self.reader = threading.Thread(
+            target=self._pump,
+            args=(process, mode, launch_number),
+            name=f"i10-{self.name}-log-{launch_number}",
+            daemon=True,
+        )
         self.reader.start()
 
-    def _pump(self) -> None:
-        assert self.process is not None
-        assert self.process.stdout is not None
-        with self.log_path.open("w", encoding="utf-8", newline="\n") as output:
-            for line in self.process.stdout:
+    def _pump(self, process: subprocess.Popen[str], mode: str, launch_number: int) -> None:
+        assert process.stdout is not None
+        with self.log_path.open(mode, encoding="utf-8", newline="\n") as output:
+            if mode == "a":
+                output.write(f"\n===== {self.name} relaunch {launch_number} at {utc_now()} =====\n")
+                output.flush()
+            for line in process.stdout:
                 output.write(line)
                 output.flush()
                 normalized = line.rstrip("\r\n")
@@ -252,22 +272,22 @@ class LoggedProcess:
             else:
                 os.killpg(pid, signal.SIGTERM)
             self.process.wait(timeout=timeout)
-            return
         except (OSError, subprocess.TimeoutExpired):
-            pass
-        try:
-            if os.name == "nt":
-                subprocess.run(
-                    ["taskkill", "/PID", str(pid), "/T", "/F"],
-                    check=False,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                )
-            else:
-                os.killpg(pid, signal.SIGKILL)
-            self.process.wait(timeout=5)
-        except (OSError, subprocess.TimeoutExpired):
-            pass
+            try:
+                if os.name == "nt":
+                    subprocess.run(
+                        ["taskkill", "/PID", str(pid), "/T", "/F"],
+                        check=False,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+                else:
+                    os.killpg(pid, signal.SIGKILL)
+                self.process.wait(timeout=5)
+            except (OSError, subprocess.TimeoutExpired):
+                pass
+        if self.reader is not None:
+            self.reader.join(timeout=5)
 
 
 def wait_for_probe(server: LoggedProcess, action: str, timeout: float = 30.0) -> str:
@@ -329,12 +349,52 @@ def configure_players(server: LoggedProcess) -> None:
         time.sleep(0.2)
 
 
-def interactive_console(server: LoggedProcess) -> None:
+def reconnect_client_b(
+    server: LoggedProcess,
+    client_b: LoggedProcess,
+    metadata: dict,
+    client_join_timeout: int,
+) -> None:
+    disconnect_marker = server.mark()
+    client_b.terminate_tree()
+    server.wait_for(
+        lambda line: f"{CLIENT_B_IDENTITY} left the game" in line,
+        30.0,
+        disconnect_marker,
+    )
+
+    reconnect_started = utc_now()
+    join_marker = server.mark()
+    client_b.start()
+    server.wait_for(
+        lambda line: f"{CLIENT_B_IDENTITY} joined the game" in line,
+        client_join_timeout,
+        join_marker,
+    )
+    server.send(f"gamemode creative {CLIENT_B_IDENTITY}")
+    server.send(f"tp {CLIENT_B_IDENTITY} 155.5 80 160.5")
+    reconnect_completed = utc_now()
+    metadata.setdefault("client_b_reconnects", []).append(
+        {
+            "started_timestamp": reconnect_started,
+            "completed_timestamp": reconnect_completed,
+        }
+    )
+    write_metadata(metadata)
+    print("Client B reconnect completed and appended to client-b.log")
+
+
+def interactive_console(
+    server: LoggedProcess,
+    client_b: LoggedProcess,
+    metadata: dict,
+    client_join_timeout: int,
+) -> None:
     print()
     print("I10 multiplayer session READY")
     print("Both real clients were started with --quickPlayMultiplayer at 127.0.0.1:25565.")
     print("Formation must still be performed physically by Client A in Minecraft.")
-    print("Launcher commands: status | break | server <minecraft command> | help | stop")
+    print("Launcher commands: status | break | reconnect-b | server <minecraft command> | help | stop")
     while True:
         try:
             raw = input("i10> ").strip()
@@ -351,16 +411,20 @@ def interactive_console(server: LoggedProcess) -> None:
         if lowered == "break":
             server.send("i10probe break_required_part")
             continue
+        if lowered == "reconnect-b":
+            reconnect_client_b(server, client_b, metadata, client_join_timeout)
+            continue
         if lowered == "help":
             print("status = i10probe status")
             print("break = i10probe break_required_part")
+            print("reconnect-b = disconnect Client B process, wait for leave, relaunch it, and append its log")
             print("server <command> = forward an arbitrary dedicated-server command")
             print("stop = end the session, preserve logs, and stop all launched processes")
             continue
         if lowered.startswith("server ") and len(raw) > len("server "):
             server.send(raw[len("server "):])
             continue
-        print("Unknown launcher command. Use: status | break | server <command> | help | stop")
+        print("Unknown launcher command. Use: status | break | reconnect-b | server <command> | help | stop")
 
 
 def run(commit: str, server_ready_timeout: int, client_join_timeout: int) -> int:
@@ -382,6 +446,7 @@ def run(commit: str, server_ready_timeout: int, client_join_timeout: int) -> int
         "end_timestamp": None,
         "baseline_probe": None,
         "clients_joined_timestamp": None,
+        "client_b_reconnects": [],
         "launcher_state": "STARTING",
     }
     write_metadata(metadata)
@@ -424,7 +489,7 @@ def run(commit: str, server_ready_timeout: int, client_join_timeout: int) -> int
         metadata["launcher_state"] = "READY_FOR_PHYSICAL_ACCEPTANCE"
         write_metadata(metadata)
 
-        interactive_console(server)
+        interactive_console(server, client_b, metadata, client_join_timeout)
         return 0
     except KeyboardInterrupt:
         print("\nStopping I10 multiplayer session...")
@@ -440,9 +505,6 @@ def run(commit: str, server_ready_timeout: int, client_join_timeout: int) -> int
                 pass
         for process in processes:
             process.terminate_tree()
-        for process in processes:
-            if process.reader is not None:
-                process.reader.join(timeout=5)
         collect_raw_evidence()
         metadata["end_timestamp"] = utc_now()
         metadata["launcher_state"] = "STOPPED"
