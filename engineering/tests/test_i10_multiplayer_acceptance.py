@@ -52,6 +52,7 @@ class I10MultiplayerAcceptanceGuard(unittest.TestCase):
             "Fake players",
             "server-only tests",
             "GameTests",
+            "run-i10-multiplayer-acceptance.py",
         )
         missing = [token for token in required if token not in text]
         self.assertEqual([], missing, f"I10 multiplayer protocol is incomplete: {missing}")
@@ -68,6 +69,7 @@ class I10MultiplayerAcceptanceGuard(unittest.TestCase):
             launcher = generated / "run-i10-multiplayer-acceptance.py"
             self.assertTrue(launcher.is_file(), "I10 RED: multiplayer launcher is missing from materialization")
             launcher_text = launcher.read_text(encoding="utf-8")
+            compile(launcher_text, str(launcher), "exec")
             required_launcher_tokens = (
                 "runServer",
                 "runClientA",
