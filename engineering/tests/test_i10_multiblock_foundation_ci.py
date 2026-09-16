@@ -68,6 +68,32 @@ class I10PermanentCIContract(unittest.TestCase):
         ):
             self.assertIn(token, text, f"I10 permanent CI is missing I5 gate token: {token}")
 
+    def test_physical_acceptance_handoff_is_published_after_gates(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        required = (
+            "Materialize physical acceptance handoff",
+            "I10-SOURCE-COMMIT.txt",
+            "START-I10-MULTIPLAYER.bat",
+            "START-I10-MULTIPLAYER.sh",
+            "PHYSICAL-ACCEPTANCE-README.txt",
+            "run-i10-multiplayer-acceptance.py --commit",
+            "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+            "i10-physical-acceptance-${{ github.sha }}",
+            "if-no-files-found: error",
+        )
+        for token in required:
+            self.assertIn(token, text, f"I10 physical acceptance handoff is missing token: {token}")
+        self.assertGreater(
+            text.index("Materialize physical acceptance handoff"),
+            text.index("Run I10 real chunk acceptance"),
+            "physical handoff must only be materialized after the runtime acceptance gate",
+        )
+        self.assertGreater(
+            text.index("Upload physical acceptance handoff"),
+            text.index("Check whitespace"),
+            "physical handoff artifact must only publish after the final repository gate",
+        )
+
     def test_sonar_fail_closed_coverage_includes_i10_tooling(self) -> None:
         text = SONAR_WORKFLOW.read_text(encoding="utf-8")
         for token in (
