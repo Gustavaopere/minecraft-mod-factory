@@ -3,7 +3,7 @@ import json
 import pathlib
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -121,6 +121,17 @@ class AuthorityReconciliationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             mod.snapshot_from_inventory({'records': [{}]}, source='s', revision='r', captured_at='t')
 
+    def test_workspace_relpath_accepts_nested_posix_path(self):
+        mod = load_module()
+        self.assertEqual('exports/snapshot.json', mod._normalized_workspace_relpath('exports/snapshot.json'))
+
+    def test_workspace_relpath_rejects_unsafe_shapes(self):
+        mod = load_module()
+        unsafe = ('', '/absolute.json', '../outside.json', './dot.json', 'a/../b.json', 'a//b.json', 'a\\b.json')
+        for value in unsafe:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                mod._normalized_workspace_relpath(value)
+
     def test_required_external_source_fails_closed_when_missing(self):
         mod = load_module()
         with tempfile.TemporaryDirectory() as td:
@@ -163,6 +174,20 @@ class AuthorityReconciliationTests(unittest.TestCase):
         self.assertIn('authority-field-divergence: 1', out.getvalue())
         self.assertNotIn('NPC-0001', out.getvalue())
 
+    def test_identical_comparison_cli_reports_ok(self):
+        mod = load_module()
+        with tempfile.TemporaryDirectory() as td:
+            root = pathlib.Path(td)
+            write_json(root / 'local.json', snapshot([]))
+            write_json(root / 'external.json', snapshot([], revision='r2'))
+            out = StringIO()
+            with redirect_stdout(out):
+                code = mod.main([
+                    'compare', '--local', 'local.json', '--external', 'external.json'
+                ], workspace_root=root)
+        self.assertEqual(0, code)
+        self.assertEqual('OK no authority divergence found\n', out.getvalue())
+
     def test_reveal_comparison_prints_record_reference(self):
         mod = load_module()
         with tempfile.TemporaryDirectory() as td:
@@ -178,7 +203,7 @@ class AuthorityReconciliationTests(unittest.TestCase):
         self.assertEqual(1, code)
         self.assertIn('NPC-0001:state', out.getvalue())
 
-    def test_export_inventory_writes_valid_snapshot(self):
+    def test_export_inventory_emits_valid_snapshot_to_stdout(self):
         mod = load_module()
         inventory = {
             'records': [{
@@ -192,14 +217,14 @@ class AuthorityReconciliationTests(unittest.TestCase):
             out = StringIO()
             with redirect_stdout(out):
                 code = mod.main([
-                    'export-inventory', '--inventory', 'inventory.json', '--output', 'exports/snapshot.json',
+                    'export-inventory', '--inventory', 'inventory.json',
                     '--source', 'story-inventory', '--revision', 'abc123',
                     '--captured-at', '2026-09-16T00:00:00Z'
                 ], workspace_root=root)
-            exported = json.loads((root / 'exports' / 'snapshot.json').read_text(encoding='utf-8'))
+        exported = json.loads(out.getvalue())
         self.assertEqual(0, code)
         self.assertEqual([], mod.validate_snapshot(exported))
-        self.assertIn('neutral authority snapshot exported', out.getvalue())
+        self.assertEqual('NPC-0001', exported['records'][0]['id'])
 
     def test_export_invalid_inventory_fails_closed(self):
         mod = load_module()
@@ -209,14 +234,29 @@ class AuthorityReconciliationTests(unittest.TestCase):
             out = StringIO()
             with redirect_stdout(out):
                 code = mod.main([
+                    'export-inventory', '--inventory', 'inventory.json',
+                    '--source', 'story-inventory', '--revision', 'abc123',
+                    '--captured-at', '2026-09-16T00:00:00Z'
+                ], workspace_root=root)
+        self.assertEqual(2, code)
+        self.assertIn('invalid input or workspace path', out.getvalue())
+
+    def test_export_rejects_legacy_output_argument(self):
+        mod = load_module()
+        with tempfile.TemporaryDirectory() as td:
+            root = pathlib.Path(td)
+            write_json(root / 'inventory.json', {'records': []})
+            stderr = StringIO()
+            with redirect_stderr(stderr), self.assertRaises(SystemExit) as caught:
+                mod.main([
                     'export-inventory', '--inventory', 'inventory.json', '--output', 'out.json',
                     '--source', 'story-inventory', '--revision', 'abc123',
                     '--captured-at', '2026-09-16T00:00:00Z'
                 ], workspace_root=root)
-        self.assertEqual(2, code)
-        self.assertIn('invalid input or workspace path', out.getvalue())
+        self.assertEqual(2, caught.exception.code)
+        self.assertIn('unrecognized arguments: --output out.json', stderr.getvalue())
 
-    def test_cli_rejects_absolute_output_path_even_inside_workspace(self):
+    def test_cli_rejects_traversal_input_path(self):
         mod = load_module()
         with tempfile.TemporaryDirectory() as td:
             root = pathlib.Path(td)
@@ -224,27 +264,26 @@ class AuthorityReconciliationTests(unittest.TestCase):
             out = StringIO()
             with redirect_stdout(out):
                 code = mod.main([
-                    'export-inventory', '--inventory', 'inventory.json', '--output', str(root / 'out.json'),
+                    'export-inventory', '--inventory', '../outside.json',
                     '--source', 'story-inventory', '--revision', 'abc123',
                     '--captured-at', '2026-09-16T00:00:00Z'
                 ], workspace_root=root)
         self.assertEqual(2, code)
         self.assertIn('invalid input or workspace path', out.getvalue())
 
-    def test_cli_rejects_traversal_path(self):
+    def test_malformed_json_fails_closed(self):
         mod = load_module()
         with tempfile.TemporaryDirectory() as td:
             root = pathlib.Path(td)
-            write_json(root / 'inventory.json', {'records': []})
+            (root / 'local.json').write_text('{bad-json', encoding='utf-8')
+            write_json(root / 'external.json', snapshot([]))
             out = StringIO()
             with redirect_stdout(out):
                 code = mod.main([
-                    'export-inventory', '--inventory', 'inventory.json', '--output', '../outside.json',
-                    '--source', 'story-inventory', '--revision', 'abc123',
-                    '--captured-at', '2026-09-16T00:00:00Z'
+                    'compare', '--local', 'local.json', '--external', 'external.json'
                 ], workspace_root=root)
         self.assertEqual(2, code)
-        self.assertFalse((root.parent / 'outside.json').exists())
+        self.assertIn('invalid input or workspace path', out.getvalue())
 
 
 if __name__ == '__main__':
