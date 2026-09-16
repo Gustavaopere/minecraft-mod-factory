@@ -14,6 +14,11 @@ EXPECTED_ITEM_MODELS = {
     "multiblock_io_port.json": "i10_multiblock:block/io_port_unformed",
 }
 
+EXPECTED_MODEL_RENDER_BLOCKS = (
+    "MultiblockControllerBlock.java",
+    "MultiblockPortBlock.java",
+)
+
 
 def load_module(path: Path, name: str):
     if not path.is_file():
@@ -44,6 +49,36 @@ class I10ClientResourceRegression(unittest.TestCase):
                     self.assertEqual(
                         {"parent": expected_parent},
                         json.loads(path.read_text(encoding="utf-8")),
+                    )
+
+    def test_materialized_block_entities_render_their_block_models(self):
+        materializer = load_module(MATERIALIZER, "i10_client_render_shape_materializer")
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            with contextlib.chdir(workspace):
+                generated = materializer.materialize_i10("generated")
+
+            source_root = (
+                generated
+                / "src/main/java/dev/example/i10multiblock/multiblock"
+            )
+            for filename in EXPECTED_MODEL_RENDER_BLOCKS:
+                with self.subTest(filename=filename):
+                    source = (source_root / filename).read_text(encoding="utf-8")
+                    self.assertIn(
+                        "import net.minecraft.world.level.block.RenderShape;",
+                        source,
+                        f"I10 RED: {filename} must import RenderShape for model rendering",
+                    )
+                    self.assertIn(
+                        "protected RenderShape getRenderShape(BlockState state)",
+                        source,
+                        f"I10 RED: {filename} must override getRenderShape",
+                    )
+                    self.assertIn(
+                        "return RenderShape.MODEL;",
+                        source,
+                        f"I10 RED: {filename} must render its blockstate model",
                     )
 
 
