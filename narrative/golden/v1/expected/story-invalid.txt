@@ -1,0 +1,3 @@
+ERROR invalid-editorial-state: 1
+WARN unresolved-ref: 1
+Details hidden by spoiler-safe mode. Use --reveal for editorial debugging.

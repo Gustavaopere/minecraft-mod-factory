@@ -1,0 +1,59 @@
+{
+  "summary": {
+    "total": 5,
+    "by_type": {
+      "EVD": 1,
+      "EVT": 2,
+      "NPC": 2
+    },
+    "by_state": {
+      "CANON": 5
+    }
+  },
+  "records": [
+    {
+      "id": "EVD-0001",
+      "type": "EVD",
+      "title": "Field proof",
+      "state": "CANON",
+      "path": "EVD-0001-proof.md",
+      "references": []
+    },
+    {
+      "id": "EVT-0001",
+      "type": "EVT",
+      "title": "First event",
+      "state": "CANON",
+      "path": "EVT-0001-first.md",
+      "references": [
+        "EVT-0002"
+      ]
+    },
+    {
+      "id": "EVT-0002",
+      "type": "EVT",
+      "title": "Second event",
+      "state": "CANON",
+      "path": "EVT-0002-second.md",
+      "references": [
+        "EVT-0001"
+      ]
+    },
+    {
+      "id": "NPC-0001",
+      "type": "NPC",
+      "title": "Keeper",
+      "state": "CANON",
+      "path": "NPC-0001-keeper.md",
+      "references": []
+    },
+    {
+      "id": "NPC-0002",
+      "type": "NPC",
+      "title": "Scout",
+      "state": "CANON",
+      "path": "NPC-0002-scout.md",
+      "references": []
+    }
+  ]
+}

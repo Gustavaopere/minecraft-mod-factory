@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'narrative/**'
+      - 'plans/narrative-authoring/**'
       - 'skills/README.md'
       - 'skills/ROUTER.md'
       - '.github/workflows/narrative-authoring-toolkit.yml'
@@ -11,6 +12,7 @@ on:
     branches: [main]
     paths:
       - 'narrative/**'
+      - 'plans/narrative-authoring/**'
       - 'skills/README.md'
       - 'skills/ROUTER.md'
       - '.github/workflows/narrative-authoring-toolkit.yml'
@@ -42,3 +44,42 @@ jobs:
           EOF
           python3 narrative/tooling/validate_story.py --profile narrative/profiles/example.json --root .factory-ci/narrative-smoke --strict-references
           python3 narrative/tooling/story_inventory.py --profile narrative/profiles/example.json --root .factory-ci/narrative-smoke --format json > .factory-ci/narrative-inventory.json
+      - name: Golden corpus
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .factory-ci/narrative-golden
+          mkdir -p .factory-ci/narrative-golden
+          PROFILE=narrative/golden/v1/profile.json
+          POS=narrative/golden/v1/story
+          NEG=narrative/golden/v1/negative
+          python3 narrative/tooling/story_inventory.py --profile "$PROFILE" --root "$POS" --format json > .factory-ci/narrative-golden/inventory.json
+          python3 narrative/tooling/validate_story.py --profile "$PROFILE" --root "$POS" --strict-references > .factory-ci/narrative-golden/story-valid.txt
+          python3 narrative/tooling/validate_advanced.py --profile "$PROFILE" --root "$POS" > .factory-ci/narrative-golden/advanced-valid.txt
+          set +e
+          python3 narrative/tooling/validate_story.py --profile "$PROFILE" --root "$NEG" > .factory-ci/narrative-golden/story-invalid.txt
+          STORY_NEG=$?
+          python3 narrative/tooling/validate_advanced.py --profile "$PROFILE" --root "$NEG" > .factory-ci/narrative-golden/advanced-invalid.txt
+          ADV_NEG=$?
+          set -e
+          test "$STORY_NEG" -eq 1
+          test "$ADV_NEG" -eq 1
+          python3 narrative/tooling/golden_check.py --manifest narrative/golden/v1/manifest.json
+      - name: Profile contract compatibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import importlib.util
+          import json
+          import pathlib
+          module_path = pathlib.Path('narrative/tooling/golden_check.py')
+          spec = importlib.util.spec_from_file_location('golden_check', module_path)
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          contract = json.loads(pathlib.Path('narrative/compat/profile-contract-v1.json').read_text(encoding='utf-8'))
+          issues = module.compatibility_issues(contract, contract)
+          if issues:
+              raise SystemExit(f'profile contract is not self-compatible: {issues}')
+          print('OK profile contract revision 1 is self-compatible')
+          PY
