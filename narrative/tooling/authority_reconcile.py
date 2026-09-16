@@ -53,14 +53,20 @@ def validate_snapshot(snapshot) -> list[Issue]:
 
 
 def _records_by_id(snapshot):
-    return {record['id']: record['fields'] for record in snapshot.get('records', []) if isinstance(record, dict) and isinstance(record.get('fields'), dict)}
+    return {
+        record['id']: record['fields']
+        for record in snapshot.get('records', [])
+        if isinstance(record, dict) and isinstance(record.get('fields'), dict)
+    }
 
 
 def compare_snapshots(local, external, compare_fields=()) -> list[Issue]:
     local_issues = validate_snapshot(local)
     external_issues = validate_snapshot(external)
     if local_issues or external_issues:
-        return [Issue('invalid-local-snapshot', issue.ref) for issue in local_issues] + [Issue('invalid-external-snapshot', issue.ref) for issue in external_issues]
+        return [Issue('invalid-local-snapshot', issue.ref) for issue in local_issues] + [
+            Issue('invalid-external-snapshot', issue.ref) for issue in external_issues
+        ]
     local_records = _records_by_id(local)
     external_records = _records_by_id(external)
     issues: list[Issue] = []
@@ -100,9 +106,25 @@ def snapshot_from_inventory(inventory, *, source: str, revision: str, captured_a
     }
 
 
+def _normalized_workspace_relpath(path: str | pathlib.Path) -> str:
+    raw = path.as_posix() if isinstance(path, pathlib.Path) else path
+    if not isinstance(raw, str) or not raw or '\\' in raw or raw.startswith('/'):
+        raise ValueError('path must be a normalized workspace-relative path')
+    parts = raw.split('/')
+    if any(part in {'', '.', '..'} for part in parts):
+        raise ValueError('path must be a normalized workspace-relative path')
+    normalized = pathlib.PurePosixPath(raw).as_posix()
+    if normalized != raw:
+        raise ValueError('path must be a normalized workspace-relative path')
+    return normalized
+
+
 def _workspace_path(path: str | pathlib.Path, workspace: pathlib.Path, *, must_exist: bool) -> pathlib.Path:
-    supplied = pathlib.Path(path)
-    candidate = supplied if supplied.is_absolute() else workspace / supplied
+    normalized = _normalized_workspace_relpath(path)
+    workspace = workspace.resolve(strict=True)
+    candidate = workspace.joinpath(*pathlib.PurePosixPath(normalized).parts)
+    if candidate.is_symlink():
+        raise ValueError('workspace path may not be a symlink')
     resolved = candidate.resolve(strict=must_exist)
     try:
         resolved.relative_to(workspace)
@@ -131,7 +153,10 @@ def _print_issues(issues: list[Issue], reveal: bool):
 
 def main(argv=None, workspace_root=None):
     import argparse
-    parser = argparse.ArgumentParser(description='Reconcile neutral narrative authority snapshots without mutating canon.')
+
+    parser = argparse.ArgumentParser(
+        description='Reconcile neutral narrative authority snapshots without mutating canon.'
+    )
     subparsers = parser.add_subparsers(dest='command', required=True)
 
     compare = subparsers.add_parser('compare')
@@ -153,8 +178,6 @@ def main(argv=None, workspace_root=None):
     try:
         if args.command == 'compare':
             local_path = _workspace_path(args.local, workspace, must_exist=True)
-            external_candidate = pathlib.Path(args.external)
-            external_unresolved = external_candidate if external_candidate.is_absolute() else workspace / external_candidate
             try:
                 external_path = _workspace_path(args.external, workspace, must_exist=True)
             except FileNotFoundError:
@@ -174,12 +197,20 @@ def main(argv=None, workspace_root=None):
         inventory_path = _workspace_path(args.inventory, workspace, must_exist=True)
         output_path = _workspace_path(args.output, workspace, must_exist=False)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        payload = snapshot_from_inventory(_load_json(inventory_path), source=args.source, revision=args.revision, captured_at=args.captured_at)
+        payload = snapshot_from_inventory(
+            _load_json(inventory_path),
+            source=args.source,
+            revision=args.revision,
+            captured_at=args.captured_at,
+        )
         validation = validate_snapshot(payload)
         if validation:
             _print_issues(validation, reveal=False)
             return 2
-        output_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+        output_path.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2) + '\n',
+            encoding='utf-8',
+        )
         print('OK neutral authority snapshot exported')
         return 0
     except (OSError, ValueError, json.JSONDecodeError):
