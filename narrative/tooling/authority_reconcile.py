@@ -168,7 +168,6 @@ def main(argv=None, workspace_root=None):
 
     export = subparsers.add_parser('export-inventory')
     export.add_argument('--inventory', required=True)
-    export.add_argument('--output', required=True)
     export.add_argument('--source', required=True)
     export.add_argument('--revision', required=True)
     export.add_argument('--captured-at', required=True)
@@ -195,8 +194,6 @@ def main(argv=None, workspace_root=None):
             return 1 if issues else 0
 
         inventory_path = _workspace_path(args.inventory, workspace, must_exist=True)
-        output_path = _workspace_path(args.output, workspace, must_exist=False)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
         payload = snapshot_from_inventory(
             _load_json(inventory_path),
             source=args.source,
@@ -207,11 +204,7 @@ def main(argv=None, workspace_root=None):
         if validation:
             _print_issues(validation, reveal=False)
             return 2
-        output_path.write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2) + '\n',
-            encoding='utf-8',
-        )
-        print('OK neutral authority snapshot exported')
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
         return 0
     except (OSError, ValueError, json.JSONDecodeError):
         print('ERROR authority-reconcile: invalid input or workspace path')
