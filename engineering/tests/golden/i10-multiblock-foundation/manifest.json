@@ -6,6 +6,10 @@
       "destination": "I10-MULTIBLOCK-FOUNDATION.md"
     },
     {
+      "source": "run-i10-multiplayer-acceptance.py",
+      "destination": "run-i10-multiplayer-acceptance.py"
+    },
+    {
       "source": "src/main/java/dev/example/i10multiblock/multiblock/I10MultiblockContent.java",
       "destination": "src/main/java/dev/example/i10multiblock/multiblock/I10MultiblockContent.java"
     },
