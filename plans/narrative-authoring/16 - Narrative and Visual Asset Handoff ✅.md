@@ -1,6 +1,6 @@
-# 16 — Narrative and Visual Asset Handoff ⬜
+# 16 — Narrative and Visual Asset Handoff ✅
 
-Status: planejado.
+Status: concluído na branch de implementação; release em `main` depende do merge do PR #118.
 
 ## Objetivo
 
@@ -23,3 +23,11 @@ Conectar dados editoriais de personagens e locais ao pipeline visual da Factory 
 ## Gate de conclusão
 
 Contrato de handoff versionado, testes de referência cruzada e fluxo demonstrável entre narrativa e assets sem duplicar ownership.
+
+## Evidência de conclusão
+
+- `visual_handoff.py` valida stable IDs, kinds, approval, provenance, asset roots, containment e existência física;
+- `test_visual_handoff.py` cobre manifests válidos e inválidos;
+- `narrative/golden/v1/visual-handoff.json` referencia um SVG físico neutro com `approved: false` e o CI usa `--check-files`;
+- Factory run `35058398971` = `success`;
+- a fixture é sintética e não representa aparência canônica de NPC do consumidor.
