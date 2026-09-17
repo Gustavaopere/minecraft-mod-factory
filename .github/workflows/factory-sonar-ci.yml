@@ -57,7 +57,7 @@ jobs:
 
       - name: Install hash-pinned Python coverage tool
         run: >-
-          python3 -m pip install --require-hashes --no-deps
+          python3 -m pip install --require-hashes --no-deps --only-binary :all:
           -r .github/sonar/python-coverage-lock.txt
 
       - name: Generate fail-closed Python coverage
