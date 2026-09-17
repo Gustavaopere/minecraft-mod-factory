@@ -137,6 +137,18 @@ class I10PermanentCIContract(unittest.TestCase):
         ):
             self.assertIn(token, text, f"Sonar CI must measure I10 tooling coverage: {token}")
 
+    def test_sonar_python_coverage_install_is_binary_only(self) -> None:
+        text = SONAR_WORKFLOW.read_text(encoding="utf-8")
+        install_step = text.split("- name: Install hash-pinned Python coverage tool", 1)[1].split(
+            "- name: Generate fail-closed Python coverage",
+            1,
+        )[0]
+        self.assertIn(
+            "--only-binary :all:",
+            install_step,
+            "Sonar Python coverage dependencies must be wheel-only so pip cannot execute package setup scripts",
+        )
+
     def test_multiplayer_remains_fail_closed_until_real_evidence(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
         protocol = PROTOCOL.read_text(encoding="utf-8")
