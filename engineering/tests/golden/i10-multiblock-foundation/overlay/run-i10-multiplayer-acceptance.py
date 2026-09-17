@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Callable
 
 PROJECT_ROOT = Path(__file__).resolve().parent
+GRADLE_USER_HOME = PROJECT_ROOT / ".i10-gradle-user-home"
 EVIDENCE_RELATIVE = Path("build/i10-multiplayer-acceptance")
 EVIDENCE_ROOT = PROJECT_ROOT / EVIDENCE_RELATIVE
 ARCHIVE_ROOT = PROJECT_ROOT / "build/i10-multiplayer-acceptance-archive"
@@ -137,16 +138,23 @@ def prepare_server_files() -> None:
     )
 
 
+def gradle_process_env() -> dict[str, str]:
+    GRADLE_USER_HOME.mkdir(parents=True, exist_ok=True)
+    env = os.environ.copy()
+    env["GRADLE_USER_HOME"] = str(GRADLE_USER_HOME)
+    return env
+
+
 def gradle_command(task: str) -> list[str]:
     if os.name == "nt":
         wrapper = PROJECT_ROOT / "gradlew.bat"
         if not wrapper.is_file():
             raise AcceptanceError(f"missing Gradle wrapper: {wrapper}")
-        return [str(wrapper), task, "--no-daemon", "--console=plain"]
+        return [str(wrapper), task, "--no-daemon", "--console=plain", "--stacktrace"]
     wrapper = PROJECT_ROOT / "gradlew"
     if not wrapper.is_file():
         raise AcceptanceError(f"missing Gradle wrapper: {wrapper}")
-    return [str(wrapper), task, "--no-daemon", "--console=plain"]
+    return [str(wrapper), task, "--no-daemon", "--console=plain", "--stacktrace"]
 
 
 class LoggedProcess:
@@ -181,6 +189,7 @@ class LoggedProcess:
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
         kwargs: dict = {
             "cwd": PROJECT_ROOT,
+            "env": gradle_process_env(),
             "stdin": subprocess.PIPE if self.stdin_enabled else subprocess.DEVNULL,
             "stdout": subprocess.PIPE,
             "stderr": subprocess.STDOUT,
