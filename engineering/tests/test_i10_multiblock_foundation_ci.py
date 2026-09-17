@@ -105,6 +105,18 @@ class I10PermanentCIContract(unittest.TestCase):
             "physical handoff artifact must only publish after the final repository gate",
         )
 
+    def test_physical_handoff_checkout_does_not_persist_credentials(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        checkout = text.split(
+            "uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+            1,
+        )[1].split("- name: Set up Java 21", 1)[0]
+        self.assertIn(
+            "persist-credentials: false",
+            checkout,
+            "I10 artifact-producing job must not leave the checkout credential in .git/config",
+        )
+
     def test_sonar_fail_closed_coverage_includes_i10_tooling(self) -> None:
         text = SONAR_WORKFLOW.read_text(encoding="utf-8")
         for token in (
