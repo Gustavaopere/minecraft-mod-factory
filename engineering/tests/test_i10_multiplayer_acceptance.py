@@ -98,6 +98,40 @@ class I10MultiplayerAcceptanceGuard(unittest.TestCase):
             missing_launcher = [token for token in required_launcher_tokens if token not in launcher_text]
             self.assertEqual([], missing_launcher, f"I10 multiplayer launcher is incomplete: {missing_launcher}")
 
+            start_bat = generated / "START-I10-MULTIPLAYER.bat"
+            start_sh = generated / "START-I10-MULTIPLAYER.sh"
+            handoff_readme = generated / "PHYSICAL-ACCEPTANCE-README.txt"
+            for wrapper in (start_bat, start_sh, handoff_readme):
+                self.assertTrue(wrapper.is_file(), f"I10 RED: physical handoff wrapper is missing: {wrapper.name}")
+
+            bat_text = start_bat.read_text(encoding="utf-8")
+            for token in (
+                "I10-SOURCE-COMMIT.txt",
+                "run-i10-multiplayer-acceptance.py --commit",
+                "py -3",
+                "python",
+            ):
+                self.assertIn(token, bat_text, f"I10 Windows wrapper is missing token: {token}")
+
+            sh_text = start_sh.read_text(encoding="utf-8")
+            for token in (
+                "I10-SOURCE-COMMIT.txt",
+                "run-i10-multiplayer-acceptance.py --commit",
+                "python3",
+            ):
+                self.assertIn(token, sh_text, f"I10 POSIX wrapper is missing token: {token}")
+
+            readme_text = handoff_readme.read_text(encoding="utf-8")
+            for token in (
+                "Windows",
+                "Linux/macOS",
+                "dedicated server",
+                "Client A",
+                "Client B",
+                "Physical formation and visual observations remain required",
+            ):
+                self.assertIn(token, readme_text, f"I10 physical handoff README is missing token: {token}")
+
             build_gradle = (generated / "build.gradle").read_text(encoding="utf-8")
             required_gradle_tokens = (
                 "clientA",
