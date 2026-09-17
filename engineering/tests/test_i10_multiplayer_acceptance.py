@@ -107,6 +107,11 @@ class I10MultiplayerAcceptanceGuard(unittest.TestCase):
             self.assertEqual([], missing_launcher, f"I10 multiplayer launcher is incomplete: {missing_launcher}")
 
             launcher_module = load_launcher(launcher)
+            self.assertGreaterEqual(
+                launcher_module.DEFAULT_SERVER_READY_TIMEOUT_SECONDS,
+                1200,
+                "I10 physical launcher must allow a cold Windows NeoGradle startup longer than five minutes",
+            )
             gradle_env = launcher_module.gradle_process_env()
             self.assertEqual(
                 str(generated / ".i10-gradle-user-home"),
