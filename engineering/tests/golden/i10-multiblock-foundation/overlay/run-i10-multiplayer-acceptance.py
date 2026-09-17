@@ -38,6 +38,7 @@ TARGET = {
     "neoforge": "21.1.250",
     "java": "21",
 }
+DEFAULT_SERVER_READY_TIMEOUT_SECONDS = 1200
 
 BASELINE_FORCELoad = "forceload add 159 160 161 160"
 BASELINE_SETUP = "i10probe setup"
@@ -529,7 +530,7 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     parser.add_argument("--commit", help="exact 40-character Factory commit SHA; auto-detected from Git when omitted")
-    parser.add_argument("--server-ready-timeout", type=int, default=300)
+    parser.add_argument("--server-ready-timeout", type=int, default=DEFAULT_SERVER_READY_TIMEOUT_SECONDS)
     parser.add_argument("--client-join-timeout", type=int, default=300)
     args = parser.parse_args(argv)
     try:
