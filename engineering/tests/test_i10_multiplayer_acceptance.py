@@ -22,6 +22,14 @@ def load_materializer():
     return module
 
 
+def load_launcher(path: Path):
+    spec = importlib.util.spec_from_file_location("i10_multiplayer_launcher", path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
 class I10MultiplayerAcceptanceGuard(unittest.TestCase):
     def test_real_two_client_protocol_is_versioned_and_fail_closed(self) -> None:
         self.assertTrue(PROTOCOL.is_file(), "I10 RED: real two-client multiplayer protocol is missing")
@@ -98,6 +106,20 @@ class I10MultiplayerAcceptanceGuard(unittest.TestCase):
             missing_launcher = [token for token in required_launcher_tokens if token not in launcher_text]
             self.assertEqual([], missing_launcher, f"I10 multiplayer launcher is incomplete: {missing_launcher}")
 
+            launcher_module = load_launcher(launcher)
+            gradle_env = launcher_module.gradle_process_env()
+            self.assertEqual(
+                str(generated / ".i10-gradle-user-home"),
+                gradle_env.get("GRADLE_USER_HOME"),
+                "I10 physical launcher must isolate NeoGradle from the host-global Gradle cache",
+            )
+            for task in ("runServer", "runClientA", "runClientB"):
+                self.assertIn(
+                    "--stacktrace",
+                    launcher_module.gradle_command(task),
+                    f"I10 physical launcher must preserve complete Gradle diagnostics for {task}",
+                )
+
             start_bat = generated / "START-I10-MULTIPLAYER.bat"
             start_sh = generated / "START-I10-MULTIPLAYER.sh"
             handoff_readme = generated / "PHYSICAL-ACCEPTANCE-README.txt"
@@ -110,6 +132,8 @@ class I10MultiplayerAcceptanceGuard(unittest.TestCase):
                 "run-i10-multiplayer-acceptance.py --commit",
                 "py -3",
                 "python",
+                "GRADLE_USER_HOME",
+                ".i10-gradle-user-home",
             ):
                 self.assertIn(token, bat_text, f"I10 Windows wrapper is missing token: {token}")
 
@@ -118,6 +142,8 @@ class I10MultiplayerAcceptanceGuard(unittest.TestCase):
                 "I10-SOURCE-COMMIT.txt",
                 "run-i10-multiplayer-acceptance.py --commit",
                 "python3",
+                "GRADLE_USER_HOME",
+                ".i10-gradle-user-home",
             ):
                 self.assertIn(token, sh_text, f"I10 POSIX wrapper is missing token: {token}")
 
