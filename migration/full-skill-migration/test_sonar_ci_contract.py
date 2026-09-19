@@ -78,7 +78,7 @@ class SonarCiContractTest(unittest.TestCase):
         self.assertIn("SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}", workflow)
         self.assertIn("github.event.pull_request.head.repo.full_name == github.repository", workflow)
         self.assertIn(
-            "concurrency:\\n  group: ${{ github.workflow }}-${{ github.ref }}\\n  cancel-in-progress: true\\n",
+            "concurrency:\n  group: ${{ github.workflow }}-${{ github.ref }}\n  cancel-in-progress: true\n",
             workflow,
             "Sonar scans for the same ref must serialize by cancelling stale in-progress runs",
         )
