@@ -6,8 +6,12 @@ DRAFT
 ## Production state
 NOT STARTED
 
-## Asset ID
+## Entity ID
 `{{ENTITY_ID}}`
+
+## Asset IDs
+Use one stable lowercase asset identifier per physical/visual artifact when it enters a handoff manifest.
+- `{{ASSET_ID}}`
 
 ## Owner/repository
 - owner:
