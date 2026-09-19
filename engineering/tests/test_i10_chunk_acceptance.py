@@ -22,6 +22,7 @@ EXPECTED_COMMANDS = frozenset(
     {
         "forceload add 159 160 161 160",
         "forceload remove 159 160 161 160",
+        "i10probe baseline",
         "i10probe setup",
         "i10probe status",
         "i10probe break_required_part",
@@ -373,6 +374,18 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
                 self.phase = phase
 
             def send(self, command, expected_action=None):
+                if command == "i10probe baseline":
+                    return module.parse_probe_marker(
+                        marker_line(
+                            action="baseline",
+                            runtime="UNFORMED",
+                            revision=0,
+                            sentinel="empty",
+                            count=0,
+                            capability=False,
+                            last_known_formed=False,
+                        )
+                    )
                 if command == "i10probe setup":
                     return module.parse_probe_marker(marker_line(action="setup"))
                 if command == "i10probe break_required_part":
@@ -427,7 +440,7 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
             with mock.patch.object(module, "_run_phase", side_effect=fake_run_phase):
                 summary = module.run_acceptance(project, workspace)
             self.assertEqual("PASS", summary["state"])
-            self.assertEqual(3, len(summary["phases"]))
+            self.assertEqual(4, len(summary["phases"]))
             self.assertFalse(stale_world.exists())
             persisted = project / module.OUTPUT_RELATIVE / "summary.json"
             self.assertTrue(persisted.is_file())
@@ -462,6 +475,7 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
         for token in (
             "RegisterCommandsEvent",
             'Commands.literal("i10probe")',
+            'Commands.literal("baseline")',
             'Commands.literal("setup")',
             'Commands.literal("status")',
             'Commands.literal("break_required_part")',
