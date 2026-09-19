@@ -83,10 +83,13 @@ jobs:
           mkdir -p .factory-ci/i10
           python3 engineering/tooling/multiblock-foundation/materialize_i10.py .factory-ci/i10/generated
 
-      - name: Validate multiplayer launcher and run tasks
+      - name: Validate manual physical handoff and run tasks
         run: |
-          python3 .factory-ci/i10/generated/run-i10-multiplayer-acceptance.py --help
+          python3 .factory-ci/i10/generated/run-i10-manual-process.py --help
           chmod +x .factory-ci/i10/generated/gradlew
+          chmod +x .factory-ci/i10/generated/START-I10-SERVER.sh
+          chmod +x .factory-ci/i10/generated/START-I10-CLIENT-A.sh
+          chmod +x .factory-ci/i10/generated/START-I10-CLIENT-B.sh
           cd .factory-ci/i10/generated
           ./gradlew help --task runClientA --no-daemon
           ./gradlew help --task runClientB --no-daemon
@@ -158,7 +161,9 @@ jobs:
           rm -rf .factory-ci/i10/physical
           python3 engineering/tooling/multiblock-foundation/materialize_i10.py .factory-ci/i10/physical
           printf '%s\n' "$I10_SOURCE_SHA" > .factory-ci/i10/physical/I10-SOURCE-COMMIT.txt
-          chmod +x .factory-ci/i10/physical/START-I10-MULTIPLAYER.sh
+          chmod +x .factory-ci/i10/physical/START-I10-SERVER.sh
+          chmod +x .factory-ci/i10/physical/START-I10-CLIENT-A.sh
+          chmod +x .factory-ci/i10/physical/START-I10-CLIENT-B.sh
           chmod +x .factory-ci/i10/physical/gradlew
 
       - name: Upload physical acceptance handoff
