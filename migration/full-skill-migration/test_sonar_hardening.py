@@ -210,6 +210,20 @@ class SonarHardeningContractTest(unittest.TestCase):
         }
         self.assertTrue(exclusions.isdisjoint(canonical_authorities), "Factory-authored canonical authorities must remain analyzed")
 
+    def test_hash_pinned_workflow_installs_require_binary_only(self) -> None:
+        offenders: list[str] = []
+        workflows = ROOT / ".github" / "workflows"
+        for path in sorted(workflows.glob("*.yml")):
+            for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+                if "pip install" in line and "--require-hashes" in line and "--only-binary :all:" not in line:
+                    offenders.append(f"{path.relative_to(ROOT)}:{line_number}")
+
+        self.assertEqual(
+            [],
+            offenders,
+            "Hash-pinned workflow installs must use --only-binary :all: to prevent setup-script execution",
+        )
+
     def test_active_mcp_install_disables_lifecycle_scripts(self) -> None:
         workflow = FULL_SKILL_WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("run: npm ci --ignore-scripts", workflow)
