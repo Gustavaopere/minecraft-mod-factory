@@ -1,7 +1,8 @@
 # Factory-owned resolved test lock for the immutable Schematica snapshot.
 # Target: CPython 3.11 on ubuntu-24.04. Generated from the exact environment
 # that passed the upstream suite, then hashed from downloaded artifacts.
-# Install with: python3 -m pip install --require-hashes --no-deps -r <this-file>
+# Install with: python3 -m pip install --only-binary :all: --no-binary noise --require-hashes --no-deps -r <this-file>
+# `noise==1.2.2` is the sole source-distribution exception for this target; PyPI publishes no compatible Linux/CPython 3.11 wheel, and the exact source ZIP is SHA-256 pinned below.
 ast-serialize==0.11.1 --hash=sha256:3eebd3dd25a81839ac7d25b5f3fb3527f6141b35eca29f63d2613fe6254307fd
 contourpy==1.3.3 --hash=sha256:51e79c1f7470158e838808d4a996fa9bac72c498e93d8ebe5119bc1e6becb0db
 coverage==7.16.0 --hash=sha256:7cae7715afa51dd7c9c42e6603bb46daf424c3449fdf06519cc658aa8d46e2e4
