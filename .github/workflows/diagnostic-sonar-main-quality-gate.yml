@@ -37,3 +37,29 @@ jobs:
                   'comparator={comparator} threshold={errorThreshold}'.format(**condition)
               )
           PY
+          curl --fail --silent --show-error --location \
+            --header "Authorization: Bearer ${SONAR_TOKEN}" \
+            'https://sonarcloud.io/api/issues/search?componentKeys=Gustavaopere_minecraft-mod-factory&branch=main&types=VULNERABILITY&resolved=false&ps=100' \
+            > /tmp/security-issues.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path('/tmp/security-issues.json').read_text(encoding='utf-8'))
+          issues = payload.get('issues', [])
+          print(f'OPEN_VULNERABILITIES={len(issues)}')
+          for issue in issues:
+              component = str(issue.get('component', '')).split(':', 1)[-1]
+              impacts = issue.get('impacts') or []
+              impact_text = ','.join(
+                  f"{impact.get('softwareQuality')}:{impact.get('severity')}"
+                  for impact in impacts
+              )
+              print(
+                  'ISSUE '
+                  f"key={issue.get('key')} rule={issue.get('rule')} severity={issue.get('severity')} "
+                  f"type={issue.get('type')} component={component} line={issue.get('line')} "
+                  f"status={issue.get('status')} created={issue.get('creationDate')} impacts={impact_text} "
+                  f"message={issue.get('message')}"
+              )
+          PY
