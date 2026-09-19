@@ -59,6 +59,26 @@ class AuxiliaryDocumentContractProfileTests(unittest.TestCase):
         self.assertEqual(('Availability',), contract.required_sections['availability'])
         self.assertEqual(('NPC',), contract.reference_rules['discovery'].allowed_types)
         self.assertEqual(1, contract.reference_rules['discovery'].min_references)
+        self.assertIsNone(contract.filename_identity_section)
+
+    def test_profile_loads_filename_identity_section(self):
+        contracts = self.valid_contracts()
+        contracts['quest-lifecycle']['filename_identity_section'] = 'discovery'
+        self.write_profile(contracts)
+        profile = profile_module.load_profile(self.profile_path, self.root)
+        self.assertEqual(
+            'discovery',
+            profile.auxiliary_document_contracts['quest-lifecycle'].filename_identity_section,
+        )
+
+    def test_filename_identity_section_must_name_required_section(self):
+        for invalid in ('missing', '', 7):
+            with self.subTest(invalid=invalid):
+                contracts = self.valid_contracts()
+                contracts['quest-lifecycle']['filename_identity_section'] = invalid
+                self.write_profile(contracts)
+                with self.assertRaises(ValueError):
+                    profile_module.load_profile(self.profile_path, self.root)
 
     def test_profile_without_auxiliary_contracts_is_backward_compatible(self):
         self.write_profile()
@@ -303,6 +323,80 @@ class AuxiliaryDocumentContractValidationTests(unittest.TestCase):
                 'invalid-auxiliary-reference-type',
             }
             and issue.path.name == 'QST-0002-lifecycle.md'
+            for issue in issues
+        ))
+
+    def test_filename_identity_section_accepts_exact_filename_id(self):
+        data = json.loads(self.profile_path.read_text(encoding='utf-8'))
+        contract = data['auxiliary_document_contracts']['quest-lifecycle']
+        contract['required_sections']['identity'] = ['Entity ID']
+        contract['reference_rules']['identity'] = {
+            'allowed_types': ['QST'],
+            'min_references': 1,
+        }
+        contract['filename_identity_section'] = 'identity'
+        self.profile_path.write_text(json.dumps(data), encoding='utf-8')
+        profile = profile_module.load_profile(self.profile_path, self.root)
+        self.write_aux(
+            'QST-0001-lifecycle.md',
+            '# Lifecycle editorial\n\n'
+            '## Availability\nAvailable.\n\n'
+            '## Discovery\nNPC-0001 knows the lead.\n\n'
+            '## Entity ID\nQST-0001\n',
+        )
+        issues = story_module.validate(self.story, profile)
+        self.assertFalse(any(issue.code.startswith('auxiliary-filename-identity') for issue in issues))
+
+    def test_filename_identity_section_rejects_different_or_extra_id(self):
+        data = json.loads(self.profile_path.read_text(encoding='utf-8'))
+        contract = data['auxiliary_document_contracts']['quest-lifecycle']
+        contract['required_sections']['identity'] = ['Entity ID']
+        contract['reference_rules']['identity'] = {
+            'allowed_types': ['QST'],
+            'min_references': 1,
+        }
+        contract['filename_identity_section'] = 'identity'
+        self.profile_path.write_text(json.dumps(data), encoding='utf-8')
+        profile = profile_module.load_profile(self.profile_path, self.root)
+        for value in ('QST-0009', 'QST-0001 and QST-0009'):
+            with self.subTest(value=value):
+                path = self.write_aux(
+                    'QST-0001-lifecycle.md',
+                    '# Lifecycle editorial\n\n'
+                    '## Availability\nAvailable.\n\n'
+                    '## Discovery\nNPC-0001 knows the lead.\n\n'
+                    f'## Entity ID\n{value}\n',
+                )
+                issues = story_module.validate(self.story, profile)
+                self.assertTrue(any(
+                    issue.code == 'auxiliary-filename-identity-mismatch'
+                    and issue.path == path
+                    for issue in issues
+                ))
+
+    def test_filename_identity_section_requires_stable_id_prefix_in_filename(self):
+        data = json.loads(self.profile_path.read_text(encoding='utf-8'))
+        contract = data['auxiliary_document_contracts']['quest-lifecycle']
+        contract['include'] = ['aux/**/*.md']
+        contract['required_sections']['identity'] = ['Entity ID']
+        contract['reference_rules']['identity'] = {
+            'allowed_types': ['QST'],
+            'min_references': 1,
+        }
+        contract['filename_identity_section'] = 'identity'
+        self.profile_path.write_text(json.dumps(data), encoding='utf-8')
+        profile = profile_module.load_profile(self.profile_path, self.root)
+        path = self.write_aux(
+            'quest-lifecycle.md',
+            '# Lifecycle editorial\n\n'
+            '## Availability\nAvailable.\n\n'
+            '## Discovery\nNPC-0001 knows the lead.\n\n'
+            '## Entity ID\nQST-0001\n',
+        )
+        issues = story_module.validate(self.story, profile)
+        self.assertTrue(any(
+            issue.code == 'missing-auxiliary-filename-identity'
+            and issue.path == path
             for issue in issues
         ))
 
