@@ -79,7 +79,9 @@ class I10PermanentCIContract(unittest.TestCase):
             "Materialize physical acceptance handoff",
             "I10-SOURCE-COMMIT.txt",
             'printf \'%s\\n\' "$I10_SOURCE_SHA"',
-            "chmod +x .factory-ci/i10/physical/START-I10-MULTIPLAYER.sh",
+            "chmod +x .factory-ci/i10/physical/START-I10-SERVER.sh",
+            "chmod +x .factory-ci/i10/physical/START-I10-CLIENT-A.sh",
+            "chmod +x .factory-ci/i10/physical/START-I10-CLIENT-B.sh",
             "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
             "name: i10-physical-acceptance",
             "if-no-files-found: error",
@@ -92,10 +94,10 @@ class I10PermanentCIContract(unittest.TestCase):
             "physical handoff provenance must be derived from the checked-out Git graph, not interpolated PR context",
         )
         for unsafe_inline in (
-            "cat > .factory-ci/i10/physical/START-I10-MULTIPLAYER.bat",
-            "cat > .factory-ci/i10/physical/START-I10-MULTIPLAYER.sh",
+            "cat > .factory-ci/i10/physical/START-I10-SERVER.bat",
+            "cat > .factory-ci/i10/physical/START-I10-CLIENT-A.bat",
+            "cat > .factory-ci/i10/physical/START-I10-CLIENT-B.bat",
             "cat > .factory-ci/i10/physical/PHYSICAL-ACCEPTANCE-README.txt",
-            "run-i10-multiplayer-acceptance.py --commit",
         ):
             self.assertNotIn(
                 unsafe_inline,
