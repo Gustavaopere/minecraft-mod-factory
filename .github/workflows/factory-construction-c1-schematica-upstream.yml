@@ -44,7 +44,8 @@ jobs:
           python3 -m unittest construction/tests/test_c0_foundation.py -v
           python3 construction/scripts/validate_c0.py
       - name: Install hashed Schematica test environment
-        run: python3 -m pip install --only-binary :all: --no-binary noise --require-hashes --no-deps -r construction/upstream/harness/schematica-test-lock.txt
+        run: >-
+        python3 -m pip install --only-binary :all: --no-binary noise --require-hashes --no-deps -r construction/upstream/harness/schematica-test-lock.txt
       - name: Run upstream Schematica test suite unchanged
         env:
           PYTHONPATH: construction/upstream/snapshots/schematica/scripts
