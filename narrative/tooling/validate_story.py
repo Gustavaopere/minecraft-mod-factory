@@ -29,6 +29,8 @@ FATAL_CODES = {
     'empty-auxiliary-required-section',
     'missing-auxiliary-section-reference',
     'invalid-auxiliary-reference-type',
+    'missing-auxiliary-filename-identity',
+    'auxiliary-filename-identity-mismatch',
 }
 
 
@@ -219,7 +221,62 @@ def _auxiliary_contract_matches(root: pathlib.Path, profile: NarrativeProfile):
     return matches
 
 
-def _auxiliary_contract_issues(path, lines, contract_name, contract, id_re) -> list[Issue]:
+def _auxiliary_filename_identity_issues(
+    path,
+    lines,
+    contract_name,
+    contract,
+    id_re,
+    filename_id_re,
+) -> list[Issue]:
+    section_key = contract.filename_identity_section
+    if section_key is None:
+        return []
+
+    filename_match = filename_id_re.match(path.name)
+    if filename_match is None:
+        return [Issue('missing-auxiliary-filename-identity', contract_name, path, 1)]
+
+    aliases = {
+        alias.strip().casefold()
+        for alias in contract.required_sections.get(section_key, ())
+    }
+    heading_locations: list[int] = []
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.startswith('## ') and stripped[3:].strip().casefold() in aliases:
+            heading_locations.append(index)
+
+    if not heading_locations:
+        return []
+
+    references: set[str] = set()
+    populated = False
+    for heading_index in heading_locations:
+        for candidate_index in range(heading_index + 1, len(lines)):
+            stripped = lines[candidate_index].strip()
+            if stripped.startswith('## '):
+                break
+            if not stripped:
+                continue
+            populated = True
+            references.update(id_re.findall(lines[candidate_index]))
+
+    if not populated:
+        return []
+
+    expected = filename_match.group(1)
+    if references != {expected}:
+        return [Issue(
+            'auxiliary-filename-identity-mismatch',
+            f'{contract_name}:{section_key}:{expected}',
+            path,
+            heading_locations[0] + 1,
+        )]
+    return []
+
+
+def _auxiliary_contract_issues(path, lines, contract_name, contract, id_re, filename_id_re) -> list[Issue]:
     structural = _required_section_issues(
         path,
         lines,
@@ -244,7 +301,15 @@ def _auxiliary_contract_issues(path, lines, contract_name, contract, id_re) -> l
         'missing-entity-section-reference': 'missing-auxiliary-section-reference',
         'invalid-entity-reference-type': 'invalid-auxiliary-reference-type',
     })
-    return structural + references
+    identity = _auxiliary_filename_identity_issues(
+        path,
+        lines,
+        contract_name,
+        contract,
+        id_re,
+        filename_id_re,
+    )
+    return structural + references + identity
 
 
 def validate(root: pathlib.Path, profile: NarrativeProfile) -> list[Issue]:
@@ -302,6 +367,7 @@ def validate(root: pathlib.Path, profile: NarrativeProfile) -> list[Issue]:
                     contract_name,
                     contract,
                     id_re,
+                    filename_id_re,
                 ))
 
     for ref, locations in sorted(declarations.items()):
