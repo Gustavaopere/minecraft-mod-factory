@@ -11,7 +11,7 @@ class TemplateTests(unittest.TestCase):
             'TEMPLATE-HISTORY.md','TEMPLATE-ARC.md','TEMPLATE-NPC.md','TEMPLATE-NPC-AUTHORING.md',
             'TEMPLATE-QUEST.md','TEMPLATE-QUEST-LIFECYCLE.md','TEMPLATE-FACTION.md','TEMPLATE-SETTLEMENT.md',
             'TEMPLATE-LOCATION.md','TEMPLATE-EVENT.md','TEMPLATE-EVIDENCE.md','TEMPLATE-DIALOGUE.md',
-            'TEMPLATE-RELATION.md','TEMPLATE-EPILOGUE.md'
+            'TEMPLATE-RELATION.md','TEMPLATE-EPILOGUE.md','TEMPLATE-ASSET-BRIEF.md'
         }
         self.assertEqual(expected, {p.name for p in TEMPLATES.glob('*.md')})
 
