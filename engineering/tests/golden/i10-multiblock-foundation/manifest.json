@@ -6,16 +6,32 @@
       "destination": "I10-MULTIBLOCK-FOUNDATION.md"
     },
     {
-      "source": "run-i10-multiplayer-acceptance.py",
-      "destination": "run-i10-multiplayer-acceptance.py"
+      "source": "run-i10-manual-process.py",
+      "destination": "run-i10-manual-process.py"
     },
     {
-      "source": "START-I10-MULTIPLAYER.bat",
-      "destination": "START-I10-MULTIPLAYER.bat"
+      "source": "START-I10-SERVER.bat",
+      "destination": "START-I10-SERVER.bat"
     },
     {
-      "source": "START-I10-MULTIPLAYER.sh",
-      "destination": "START-I10-MULTIPLAYER.sh"
+      "source": "START-I10-CLIENT-A.bat",
+      "destination": "START-I10-CLIENT-A.bat"
+    },
+    {
+      "source": "START-I10-CLIENT-B.bat",
+      "destination": "START-I10-CLIENT-B.bat"
+    },
+    {
+      "source": "START-I10-SERVER.sh",
+      "destination": "START-I10-SERVER.sh"
+    },
+    {
+      "source": "START-I10-CLIENT-A.sh",
+      "destination": "START-I10-CLIENT-A.sh"
+    },
+    {
+      "source": "START-I10-CLIENT-B.sh",
+      "destination": "START-I10-CLIENT-B.sh"
     },
     {
       "source": "PHYSICAL-ACCEPTANCE-README.txt",
