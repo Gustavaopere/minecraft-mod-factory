@@ -243,6 +243,20 @@ class SonarHardeningContractTest(unittest.TestCase):
             "The source-only noise exception must remain bound to the reviewed PyPI ZIP digest",
         )
 
+    def test_binary_only_pip_flags_are_not_plain_yaml_run_scalars(self) -> None:
+        offenders: list[str] = []
+        workflows = ROOT / ".github" / "workflows"
+        for path in sorted(workflows.glob("*.yml")):
+            for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+                stripped = line.strip()
+                if stripped.startswith("run:") and "--only-binary :all:" in stripped:
+                    offenders.append(f"{path.relative_to(ROOT)}:{line_number}")
+        self.assertEqual(
+            [],
+            offenders,
+            "Commands containing :all: must use a YAML block scalar instead of a plain run scalar",
+        )
+
     def test_active_mcp_install_disables_lifecycle_scripts(self) -> None:
         workflow = FULL_SKILL_WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("run: npm ci --ignore-scripts", workflow)
