@@ -20,7 +20,8 @@ class TemplateTests(unittest.TestCase):
         for heading in (
             '## Editorial state',
             '## Production state',
-            '## Asset ID',
+            '## Entity ID',
+            '## Asset IDs',
             '## Narrative sources',
             '## Resolution and formats',
             '### Portrait/documentation',
@@ -31,6 +32,9 @@ class TemplateTests(unittest.TestCase):
             '## Pending decisions',
         ):
             self.assertIn(heading, asset)
+        self.assertIn('`{{ENTITY_ID}}`', asset)
+        self.assertIn('`{{ASSET_ID}}`', asset)
+        self.assertNotEqual('{{ENTITY_ID}}', '{{ASSET_ID}}')
         for forbidden in ('2048×2048', '64×64', 'Easy NPC'):
             self.assertNotIn(forbidden, asset)
 
