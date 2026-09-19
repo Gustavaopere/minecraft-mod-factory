@@ -28,6 +28,7 @@ class AuxiliaryDocumentContract:
     include: tuple[str, ...]
     required_sections: dict[str, tuple[str, ...]]
     reference_rules: dict[str, AuxiliaryReferenceRule]
+    filename_identity_section: str | None = None
 
 
 @dataclass(frozen=True)
@@ -224,10 +225,25 @@ def _auxiliary_document_contracts(
                 min_references=min_references,
             )
 
+        raw_filename_identity_section = raw_contract.get('filename_identity_section')
+        if raw_filename_identity_section is None:
+            filename_identity_section = None
+        elif (
+            not isinstance(raw_filename_identity_section, str)
+            or raw_filename_identity_section not in required_sections
+        ):
+            raise ValueError(
+                f'auxiliary_document_contracts.{name}.filename_identity_section '
+                'must name required_sections'
+            )
+        else:
+            filename_identity_section = raw_filename_identity_section
+
         contracts[name] = AuxiliaryDocumentContract(
             include=include,
             required_sections=required_sections,
             reference_rules=reference_rules,
+            filename_identity_section=filename_identity_section,
         )
 
     return contracts
