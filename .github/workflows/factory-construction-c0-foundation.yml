@@ -31,8 +31,8 @@ jobs:
           python-version: '3.11'
       - name: Install hashed Construction test environment
         run: |
-          python3 -m pip install --require-hashes --no-deps -r construction/upstream/harness/schematica-test-lock.txt
-          python3 -m pip install --require-hashes --no-deps -r construction/upstream/harness/c9-mcp-lock.txt
+          python3 -m pip install --only-binary :all: --no-binary noise --require-hashes --no-deps -r construction/upstream/harness/schematica-test-lock.txt
+          python3 -m pip install --only-binary :all: --require-hashes --no-deps -r construction/upstream/harness/c9-mcp-lock.txt
           python3 -m pip check
           python3 -c 'from importlib.metadata import version; assert version("mcp") == "2.2.0"'
       - name: Run construction C0 contract tests

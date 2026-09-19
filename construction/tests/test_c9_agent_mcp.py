@@ -1162,12 +1162,12 @@ class C9CapabilityBoundaryTests(unittest.TestCase):
     def test_c9_workflow_dependency_contract_is_hash_pinned(self) -> None:
         workflow = WORKFLOW_PATH.read_text(encoding="utf-8")
         self.assertIn(
-            "python3 -m pip install --require-hashes --no-deps -r "
+            "python3 -m pip install --only-binary :all: --no-binary noise --require-hashes --no-deps -r "
             "construction/upstream/harness/schematica-test-lock.txt",
             workflow,
         )
         self.assertIn(
-            "python3 -m pip install --require-hashes --no-deps -r "
+            "python3 -m pip install --only-binary :all: --require-hashes --no-deps -r "
             "construction/upstream/harness/c9-mcp-lock.txt",
             workflow,
         )
