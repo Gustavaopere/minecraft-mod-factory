@@ -61,6 +61,10 @@ class I10MultiplayerAcceptanceGuard(unittest.TestCase):
             "server-only tests",
             "GameTests",
             "run-i10-multiplayer-acceptance.py",
+            "START-I10-SERVER.bat",
+            "START-I10-CLIENT-A.bat",
+            "START-I10-CLIENT-B.bat",
+            "i10probe baseline",
         )
         missing = [token for token in required if token not in text]
         self.assertEqual([], missing, f"I10 multiplayer protocol is incomplete: {missing}")
@@ -90,9 +94,7 @@ class I10MultiplayerAcceptanceGuard(unittest.TestCase):
                 "client-b.log",
                 "metadata.json",
                 "raw",
-                "i10probe setup",
-                "i10probe break_required_part",
-                "setblock 159 79 161 i10_multiblock:multiblock_casing",
+                "i10probe baseline",
                 "forceload add 159 160 161 160",
                 "validation=VALID runtime=UNFORMED",
                 "capability=false",
@@ -125,37 +127,47 @@ class I10MultiplayerAcceptanceGuard(unittest.TestCase):
                     f"I10 physical launcher must preserve complete Gradle diagnostics for {task}",
                 )
 
-            start_bat = generated / "START-I10-MULTIPLAYER.bat"
-            start_sh = generated / "START-I10-MULTIPLAYER.sh"
-            handoff_readme = generated / "PHYSICAL-ACCEPTANCE-README.txt"
-            for wrapper in (start_bat, start_sh, handoff_readme):
-                self.assertTrue(wrapper.is_file(), f"I10 RED: physical handoff wrapper is missing: {wrapper.name}")
+            manual_files = (
+                generated / "START-I10-SERVER.bat",
+                generated / "START-I10-CLIENT-A.bat",
+                generated / "START-I10-CLIENT-B.bat",
+                generated / "START-I10-SERVER.sh",
+                generated / "START-I10-CLIENT-A.sh",
+                generated / "START-I10-CLIENT-B.sh",
+                generated / "PHYSICAL-ACCEPTANCE-README.txt",
+            )
+            for wrapper in manual_files:
+                self.assertTrue(wrapper.is_file(), f"I10 RED: manual physical handoff file is missing: {wrapper.name}")
+            self.assertFalse((generated / "START-I10-MULTIPLAYER.bat").exists())
+            self.assertFalse((generated / "START-I10-MULTIPLAYER.sh").exists())
 
-            bat_text = start_bat.read_text(encoding="utf-8")
+            server_bat = (generated / "START-I10-SERVER.bat").read_text(encoding="utf-8")
             for token in (
                 "I10-SOURCE-COMMIT.txt",
-                "run-i10-multiplayer-acceptance.py --commit",
-                "py -3",
-                "python",
                 "GRADLE_USER_HOME",
                 ".i10-gradle-user-home",
+                "eula=true",
+                "online-mode=false",
+                "level-name=i10-acceptance-world",
+                "gradlew.bat runServer",
+                "--stacktrace",
             ):
-                self.assertIn(token, bat_text, f"I10 Windows wrapper is missing token: {token}")
+                self.assertIn(token, server_bat, f"I10 Windows server wrapper is missing token: {token}")
 
-            sh_text = start_sh.read_text(encoding="utf-8")
-            for token in (
-                "I10-SOURCE-COMMIT.txt",
-                "run-i10-multiplayer-acceptance.py --commit",
-                "python3",
-                "GRADLE_USER_HOME",
-                ".i10-gradle-user-home",
-            ):
-                self.assertIn(token, sh_text, f"I10 POSIX wrapper is missing token: {token}")
+            client_a_bat = (generated / "START-I10-CLIENT-A.bat").read_text(encoding="utf-8")
+            client_b_bat = (generated / "START-I10-CLIENT-B.bat").read_text(encoding="utf-8")
+            self.assertIn("gradlew.bat runClientA", client_a_bat)
+            self.assertIn("gradlew.bat runClientB", client_b_bat)
+            self.assertIn(".i10-gradle-user-home", client_a_bat)
+            self.assertIn(".i10-gradle-user-home", client_b_bat)
 
-            readme_text = handoff_readme.read_text(encoding="utf-8")
+            readme_text = (generated / "PHYSICAL-ACCEPTANCE-README.txt").read_text(encoding="utf-8")
             for token in (
-                "Windows",
-                "Linux/macOS",
+                "Manual startup is the default",
+                "START-I10-SERVER.bat",
+                "START-I10-CLIENT-A.bat",
+                "START-I10-CLIENT-B.bat",
+                "i10probe baseline",
                 "dedicated server",
                 "Client A",
                 "Client B",
