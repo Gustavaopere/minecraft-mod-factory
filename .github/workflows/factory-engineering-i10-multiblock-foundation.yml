@@ -1,0 +1,175 @@
+name: Factory Engineering I10 Multiblock Foundation
+
+on:
+  push:
+    branches:
+      - main
+      - engineering/i10-multiblock-foundation-reference
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'engineering/tests/fixtures/i10-multiblock-*.json'
+      - 'engineering/tests/test_i10_multiblock_foundation*.py'
+      - 'engineering/tests/test_i10_chunk_acceptance.py'
+      - 'engineering/tests/test_i10_multiplayer_acceptance.py'
+      - 'engineering/tests/i10-multiplayer-acceptance.md'
+      - 'engineering/tooling/multiblock-foundation/**'
+      - 'engineering/tests/golden/i10-multiblock-foundation/**'
+      - 'art/golden-samples/i10-multiblock-visual/**'
+      - 'engineering/templates/neoforge-mod/**'
+      - 'engineering/tooling/scaffolder/**'
+      - 'engineering/tooling/test-harness/**'
+      - 'engineering/tooling/asset-handoff/**'
+      - 'engineering/schemas/asset-handoff.schema.json'
+      - 'engineering/schemas/mod-spec.schema.json'
+      - 'engineering/tooling/feature-generator/**'
+      - 'engineering/tooling/machine-foundation/**'
+      - 'engineering/tests/test_i3_*.py'
+      - 'engineering/tests/test_i4_*.py'
+      - 'engineering/tests/test_i5_*.py'
+      - 'engineering/tests/test_i6_*.py'
+      - 'engineering/tests/test_i8_*.py'
+      - 'engineering/tests/test_i9_*.py'
+      - '.github/workflows/factory-engineering-i10-multiblock-foundation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  multiblock-structural-build:
+    runs-on: ubuntu-24.04
+    env:
+      GRADLE_USER_HOME: ${{ github.workspace }}/.factory-ci/i10/gradle-home
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Set up Java 21
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Run I10 and relevant engineering regressions
+        run: >-
+          python3 -m unittest
+          engineering/tests/test_i3_mod_scaffolder.py
+          engineering/tests/test_i3_security_review.py
+          engineering/tests/test_i4_engineering_validators.py
+          engineering/tests/test_i5_test_harness.py
+          engineering/tests/test_i6_asset_handoff.py
+          engineering/tests/test_i8_feature_generator.py
+          engineering/tests/test_i8_feature_generator_neoforge.py
+          engineering/tests/test_i9_machine_foundation.py
+          engineering/tests/test_i9_machine_foundation_composition.py
+          engineering/tests/test_i10_multiblock_foundation.py
+          engineering/tests/test_i10_multiblock_foundation_task5.py
+          engineering/tests/test_i10_multiblock_foundation_handoff.py
+          engineering/tests/test_i10_multiblock_foundation_client_resources.py
+          engineering/tests/test_i10_multiblock_foundation_gametest.py
+          engineering/tests/test_i10_multiblock_foundation_provider.py
+          engineering/tests/test_i10_chunk_acceptance.py
+          engineering/tests/test_i10_multiplayer_acceptance.py
+          engineering/tests/test_i10_multiblock_foundation_composition.py
+          engineering/tests/test_i10_multiblock_foundation_ci.py
+
+      - name: Materialize I10 Golden
+        run: |
+          rm -rf .factory-ci/i10/generated
+          mkdir -p .factory-ci/i10
+          python3 engineering/tooling/multiblock-foundation/materialize_i10.py .factory-ci/i10/generated
+
+      - name: Validate manual physical handoff and run tasks
+        run: |
+          python3 .factory-ci/i10/generated/run-i10-manual-process.py --help
+          chmod +x .factory-ci/i10/generated/gradlew
+          chmod +x .factory-ci/i10/generated/START-I10-SERVER.sh
+          chmod +x .factory-ci/i10/generated/START-I10-CLIENT-A.sh
+          chmod +x .factory-ci/i10/generated/START-I10-CLIENT-B.sh
+          cd .factory-ci/i10/generated
+          ./gradlew help --task runClientA --no-daemon
+          ./gradlew help --task runClientB --no-daemon
+
+      - name: Build materialized NeoForge project
+        run: |
+          chmod +x .factory-ci/i10/generated/gradlew
+          cd .factory-ci/i10/generated
+          ./gradlew test build --no-daemon
+
+      - name: Run I10 GameTest server
+        run: |
+          cd .factory-ci/i10/generated
+          ./gradlew runGameTestServer --no-daemon
+
+      - name: Accept EULA in generated fixture only
+        run: |
+          mkdir -p .factory-ci/i10/generated/run/server
+          printf 'eula=true\n' > .factory-ci/i10/generated/run/server/eula.txt
+
+      - name: Run canonical I5 harness
+        run: >-
+          python3 engineering/tooling/test-harness/run_test_harness.py
+          --project .factory-ci/i10/generated
+
+      - name: Verify I5 manifest
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('.factory-ci/i10/generated/build/i5-test-harness/test-manifest.json')
+          manifest = json.loads(path.read_text(encoding='utf-8'))
+          assert manifest['overall_state'] == 'PASS', manifest
+          suites = {suite['suite_id']: suite['state'] for suite in manifest['suites']}
+          assert suites == {
+              'unit': 'PASS',
+              'gametest': 'PASS',
+              'dedicated_server': 'PASS',
+          }, suites
+          print(json.dumps(manifest, indent=2, sort_keys=True))
+          PY
+
+      - name: Run I10 real chunk acceptance
+        run: python3 engineering/tooling/multiblock-foundation/run_i10_chunk_acceptance.py --project .factory-ci/i10/generated
+
+      - name: Check whitespace
+        if: always()
+        run: git diff --check HEAD^
+
+      - name: Resolve exact I10 source revision
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            I10_SOURCE_SHA="$(git rev-parse 'HEAD^2')"
+          else
+            I10_SOURCE_SHA="$(git rev-parse HEAD)"
+          fi
+          if [[ ! "$I10_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error title=Invalid I10 source SHA::Expected a full lowercase Git commit SHA."
+            exit 1
+          fi
+          git cat-file -e "${I10_SOURCE_SHA}^{commit}"
+          printf '%s\n' "$I10_SOURCE_SHA" > .factory-ci/i10/source-sha.txt
+
+      - name: Materialize physical acceptance handoff
+        run: |
+          I10_SOURCE_SHA="$(cat .factory-ci/i10/source-sha.txt)"
+          git checkout --detach "$I10_SOURCE_SHA"
+          rm -rf .factory-ci/i10/physical
+          python3 engineering/tooling/multiblock-foundation/materialize_i10.py .factory-ci/i10/physical
+          printf '%s\n' "$I10_SOURCE_SHA" > .factory-ci/i10/physical/I10-SOURCE-COMMIT.txt
+          chmod +x .factory-ci/i10/physical/START-I10-SERVER.sh
+          chmod +x .factory-ci/i10/physical/START-I10-CLIENT-A.sh
+          chmod +x .factory-ci/i10/physical/START-I10-CLIENT-B.sh
+          chmod +x .factory-ci/i10/physical/gradlew
+
+      - name: Upload physical acceptance handoff
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: i10-physical-acceptance
+          path: .factory-ci/i10/physical
+          if-no-files-found: error
+          retention-days: 7

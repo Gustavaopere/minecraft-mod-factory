@@ -44,7 +44,7 @@ def write_fake_project(root: Path) -> Path:
             [
                 "mod_id=i5_fixture",
                 "minecraft_version=1.21.1",
-                "neo_version=21.1.248",
+                "neo_version=21.1.250",
                 "java_version=21",
             ]
         )

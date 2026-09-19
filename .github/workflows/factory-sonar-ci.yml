@@ -57,7 +57,7 @@ jobs:
 
       - name: Install hash-pinned Python coverage tool
         run: >-
-          python3 -m pip install --require-hashes --no-deps
+          python3 -m pip install --require-hashes --no-deps --only-binary :all:
           -r .github/sonar/python-coverage-lock.txt
 
       - name: Generate fail-closed Python coverage
@@ -112,6 +112,44 @@ jobs:
                 engineering/tests/test_i9_machine_foundation_composition.py
             fi
             coverage_started=1
+          fi
+
+          if [[ -f engineering/tooling/multiblock-foundation/materialize_i10.py && -f engineering/tooling/multiblock-foundation/run_i10_chunk_acceptance.py && -f engineering/tests/test_i10_multiblock_foundation.py && -f engineering/tests/test_i10_chunk_acceptance.py ]]; then
+            if [[ "$coverage_started" -eq 0 ]]; then
+              python3 -m coverage run \
+                --branch \
+                --source=engineering/tooling/multiblock-foundation \
+                -m unittest \
+                engineering/tests/test_i10_multiblock_foundation.py \
+                engineering/tests/test_i10_multiblock_foundation_task5.py \
+                engineering/tests/test_i10_multiblock_foundation_handoff.py \
+                engineering/tests/test_i10_multiblock_foundation_gametest.py \
+                engineering/tests/test_i10_multiblock_foundation_provider.py \
+                engineering/tests/test_i10_chunk_acceptance.py \
+                engineering/tests/test_i10_multiplayer_acceptance.py \
+                engineering/tests/test_i10_multiblock_foundation_composition.py \
+                engineering/tests/test_i10_multiblock_foundation_ci.py
+            else
+              python3 -m coverage run \
+                --append \
+                --branch \
+                --source=engineering/tooling/multiblock-foundation \
+                -m unittest \
+                engineering/tests/test_i10_multiblock_foundation.py \
+                engineering/tests/test_i10_multiblock_foundation_task5.py \
+                engineering/tests/test_i10_multiblock_foundation_handoff.py \
+                engineering/tests/test_i10_multiblock_foundation_gametest.py \
+                engineering/tests/test_i10_multiblock_foundation_provider.py \
+                engineering/tests/test_i10_chunk_acceptance.py \
+                engineering/tests/test_i10_multiplayer_acceptance.py \
+                engineering/tests/test_i10_multiblock_foundation_composition.py \
+                engineering/tests/test_i10_multiblock_foundation_ci.py
+            fi
+            coverage_started=1
+            python3 -m coverage report \
+              --include='engineering/tooling/multiblock-foundation/*' \
+              --show-missing \
+              --fail-under=80
           fi
 
           if [[ -f migration/full-skill-migration/check_whitespace.py && -f migration/full-skill-migration/test_markdown_whitespace_policy.py ]]; then

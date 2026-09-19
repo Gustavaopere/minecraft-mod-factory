@@ -52,7 +52,7 @@ jobs:
       - name: Generate canonical NeoForge 21.1.248 smoke project
         run: >-
           python3 engineering/tooling/scaffolder/scaffold_mod.py
-          --mod-spec engineering/tests/fixtures/i3-golden-mod-spec.json
+          --mod-spec art/native-golden-samples/geckolib4-simple-mob/runtime-smoke/mod-spec.json
           --config engineering/tests/fixtures/i3-golden-scaffold-config.json
           --output '.factory-ci/geckolib4/generated'
       - name: Materialize audited GeckoLib runtime fixture and physical assets

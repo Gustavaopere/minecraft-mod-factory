@@ -65,7 +65,15 @@ if registry_path.is_file():
 version_path = ROOT / "skills/VERSION-AUTHORITY.md"
 if version_path.is_file():
     version_text = version_path.read_text(encoding="utf-8")
-    for token in ("Minecraft: **1.21.1**", "NeoForge: **21.1.248**", "Java: **21**", "modlist física"):
+    for token in (
+        "Minecraft: **1.21.1**",
+        "NeoForge: **21.1.x estável mais recente compatível com Minecraft 1.21.1**",
+        "Java: **21**",
+        "resolvida no início de cada ciclo relevante de implementação ou validação",
+        "Não atualizar silenciosamente o NeoForge no meio de um gate já iniciado",
+        "A resolução exata do ciclo I10 atual é NeoForge **21.1.250**",
+        "modlist física",
+    ):
         if token not in version_text:
             errors.append(f"version authority missing token: {token}")
 

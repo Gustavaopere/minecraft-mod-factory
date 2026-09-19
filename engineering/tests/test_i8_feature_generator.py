@@ -107,7 +107,7 @@ class I8FeatureGeneratorCoreContractTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 module.plan_feature_set(project, request)
 
-            properties.write_text(original.replace("neo_version=21.1.248", "neo_version=21.1.247"), encoding="utf-8")
+            properties.write_text(original.replace("neo_version=21.1.250", "neo_version=21.1.249"), encoding="utf-8")
             with self.assertRaises(ValueError):
                 module.plan_feature_set(project, request)
 
