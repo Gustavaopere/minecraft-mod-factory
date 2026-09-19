@@ -13,11 +13,15 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - name: Read public SonarCloud main Quality Gate
+      - name: Read authenticated SonarCloud main Quality Gate
         shell: bash
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           set -euo pipefail
+          test -n "${SONAR_TOKEN:-}"
           curl --fail --silent --show-error --location \
+            --header "Authorization: Bearer ${SONAR_TOKEN}" \
             'https://sonarcloud.io/api/qualitygates/project_status?projectKey=Gustavaopere_minecraft-mod-factory&branch=main' \
             > /tmp/quality-gate.json
           python3 - <<'PY'
