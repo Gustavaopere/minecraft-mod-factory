@@ -118,11 +118,12 @@ Regras da seleção:
 - os padrões usam `/`, aceitam `**` para recursão e não podem ser absolutos nem conter segmento `..`;
 - um match que resolva fisicamente fora de `story_root` falha fechado;
 - se mais de um contrato casar com o mesmo arquivo, cada contrato é aplicado independentemente;
-- somente Markdown é validado por essa capability.
+- somente Markdown é validado por essa capability;
+- opcionalmente, `filename_identity_section` pode apontar para uma chave de `required_sections`; nesse modo, o filename precisa começar por um ID estável `TYPE-####` e a seção indicada precisa conter exatamente esse mesmo ID, sem outro ID estável adicional.
 
 Precedência de identidade: um arquivo que contenha uma declaração H1 reconhecida como `# TYPE-#### ...` continua sendo um entity record, mesmo que o glob auxiliar case com seu caminho. Um H1 como `# Lifecycle editorial de QST-0001 ...` continua auxiliar; `QST-0001` ali é referência, não declaração.
 
-A semântica de `required_sections` e `reference_rules` é a mesma dos contratos de entidade: aliases case-insensitive, seção precisa ter conteúdo não vazio, referências são IDs estáveis distintos, e seção ausente/vazia não gera erro duplicado de cardinalidade. Os issue codes auxiliares são `missing-auxiliary-required-section`, `empty-auxiliary-required-section`, `missing-auxiliary-section-reference` e `invalid-auxiliary-reference-type`.
+A semântica de `required_sections` e `reference_rules` é a mesma dos contratos de entidade: aliases case-insensitive, seção precisa ter conteúdo não vazio, referências são IDs estáveis distintos, e seção ausente/vazia não gera erro duplicado de cardinalidade. Os issue codes auxiliares são `missing-auxiliary-required-section`, `empty-auxiliary-required-section`, `missing-auxiliary-section-reference`, `invalid-auxiliary-reference-type`, `missing-auxiliary-filename-identity` e `auxiliary-filename-identity-mismatch`.
 
 Esses checks continuam estritamente estruturais. Eles não inferem verdade, cânone, causalidade, legitimidade de conhecimento, qualidade narrativa ou mecânicas de mods/providers.
 

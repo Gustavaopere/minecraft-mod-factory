@@ -40,6 +40,8 @@ As chaves base já suportadas continuam compatíveis com profiles anteriores da 
 
 A validação verifica somente estrutura, referências declaradas e existência dos alvos. Confiabilidade e suficiência probatória permanecem decisões editoriais.
 
+Em `auxiliary_document_contracts`, o campo opcional `filename_identity_section` pode nomear uma chave de `required_sections`. Quando presente, o validator exige que o arquivo auxiliar comece por um ID estável `TYPE-####` e que a seção indicada contenha exatamente esse mesmo ID. Isso permite vincular briefs, lifecycles e outros documentos auxiliares à entidade codificada no filename sem transformá-los em declarações H1 duplicadas.
+
 ## Relationships, memory e autonomy
 
 `relationship_memory_contracts` também é opt-in. Cada contrato pode declarar seções obrigatórias, dimensões independentes, regras de referência, source/target actor, memory event, tipos permitidos de relação e estados de autonomia.
