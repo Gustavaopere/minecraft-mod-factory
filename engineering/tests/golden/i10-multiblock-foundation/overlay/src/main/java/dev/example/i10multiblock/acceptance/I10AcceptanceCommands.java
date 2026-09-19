@@ -8,6 +8,7 @@ import dev.example.i10multiblock.multiblock.MultiblockControllerBlock;
 import dev.example.i10multiblock.multiblock.MultiblockControllerBlockEntity;
 import dev.example.i10multiblock.multiblock.MultiblockPattern;
 import dev.example.i10multiblock.multiblock.MultiblockPortBlock;
+import dev.example.i10multiblock.multiblock.MultiblockPortBlockEntity;
 import dev.example.i10multiblock.multiblock.MultiblockRuntimeState;
 import dev.example.i10multiblock.multiblock.MultiblockValidationResult;
 import net.minecraft.commands.CommandSourceStack;
@@ -45,12 +46,38 @@ public final class I10AcceptanceCommands {
         dispatcher.register(
                 Commands.literal("i10probe")
                         .requires(source -> source.hasPermission(2))
+                        .then(Commands.literal("baseline")
+                                .executes(context -> baseline(context.getSource())))
                         .then(Commands.literal("setup")
                                 .executes(context -> setup(context.getSource())))
                         .then(Commands.literal("status")
                                 .executes(context -> status(context.getSource())))
                         .then(Commands.literal("break_required_part")
                                 .executes(context -> breakRequiredPart(context.getSource()))));
+    }
+
+    private static int baseline(CommandSourceStack source) {
+        ServerLevel level = source.getLevel();
+        clearStructure(level);
+        buildStructure(level);
+
+        BlockEntity blockEntity = level.getBlockEntity(CONTROLLER_POS);
+        if (!(blockEntity instanceof MultiblockControllerBlockEntity controller)) {
+            emit(level, "baseline", null);
+            return 0;
+        }
+
+        controller.markUnformed();
+        BlockPos portPos = MultiblockPattern.worldPos(
+                CONTROLLER_POS, FACING, MultiblockPattern.PORT_LOCAL);
+        if (level.hasChunkAt(portPos)
+                && level.getBlockEntity(portPos) instanceof MultiblockPortBlockEntity port) {
+            port.clearBinding();
+            level.invalidateCapabilities(portPos);
+        }
+
+        emit(level, "baseline", controller);
+        return 1;
     }
 
     private static int setup(CommandSourceStack source) {
@@ -105,6 +132,20 @@ public final class I10AcceptanceCommands {
                 "break_required_part",
                 blockEntity instanceof MultiblockControllerBlockEntity controller ? controller : null);
         return 1;
+    }
+
+    private static void clearStructure(ServerLevel level) {
+        for (int localX = MultiblockPattern.MIN_X; localX <= MultiblockPattern.MAX_X; localX++) {
+            for (int localY = MultiblockPattern.MIN_Y; localY <= MultiblockPattern.MAX_Y; localY++) {
+                for (int localZ = MultiblockPattern.MIN_Z; localZ <= MultiblockPattern.MAX_Z; localZ++) {
+                    BlockPos local = new BlockPos(localX, localY, localZ);
+                    BlockPos world = MultiblockPattern.worldPos(CONTROLLER_POS, FACING, local);
+                    if (level.hasChunkAt(world)) {
+                        level.setBlock(world, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+                    }
+                }
+            }
+        }
     }
 
     private static void buildStructure(ServerLevel level) {
