@@ -224,6 +224,25 @@ class SonarHardeningContractTest(unittest.TestCase):
             "Hash-pinned workflow installs must use --only-binary :all: to prevent setup-script execution",
         )
 
+        source_exceptions: list[str] = []
+        for path in sorted(workflows.glob("*.yml")):
+            for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+                if "--no-binary" in line:
+                    if "--no-binary noise" not in line or "schematica-test-lock.txt" not in line:
+                        source_exceptions.append(f"{path.relative_to(ROOT)}:{line_number}")
+        self.assertEqual(
+            [],
+            source_exceptions,
+            "The only permitted source-distribution exception is noise in the Schematica lock",
+        )
+
+        schematica_lock = (ROOT / "construction/upstream/harness/schematica-test-lock.txt").read_text(encoding="utf-8")
+        self.assertIn(
+            "noise==1.2.2 --hash=sha256:36036cdaca131ddd2ab4397fba649af7f074ec08031e1e0a51031d0ae23b509a",
+            schematica_lock,
+            "The source-only noise exception must remain bound to the reviewed PyPI ZIP digest",
+        )
+
     def test_active_mcp_install_disables_lifecycle_scripts(self) -> None:
         workflow = FULL_SKILL_WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("run: npm ci --ignore-scripts", workflow)
