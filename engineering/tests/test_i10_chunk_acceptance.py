@@ -436,6 +436,18 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
                             last_known_formed=False,
                         )
                     )
+                elif "manual multiplayer baseline" in description:
+                    value = module.parse_probe_marker(
+                        marker_line(
+                            action="baseline",
+                            runtime="UNFORMED",
+                            revision=0,
+                            sentinel="empty",
+                            count=0,
+                            capability=False,
+                            last_known_formed=False,
+                        )
+                    )
                 else:
                     value = module.parse_probe_marker(marker_line())
                 if not predicate(value):
