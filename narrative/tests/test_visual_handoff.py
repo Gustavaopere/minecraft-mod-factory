@@ -1,3 +1,4 @@
+import hashlib
 import importlib.util
 import json
 import pathlib
@@ -15,6 +16,16 @@ def load_module():
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
+
+
+def png_header(width, height):
+    return (
+        b'\x89PNG\r\n\x1a\n'
+        + (13).to_bytes(4, 'big')
+        + b'IHDR'
+        + width.to_bytes(4, 'big')
+        + height.to_bytes(4, 'big')
+    )
 
 
 def valid_manifest():
@@ -43,6 +54,59 @@ class VisualHandoffTests(unittest.TestCase):
             asset.parent.mkdir(parents=True)
             asset.write_bytes(b'not-a-real-png-but-present')
             self.assertEqual([], mod.validate_manifest(valid_manifest(), root, check_files=True))
+
+    def test_manifest_verifies_declared_sha256_and_png_dimensions(self):
+        mod = load_module()
+        with tempfile.TemporaryDirectory() as td:
+            root = pathlib.Path(td)
+            asset = root / 'art' / 'portraits' / 'npc-0001.png'
+            asset.parent.mkdir(parents=True)
+            payload = png_header(2048, 2048)
+            asset.write_bytes(payload)
+            manifest = valid_manifest()
+            entry = manifest['records'][0]['assets'][0]
+            entry['sha256'] = hashlib.sha256(payload).hexdigest()
+            entry['pixel_dimensions'] = {'width': 2048, 'height': 2048}
+            self.assertEqual([], mod.validate_manifest(manifest, root, check_files=True))
+
+    def test_manifest_rejects_invalid_integrity_metadata(self):
+        mod = load_module()
+        manifest = valid_manifest()
+        entry = manifest['records'][0]['assets'][0]
+        entry['sha256'] = 'NOT-A-SHA256'
+        entry['pixel_dimensions'] = {'width': 0, 'height': True}
+        codes = {issue.code for issue in mod.validate_manifest(manifest, pathlib.Path('.'))}
+        self.assertIn('invalid-asset-sha256', codes)
+        self.assertIn('invalid-pixel-dimensions', codes)
+
+    def test_manifest_reports_hash_and_pixel_dimension_mismatch(self):
+        mod = load_module()
+        with tempfile.TemporaryDirectory() as td:
+            root = pathlib.Path(td)
+            asset = root / 'art' / 'portraits' / 'npc-0001.png'
+            asset.parent.mkdir(parents=True)
+            asset.write_bytes(png_header(2048, 2048))
+            manifest = valid_manifest()
+            entry = manifest['records'][0]['assets'][0]
+            entry['sha256'] = '0' * 64
+            entry['pixel_dimensions'] = {'width': 1024, 'height': 1024}
+            codes = {issue.code for issue in mod.validate_manifest(manifest, root, check_files=True)}
+        self.assertIn('asset-sha256-mismatch', codes)
+        self.assertIn('asset-pixel-dimensions-mismatch', codes)
+
+    def test_dimension_check_fails_closed_when_declared_for_non_png(self):
+        mod = load_module()
+        with tempfile.TemporaryDirectory() as td:
+            root = pathlib.Path(td)
+            asset = root / 'art' / 'portraits' / 'npc-0001.dat'
+            asset.parent.mkdir(parents=True)
+            asset.write_bytes(b'not-a-png')
+            manifest = valid_manifest()
+            entry = manifest['records'][0]['assets'][0]
+            entry['path'] = 'art/portraits/npc-0001.dat'
+            entry['pixel_dimensions'] = {'width': 2048, 'height': 2048}
+            codes = {issue.code for issue in mod.validate_manifest(manifest, root, check_files=True)}
+        self.assertIn('asset-dimensions-unverifiable', codes)
 
     def test_manifest_rejects_path_traversal_duplicate_asset_ids_and_missing_files(self):
         mod = load_module()
