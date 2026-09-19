@@ -27,6 +27,7 @@ ALLOWED_SERVER_COMMANDS = frozenset(
     {
         "forceload add 159 160 161 160",
         "forceload remove 159 160 161 160",
+        "i10probe baseline",
         "i10probe setup",
         "i10probe status",
         "i10probe break_required_part",
@@ -146,7 +147,7 @@ def parse_probe_marker(line: str) -> dict[str, object]:
         raise AcceptanceError(f"I10 probe fields must be exactly ordered; missing={missing}")
 
     action = fields["action"]
-    if action not in {"setup", "status", "break_required_part"}:
+    if action not in {"baseline", "setup", "status", "break_required_part"}:
         raise AcceptanceError(f"invalid I10 probe action: {action}")
     validation = fields["validation"]
     if validation not in {"VALID", "INVALID", "UNAVAILABLE"}:
@@ -329,6 +330,18 @@ class ServerSession:
         (output_root / f"{self.phase}.log").write_text("".join(self.lines), encoding="utf-8")
 
 
+def _baseline_unformed(marker: dict[str, object]) -> bool:
+    return (
+        marker["validation"] == "VALID"
+        and marker["runtime"] == "UNFORMED"
+        and marker["revision"] == 0
+        and marker["sentinel"] == "empty"
+        and marker["count"] == 0
+        and marker["capability"] is False
+        and marker["last_known_formed"] is False
+    )
+
+
 def _formed(marker: dict[str, object], revision: int | None = None) -> bool:
     return (
         marker["validation"] == "VALID"
@@ -460,6 +473,21 @@ def run_acceptance(project_root: Path | str, workspace: Path | str | None = None
 
         phase3_data = _run_phase(project, output, "phase3-broken-restart", phase3)
         summary["phases"].append({"phase": "broken_restart", **phase3_data})
+
+        def phase4(session: ServerSession):
+            session.send("forceload add 159 160 161 160")
+            baseline = session.send("i10probe baseline", "baseline")
+            assert baseline is not None
+            if not _baseline_unformed(baseline):
+                raise AcceptanceError(f"phase4: deterministic manual baseline was not exact: {baseline}")
+            stable = session.poll_status(
+                _baseline_unformed,
+                "stable VALID/UNFORMED manual multiplayer baseline",
+            )
+            return {"baseline": baseline, "stable": stable}
+
+        phase4_data = _run_phase(project, output, "phase4-manual-baseline", phase4)
+        summary["phases"].append({"phase": "manual_baseline", **phase4_data})
         summary["state"] = "PASS"
         return summary
     finally:
