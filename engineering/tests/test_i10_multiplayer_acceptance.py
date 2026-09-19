@@ -22,8 +22,8 @@ def load_materializer():
     return module
 
 
-def load_launcher(path: Path):
-    spec = importlib.util.spec_from_file_location("i10_multiplayer_launcher", path)
+def load_manual_helper(path: Path):
+    spec = importlib.util.spec_from_file_location("i10_manual_process", path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)
@@ -60,10 +60,11 @@ class I10MultiplayerAcceptanceGuard(unittest.TestCase):
             "Fake players",
             "server-only tests",
             "GameTests",
-            "run-i10-multiplayer-acceptance.py",
+            "Manual startup is the default",
             "START-I10-SERVER.bat",
             "START-I10-CLIENT-A.bat",
             "START-I10-CLIENT-B.bat",
+            "run-i10-manual-process.py",
             "i10probe baseline",
         )
         missing = [token for token in required if token not in text]
@@ -71,61 +72,54 @@ class I10MultiplayerAcceptanceGuard(unittest.TestCase):
         self.assertEqual(1, text.count(PENDING_STATE))
         self.assertNotIn(PASS_STATE, text, "I10 multiplayer protocol must not encode PASS before real evidence exists")
 
-    def test_materialized_launcher_starts_server_and_two_real_clients_with_complete_logs(self) -> None:
+    def test_materialized_manual_handoff_runs_one_process_at_a_time_with_complete_logs(self) -> None:
         materializer = load_materializer()
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp)
             with contextlib.chdir(workspace):
                 generated = materializer.materialize_i10("generated")
 
-            launcher = generated / "run-i10-multiplayer-acceptance.py"
-            self.assertTrue(launcher.is_file(), "I10 RED: multiplayer launcher is missing from materialization")
-            launcher_text = launcher.read_text(encoding="utf-8")
-            compile(launcher_text, str(launcher), "exec")
-            required_launcher_tokens = (
+            helper = generated / "run-i10-manual-process.py"
+            self.assertTrue(helper.is_file(), "I10 RED: manual process helper is missing from materialization")
+            helper_text = helper.read_text(encoding="utf-8")
+            compile(helper_text, str(helper), "exec")
+            for token in (
                 "runServer",
                 "runClientA",
                 "runClientB",
                 "I10ClientA",
                 "I10ClientB",
-                "build/i10-multiplayer-acceptance",
+                "build",
+                "i10-multiplayer-acceptance",
                 "server.log",
                 "client-a.log",
                 "client-b.log",
                 "metadata.json",
                 "raw",
-                "i10probe baseline",
-                "forceload add 159 160 161 160",
-                "validation=VALID runtime=UNFORMED",
-                "capability=false",
-                "last_known_formed=false",
-                "online-mode",
-                "quickPlayMultiplayer",
-                "reconnect-b",
-                "client_b_reconnects",
-                "appended to client-b.log",
-            )
-            missing_launcher = [token for token in required_launcher_tokens if token not in launcher_text]
-            self.assertEqual([], missing_launcher, f"I10 multiplayer launcher is incomplete: {missing_launcher}")
+                "GRADLE_USER_HOME",
+                ".i10-gradle-user-home",
+                "--stacktrace",
+                "stdout=subprocess.PIPE",
+                "MANUAL_SEPARATE_PROCESSES",
+            ):
+                self.assertIn(token, helper_text, f"I10 manual helper is incomplete: {token}")
+            self.assertNotIn("stdin=subprocess.PIPE", helper_text)
 
-            launcher_module = load_launcher(launcher)
-            self.assertGreaterEqual(
-                launcher_module.DEFAULT_SERVER_READY_TIMEOUT_SECONDS,
-                1200,
-                "I10 physical launcher must allow a cold Windows NeoGradle startup longer than five minutes",
-            )
-            gradle_env = launcher_module.gradle_process_env()
+            helper_module = load_manual_helper(helper)
+            self.assertEqual("runServer", helper_module.ROLE_CONFIG["server"]["task"])
+            self.assertEqual("runClientA", helper_module.ROLE_CONFIG["client-a"]["task"])
+            self.assertEqual("runClientB", helper_module.ROLE_CONFIG["client-b"]["task"])
+            gradle_env = helper_module.gradle_process_env()
             self.assertEqual(
                 str(generated / ".i10-gradle-user-home"),
                 gradle_env.get("GRADLE_USER_HOME"),
-                "I10 physical launcher must isolate NeoGradle from the host-global Gradle cache",
+                "I10 manual physical handoff must isolate NeoGradle from the host-global Gradle cache",
             )
             for task in ("runServer", "runClientA", "runClientB"):
-                self.assertIn(
-                    "--stacktrace",
-                    launcher_module.gradle_command(task),
-                    f"I10 physical launcher must preserve complete Gradle diagnostics for {task}",
-                )
+                command = helper_module.gradle_command(task)
+                self.assertIn("--stacktrace", command)
+                self.assertIn("--no-daemon", command)
+                self.assertIn("--console=plain", command)
 
             manual_files = (
                 generated / "START-I10-SERVER.bat",
@@ -138,26 +132,26 @@ class I10MultiplayerAcceptanceGuard(unittest.TestCase):
             )
             for wrapper in manual_files:
                 self.assertTrue(wrapper.is_file(), f"I10 RED: manual physical handoff file is missing: {wrapper.name}")
+
             self.assertFalse((generated / "START-I10-MULTIPLAYER.bat").exists())
             self.assertFalse((generated / "START-I10-MULTIPLAYER.sh").exists())
+            self.assertFalse((generated / "run-i10-multiplayer-acceptance.py").exists())
 
             server_bat = (generated / "START-I10-SERVER.bat").read_text(encoding="utf-8")
             for token in (
                 "I10-SOURCE-COMMIT.txt",
+                "run-i10-manual-process.py server",
                 "GRADLE_USER_HOME",
                 ".i10-gradle-user-home",
-                "eula=true",
-                "online-mode=false",
-                "level-name=i10-acceptance-world",
-                "gradlew.bat runServer",
-                "--stacktrace",
             ):
                 self.assertIn(token, server_bat, f"I10 Windows server wrapper is missing token: {token}")
+            self.assertNotIn("runClientA", server_bat)
+            self.assertNotIn("runClientB", server_bat)
 
             client_a_bat = (generated / "START-I10-CLIENT-A.bat").read_text(encoding="utf-8")
             client_b_bat = (generated / "START-I10-CLIENT-B.bat").read_text(encoding="utf-8")
-            self.assertIn("gradlew.bat runClientA", client_a_bat)
-            self.assertIn("gradlew.bat runClientB", client_b_bat)
+            self.assertIn("run-i10-manual-process.py client-a", client_a_bat)
+            self.assertIn("run-i10-manual-process.py client-b", client_b_bat)
             self.assertIn(".i10-gradle-user-home", client_a_bat)
             self.assertIn(".i10-gradle-user-home", client_b_bat)
 
