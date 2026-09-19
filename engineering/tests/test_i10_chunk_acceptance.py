@@ -328,6 +328,21 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
         unloaded["count"] = 1
         self.assertFalse(module._fully_unloaded(unloaded))
 
+        baseline = module.parse_probe_marker(
+            marker_line(
+                action="baseline",
+                runtime="UNFORMED",
+                revision=0,
+                sentinel="empty",
+                count=0,
+                capability=False,
+                last_known_formed=False,
+            )
+        )
+        self.assertTrue(module._baseline_unformed(baseline))
+        baseline["revision"] = 1
+        self.assertFalse(module._baseline_unformed(baseline))
+
         invalid = module.parse_probe_marker(
             marker_line(
                 validation="INVALID",
