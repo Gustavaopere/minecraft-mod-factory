@@ -139,3 +139,5 @@ Veja `profiles/example.json`.
 ## Templates
 
 `templates/` contém scaffolds genéricos. O consumidor deve adaptar placeholders e constraints ao seu runtime/authority local sem copiar tooling de volta para o repositório do mod.
+
+`TEMPLATE-ASSET-BRIEF.md` fornece um handoff editorial genérico para portrait, textura/modelo de runtime, provenance e evidência final. A Factory não fixa resolução, formato de skin, renderer ou provider: esses valores devem vir do consumidor e de capability mecânica verificada. Quando o consumidor quiser tornar a estrutura obrigatória, o brief pode ser selecionado por `auxiliary_document_contracts`; isso continua separado de `visual_handoff.py --check-files`, que só deve ser usado quando arquivos de asset reais existirem.
