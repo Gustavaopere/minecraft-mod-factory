@@ -26,8 +26,8 @@ canonical server/client process logs and metadata under:
   build/i10-multiplayer-acceptance/
 
 The helper does not form the multiblock, break it, reconnect Client B, create
-canonical screenshots, or mark the gate PASS. Physical formation and visual
-observations remain required by the acceptance protocol.
+canonical screenshots, or mark the gate PASS.
+Physical formation and visual observations remain required by the acceptance protocol.
 
 After both clients are online, follow engineering/tests/i10-multiplayer-acceptance.md:
 - both clients observe UNFORMED;
