@@ -15,6 +15,7 @@ A Factory não vira Campaign Bible e não guarda o conteúdo de uma campanha con
 python narrative/tooling/validate_story.py --profile <profile.json> [--root <story-root>]
 python narrative/tooling/validate_dialogues.py --profile <profile.json> [--root <dialogue-root>]
 python narrative/tooling/story_inventory.py --profile <profile.json> [--root <story-root>] --format markdown
+python narrative/tooling/visual_handoff.py --manifest <manifest.json> [--check-files]
 ```
 
 Os validators escondem IDs/caminhos/detalhes por padrão. Use `--reveal` somente em revisão editorial deliberada.

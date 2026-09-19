@@ -66,6 +66,13 @@ Uma authority marcada como obrigatória por `--required-external` falha fechado 
 
 `visual_handoff.py` valida manifest schema 1 com `asset_roots` e registros `{entity_id, assets}`. Cada asset exige ID estável, `kind`, aprovação booleana, provenance `{source, revision}` e path contido em uma asset root declarada. Kinds suportados: `skin`, `portrait`, `concept-art`, `variation`.
 
+Dois campos opcionais tornam integridade física verificável sem quebrar manifests schema 1 existentes:
+
+- `sha256`: digest hexadecimal lowercase de 64 caracteres; com `--check-files`, o arquivo real é lido de forma incremental e o digest precisa coincidir;
+- `pixel_dimensions`: objeto `{width, height}` com inteiros positivos; com `--check-files`, a revisão 1 verifica essas dimensões diretamente no header `IHDR` de PNG. Se dimensões forem declaradas para um formato que essa revisão não consegue inspecionar, a validação falha fechado como unverificável em vez de presumir resolução.
+
+Ausência desses campos mantém o comportamento compatível anterior: `--check-files` confirma existência, mas não inventa hash ou resolução. O consumidor decide se sua política exige os metadados e quais dimensões são corretas para cada provider/superfície.
+
 O manifest referencia assets; não define aparência narrativa e não transfere ownership do asset para o domínio narrativo.
 
 ## Spoiler safety

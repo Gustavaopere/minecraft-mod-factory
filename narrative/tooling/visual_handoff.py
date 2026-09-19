@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import pathlib
 import re
@@ -9,6 +10,7 @@ from typing import NamedTuple
 
 ENTITY_ID_RE = re.compile(r'^[A-Z][A-Z0-9_]*-\d{4}$')
 ASSET_ID_RE = re.compile(r'^[a-z0-9][a-z0-9._-]*$')
+SHA256_RE = re.compile(r'^[0-9a-f]{64}$')
 ALLOWED_KINDS = {'skin', 'portrait', 'concept-art', 'variation'}
 
 
@@ -40,6 +42,41 @@ def _valid_provenance(value) -> bool:
         and isinstance(value.get('revision'), str)
         and bool(value['revision'].strip())
     )
+
+
+def _valid_pixel_dimensions(value) -> bool:
+    if not isinstance(value, dict):
+        return False
+    width = value.get('width')
+    height = value.get('height')
+    return (
+        isinstance(width, int)
+        and not isinstance(width, bool)
+        and width > 0
+        and isinstance(height, int)
+        and not isinstance(height, bool)
+        and height > 0
+    )
+
+
+def _sha256_file(path: pathlib.Path) -> str:
+    digest = hashlib.sha256()
+    with path.open('rb') as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _png_dimensions(path: pathlib.Path):
+    with path.open('rb') as stream:
+        header = stream.read(24)
+    if (
+        len(header) < 24
+        or header[:8] != b'\x89PNG\r\n\x1a\n'
+        or header[12:16] != b'IHDR'
+    ):
+        return None
+    return int.from_bytes(header[16:20], 'big'), int.from_bytes(header[20:24], 'big')
 
 
 def validate_manifest(manifest, workspace_root: pathlib.Path, *, check_files: bool = False) -> list[Issue]:
@@ -108,6 +145,16 @@ def validate_manifest(manifest, workspace_root: pathlib.Path, *, check_files: bo
                 issues.append(Issue('invalid-asset-approval', f'{entity_key}:{asset_key}'))
             if not _valid_provenance(asset.get('provenance')):
                 issues.append(Issue('missing-asset-provenance', f'{entity_key}:{asset_key}'))
+            expected_sha256 = asset.get('sha256')
+            sha256_valid = expected_sha256 is None or (
+                isinstance(expected_sha256, str) and bool(SHA256_RE.fullmatch(expected_sha256))
+            )
+            if not sha256_valid:
+                issues.append(Issue('invalid-asset-sha256', f'{entity_key}:{asset_key}'))
+            expected_dimensions = asset.get('pixel_dimensions')
+            dimensions_valid = expected_dimensions is None or _valid_pixel_dimensions(expected_dimensions)
+            if not dimensions_valid:
+                issues.append(Issue('invalid-pixel-dimensions', f'{entity_key}:{asset_key}'))
             rel_path = asset.get('path')
             if not _safe_relative(rel_path):
                 issues.append(Issue('asset-path-outside-roots', f'{entity_key}:{asset_key}'))
@@ -116,8 +163,24 @@ def validate_manifest(manifest, workspace_root: pathlib.Path, *, check_files: bo
             if not _inside(resolved, root) or not any(_inside(resolved, asset_root) for asset_root in valid_roots):
                 issues.append(Issue('asset-path-outside-roots', f'{entity_key}:{asset_key}'))
                 continue
-            if check_files and not resolved.is_file():
-                issues.append(Issue('missing-asset-file', f'{entity_key}:{asset_key}'))
+            if check_files:
+                if not resolved.is_file():
+                    issues.append(Issue('missing-asset-file', f'{entity_key}:{asset_key}'))
+                    continue
+                if expected_sha256 is not None and sha256_valid:
+                    if _sha256_file(resolved) != expected_sha256:
+                        issues.append(Issue('asset-sha256-mismatch', f'{entity_key}:{asset_key}'))
+                if expected_dimensions is not None and dimensions_valid:
+                    actual_dimensions = _png_dimensions(resolved)
+                    if actual_dimensions is None:
+                        issues.append(Issue('asset-dimensions-unverifiable', f'{entity_key}:{asset_key}'))
+                    else:
+                        expected_pair = (
+                            expected_dimensions['width'],
+                            expected_dimensions['height'],
+                        )
+                        if actual_dimensions != expected_pair:
+                            issues.append(Issue('asset-pixel-dimensions-mismatch', f'{entity_key}:{asset_key}'))
     return sorted(issues)
 
 
