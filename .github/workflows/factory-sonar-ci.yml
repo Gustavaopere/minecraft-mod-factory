@@ -16,6 +16,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   sonar-ci:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
