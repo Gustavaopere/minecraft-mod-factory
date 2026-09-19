@@ -15,6 +15,25 @@ class TemplateTests(unittest.TestCase):
         }
         self.assertEqual(expected, {p.name for p in TEMPLATES.glob('*.md')})
 
+    def test_asset_brief_keeps_resolution_and_provider_consumer_owned(self):
+        asset = (TEMPLATES / 'TEMPLATE-ASSET-BRIEF.md').read_text(encoding='utf-8')
+        for heading in (
+            '## Editorial state',
+            '## Production state',
+            '## Asset ID',
+            '## Narrative sources',
+            '## Resolution and formats',
+            '### Portrait/documentation',
+            '### Runtime texture/model',
+            '## Provider/runtime evidence',
+            '## Provenance/license',
+            '## Final evidence required',
+            '## Pending decisions',
+        ):
+            self.assertIn(heading, asset)
+        for forbidden in ('2048×2048', '64×64', 'Easy NPC'):
+            self.assertNotIn(forbidden, asset)
+
     def test_templates_do_not_embed_rpg_specific_ids_or_stage08(self):
         joined = '\n'.join(p.read_text(encoding='utf-8') for p in TEMPLATES.glob('*.md'))
         for forbidden in ('NPC-0001', 'QST-0001', 'Stage 08', 'Grimoire/TTRPG.bot'):
