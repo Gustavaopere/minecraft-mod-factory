@@ -25,9 +25,13 @@ GAMETEST_STRUCTURE_SHA256 = "75b23fb80317d88bbde1a2aff7121cfd903b8a1010878e0327c
 
 CANONICAL_OVERLAY_FILES = (
     ("README.md", "I10-MULTIBLOCK-FOUNDATION.md"),
-    ("run-i10-multiplayer-acceptance.py", "run-i10-multiplayer-acceptance.py"),
-    ("START-I10-MULTIPLAYER.bat", "START-I10-MULTIPLAYER.bat"),
-    ("START-I10-MULTIPLAYER.sh", "START-I10-MULTIPLAYER.sh"),
+    ("run-i10-manual-process.py", "run-i10-manual-process.py"),
+    ("START-I10-SERVER.bat", "START-I10-SERVER.bat"),
+    ("START-I10-CLIENT-A.bat", "START-I10-CLIENT-A.bat"),
+    ("START-I10-CLIENT-B.bat", "START-I10-CLIENT-B.bat"),
+    ("START-I10-SERVER.sh", "START-I10-SERVER.sh"),
+    ("START-I10-CLIENT-A.sh", "START-I10-CLIENT-A.sh"),
+    ("START-I10-CLIENT-B.sh", "START-I10-CLIENT-B.sh"),
     ("PHYSICAL-ACCEPTANCE-README.txt", "PHYSICAL-ACCEPTANCE-README.txt"),
     ("src/main/java/dev/example/i10multiblock/multiblock/I10MultiblockContent.java", "src/main/java/dev/example/i10multiblock/multiblock/I10MultiblockContent.java"),
     ("src/main/java/dev/example/i10multiblock/multiblock/MultiblockPattern.java", "src/main/java/dev/example/i10multiblock/multiblock/MultiblockPattern.java"),
