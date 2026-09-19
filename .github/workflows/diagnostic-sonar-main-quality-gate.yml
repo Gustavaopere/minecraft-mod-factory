@@ -1,0 +1,35 @@
+name: Diagnostic Sonar Main Quality Gate
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/diagnostic-sonar-main-quality-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Read public SonarCloud main Quality Gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            'https://sonarcloud.io/api/qualitygates/project_status?projectKey=Gustavaopere_minecraft-mod-factory&branch=main' \
+            > /tmp/quality-gate.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path('/tmp/quality-gate.json').read_text(encoding='utf-8'))
+          status = payload.get('projectStatus', {})
+          print('QUALITY_GATE_STATUS=' + str(status.get('status')))
+          for condition in status.get('conditions', []):
+              print(
+                  'CONDITION metric={metricKey} status={status} actual={actualValue} '
+                  'comparator={comparator} threshold={errorThreshold}'.format(**condition)
+              )
+          PY
