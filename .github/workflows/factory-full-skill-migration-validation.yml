@@ -12,6 +12,7 @@ on:
       - 'art/**'
       - '.sonarcloud.properties'
       - 'sonar-project.properties'
+      - '.github/workflows/**'
       - '.github/workflows/factory-sonar-ci.yml'
       - '.github/workflows/factory-full-skill-migration-validation.yml'
   pull_request:
@@ -22,6 +23,7 @@ on:
       - 'art/**'
       - '.sonarcloud.properties'
       - 'sonar-project.properties'
+      - '.github/workflows/**'
       - '.github/workflows/factory-sonar-ci.yml'
       - '.github/workflows/factory-full-skill-migration-validation.yml'
   workflow_dispatch:

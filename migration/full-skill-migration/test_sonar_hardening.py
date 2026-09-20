@@ -224,6 +224,24 @@ class SonarHardeningContractTest(unittest.TestCase):
             "Hash-pinned workflow installs must use --only-binary :all: to prevent setup-script execution",
         )
 
+        full_skill_workflow = FULL_SKILL_WORKFLOW.read_text(encoding="utf-8")
+        self.assertEqual(
+            2,
+            full_skill_workflow.count("- '.github/workflows/**'"),
+            "Full Skill hardening must run for both push and pull_request workflow-file changes",
+        )
+
+        unsafe_yaml_runs: list[str] = []
+        for path in sorted(workflows.glob("*.yml")):
+            for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+                if line.lstrip().startswith("run: ") and "--only-binary :all:" in line:
+                    unsafe_yaml_runs.append(f"{path.relative_to(ROOT)}:{line_number}")
+        self.assertEqual(
+            [],
+            unsafe_yaml_runs,
+            "Binary-only pip installs containing :all: must use a YAML block scalar instead of an inline run value",
+        )
+
         source_exceptions: list[str] = []
         for path in sorted(workflows.glob("*.yml")):
             for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
