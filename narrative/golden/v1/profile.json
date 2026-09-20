@@ -9,6 +9,18 @@
   "dialogue_required_sections": {
     "state": ["Editorial state"]
   },
+  "auxiliary_document_contracts": {
+    "visual-brief": {
+      "include": ["auxiliary/**/*-visual-brief.md"],
+      "required_sections": {
+        "identity": ["Entity ID"]
+      },
+      "reference_rules": {
+        "identity": {"allowed_types": ["NPC"], "min_references": 1}
+      },
+      "filename_identity_section": "identity"
+    }
+  },
   "knowledge_evidence_contracts": {
     "field-knowledge": {
       "include": ["knowledge/**/*.md"],
