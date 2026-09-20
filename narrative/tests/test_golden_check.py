@@ -67,5 +67,26 @@ class GoldenCompatibilityTests(unittest.TestCase):
             self.assertEqual([], mod.check_materialized_goldens(manifest_path, root))
 
 
+    def test_v1_golden_exercises_additive_identity_and_integrity_contracts(self):
+        profile = json.loads((ROOT / 'golden' / 'v1' / 'profile.json').read_text(encoding='utf-8'))
+        contracts = profile.get('auxiliary_document_contracts', {})
+        visual_brief = contracts.get('visual-brief')
+        self.assertIsInstance(visual_brief, dict)
+        self.assertEqual('identity', visual_brief.get('filename_identity_section'))
+
+        story_brief = ROOT / 'golden' / 'v1' / 'story' / 'auxiliary' / 'NPC-0001-visual-brief.md'
+        negative_brief = ROOT / 'golden' / 'v1' / 'negative' / 'auxiliary' / 'NPC-0001-visual-brief.md'
+        self.assertTrue(story_brief.is_file())
+        self.assertTrue(negative_brief.is_file())
+
+        expected_invalid = (ROOT / 'golden' / 'v1' / 'expected' / 'story-invalid.txt').read_text(encoding='utf-8')
+        self.assertIn('ERROR auxiliary-filename-identity-mismatch: 1', expected_invalid)
+
+        handoff = json.loads((ROOT / 'golden' / 'v1' / 'visual-handoff.json').read_text(encoding='utf-8'))
+        asset = handoff['records'][0]['assets'][0]
+        self.assertRegex(asset.get('sha256', ''), r'^[0-9a-f]{64}    unittest.main()
+)
+
+
 if __name__ == '__main__':
     unittest.main()
