@@ -77,6 +77,8 @@ Ausência desses campos mantém o comportamento compatível anterior: `--check-f
 
 O manifest referencia assets; não define aparência narrativa e não transfere ownership do asset para o domínio narrativo.
 
+`sha256` e `pixel_dimensions` são assertions de integridade, não política de produção. `visual_handoff.py` não decide resolução permitida, formato final, resolução nativa, estado `FINAL`, layout de skin, renderer ou provider. Para portraits/skins de NPC sujeitos a esses gates, a authority reutilizável é `art/tooling/validate_npc_visual_assets.py` com policy declarada pelo consumidor. Um mesmo arquivo pode ser referenciado pelos dois domínios, mas o handoff narrativo não pode sobrescrever nem satisfazer a policy física do domínio `art/`.
+
 ## Spoiler safety
 
 CLIs exibem contagens/códigos por padrão. IDs, paths e linhas só aparecem com `--reveal`. Golden diagnostics cobrem explicitamente esse comportamento.

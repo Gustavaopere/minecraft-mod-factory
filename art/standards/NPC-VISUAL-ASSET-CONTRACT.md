@@ -101,6 +101,12 @@ The Factory validator checks, when fields are present:
 
 The validator must not infer a portrait resolution, skin layout, provider or renderer when the consumer does not declare one.
 
+## Narrative handoff interop
+
+`narrative/tooling/visual_handoff.py` may reference the same project-owned portrait/skin files and may verify declared existence, SHA-256 or PNG dimensions. Those checks are referential/integrity assertions only. They do not replace this production-policy validator and do not establish `APPROVED MASTER`, `SKIN CANDIDATE`, `FINAL`, native target resolution, allowed format or provider capability.
+
+When both manifests exist, the consumer should keep them consistent about the referenced file/provenance, while treating this `art/` contract as the reusable authority for physical production policy and finality.
+
 ## Canon boundary
 
 Visual tooling does not create narrative facts.

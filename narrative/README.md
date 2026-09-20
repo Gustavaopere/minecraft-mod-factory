@@ -143,3 +143,9 @@ Veja `profiles/example.json`.
 `templates/` contém scaffolds genéricos. O consumidor deve adaptar placeholders e constraints ao seu runtime/authority local sem copiar tooling de volta para o repositório do mod.
 
 `TEMPLATE-ASSET-BRIEF.md` fornece um handoff editorial genérico para portrait, textura/modelo de runtime, provenance e evidência final. A Factory não fixa resolução, formato de skin, renderer ou provider: esses valores devem vir do consumidor e de capability mecânica verificada. Quando o consumidor quiser tornar a estrutura obrigatória, o brief pode ser selecionado por `auxiliary_document_contracts`; isso continua separado de `visual_handoff.py --check-files`, que só deve ser usado quando arquivos de asset reais existirem.
+
+## Handoff narrativo x política física do asset
+
+`visual_handoff.py` é um gate de **referência e integridade declarada**: vincula `entity_id` a assets, confina paths, exige provenance/approval e, quando solicitado, confirma existência, SHA-256 e dimensões PNG declaradas. Ele aceita qualquer dimensão positiva que corresponda ao arquivo; não existe resolução de portrait/skin embutida nesse domínio.
+
+Para portraits/skins de NPC que entram em produção, aprovação ou estado `FINAL`, a política física pertence ao domínio `art/`. O consumidor deve usar `art/tooling/validate_npc_visual_assets.py` com seu manifest project-owned para validar formato, dimensões-alvo, resolução nativa, estado de produção e finality. Passar no handoff narrativo **não** substitui esse gate e não prova capability de renderer/provider.
