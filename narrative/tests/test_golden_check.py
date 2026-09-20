@@ -75,7 +75,7 @@ class GoldenCompatibilityTests(unittest.TestCase):
         self.assertEqual('identity', visual_brief.get('filename_identity_section'))
 
         story_brief = ROOT / 'golden' / 'v1' / 'story' / 'auxiliary' / 'NPC-0001-visual-brief.md'
-        negative_brief = ROOT / 'golden' / 'v1' / 'negative' / 'auxiliary' / 'NPC-0001-visual-brief.md'
+        negative_brief = ROOT / 'golden' / 'v1' / 'negative' / 'auxiliary' / 'NPC-0002-visual-brief.md'
         self.assertTrue(story_brief.is_file())
         self.assertTrue(negative_brief.is_file())
 
@@ -84,8 +84,7 @@ class GoldenCompatibilityTests(unittest.TestCase):
 
         handoff = json.loads((ROOT / 'golden' / 'v1' / 'visual-handoff.json').read_text(encoding='utf-8'))
         asset = handoff['records'][0]['assets'][0]
-        self.assertRegex(asset.get('sha256', ''), r'^[0-9a-f]{64}    unittest.main()
-)
+        self.assertRegex(asset.get('sha256', ''), r'^[0-9a-f]{64}$')
 
 
 if __name__ == '__main__':
