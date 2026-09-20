@@ -227,7 +227,7 @@ class SonarHardeningContractTest(unittest.TestCase):
         full_skill_workflow = FULL_SKILL_WORKFLOW.read_text(encoding="utf-8")
         self.assertEqual(
             2,
-            full_skill_workflow.count("      - '.github/workflows/**'\\n"),
+            full_skill_workflow.count("- '.github/workflows/**'"),
             "Full Skill hardening must run for both push and pull_request workflow-file changes",
         )
 
