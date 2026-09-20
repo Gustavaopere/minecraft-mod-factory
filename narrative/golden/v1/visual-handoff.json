@@ -11,6 +11,7 @@
           "asset_id": "npc-0001-concept-01",
           "kind": "concept-art",
           "path": "narrative/golden/v1/art/concepts/npc-0001.svg",
+          "sha256": "7c6e11ef26270a42c25c9001ce316039e491fbca8f34f8a776ea8b2a0241d7ed",
           "approved": false,
           "provenance": {
             "source": "factory-golden-fixture",
