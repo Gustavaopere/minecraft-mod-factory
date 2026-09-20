@@ -69,6 +69,19 @@ class VisualHandoffTests(unittest.TestCase):
             entry['pixel_dimensions'] = {'width': 2048, 'height': 2048}
             self.assertEqual([], mod.validate_manifest(manifest, root, check_files=True))
 
+    def test_handoff_checks_declared_dimensions_without_imposing_resolution_policy(self):
+        mod = load_module()
+        with tempfile.TemporaryDirectory() as td:
+            root = pathlib.Path(td)
+            asset = root / 'art' / 'portraits' / 'npc-0001.png'
+            asset.parent.mkdir(parents=True)
+            payload = png_header(137, 271)
+            asset.write_bytes(payload)
+            manifest = valid_manifest()
+            entry = manifest['records'][0]['assets'][0]
+            entry['pixel_dimensions'] = {'width': 137, 'height': 271}
+            self.assertEqual([], mod.validate_manifest(manifest, root, check_files=True))
+
     def test_manifest_rejects_invalid_integrity_metadata(self):
         mod = load_module()
         manifest = valid_manifest()
