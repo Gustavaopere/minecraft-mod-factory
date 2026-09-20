@@ -7,7 +7,7 @@ A capability narrativa só é considerada apta a release quando todos os passos 
 3. Confirmar que diagnostics negativos continuam spoiler-safe e que os casos positivos permanecem exatos.
 4. Executar `validate_story.py`, `validate_advanced.py` e `story_inventory.py` com pelo menos um profile mantido pelo repositório consumidor.
 5. Quando houver authority externa, usar snapshot neutro com provenance; ausência de authority obrigatória deve falhar fechado. O gate nunca sobrescreve canon.
-6. Quando houver handoff visual, validar o manifest e, no gate apropriado, usar `--check-files`.
+6. Quando houver handoff visual, validar o manifest e, no gate apropriado, usar `--check-files`. Se o handoff apontar para portrait/skin de NPC candidato a aprovação/finalidade, executar separadamente `art/tooling/validate_npc_visual_assets.py` contra a policy do consumidor; sucesso no handoff narrativo sozinho não constitui aprovação técnica do asset.
 7. Registrar o SHA da Factory e o SHA/PR do consumidor usados na prova de compatibilidade.
 8. Somente depois mover o pin do consumidor e marcar o milestone/release como concluído.
 
