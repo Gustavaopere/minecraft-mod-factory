@@ -16,6 +16,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   sonar-ci:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
@@ -57,7 +61,7 @@ jobs:
 
       - name: Install hash-pinned Python coverage tool
         run: >-
-          python3 -m pip install --require-hashes --no-deps --only-binary :all:
+          python3 -m pip install --only-binary :all: --require-hashes --no-deps
           -r .github/sonar/python-coverage-lock.txt
 
       - name: Generate fail-closed Python coverage
