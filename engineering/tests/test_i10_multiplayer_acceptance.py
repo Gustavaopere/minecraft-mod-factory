@@ -36,7 +36,7 @@ class I10MultiplayerAcceptanceGuard(unittest.TestCase):
         text = PROTOCOL.read_text(encoding="utf-8")
 
         required = (
-            PENDING_STATE,
+            "I10_MULTIPLAYER_ACCEPTANCE_STATE=",
             "Minecraft 1.21.1",
             "NeoForge 21.1.250",
             "Java 21",
@@ -69,8 +69,29 @@ class I10MultiplayerAcceptanceGuard(unittest.TestCase):
         )
         missing = [token for token in required if token not in text]
         self.assertEqual([], missing, f"I10 multiplayer protocol is incomplete: {missing}")
-        self.assertEqual(1, text.count(PENDING_STATE))
-        self.assertNotIn(PASS_STATE, text, "I10 multiplayer protocol must not encode PASS before real evidence exists")
+        states = [state for state in (PENDING_STATE, PASS_STATE) if state in text]
+        self.assertEqual(1, len(states), "I10 multiplayer gate must declare exactly one accepted state")
+        self.assertEqual(1, text.count(states[0]))
+        if PASS_STATE in text:
+            # The physical gate may advance only alongside an exact, reviewable
+            # evidence record; the developer/test helper must never synthesize PASS.
+            for evidence_token in (
+                "## Accepted physical campaign",
+                "Validated runtime source commit:",
+                "bff6f7348cc56de7e7cd13859be346c15369e363",
+                "https://github.com/user-attachments/files/33409008/i10-pr106-evidencias-publicaveis-2026-10-13.zip",
+                "3b503543218f8ab667168471d32a670c0819814f3e1df2c64033687b662840d1",
+                "metadata.json",
+                "server.log",
+                "client-a.log",
+                "client-b.log",
+                "the seven canonical screenshots",
+                "operator-attested",
+                "CI, branch integration and code review remain independent gates",
+            ):
+                self.assertIn(evidence_token, text)
+        else:
+            self.assertNotIn(PASS_STATE, text, "I10 multiplayer gate must remain fail-closed without evidence")
 
     def test_materialized_manual_handoff_runs_one_process_at_a_time_with_complete_logs(self) -> None:
         materializer = load_materializer()

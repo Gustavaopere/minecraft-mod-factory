@@ -1,6 +1,24 @@
 # I10 Multiplayer Acceptance Protocol
 
-I10_MULTIPLAYER_ACCEPTANCE_STATE=PENDING_MANUAL_MULTIPLAYER_ACCEPTANCE
+I10_MULTIPLAYER_ACCEPTANCE_STATE=PASS
+
+## Accepted physical campaign — 2026-10-13
+
+The physical multiplayer gate for the tested I10 runtime is **PASS**. This records the observed Windows 11 dedicated-server campaign, not permission to merge this PR; CI, branch integration and code review remain independent gates.
+
+- Validated runtime source commit: `bff6f7348cc56de7e7cd13859be346c15369e363`.
+- Target: Minecraft 1.21.1 / NeoForge 21.1.250 / Java 21.
+- Dedicated-server world: `i10-acceptance-world`; clients: `I10ClientA` and `I10ClientB`, distinct real game processes.
+- Canonical, reviewer-accessible physical evidence: [I10 acceptance evidence ZIP](https://github.com/user-attachments/files/33409008/i10-pr106-evidencias-publicaveis-2026-10-13.zip).
+- Evidence archive SHA-256: `3b503543218f8ab667168471d32a670c0819814f3e1df2c64033687b662840d1`; includes `metadata.json`, `server.log`, `client-a.log`, `client-b.log`, and the seven canonical screenshots. The private full diagnostic log bundle is intentionally not published.
+- Evidence audit and chain-of-custody discussion: https://github.com/Gustavaopere/minecraft-mod-factory/pull/106#issuecomment-6156960876.
+- At 19:26:11 local time, the dedicated server reported `VALID / UNFORMED / capability=false`; the two connected clients each captured the unformed controller at 19:28–19:29.
+- The operator directly reported using Client A (not a server command) to right-click the controller. Both clients captured `FORMED` at 19:30; the server reported `VALID / FORMED / capability=true` at 19:32:29. The originating interaction is operator-attested, not independently attributed to a client by the server log.
+- At 19:32:59, `i10probe break_required_part` invalidated a required casing. Both clients captured `UNFORMED` at 19:33; the server reported `INVALID / UNFORMED / capability=false` at 19:33:21.
+- Client B disconnected at 19:38, restarted through its independent wrapper and rejoined at 19:39 while Client A remained connected; the seventh screenshot and server status at 19:40 confirm the current `INVALID / UNFORMED / capability=false` state without historical replay.
+- The dedicated server and client processes exited cleanly after `stop`; world data was saved. Logs and screenshot timestamps are from one complete acceptance cycle.
+
+**Scope boundary:** this PASS applies to the physical multiplayer evidence for source commit `bff6f7348cc56de7e7cd13859be346c15369e363`. Any later runtime change requires deciding whether physical retesting is necessary. This does not override merge conflicts, required checks, review rules, or Draft status.
 
 ## Purpose
 
@@ -119,7 +137,7 @@ The evidence reviewer must verify all of the following before any later closeout
 - Client B received current UNFORMED state after reconnect without historical replay;
 - server log, Client A log, Client B log, screenshots, and metadata are all present and temporally consistent.
 
-Any missing, ambiguous, synthetic, replayed, single-client, server-only, or mismatched-commit evidence leaves this protocol in its current pending state. Dedicated-server startup and GameTest success are necessary engineering evidence but are not multiplayer acceptance.
+Any missing, ambiguous, synthetic, replayed, single-client, server-only, or mismatched-commit evidence requires the state to remain `PENDING_MANUAL_MULTIPLAYER_ACCEPTANCE` until independently reviewed. Dedicated-server startup and GameTest success are necessary engineering evidence but are not multiplayer acceptance.
 
 ## Execution rule
 
