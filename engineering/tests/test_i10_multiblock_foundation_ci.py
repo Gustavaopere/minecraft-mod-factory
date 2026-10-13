@@ -154,11 +154,22 @@ class I10PermanentCIContract(unittest.TestCase):
     def test_multiplayer_remains_fail_closed_until_real_evidence(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
         protocol = PROTOCOL.read_text(encoding="utf-8")
-        self.assertIn(
-            "I10_MULTIPLAYER_ACCEPTANCE_STATE=PENDING_MANUAL_MULTIPLAYER_ACCEPTANCE",
-            protocol,
-        )
-        self.assertNotIn("I10_MULTIPLAYER_ACCEPTANCE_STATE=PASS", protocol)
+        pending = "I10_MULTIPLAYER_ACCEPTANCE_STATE=PENDING_MANUAL_MULTIPLAYER_ACCEPTANCE"
+        passed = "I10_MULTIPLAYER_ACCEPTANCE_STATE=PASS"
+        self.assertEqual(1, sum(token in protocol for token in (pending, passed)))
+        if passed in protocol:
+            # Advancing the physical gate requires reviewable, commit-pinned
+            # evidence. Workflow jobs must not self-approve this gate.
+            for token in (
+                "## Accepted physical campaign",
+                "bff6f7348cc56de7e7cd13859be346c15369e363",
+                "https://github.com/user-attachments/files/33409008/i10-pr106-evidencias-publicaveis-2026-10-13.zip",
+                "3b503543218f8ab667168471d32a670c0819814f3e1df2c64033687b662840d1",
+                "operator-attested",
+            ):
+                self.assertIn(token, protocol)
+        else:
+            self.assertNotIn(passed, protocol)
         self.assertNotIn("I10_MULTIPLAYER_ACCEPTANCE_STATE=PASS", workflow)
         self.assertNotIn("fake player", workflow.lower())
 
