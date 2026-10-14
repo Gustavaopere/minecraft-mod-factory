@@ -458,7 +458,7 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
             def __init__(self, phase):
                 self.phase = phase
 
-            def send(self, command, expected_action=None):
+            def send(self, command, expected_action=None, marker_prefix="I10_PROBE "):
                 if command == "i10probe baseline":
                     return module.parse_probe_marker(
                         marker_line(
