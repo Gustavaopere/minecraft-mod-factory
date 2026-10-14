@@ -1,10 +1,16 @@
 # I10 Multiplayer Acceptance Protocol
 
-I10_MULTIPLAYER_ACCEPTANCE_STATE=PASS
+I10_MULTIPLAYER_ACCEPTANCE_STATE=PENDING_MANUAL_MULTIPLAYER_ACCEPTANCE
 
-## Accepted physical campaign — 2026-10-13/14 (runtime commit 914829bc)
+## Current runtime review P2 — physical re-acceptance required
 
-**Physical multiplayer gate: PASS for exact tested runtime source commit `914829bce29b44e4bd5bc30f0142a81fd85838bf`.** This status is supported by operator-produced evidence and an independent local audit; it is not a release or merge approval.
+A post-integration Codex review identified an autonomous chunk-recovery defect: the controller's one-shot `onLoad` tick could encounter `UNAVAILABLE` before an adjacent footprint chunk loaded and then remain pending indefinitely without another attempt. A server-side, 20-tick retry while `lastKnownFormed` is true now schedules autonomous recovery once the full footprint becomes available. No missing chunk is force-loaded, and port IO remains fail-closed while unavailable. The corresponding regression and target runtime must pass CI.
+
+**Current physical gate: PENDING.** The previous two-client campaign PASSED only for runtime source `914829bce29b44e4bd5bc30f0142a81fd85838bf`; it remains historical provenance, not evidence of the corrected runtime. The new runtime requires an exact-commit two-client acceptance campaign with server/Client A/Client B logs, seven screenshots, and independent audit. Green CI and prior physical screenshots cannot replace that retest. PR #106 remains Draft and unmerged until the new acceptance.
+
+## Previously accepted physical campaign — 2026-10-13/14 (runtime commit 914829bc)
+
+**Historical physical result: PASS for exact tested runtime source commit `914829bce29b44e4bd5bc30f0142a81fd85838bf`.** This accepted historical result does not accept the corrected runtime or authorize a merge.
 
 - Validated runtime source commit: `914829bce29b44e4bd5bc30f0142a81fd85838bf`.
 - Target: Minecraft 1.21.1 / NeoForge 21.1.250 / Java 21; Windows 11 dedicated server, `i10-acceptance-world`, independently started `I10ClientA` and `I10ClientB` Minecraft JVM processes.

@@ -16,6 +16,7 @@ public final class MultiblockControllerBlockEntity extends BlockEntity {
     private static final String INVENTORY_TAG = "Inventory";
     private static final String LAST_KNOWN_FORMED_TAG = "LastKnownFormed";
     private static final String FORMATION_REVISION_TAG = "FormationRevision";
+    private static final int UNAVAILABLE_REVALIDATION_RETRY_TICKS = 20;
 
     private final ItemStackHandler itemHandler = new ItemStackHandler(1) {
         @Override
@@ -50,6 +51,16 @@ public final class MultiblockControllerBlockEntity extends BlockEntity {
         setChanged();
     }
 
+    /**
+     * Retry while the controller remembers a formed footprint, without
+     * requesting or force-loading chunks or requiring a port IO query.
+     */
+    private void schedulePendingRetry(ServerLevel level) {
+        if (lastKnownFormed) {
+            level.scheduleTick(worldPosition, getBlockState().getBlock(), UNAVAILABLE_REVALIDATION_RETRY_TICKS);
+        }
+    }
+
     public long markFormed() {
         if (formationRevision < Long.MAX_VALUE) {
             formationRevision++;
@@ -82,6 +93,7 @@ public final class MultiblockControllerBlockEntity extends BlockEntity {
                 markPendingRevalidation();
             }
             setVisualFormed(level, facing, false);
+            schedulePendingRetry(level);
             return validation;
         }
         if (validation == MultiblockValidationResult.INVALID) {
@@ -109,6 +121,7 @@ public final class MultiblockControllerBlockEntity extends BlockEntity {
                 markPendingRevalidation();
             }
             setVisualFormed(level, facing, false);
+            schedulePendingRetry(level);
             return validation;
         }
         if (validation == MultiblockValidationResult.INVALID) {

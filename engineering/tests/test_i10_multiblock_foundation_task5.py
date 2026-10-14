@@ -70,6 +70,32 @@ class I10Task5MutationClosureContract(unittest.TestCase):
         )[0]
         self.assertNotIn("return controller.itemHandler()", getter)
 
+    def test_unavailable_chunks_retry_autonomously_without_forcing_loads(self) -> None:
+        source = JAVA_ROOT / "MultiblockControllerBlockEntity.java"
+        text = source.read_text(encoding="utf-8")
+        self.assertIn("private static final int UNAVAILABLE_REVALIDATION_RETRY_TICKS = 20;", text)
+        helper = text.split("private void schedulePendingRetry(ServerLevel level)", 1)[1].split(
+            "public long markFormed()", 1
+        )[0]
+        self.assertIn("if (lastKnownFormed)", helper)
+        self.assertIn(
+            "level.scheduleTick(worldPosition, getBlockState().getBlock(), UNAVAILABLE_REVALIDATION_RETRY_TICKS);",
+            helper,
+        )
+        self.assertNotIn("getChunk(", helper)
+        self.assertNotIn("forceload", helper)
+
+        for signature in (
+            "public MultiblockValidationResult tryForm(ServerLevel level, Direction facing)",
+            "public MultiblockValidationResult revalidate(ServerLevel level, Direction facing)",
+        ):
+            unavailable = text.split(signature, 1)[1].split(
+                "if (validation == MultiblockValidationResult.INVALID)", 1
+            )[0]
+            self.assertIn("if (validation == MultiblockValidationResult.UNAVAILABLE)", unavailable)
+            self.assertIn("schedulePendingRetry(level);", unavailable)
+            self.assertLess(unavailable.index("schedulePendingRetry(level);"), unavailable.index("return validation;"))
+
     def test_persisted_formed_controller_schedules_one_revalidation_on_load(self) -> None:
         source = JAVA_ROOT / "MultiblockControllerBlockEntity.java"
         self.assertTrue(source.is_file(), "I10 RED: controller BlockEntity source is missing")
