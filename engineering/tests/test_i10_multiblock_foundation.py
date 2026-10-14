@@ -154,7 +154,7 @@ class I10RuntimeSurfaceContract(unittest.TestCase):
             "bindToController",
             "clearBinding",
             "linkedRevision <= 0",
-            "level.hasChunkAt(controllerPos)",
+            "serverLevel.hasChunkAt(controllerPos)",
             "instanceof MultiblockControllerBlockEntity controller",
             "controller.runtimeState() != MultiblockRuntimeState.FORMED",
             "controller.formationRevision() != linkedRevision",
