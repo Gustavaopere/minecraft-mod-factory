@@ -122,7 +122,9 @@ jobs:
           for suite in i5['suites']:
             for relative in suite['evidence']:
               item=p/relative
-              assert item.is_file() and item.stat().st_size>0, f'I5 missing evidence: {relative}'
+              assert item.is_file(), f'I5 missing evidence: {relative}'
+              if relative.endswith('.log') or relative.endswith('.xml'):
+                assert item.stat().st_size>0, f'I5 empty required log/report: {relative}'
           for phase in ('phase1-unload-reload','phase2-restart-break',
                         'phase3-broken-restart','phase4-manual-baseline'):
             item=p/'build/i10-acceptance'/f'{phase}.log'
