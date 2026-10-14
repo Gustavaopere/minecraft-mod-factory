@@ -149,6 +149,19 @@ jobs:
       - name: Run I10 real chunk acceptance
         run: python3 engineering/tooling/multiblock-foundation/run_i10_chunk_acceptance.py --project .factory-ci/i10/generated
 
+      # An intermittent status transition must never disappear into a red CI log.
+      # Diagnostic collection does not change a failed gate into a passing gate.
+      - name: Retain genuine I10 structural failure evidence
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: i10-structural-failure-${{ github.run_id }}
+          path: |
+            .factory-ci/i10/generated/build/i10-acceptance/
+            .factory-ci/i10/generated/run/server/logs/latest.log
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Check whitespace
         if: always()
         run: git diff --check HEAD^
