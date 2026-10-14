@@ -132,6 +132,66 @@ class I5TestHarnessContractTest(unittest.TestCase):
             self.assertNotEqual(0, result.returncode)
             self.assertFalse((project / ".i5-invocations").exists())
 
+    def test_explicit_physical_neoforge248_runs_same_allowlisted_suites(self):
+        """A recorded physical snapshot is selected only through an explicit CLI flag."""
+        self.require_harness()
+        with tempfile.TemporaryDirectory() as tmp:
+            project = write_fake_project(Path(tmp) / "project")
+            properties = project / "gradle.properties"
+            properties.write_text(
+                properties.read_text(encoding="utf-8").replace(
+                    "neo_version=21.1.250", "neo_version=21.1.248"
+                ),
+                encoding="utf-8",
+            )
+            result = run_harness_cli(project, "--target-neoforge", "21.1.248")
+            self.assertEqual(0, result.returncode, result.stdout)
+            manifest = json.loads(
+                (project / "build/i5-test-harness/test-manifest.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual("PASS", manifest["overall_state"])
+            self.assertEqual("21.1.248", manifest["target"]["neoforge"])
+            self.assertEqual(
+                EXPECTED_SUITES,
+                [(s["suite_id"], s["type"], s["command"]) for s in manifest["suites"]],
+            )
+            invocations = (project / ".i5-invocations").read_text(encoding="utf-8").splitlines()
+            self.assertEqual(
+                [command.removeprefix("./gradlew ") for command in EXPECTED_COMMANDS],
+                invocations,
+            )
+
+    def test_non_default_physical_profile_must_be_explicit_and_exact(self):
+        self.require_harness()
+        with tempfile.TemporaryDirectory() as tmp:
+            project = write_fake_project(Path(tmp) / "project")
+            properties = project / "gradle.properties"
+            properties.write_text(
+                properties.read_text(encoding="utf-8").replace(
+                    "neo_version=21.1.250", "neo_version=21.1.248"
+                ),
+                encoding="utf-8",
+            )
+            implicit = run_harness_cli(project)
+            self.assertEqual(2, implicit.returncode, implicit.stdout)
+            self.assertIn("target drift rejected", implicit.stdout)
+            self.assertFalse((project / ".i5-invocations").exists())
+            for value in ("21.1.249", "21.1.248-invalid", "latest"):
+                with self.subTest(value=value):
+                    refused = run_harness_cli(project, "--target-neoforge", value)
+                    self.assertEqual(2, refused.returncode, refused.stdout)
+                    self.assertFalse((project / ".i5-invocations").exists())
+            properties.write_text(
+                properties.read_text(encoding="utf-8").replace(
+                    "neo_version=21.1.248", "neo_version=21.1.250"
+                ),
+                encoding="utf-8",
+            )
+            wrong_target = run_harness_cli(project, "--target-neoforge", "21.1.248")
+            self.assertEqual(2, wrong_target.returncode, wrong_target.stdout)
+            self.assertIn("target drift rejected", wrong_target.stdout)
+            self.assertFalse((project / ".i5-invocations").exists())
+
     def test_success_executes_exact_allowlisted_suites_and_writes_canonical_manifest(self):
         self.require_harness()
         with tempfile.TemporaryDirectory() as tmp:
