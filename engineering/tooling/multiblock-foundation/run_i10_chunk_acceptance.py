@@ -30,6 +30,7 @@ ALLOWED_SERVER_COMMANDS = frozenset(
         "i10probe baseline",
         "i10probe setup",
         "i10probe status",
+        "i10probe peek",
         "i10probe break_required_part",
         "save-all flush",
         "stop",
@@ -44,6 +45,10 @@ EXPECTED_MARKER_KEYS = (
     "count",
     "capability",
     "last_known_formed",
+)
+EXPECTED_PEEK_KEYS = (
+    "action", "validation", "runtime", "revision", "last_known_formed",
+    "controller_visual", "port_visual", "port_bound",
 )
 RESOURCE_ID_RE = re.compile(r"^[a-z0-9_.-]+:[a-z0-9_/.-]+$")
 
@@ -171,6 +176,38 @@ def parse_probe_marker(line: str) -> dict[str, object]:
     }
 
 
+def parse_peek_marker(line: str) -> dict[str, object]:
+    position = line.find("I10_PEEK ")
+    if position < 0:
+        raise AcceptanceError("line does not contain I10_PEEK")
+    fields: dict[str, str] = {}
+    for token in line[position + len("I10_PEEK "):].strip().split():
+        if token.count("=") != 1:
+            raise AcceptanceError(f"invalid peek token: {token!r}")
+        key, value = token.split("=", 1)
+        if not key or not value or key not in EXPECTED_PEEK_KEYS or key in fields:
+            raise AcceptanceError(f"invalid or duplicate peek field: {token!r}")
+        fields[key] = value
+    if tuple(fields) != EXPECTED_PEEK_KEYS:
+        raise AcceptanceError("I10 peek fields must match the closed ordered schema")
+    if fields["action"] != "peek":
+        raise AcceptanceError("I10 peek action must be peek")
+    if fields["validation"] not in {"VALID", "INVALID", "UNAVAILABLE"}:
+        raise AcceptanceError("invalid I10 peek validation")
+    if fields["runtime"] not in {"UNFORMED", "PENDING_REVALIDATION", "FORMED"}:
+        raise AcceptanceError("invalid I10 peek runtime")
+    return {
+        "action": "peek",
+        "validation": fields["validation"],
+        "runtime": fields["runtime"],
+        "revision": _parse_nonnegative_int(fields["revision"], "revision"),
+        "last_known_formed": _parse_bool(fields["last_known_formed"], "last_known_formed"),
+        "controller_visual": _parse_bool(fields["controller_visual"], "controller_visual"),
+        "port_visual": _parse_bool(fields["port_visual"], "port_visual"),
+        "port_bound": _parse_bool(fields["port_bound"], "port_bound"),
+    }
+
+
 def _require_eula(project_root: Path) -> None:
     path = project_root / EULA_RELATIVE
     if path.is_symlink():
@@ -250,7 +287,10 @@ class ServerSession:
                 break
         raise AcceptanceError(f"{self.phase}: server did not reach ready marker")
 
-    def send(self, command: str, expected_action: str | None = None) -> dict[str, object] | None:
+    def send(self, command: str, expected_action: str | None = None,
+             marker_prefix: str = "I10_PROBE ") -> dict[str, object] | None:
+        if marker_prefix not in {"I10_PROBE ", "I10_PEEK "}:
+            raise AcceptanceError(f"{self.phase}: unsupported marker prefix")
         if not is_allowed_server_command(command):
             raise AcceptanceError(f"{self.phase}: command is not allowlisted: {command!r}")
         if self.process is None or self.process.poll() is not None or self.process.stdin is None:
@@ -265,14 +305,14 @@ class ServerSession:
             line = self._next_line(0.1)
             if line is None:
                 break
-            if not line or "I10_PROBE " not in line:
+            if not line or marker_prefix not in line:
                 continue
-            marker = parse_probe_marker(line)
+            marker = parse_peek_marker(line) if marker_prefix == "I10_PEEK " else parse_probe_marker(line)
             if marker["action"] == expected_action:
                 return marker
         tail = recent_output_tail(self.lines)
         raise AcceptanceError(
-            f"{self.phase}: no I10_PROBE action={expected_action} marker observed; "
+            f"{self.phase}: no {marker_prefix.strip()} action={expected_action} marker observed; "
             f"recent server output:\n{tail}"
         )
 
@@ -281,6 +321,19 @@ class ServerSession:
         last: dict[str, object] | None = None
         while time.monotonic() < deadline:
             marker = self.send("i10probe status", "status")
+            assert marker is not None
+            last = marker
+            if predicate(marker):
+                return marker
+            time.sleep(0.5)
+        raise AcceptanceError(f"{self.phase}: timeout waiting for {description}; last={last}")
+
+    def poll_peek(self, predicate, description: str) -> dict[str, object]:
+        """Wait for autonomous server runtime recovery without an IO probe."""
+        deadline = time.monotonic() + POLL_TIMEOUT_SECONDS
+        last: dict[str, object] | None = None
+        while time.monotonic() < deadline:
+            marker = self.send("i10probe peek", "peek", "I10_PEEK ")
             assert marker is not None
             last = marker
             if predicate(marker):
@@ -351,6 +404,18 @@ def _formed(marker: dict[str, object], revision: int | None = None) -> bool:
         and marker["capability"] is True
         and marker["last_known_formed"] is True
         and (revision is None or marker["revision"] == revision)
+    )
+
+
+def _formed_pre_probe(marker: dict[str, object], revision: int) -> bool:
+    return (
+        marker["validation"] == "VALID"
+        and marker["runtime"] == "FORMED"
+        and marker["revision"] == revision
+        and marker["last_known_formed"] is True
+        and marker["controller_visual"] is True
+        and marker["port_visual"] is True
+        and marker["port_bound"] is True
     )
 
 
@@ -428,22 +493,30 @@ def run_acceptance(project_root: Path | str, workspace: Path | str | None = None
                 "physical unload of the complete multiblock footprint",
             )
             session.send("forceload add 159 159 161 161")
-            recovered = session.poll_status(
-                lambda marker: _formed(marker, revision),
-                "FORMED recovery with same revision/sentinel after real footprint reload",
+            pre_probe = session.poll_peek(
+                lambda marker: _formed_pre_probe(marker, revision),
+                "FORMED visual/binding state without any capability probe after footprint reload",
             )
+            recovered = session.send("i10probe status", "status")
+            assert recovered is not None
+            if not _formed(recovered, revision):
+                raise AcceptanceError(f"phase1: capability/sentinel mismatch after no-probe recovery: {recovered}")
             session.send("save-all flush")
-            return revision, {"setup": setup, "unloaded": unloaded, "recovered": recovered}
+            return revision, {"setup": setup, "unloaded": unloaded, "pre_capability_probe": pre_probe, "recovered": recovered}
 
         revision, phase1_data = _run_phase(project, output, "phase1-unload-reload", phase1)
         summary["phases"].append({"phase": "unload_reload", **phase1_data})
 
         def phase2(session: ServerSession):
             session.send("forceload add 159 159 161 161")
-            recovered = session.poll_status(
-                lambda marker: _formed(marker, revision),
-                "persisted FORM state after server restart",
+            pre_probe = session.poll_peek(
+                lambda marker: _formed_pre_probe(marker, revision),
+                "persisted autonomous FORMED state before port capability query",
             )
+            recovered = session.send("i10probe status", "status")
+            assert recovered is not None
+            if not _formed(recovered, revision):
+                raise AcceptanceError(f"phase2: capability/sentinel mismatch after no-probe recovery: {recovered}")
             broken = session.send("i10probe break_required_part", "break_required_part")
             assert broken is not None
             if not (
@@ -457,7 +530,7 @@ def run_acceptance(project_root: Path | str, workspace: Path | str | None = None
             ):
                 raise AcceptanceError(f"phase2: break mutation did not fail closed pending: {broken}")
             session.send("save-all flush")
-            return {"recovered_after_restart": recovered, "broken_before_restart": broken}
+            return {"pre_capability_probe": pre_probe, "recovered_after_restart": recovered, "broken_before_restart": broken}
 
         phase2_data = _run_phase(project, output, "phase2-restart-break", phase2)
         summary["phases"].append({"phase": "restart_break", **phase2_data})

@@ -52,6 +52,8 @@ public final class I10AcceptanceCommands {
                                 .executes(context -> setup(context.getSource())))
                         .then(Commands.literal("status")
                                 .executes(context -> status(context.getSource())))
+                        .then(Commands.literal("peek")
+                                .executes(context -> peek(context.getSource())))
                         .then(Commands.literal("break_required_part")
                                 .executes(context -> breakRequiredPart(context.getSource()))));
     }
@@ -113,6 +115,41 @@ public final class I10AcceptanceCommands {
                 level,
                 "status",
                 blockEntity instanceof MultiblockControllerBlockEntity controller ? controller : null);
+        return 1;
+    }
+
+    /** Read-only acceptance observation; never query a capability or request chunks. */
+    private static int peek(CommandSourceStack source) {
+        ServerLevel level = source.getLevel();
+        BlockPos portPos = MultiblockPattern.worldPos(CONTROLLER_POS, FACING, MultiblockPattern.PORT_LOCAL);
+        MultiblockControllerBlockEntity controller = null;
+        if (level.hasChunkAt(CONTROLLER_POS)
+                && level.getBlockEntity(CONTROLLER_POS) instanceof MultiblockControllerBlockEntity observed) {
+            controller = observed;
+        }
+
+        BlockState controllerState = level.hasChunkAt(CONTROLLER_POS)
+                ? level.getBlockState(CONTROLLER_POS) : Blocks.AIR.defaultBlockState();
+        BlockState portState = level.hasChunkAt(portPos)
+                ? level.getBlockState(portPos) : Blocks.AIR.defaultBlockState();
+        boolean controllerVisual = controllerState.is(I10MultiblockContent.MULTIBLOCK_CONTROLLER.get())
+                && controllerState.getValue(MultiblockControllerBlock.FORMED);
+        boolean portVisual = portState.is(I10MultiblockContent.MULTIBLOCK_IO_PORT.get())
+                && portState.getValue(MultiblockPortBlock.FORMED);
+        boolean portBound = controller != null && level.hasChunkAt(portPos)
+                && level.getBlockEntity(portPos) instanceof MultiblockPortBlockEntity port
+                && controller.getBlockPos().equals(port.controllerPos())
+                && controller.formationRevision() == port.linkedRevision();
+
+        LOGGER.info(
+                "I10_PEEK action=peek validation={} runtime={} revision={} last_known_formed={} controller_visual={} port_visual={} port_bound={}",
+                MultiblockPattern.validate(level, CONTROLLER_POS, FACING).name(),
+                controller == null ? MultiblockRuntimeState.UNFORMED.name() : controller.runtimeState().name(),
+                controller == null ? 0L : Math.max(0L, controller.formationRevision()),
+                controller != null && controller.lastKnownFormed(),
+                controllerVisual,
+                portVisual,
+                portBound);
         return 1;
     }
 

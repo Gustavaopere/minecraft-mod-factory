@@ -25,6 +25,7 @@ EXPECTED_COMMANDS = frozenset(
         "i10probe baseline",
         "i10probe setup",
         "i10probe status",
+        "i10probe peek",
         "i10probe break_required_part",
         "save-all flush",
         "stop",
@@ -35,6 +36,16 @@ GOOD_MARKER = (
     "runtime=PENDING_REVALIDATION revision=7 sentinel=minecraft:diamond count=1 "
     "capability=false last_known_formed=true"
 )
+
+
+GOOD_PEEK = (
+    "[Server thread/INFO] I10_PEEK action=peek validation=VALID runtime=FORMED "
+    "revision=3 last_known_formed=true controller_visual=true port_visual=true port_bound=true"
+)
+
+
+def peek_line() -> str:
+    return GOOD_PEEK + "\n"
 
 
 def marker_line(
@@ -139,6 +150,7 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
         self.assertNotIn("forceload add 159 160 161 160", text)
         self.assertNotIn('session.send("forceload remove 161 160")', text)
         self.assertTrue(module.is_allowed_server_command("i10probe status"))
+        self.assertTrue(module.is_allowed_server_command("i10probe peek"))
         self.assertFalse(module.is_allowed_server_command("op somebody"))
         self.assertFalse(module.is_allowed_server_command("forceload add 0 0"))
 
@@ -172,6 +184,29 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
             with self.subTest(line=line):
                 with self.assertRaises(module.AcceptanceError):
                     module.parse_probe_marker(line)
+
+    def test_noninvasive_peek_parser_and_predicate_are_fail_closed(self) -> None:
+        module = load_harness()
+        good = module.parse_peek_marker(GOOD_PEEK)
+        self.assertTrue(module._formed_pre_probe(good, 3))
+        self.assertFalse(module._formed_pre_probe(good, 4))
+        for key in ("last_known_formed", "controller_visual", "port_visual", "port_bound"):
+            bad = dict(good)
+            bad[key] = False
+            self.assertFalse(module._formed_pre_probe(bad, 3))
+        for bad in (
+            "no marker",
+            GOOD_PEEK.replace(" port_bound=true", ""),
+            GOOD_PEEK + " unknown=x",
+            GOOD_PEEK.replace("validation=VALID", "validation=UNKNOWN"),
+            GOOD_PEEK.replace("runtime=FORMED", "runtime=UNKNOWN"),
+            GOOD_PEEK.replace("revision=3", "revision=-1"),
+            GOOD_PEEK.replace("port_visual=true", "port_visual=maybe"),
+            GOOD_PEEK.replace("action=peek", "action=status"),
+            GOOD_PEEK.replace("port_bound=true", "port_bound=false port_bound=true"),
+        ):
+            with self.subTest(bad=bad), self.assertRaises(module.AcceptanceError):
+                module.parse_peek_marker(bad)
 
     def test_marker_timeout_diagnostic_tail_is_bounded_and_visible(self) -> None:
         module = load_harness()
@@ -266,12 +301,18 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
             marker = session.send("i10probe status", "status")
             self.assertEqual("FORMED", marker["runtime"])
             self.assertIn("i10probe status\n", process.stdin.getvalue())
+            session.output_queue.put(peek_line())
+            observed = session.send("i10probe peek", "peek", "I10_PEEK ")
+            self.assertTrue(module._formed_pre_probe(observed, 3))
 
             session.output_queue.put(marker_line(runtime="UNFORMED", capability=False, last_known_formed=False))
             session.output_queue.put(marker_line())
             with mock.patch.object(module.time, "sleep", return_value=None):
                 polled = session.poll_status(lambda value: value["runtime"] == "FORMED", "formed")
             self.assertEqual("FORMED", polled["runtime"])
+            session.output_queue.put(peek_line())
+            before_capability = session.poll_peek(lambda value: value["runtime"] == "FORMED", "no-probe")
+            self.assertTrue(module._formed_pre_probe(before_capability, 3))
 
             with self.assertRaises(module.AcceptanceError):
                 session.send("op somebody")
@@ -407,6 +448,8 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
                     )
                 if command == "i10probe setup":
                     return module.parse_probe_marker(marker_line(action="setup"))
+                if command == "i10probe status":
+                    return module.parse_probe_marker(marker_line())
                 if command == "i10probe break_required_part":
                     return module.parse_probe_marker(
                         marker_line(
@@ -417,6 +460,12 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
                         )
                     )
                 return None
+
+            def poll_peek(self, predicate, description):
+                value = module.parse_peek_marker(GOOD_PEEK)
+                if not predicate(value):
+                    raise AssertionError(f"peek predicate rejected: {description}: {value}")
+                return value
 
             def poll_status(self, predicate, description):
                 if "physical unload" in description:
@@ -472,6 +521,8 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
                 summary = module.run_acceptance(project, workspace)
             self.assertEqual("PASS", summary["state"])
             self.assertEqual(4, len(summary["phases"]))
+            self.assertIn("pre_capability_probe", summary["phases"][0])
+            self.assertIn("pre_capability_probe", summary["phases"][1])
             self.assertFalse(stale_world.exists())
             persisted = project / module.OUTPUT_RELATIVE / "summary.json"
             self.assertTrue(persisted.is_file())
@@ -509,6 +560,7 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
             'Commands.literal("baseline")',
             'Commands.literal("setup")',
             'Commands.literal("status")',
+            'Commands.literal("peek")',
             'Commands.literal("break_required_part")',
             "new BlockPos(159, 80, 160)",
             "Direction.WEST",
@@ -516,9 +568,26 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
             "Capabilities.ItemHandler.BLOCK",
             "PENDING_REVALIDATION",
             "I10_PROBE",
+            "I10_PEEK",
             "hasPermission(2)",
         ):
             self.assertIn(token, text)
+
+    def test_peek_java_command_never_queries_capability_or_revalidates(self) -> None:
+        text = COMMAND.read_text(encoding="utf-8")
+        peek = text.split("private static int peek(CommandSourceStack source)", 1)[1].split(
+            "private static int breakRequiredPart(", 1
+        )[0]
+        for forbidden in ("getCapability(", "controller.revalidate(", "controller.tryForm(",
+                          "getChunk(", "controller.itemHandler()"):
+            self.assertNotIn(forbidden, peek)
+        for required in ("I10_PEEK action=peek", "controller.runtimeState()",
+                         "controller.formationRevision()", "controllerVisual", "portVisual",
+                         "portBound", "MultiblockPattern.validate("):
+            self.assertIn(required, peek)
+        harness = HARNESS.read_text(encoding="utf-8")
+        self.assertIn("pre_probe = session.poll_peek(", harness)
+        self.assertIn('recovered = session.send("i10probe status", "status")', harness)
 
     def test_workflow_runs_real_chunk_acceptance(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
