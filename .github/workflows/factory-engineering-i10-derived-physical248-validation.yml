@@ -70,19 +70,16 @@ jobs:
           cd .factory-ci/i10/physical248-project
           ./gradlew --no-daemon runGameTestServer
 
-      - name: Run canonical I5 test harness against the exact derived project
+      - name: Record I5 canonical target incompatibility without bypassing validator
         run: |
-          python3 engineering/tooling/test-harness/run_test_harness.py \
-            --project .factory-ci/i10/physical248-project
           python3 - <<'PY'
-          import json
           from pathlib import Path
-          p = Path('.factory-ci/i10/physical248-project/build/i5-test-harness/test-manifest.json')
-          m = json.loads(p.read_text())
-          assert m['overall_state'] == 'PASS', m
-          suites = {x['suite_id']: x['state'] for x in m['suites']}
-          assert suites == {'unit':'PASS','gametest':'PASS','dedicated_server':'PASS'}, suites
-          print('I5_EXACT_DERIVED_PROFILE_248=PASS')
+          text = Path('engineering/tooling/test-harness/run_test_harness.py').read_text()
+          assert 'TARGET_NEOFORGE = "21.1.250"' in text
+          assert 'neo_version=21.1.248' in Path(
+            '.factory-ci/i10/physical248-project/gradle.properties').read_text()
+          print('I5_DERIVED_248=BLOCKED_CANONICAL_I5_TARGET_21_1_250')
+          print('Native Gradle test/build and GameTests already passed on the actual 21.1.248 project.')
           PY
 
       - name: Run genuine dedicated server full-four-chunk I10 acceptance
@@ -116,7 +113,7 @@ jobs:
             'java_bytes_unchanged':True,
             'gradle_test_build':'PASS',
             'game_test_server':'PASS',
-            'i5_harness':'PASS',
+            'i5_harness':'BLOCKED_CANONICAL_TARGET_21_1_250',
             'i10_full_four_chunk':'PASS',
             'physical_missing_neighbor':'UNPROVEN',
             'two_real_clients':'PENDING',
@@ -136,8 +133,7 @@ jobs:
           path: |
             .factory-ci/i10/i10-handoff-perfil-fisico-21.1.248-9403327a.zip
             .factory-ci/i10/exact-derived-profile248-build-evidence.json
-            .factory-ci/i10/physical248-project/build/i5-test-harness/
-            .factory-ci/i10/physical248-project/build/i10-chunk-acceptance/
+            .factory-ci/i10/physical248-project/build/i10-acceptance/
             .factory-ci/i10/physical248-project/build/test-results/
             .factory-ci/i10/physical248-project/build/reports/tests/
           if-no-files-found: error
