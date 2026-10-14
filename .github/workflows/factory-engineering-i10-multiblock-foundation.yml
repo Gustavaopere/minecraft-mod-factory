@@ -15,6 +15,10 @@ on:
       - 'engineering/tests/test_i10_delayed_neighbor_diagnostic.py'
       - 'engineering/tests/test_i10_ticket_reachability.py'
       - 'engineering/tests/test_i10_synthetic_retry_control.py'
+      - 'engineering/tests/test_i10_real_ticket_trace_248.py'
+      - 'engineering/tests/test_i10_e4_onload_boundary_trace_248.py'
+      - 'engineering/tests/experiments/i10_e4_onload_boundary_trace_248.py'
+      - 'engineering/tests/experiments/i10_real_ticket_trace_248.py'
       - 'engineering/tests/experiments/i10_synthetic_retry_control.py'
       - 'engineering/tests/test_i10_multiplayer_acceptance.py'
       - 'engineering/tests/i10-multiplayer-acceptance.md'
@@ -80,6 +84,8 @@ jobs:
           engineering/tests/test_i10_delayed_neighbor_diagnostic.py
           engineering/tests/test_i10_ticket_reachability.py
           engineering/tests/test_i10_synthetic_retry_control.py
+          engineering/tests/test_i10_real_ticket_trace_248.py
+          engineering/tests/test_i10_e4_onload_boundary_trace_248.py
           engineering/tests/test_i10_multiplayer_acceptance.py
           engineering/tests/test_i10_multiblock_foundation_composition.py
           engineering/tests/test_i10_multiblock_foundation_ci.py
