@@ -1,0 +1,112 @@
+name: Factory I10 Delayed-Neighbor Exploratory Trial
+
+on:
+  push:
+    branches:
+      - engineering/i10-multiblock-foundation-reference
+    paths:
+      - '.github/workflows/factory-engineering-i10-delayed-neighbor-experiment.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  experimental-server-trial:
+    name: Exploratory 21.1.250 (not a physical acceptance gate)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      GRADLE_USER_HOME: ${{ github.workspace }}/.factory-ci/i10/gradle-home
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+
+      - name: Setup Java 21
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Validate fixture target and diagnostic regressions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          source = Path("engineering/tooling/scaffolder/scaffold_mod.py").read_text(encoding="utf-8")
+          assert 'TEMPLATE_NEOFORGE_TARGET = "21.1.250"' in source, "I10 target changed: revise experiment version"
+          assert Path("engineering/tooling/multiblock-foundation/run_i10_delayed_neighbor_diagnostic.py").is_file()
+          PY
+          python3 -m unittest engineering/tests/test_i10_delayed_neighbor_diagnostic.py engineering/tests/test_i10_chunk_acceptance.py
+
+      - name: Materialize isolated NeoForge I10 fixture
+        run: |
+          mkdir -p .factory-ci/i10
+          python3 engineering/tooling/multiblock-foundation/materialize_i10.py .factory-ci/i10/generated
+          chmod +x .factory-ci/i10/generated/gradlew
+          cd .factory-ci/i10/generated
+          ./gradlew test build --no-daemon
+
+      - name: Run one opt-in real-server staged ticket experiment
+        id: trial
+        shell: bash
+        run: |
+          set -uo pipefail
+          set +e
+          python3 engineering/tooling/multiblock-foundation/run_i10_delayed_neighbor_diagnostic.py \
+            --project .factory-ci/i10/generated > .factory-ci/i10/delayed-neighbor-attempt.log 2>&1
+          rc=$?
+          set -e
+          cat .factory-ci/i10/delayed-neighbor-attempt.log
+          printf 'exit_code=%s\n' "$rc" >> "$GITHUB_OUTPUT"
+          if [[ "$rc" -eq 2 ]]; then
+            echo "::notice title=I10 PENDING_UNREPRODUCED::Partial chunk unavailability was not demonstrated; not a PASS."
+          elif [[ "$rc" -eq 0 ]]; then
+            echo "::notice title=I10 EXPLORATORY OBSERVATION::Check evidence, retry-disabled negative control, and physical multiplayer remain PENDING."
+          else
+            echo "::error title=I10 diagnostic execution error::Unexpected diagnostic exit $rc; inspect uploaded evidence."
+            exit 1
+          fi
+
+      - name: Write experiment result manifest
+        if: always()
+        env:
+          TRIAL_EXIT_CODE: ${{ steps.trial.outputs.exit_code }}
+        run: |
+          mkdir -p .factory-ci/i10
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          trial = os.getenv("TRIAL_EXIT_CODE", "")
+          verdict = {"0":"OBSERVED_EXPLORATORY_ONLY", "2":"PENDING_UNREPRODUCED"}.get(trial,"EXECUTION_INCOMPLETE")
+          data = {
+              "schema_version":1,
+              "trial_type":"exploratory_not_acceptance",
+              "source_commit":os.getenv("GITHUB_SHA", ""),
+              "minecraft":"1.21.1",
+              "fixture_neoforge":"21.1.250",
+              "physical_modlist_neoforge":"21.1.248",
+              "exit_code":trial,
+              "verdict":verdict,
+              "required_negative_control":"PENDING",
+              "exact_head_two_client_acceptance":"PENDING",
+              "p2_review_threads":"OPEN",
+          }
+          Path(".factory-ci/i10/experiment-result.json").write_text(json.dumps(data,indent=2,sort_keys=True)+"\n",encoding="utf-8")
+          print(json.dumps(data,sort_keys=True))
+          PY
+
+      - name: Upload isolated server evidence only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: i10-delayed-neighbor-exploratory
+          path: |
+            .factory-ci/i10/experiment-result.json
+            .factory-ci/i10/delayed-neighbor-attempt.log
+            .factory-ci/i10/generated/build/i10-delayed-neighbor-diagnostic/
+          if-no-files-found: error
+          retention-days: 7
