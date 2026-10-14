@@ -60,7 +60,7 @@ class E4EarlyLifecycleTraceTests(unittest.TestCase):
                 else:
                     self.assertNotIn(forbidden,block)
             self.assertIn("neo_version=21.1.248",(project/"gradle.properties").read_text())
-            with self.assertRaisesRegex(e4.e3.TraceBlocked,"existing world"):
+            with self.assertRaisesRegex(e4.e3.TraceBlocked,"preserve previous evidence"):
                 e4.prepare(project)
 
     def test_early_load_gap_and_no_gap_classification_are_distinct(self):
