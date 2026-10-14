@@ -8,6 +8,22 @@ A post-integration Codex review identified an autonomous chunk-recovery defect: 
 
 **Current physical gate: PENDING.** The previous two-client campaign PASSED only for runtime source `914829bce29b44e4bd5bc30f0142a81fd85838bf`; it remains historical provenance, not evidence of the corrected runtime. The new runtime requires an exact-commit two-client acceptance campaign with server/Client A/Client B logs, seven screenshots, and independent audit. Green CI and prior physical screenshots cannot replace that retest. PR #106 remains Draft and unmerged until the new acceptance.
 
+## Opt-in delayed-neighbor diagnostic — P2 remains open
+
+A non-default, fail-closed diagnostic is provided by `engineering/tooling/multiblock-foundation/run_i10_delayed_neighbor_diagnostic.py`. It accepts only a **fresh disposable** `.factory-ci/i10/generated` fixture; it will not overwrite an existing world or prior diagnostic output. Never run it against the physical two-client acceptance world.
+
+Command from the Factory repository root:
+
+```sh
+python3 engineering/tooling/multiblock-foundation/run_i10_delayed_neighbor_diagnostic.py --project .factory-ci/i10/generated
+```
+
+The probe forms a four-chunk structure, drains 40 actual server ticks, saves it, witnesses complete unload, and restarts with only the controller/port chunks force-loaded. Passive `i10probe peek` must demonstrate `UNAVAILABLE / PENDING_REVALIDATION` with the preserved formation revision, unformed visuals and `port_bound=true`: this requires the port chunk to be present and some separate footprint chunk to be unavailable. It must remain unavailable at least five game ticks. Only then are the casing chunks added; the same-revision formed state, controller/port visuals and binding must be observed after at least 20 further game ticks **before** the first capability-querying `status` call. Only then can the status verify the inventory sentinel and port capability.
+
+If ordinary chunk ticket propagation keeps the adjacent casing chunks loaded, the diagnostic exits nonzero as `PENDING_UNREPRODUCED` and cannot be called PASS. The diagnostic saves per-phase server logs and `summary.json` under `build/i10-delayed-neighbor-diagnostic/`.
+
+This tool is **diagnostic, not final acceptance**: deterministic reproduction, negative control with the retry disabled, review of the result, and physical multiplayer acceptance on the exact current runtime remain independent open gates. It is intentionally not invoked by the default green I10 CI.
+
 ## Previously accepted physical campaign — 2026-10-13/14 (runtime commit 914829bc)
 
 **Historical physical result: PASS for exact tested runtime source commit `914829bce29b44e4bd5bc30f0142a81fd85838bf`.** This accepted historical result does not accept the corrected runtime or authorize a merge.
