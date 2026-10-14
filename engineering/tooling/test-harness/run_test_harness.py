@@ -17,6 +17,7 @@ from pathlib import Path
 
 TARGET_MINECRAFT = "1.21.1"
 TARGET_NEOFORGE = "21.1.250"
+EXPLICIT_PHYSICAL_NEOFORGE = "21.1.248"
 TARGET_JAVA = 21
 MOD_ID_RE = re.compile(r"^[a-z][a-z0-9_]{1,63}$")
 OUTPUT_RELATIVE = Path("build/i5-test-harness")
@@ -52,7 +53,7 @@ def _read_gradle_properties(project_root: Path) -> dict[str, str]:
     return properties
 
 
-def _project_identity(project_root: Path) -> tuple[str, dict[str, object]]:
+def _project_identity(project_root: Path, *, target_neoforge: str = TARGET_NEOFORGE) -> tuple[str, dict[str, object]]:
     properties = _read_gradle_properties(project_root)
     required = ("mod_id", "minecraft_version", "neo_version", "java_version")
     missing = [key for key in required if not properties.get(key)]
@@ -77,7 +78,7 @@ def _project_identity(project_root: Path) -> tuple[str, dict[str, object]]:
     expected = {
         "minecraft": TARGET_MINECRAFT,
         "loader": "neoforge",
-        "neoforge": TARGET_NEOFORGE,
+        "neoforge": target_neoforge,
         "java": TARGET_JAVA,
     }
     if target != expected:
@@ -295,7 +296,14 @@ def _write_manifest(project_root: Path, manifest: dict[str, object]) -> Path:
 
 
 def run_harness(project_root):
-    """Run the fixed I5 suite allowlist and return the canonical test manifest."""
+    """Run the fixed I5 suite allowlist against the original default target."""
+    return _run_harness_for_target(project_root, TARGET_NEOFORGE)
+
+
+def _run_harness_for_target(project_root, target_neoforge: str):
+    """Run the fixed allowlist for one explicitly supported, exact target."""
+    if target_neoforge not in (TARGET_NEOFORGE, EXPLICIT_PHYSICAL_NEOFORGE):
+        raise HarnessError(f"unsupported explicit NeoForge target: {target_neoforge!r}")
     project = Path(project_root).expanduser().resolve()
     if not project.is_dir():
         raise HarnessError(f"project root does not exist: {project}")
@@ -304,7 +312,7 @@ def run_harness(project_root):
     if output_root.exists():
         shutil.rmtree(output_root)
 
-    mod_id, target = _project_identity(project)
+    mod_id, target = _project_identity(project, target_neoforge=target_neoforge)
     _require_server_eula(project)
 
     suite_results: list[dict[str, object]] = []
@@ -344,10 +352,16 @@ def run_harness(project_root):
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run the canonical I5 NeoForge test harness")
     parser.add_argument("--project", required=True, help="Path to the generated mod project")
+    parser.add_argument(
+        "--target-neoforge",
+        choices=(TARGET_NEOFORGE, EXPLICIT_PHYSICAL_NEOFORGE),
+        default=TARGET_NEOFORGE,
+        help="Exact, allowlisted NeoForge profile (default retains the original target)",
+    )
     args = parser.parse_args()
 
     try:
-        manifest = run_harness(args.project)
+        manifest = _run_harness_for_target(args.project, args.target_neoforge)
     except HarnessError as exc:
         print(f"BLOCKED: {exc}")
         return 2
