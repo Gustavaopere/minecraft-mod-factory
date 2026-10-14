@@ -26,6 +26,7 @@ REQUIRED_METHODS = (
     "persistence",
     "staleBinding",
     "visualState",
+    "persistedRecoveryWithoutPortProbe",
 )
 
 
@@ -57,6 +58,19 @@ class I10GameTestContract(unittest.TestCase):
             self.assertIn(token, text, f"I10 RED: GameTest suite missing proven runtime token {token!r}")
         self.assertNotIn("materialize_i9", text)
         self.assertNotIn("dev.example.i9machine", text)
+
+    def test_persisted_recovery_runs_without_port_capability_or_probe(self):
+        text = GAME_TEST.read_text(encoding="utf-8")
+        scenario = text.split("void persistedRecoveryWithoutPortProbe(GameTestHelper helper)", 1)[1].split(
+            "private static MultiblockControllerBlockEntity buildStructure(", 1
+        )[0]
+        for required in ("saveWithFullMetadata(", "BlockEntity.loadStatic(", "setBlockEntity(restored)",
+                         "helper.runAtTickTime(40", "MultiblockRuntimeState.PENDING_REVALIDATION",
+                         "MultiblockRuntimeState.FORMED", "formationRevision() == revision",
+                         "MultiblockControllerBlock.FORMED", "MultiblockPortBlock.FORMED"):
+            self.assertIn(required, scenario)
+        for forbidden in ("getCapability(", "itemCapability(", "i10probe", "controller.revalidate("):
+            self.assertNotIn(forbidden, scenario)
 
     def test_native_template_is_pinned_byte_exact(self):
         self.assertTrue(TEMPLATE.is_file(), "I10 RED: native multiblock_test.nbt is missing")
