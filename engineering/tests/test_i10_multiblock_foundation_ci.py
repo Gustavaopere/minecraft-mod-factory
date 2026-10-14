@@ -162,9 +162,10 @@ class I10PermanentCIContract(unittest.TestCase):
             # evidence. Workflow jobs must not self-approve this gate.
             for token in (
                 "## Accepted physical campaign",
-                "bff6f7348cc56de7e7cd13859be346c15369e363",
-                "https://github.com/user-attachments/files/33409008/i10-pr106-evidencias-publicaveis-2026-10-13.zip",
-                "3b503543218f8ab667168471d32a670c0819814f3e1df2c64033687b662840d1",
+                "914829bce29b44e4bd5bc30f0142a81fd85838bf",
+                "https://github.com/user-attachments/files/33416024/i10-pr106-evidencias-publicaveis-914829bc.zip",
+                "4a2741210c7f5338336f16424edfd1cc21b80d99795a0c0da8a6c37b5db1eacf",
+                "51/51",
                 "operator-attested",
             ):
                 self.assertIn(token, protocol)

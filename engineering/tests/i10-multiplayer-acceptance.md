@@ -1,10 +1,28 @@
 # I10 Multiplayer Acceptance Protocol
 
-I10_MULTIPLAYER_ACCEPTANCE_STATE=PENDING_MANUAL_MULTIPLAYER_ACCEPTANCE
+I10_MULTIPLAYER_ACCEPTANCE_STATE=PASS
+
+## Accepted physical campaign — 2026-10-13/14 (runtime commit 914829bc)
+
+**Physical multiplayer gate: PASS for exact tested runtime source commit `914829bce29b44e4bd5bc30f0142a81fd85838bf`.** This status is supported by operator-produced evidence and an independent local audit; it is not a release or merge approval.
+
+- Validated runtime source commit: `914829bce29b44e4bd5bc30f0142a81fd85838bf`.
+- Target: Minecraft 1.21.1 / NeoForge 21.1.250 / Java 21; Windows 11 dedicated server, `i10-acceptance-world`, independently started `I10ClientA` and `I10ClientB` Minecraft JVM processes.
+- Canonical reviewer-accessible physical evidence: [I10 current-runtime evidence ZIP](https://github.com/user-attachments/files/33416024/i10-pr106-evidencias-publicaveis-914829bc.zip); attached to [PR #106](https://github.com/Gustavaopere/minecraft-mod-factory/pull/106#issuecomment-6160312401).
+- Publication-safe ZIP SHA-256: `4a2741210c7f5338336f16424edfd1cc21b80d99795a0c0da8a6c37b5db1eacf`; it includes `metadata.json`, `server.log`, `client-a.log`, `client-b.log`, `audit-report.json`, `AUDIT-README.md`, `SHA256SUMS.txt` and the seven canonical screenshots.
+- Audit results: **51/51 local integrity, provenance, state-sequence and process-relaunch checks PASS**. Original screenshots were retained; unnecessary raw/debug logs and local runtime data were excluded from publication.
+- 22:24:25 local — dedicated-server `I10_PROBE` baseline `VALID / UNFORMED / revision=0 / capability=false`; both connected clients observed UNFORMED before formation.
+- Approximately 22:32 local — **Client A formed through normal interaction** as directly reported by the operator (**operator-attested**, not independently attributable from the server log). Both clients captured FORMED. At 22:36:09 server `VALID / FORMED / revision=8 / capability=true`; the storage sentinel was empty (`count=0`), a valid formed state.
+- 22:36:58 — server `i10probe break_required_part` yielded `INVALID / PENDING_REVALIDATION / revision=8 / capability=false` immediately. By 22:38:57 the server settled at `INVALID / UNFORMED / revision=8 / capability=false / last_known_formed=false`; both clients captured UNFORMED after casing break.
+- 22:41:13 — Client B disconnected while Client A stayed online; first B Minecraft process stopped at 22:41:16. A new Client B JVM started at 22:42:12 and rejoined at 22:42:26. A seventh screenshot after reconnect shows UNFORMED without replaying the historic FORMED state.
+- 00:16:38 next day — the server still reported `INVALID / UNFORMED / revision=8 / capability=false`; both client processes and the dedicated server exited cleanly by approximately 00:19, with world data saved.
+- Limitation: a *partial-footprint* casing-chunk unload while neighboring chunks stayed loaded could **not** be physically reproduced because of server neighbor tickets; **no PASS is claimed for that subcase**. The separate CI real four-chunk unload/reload acceptance and cached-handler/footprint-guard regressions passed on the current runtime source.
+
+**Scope boundary:** this PASS applies to the physical multiplayer campaign for runtime source `914829bce29b44e4bd5bc30f0142a81fd85838bf`. The later protocol and test-only commits that record this evidence do not alter the runtime. Any subsequent runtime change must independently assess and revalidate the affected physical gates. **CI, branch integration and code review remain independent gates**; PR Draft status, review rules and merge authorization are not overridden.
 
 ## Historical accepted physical campaign — 2026-10-13 (runtime commit bff6f734)
 
-The historical physical multiplayer campaign **PASSED for runtime commit `bff6f7348cc56de7e7cd13859be346c15369e363`**. The current branch is being modified to fix chunk-unload safety and complete-footprint force-loading after review P1 findings; its new runtime commit is **not yet physically accepted**. CI, branch integration and code review remain independent gates.
+The earlier physical campaign **PASSED for historical runtime commit `bff6f7348cc56de7e7cd13859be346c15369e363`**. That proof remains retained as historical provenance only; the separate accepted current-runtime campaign is documented above. CI, branch integration and code review remain independent gates.
 
 - Validated runtime source commit: `bff6f7348cc56de7e7cd13859be346c15369e363`.
 - Target: Minecraft 1.21.1 / NeoForge 21.1.250 / Java 21.
@@ -18,7 +36,7 @@ The historical physical multiplayer campaign **PASSED for runtime commit `bff6f7
 - Client B disconnected at 19:38, restarted through its independent wrapper and rejoined at 19:39 while Client A remained connected; the seventh screenshot and server status at 19:40 confirm the current `INVALID / UNFORMED / capability=false` state without historical replay.
 - The dedicated server and client processes exited cleanly after `stop`; world data was saved. Logs and screenshot timestamps are from one complete acceptance cycle.
 
-**Scope boundary:** the prior physical result applies exclusively to source commit `bff6f7348cc56de7e7cd13859be346c15369e363`. Because the runtime code changed, the current acceptance gate is **PENDING** until exact-commit revalidation is performed. Prior evidence is retained as provenance and must not be presented as a PASS for the modified build. This does not override merge conflicts, required checks, review rules, or Draft status.
+**Historical scope:** this older evidence applies only to runtime source `bff6f7348cc56de7e7cd13859be346c15369e363`. It does not replace or expand the independently audited physical PASS for `914829bce29b44e4bd5bc30f0142a81fd85838bf`. Neither acceptance record grants merge authorization.
 
 ## Purpose
 
