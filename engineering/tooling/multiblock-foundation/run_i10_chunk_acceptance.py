@@ -48,7 +48,7 @@ EXPECTED_MARKER_KEYS = (
 )
 EXPECTED_PEEK_KEYS = (
     "action", "validation", "runtime", "revision", "last_known_formed",
-    "controller_visual", "port_visual", "port_bound",
+    "controller_visual", "port_visual", "port_bound", "game_tick",
 )
 RESOURCE_ID_RE = re.compile(r"^[a-z0-9_.-]+:[a-z0-9_/.-]+$")
 
@@ -205,6 +205,7 @@ def parse_peek_marker(line: str) -> dict[str, object]:
         "controller_visual": _parse_bool(fields["controller_visual"], "controller_visual"),
         "port_visual": _parse_bool(fields["port_visual"], "port_visual"),
         "port_bound": _parse_bool(fields["port_bound"], "port_bound"),
+        "game_tick": _parse_nonnegative_int(fields["game_tick"], "game_tick"),
     }
 
 
@@ -419,6 +420,18 @@ def _formed_pre_probe(marker: dict[str, object], revision: int) -> bool:
     )
 
 
+def _fully_unloaded_pre_probe(marker: dict[str, object]) -> bool:
+    return (
+        marker["validation"] == "UNAVAILABLE"
+        and marker["runtime"] == "UNFORMED"
+        and marker["revision"] == 0
+        and marker["last_known_formed"] is False
+        and marker["controller_visual"] is False
+        and marker["port_visual"] is False
+        and marker["port_bound"] is False
+    )
+
+
 def _fully_unloaded(marker: dict[str, object]) -> bool:
     return (
         marker["validation"] == "UNAVAILABLE"
@@ -486,11 +499,22 @@ def run_acceptance(project_root: Path | str, workspace: Path | str | None = None
             if revision <= 0:
                 raise AcceptanceError(f"phase1: formation revision must be positive: {setup}")
 
+            warmup_start = session.send("i10probe peek", "peek", "I10_PEEK ")
+            assert warmup_start is not None
+            if not _formed_pre_probe(warmup_start, revision):
+                raise AcceptanceError(f"phase1: setup must already be formed before tick drain: {warmup_start}")
+            # Wait for 40 actual server ticks (not wall clock) with no capability query
+            # so setup-generated neighbor ticks cannot seed post-reload recovery.
+            quiesced = session.poll_peek(
+                lambda marker: marker["game_tick"] >= warmup_start["game_tick"] + 40
+                and _formed_pre_probe(marker, revision),
+                "quiescent formed state after 40 server ticks with no port probe",
+            )
             session.send("save-all flush")
             session.send("forceload remove 159 159 161 161")
-            unloaded = session.poll_status(
-                _fully_unloaded,
-                "physical unload of the complete multiblock footprint",
+            unloaded = session.poll_peek(
+                _fully_unloaded_pre_probe,
+                "physical unload of the complete footprint without a capability probe",
             )
             session.send("forceload add 159 159 161 161")
             pre_probe = session.poll_peek(
@@ -502,7 +526,8 @@ def run_acceptance(project_root: Path | str, workspace: Path | str | None = None
             if not _formed(recovered, revision):
                 raise AcceptanceError(f"phase1: capability/sentinel mismatch after no-probe recovery: {recovered}")
             session.send("save-all flush")
-            return revision, {"setup": setup, "unloaded": unloaded, "pre_capability_probe": pre_probe, "recovered": recovered}
+            return revision, {"setup": setup, "quiesced": quiesced, "unloaded": unloaded,
+                              "pre_capability_probe": pre_probe, "recovered": recovered}
 
         revision, phase1_data = _run_phase(project, output, "phase1-unload-reload", phase1)
         summary["phases"].append({"phase": "unload_reload", **phase1_data})

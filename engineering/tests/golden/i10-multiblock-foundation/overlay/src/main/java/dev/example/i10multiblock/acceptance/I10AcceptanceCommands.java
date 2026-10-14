@@ -142,14 +142,15 @@ public final class I10AcceptanceCommands {
                 && controller.formationRevision() == port.linkedRevision();
 
         LOGGER.info(
-                "I10_PEEK action=peek validation={} runtime={} revision={} last_known_formed={} controller_visual={} port_visual={} port_bound={}",
+                "I10_PEEK action=peek validation={} runtime={} revision={} last_known_formed={} controller_visual={} port_visual={} port_bound={} game_tick={}",
                 MultiblockPattern.validate(level, CONTROLLER_POS, FACING).name(),
                 controller == null ? MultiblockRuntimeState.UNFORMED.name() : controller.runtimeState().name(),
                 controller == null ? 0L : Math.max(0L, controller.formationRevision()),
                 controller != null && controller.lastKnownFormed(),
                 controllerVisual,
                 portVisual,
-                portBound);
+                portBound,
+                Math.max(0L, level.getGameTime()));
         return 1;
     }
 

@@ -65,10 +65,13 @@ class I10GameTestContract(unittest.TestCase):
             "private static MultiblockControllerBlockEntity buildStructure(", 1
         )[0]
         for required in ("saveWithFullMetadata(", "BlockEntity.loadStatic(", "setBlockEntity(restored)",
-                         "helper.runAtTickTime(40", "MultiblockRuntimeState.PENDING_REVALIDATION",
+                         "helper.runAtTickTime(10", "helper.runAtTickTime(50",
+                         "MultiblockRuntimeState.PENDING_REVALIDATION",
                          "MultiblockRuntimeState.FORMED", "formationRevision() == revision",
                          "MultiblockControllerBlock.FORMED", "MultiblockPortBlock.FORMED"):
             self.assertIn(required, scenario)
+        self.assertLess(scenario.index("helper.runAtTickTime(10"), scenario.index("setBlockEntity(restored)"))
+        self.assertLess(scenario.index("setBlockEntity(restored)"), scenario.index("helper.runAtTickTime(50"))
         for forbidden in ("getCapability(", "itemCapability(", "i10probe", "controller.revalidate("):
             self.assertNotIn(forbidden, scenario)
 

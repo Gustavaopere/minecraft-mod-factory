@@ -249,44 +249,55 @@ public final class I10MultiblockGameTests {
     }
 
     /**
-     * Real scheduled-tick recovery of a persisted controller, with no
-     * capability lookup or status probe. All footprint chunks are loaded:
-     * delayed-neighbor recovery requires a separate physical proof.
+     * Verify the persisted-load scheduled tick with no IO probe. Wait until
+     * the initial construction/neighbor ticks have drained BEFORE replacing
+     * the BlockEntity. All footprint chunks are already loaded; this does
+     * not claim delayed-neighbor chunk-load reproduction.
      */
     @GameTest(template = "multiblock_test", timeoutTicks = 160)
     public static void persistedRecoveryWithoutPortProbe(GameTestHelper helper) {
         Direction facing = Direction.NORTH;
-        MultiblockControllerBlockEntity controller = buildStructure(helper, facing);
-        require(controller.tryForm(helper.getLevel(), facing) == MultiblockValidationResult.VALID,
+        MultiblockControllerBlockEntity initial = buildStructure(helper, facing);
+        require(initial.tryForm(helper.getLevel(), facing) == MultiblockValidationResult.VALID,
                 helper, facing, "Initial formation failed before persisted recovery");
-        BlockPos controllerPos = controller.getBlockPos();
+        BlockPos controllerPos = initial.getBlockPos();
         BlockPos portPos = portWorld(controllerPos, facing);
-        long revision = controller.formationRevision();
-        CompoundTag tag = controller.saveWithFullMetadata(helper.getLevel().registryAccess());
+        long revision = initial.formationRevision();
 
-        BlockState controllerState = helper.getLevel().getBlockState(controllerPos);
-        helper.getLevel().setBlock(controllerPos,
-                controllerState.setValue(MultiblockControllerBlock.FORMED, false), Block.UPDATE_CLIENTS);
-        BlockState portState = helper.getLevel().getBlockState(portPos);
-        helper.getLevel().setBlock(portPos,
-                portState.setValue(MultiblockPortBlock.FORMED, false), Block.UPDATE_CLIENTS);
+        // All setup mutation ticks run before this replacement; they cannot
+        // accidentally revalidate the restored controller.
+        helper.runAtTickTime(10, () -> {
+            require(initial.runtimeState() == MultiblockRuntimeState.FORMED,
+                    helper, facing, "Initial structure must remain formed after queued setup ticks");
+            CompoundTag tag = initial.saveWithFullMetadata(helper.getLevel().registryAccess());
+            BlockState controllerState = helper.getLevel().getBlockState(controllerPos);
+            helper.getLevel().setBlock(controllerPos,
+                    controllerState.setValue(MultiblockControllerBlock.FORMED, false), Block.UPDATE_CLIENTS);
+            BlockState portState = helper.getLevel().getBlockState(portPos);
+            helper.getLevel().setBlock(portPos,
+                    portState.setValue(MultiblockPortBlock.FORMED, false), Block.UPDATE_CLIENTS);
 
-        BlockEntity raw = BlockEntity.loadStatic(
-                controllerPos, helper.getLevel().getBlockState(controllerPos), tag,
-                helper.getLevel().registryAccess());
-        require(raw instanceof MultiblockControllerBlockEntity,
-                helper, facing, "Persisted controller deserialization must succeed");
-        MultiblockControllerBlockEntity restored = (MultiblockControllerBlockEntity) raw;
-        require(restored.runtimeState() == MultiblockRuntimeState.PENDING_REVALIDATION,
-                helper, facing, "Loaded formed history must start pending, not formed");
-        helper.getLevel().setBlockEntity(restored);
+            BlockEntity raw = BlockEntity.loadStatic(
+                    controllerPos, helper.getLevel().getBlockState(controllerPos), tag,
+                    helper.getLevel().registryAccess());
+            require(raw instanceof MultiblockControllerBlockEntity,
+                    helper, facing, "Persisted controller deserialization must succeed");
+            MultiblockControllerBlockEntity restored = (MultiblockControllerBlockEntity) raw;
+            require(restored.runtimeState() == MultiblockRuntimeState.PENDING_REVALIDATION,
+                    helper, facing, "Loaded formed history must start pending, not formed");
+            helper.getLevel().setBlockEntity(restored);
+        });
 
-        helper.runAtTickTime(40, () -> {
-            require(restored.runtimeState() == MultiblockRuntimeState.FORMED,
+        helper.runAtTickTime(50, () -> {
+            BlockEntity current = helper.getLevel().getBlockEntity(controllerPos);
+            require(current instanceof MultiblockControllerBlockEntity,
+                    helper, facing, "Persisted controller must still exist after scheduled tick");
+            MultiblockControllerBlockEntity recovered = (MultiblockControllerBlockEntity) current;
+            require(recovered.runtimeState() == MultiblockRuntimeState.FORMED,
                     helper, facing, "Persisted controller must recover without an IO query");
-            require(restored.formationRevision() == revision,
+            require(recovered.formationRevision() == revision,
                     helper, facing, "Autonomous recovery must preserve formation revision");
-            require(restored.lastKnownFormed(),
+            require(recovered.lastKnownFormed(),
                     helper, facing, "Autonomous recovery must preserve formed history");
             require(helper.getLevel().getBlockState(controllerPos).getValue(MultiblockControllerBlock.FORMED),
                     helper, facing, "Controller visual must recover without an IO query");

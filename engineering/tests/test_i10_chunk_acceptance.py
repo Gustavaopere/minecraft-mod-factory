@@ -40,12 +40,30 @@ GOOD_MARKER = (
 
 GOOD_PEEK = (
     "[Server thread/INFO] I10_PEEK action=peek validation=VALID runtime=FORMED "
-    "revision=3 last_known_formed=true controller_visual=true port_visual=true port_bound=true"
+    "revision=3 last_known_formed=true controller_visual=true port_visual=true "
+    "port_bound=true game_tick=60"
 )
 
 
-def peek_line() -> str:
-    return GOOD_PEEK + "\n"
+def peek_line(
+    *,
+    validation: str = "VALID",
+    runtime: str = "FORMED",
+    revision: int = 3,
+    last_known_formed: bool = True,
+    controller_visual: bool = True,
+    port_visual: bool = True,
+    port_bound: bool = True,
+    game_tick: int = 60,
+) -> str:
+    return (
+        "[Server thread/INFO] I10_PEEK "
+        f"action=peek validation={validation} runtime={runtime} revision={revision} "
+        f"last_known_formed={str(last_known_formed).lower()} "
+        f"controller_visual={str(controller_visual).lower()} "
+        f"port_visual={str(port_visual).lower()} port_bound={str(port_bound).lower()} "
+        f"game_tick={game_tick}\n"
+    )
 
 
 def marker_line(
@@ -190,6 +208,12 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
         good = module.parse_peek_marker(GOOD_PEEK)
         self.assertTrue(module._formed_pre_probe(good, 3))
         self.assertFalse(module._formed_pre_probe(good, 4))
+        self.assertEqual(60, good["game_tick"])
+        self.assertTrue(module._fully_unloaded_pre_probe(module.parse_peek_marker(peek_line(
+            validation="UNAVAILABLE", runtime="UNFORMED", revision=0,
+            last_known_formed=False, controller_visual=False,
+            port_visual=False, port_bound=False,
+        ))))
         for key in ("last_known_formed", "controller_visual", "port_visual", "port_bound"):
             bad = dict(good)
             bad[key] = False
@@ -201,6 +225,7 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
             GOOD_PEEK.replace("validation=VALID", "validation=UNKNOWN"),
             GOOD_PEEK.replace("runtime=FORMED", "runtime=UNKNOWN"),
             GOOD_PEEK.replace("revision=3", "revision=-1"),
+            GOOD_PEEK.replace("game_tick=60", "game_tick=-1"),
             GOOD_PEEK.replace("port_visual=true", "port_visual=maybe"),
             GOOD_PEEK.replace("action=peek", "action=status"),
             GOOD_PEEK.replace("port_bound=true", "port_bound=false port_bound=true"),
@@ -450,6 +475,8 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
                     return module.parse_probe_marker(marker_line(action="setup"))
                 if command == "i10probe status":
                     return module.parse_probe_marker(marker_line())
+                if command == "i10probe peek":
+                    return module.parse_peek_marker(GOOD_PEEK)
                 if command == "i10probe break_required_part":
                     return module.parse_probe_marker(
                         marker_line(
@@ -462,7 +489,15 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
                 return None
 
             def poll_peek(self, predicate, description):
-                value = module.parse_peek_marker(GOOD_PEEK)
+                if "physical unload" in description:
+                    line = peek_line(
+                        validation="UNAVAILABLE", runtime="UNFORMED", revision=0,
+                        last_known_formed=False, controller_visual=False,
+                        port_visual=False, port_bound=False, game_tick=101,
+                    )
+                else:
+                    line = peek_line(game_tick=101)
+                value = module.parse_peek_marker(line)
                 if not predicate(value):
                     raise AssertionError(f"peek predicate rejected: {description}: {value}")
                 return value
@@ -521,6 +556,8 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
                 summary = module.run_acceptance(project, workspace)
             self.assertEqual("PASS", summary["state"])
             self.assertEqual(4, len(summary["phases"]))
+            self.assertIn("quiesced", summary["phases"][0])
+            self.assertEqual(101, summary["phases"][0]["quiesced"]["game_tick"])
             self.assertIn("pre_capability_probe", summary["phases"][0])
             self.assertIn("pre_capability_probe", summary["phases"][1])
             self.assertFalse(stale_world.exists())
@@ -586,6 +623,9 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
                          "portBound", "MultiblockPattern.validate("):
             self.assertIn(required, peek)
         harness = HARNESS.read_text(encoding="utf-8")
+        self.assertIn("warmup_start = session.send(\"i10probe peek\", \"peek\", \"I10_PEEK \")", harness)
+        self.assertIn("unloaded = session.poll_peek(", harness)
+        self.assertNotIn("unloaded = session.poll_status(", harness)
         self.assertIn("pre_probe = session.poll_peek(", harness)
         self.assertIn('recovered = session.send("i10probe status", "status")', harness)
 
