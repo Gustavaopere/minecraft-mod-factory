@@ -105,6 +105,30 @@ jobs:
           assert manifest['source_commit']=='9403327ad50227251d8fb1f866077d16f1f3cd4b'
           assert manifest['target_neoforge']=='21.1.248'
           assert manifest['source_code_and_assets_preserved'] is True
+          # Strong evidence contract: retained I5 and I10 manifests, phase logs and suite reports.
+          i5_path=p/'build/i5-test-harness/test-manifest.json'
+          i10_path=p/'build/i10-acceptance/summary.json'
+          assert i5_path.is_file(), 'I5 manifest missing'
+          assert i10_path.is_file(), 'I10 summary missing'
+          i5=json.loads(i5_path.read_text())
+          i10=json.loads(i10_path.read_text())
+          assert i5['target']=={'minecraft':'1.21.1','loader':'neoforge','neoforge':'21.1.248','java':21},i5
+          assert i5['overall_state']=='PASS',i5
+          assert {s['suite_id']:s['state'] for s in i5['suites']}=={
+            'unit':'PASS','gametest':'PASS','dedicated_server':'PASS'},i5
+          assert i10['state']=='PASS',i10
+          assert [phase['phase'] for phase in i10['phases']]==[
+            'unload_reload','restart_break','broken_restart','manual_baseline'],i10
+          for suite in i5['suites']:
+            for relative in suite['evidence']:
+              item=p/relative
+              assert item.is_file() and item.stat().st_size>0, f'I5 missing evidence: {relative}'
+          for phase in ('phase1-unload-reload','phase2-restart-break',
+                        'phase3-broken-restart','phase4-manual-baseline'):
+            item=p/'build/i10-acceptance'/f'{phase}.log'
+            assert item.is_file() and item.stat().st_size>0, f'I10 missing log: {phase}'
+          i5_evidence_sha=hashlib.sha256(i5_path.read_bytes()).hexdigest()
+          i10_evidence_sha=hashlib.sha256(i10_path.read_bytes()).hexdigest()
           root=Path('.factory-ci/i10')
           zip_path=root/'i10-handoff-perfil-fisico-21.1.248-9403327a.zip'
           sha=hashlib.sha256(zip_path.read_bytes()).hexdigest()
@@ -122,6 +146,10 @@ jobs:
             'gradle_test_build':'PASS',
             'game_test_server':'PASS',
             'i5_harness':'PASS_EXPLICIT_21_1_248',
+            'i5_manifest_sha256':i5_evidence_sha,
+            'i10_summary_sha256':i10_evidence_sha,
+            'i5_suite_states':{s['suite_id']:s['state'] for s in i5['suites']},
+            'i10_accepted_phases':[phase['phase'] for phase in i10['phases']],
             'i10_full_four_chunk':'PASS',
             'physical_missing_neighbor':'UNPROVEN',
             'two_real_clients':'PENDING',
@@ -141,7 +169,8 @@ jobs:
           path: |
             .factory-ci/i10/i10-handoff-perfil-fisico-21.1.248-9403327a.zip
             .factory-ci/i10/exact-derived-profile248-build-evidence.json
-            .factory-ci/i10/physical248-project/build/i5-test-harness/\n            .factory-ci/i10/physical248-project/build/i10-acceptance/
+            .factory-ci/i10/physical248-project/build/i5-test-harness/
+            .factory-ci/i10/physical248-project/build/i10-acceptance/
             .factory-ci/i10/physical248-project/build/test-results/
             .factory-ci/i10/physical248-project/build/reports/tests/
           if-no-files-found: error
