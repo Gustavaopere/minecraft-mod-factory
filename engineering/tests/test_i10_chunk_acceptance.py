@@ -20,8 +20,10 @@ WORKFLOW = REPO / ".github/workflows/factory-engineering-i10-multiblock-foundati
 
 EXPECTED_COMMANDS = frozenset(
     {
-        "forceload add 159 160 161 160",
-        "forceload remove 159 160 161 160",
+        "forceload add 159 159 161 161",
+        "forceload remove 159 159 161 161",
+        "forceload add 159 159 161 159",
+        "forceload remove 159 159 161 159",
         "i10probe baseline",
         "i10probe setup",
         "i10probe status",
@@ -132,7 +134,13 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
         module = load_harness()
         text = HARNESS.read_text(encoding="utf-8")
         self.assertEqual(EXPECTED_COMMANDS, frozenset(module.ALLOWED_SERVER_COMMANDS))
-        self.assertIn('session.send("forceload remove 159 160 161 160")', text)
+        self.assertIn('session.send("forceload remove 159 159 161 161")', text)
+        self.assertIn('session.send("forceload remove 159 159 161 159")', text)
+        self.assertIn('session.send("forceload add 159 159 161 159")', text)
+        # WEST: local depth +X, local horizontal ±Z around 160.
+        self.assertEqual({(9, 9), (9, 10), (10, 9), (10, 10)},
+                         {(x // 16, z // 16) for x in (159, 161) for z in (159, 161)})
+        self.assertNotIn("forceload add 159 160 161 160", text)
         self.assertNotIn('session.send("forceload remove 161 160")', text)
         self.assertTrue(module.is_allowed_server_command("i10probe status"))
         self.assertFalse(module.is_allowed_server_command("op somebody"))
@@ -425,6 +433,14 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
                             count=0,
                             capability=False,
                             last_known_formed=False,
+                        )
+                    )
+                elif "partial footprint unavailable" in description:
+                    value = module.parse_probe_marker(
+                        marker_line(
+                            validation="UNAVAILABLE",
+                            runtime="PENDING_REVALIDATION",
+                            capability=False,
                         )
                     )
                 elif "UNFORMED/INVALID" in description:

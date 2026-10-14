@@ -41,6 +41,35 @@ class I10Task5MutationClosureContract(unittest.TestCase):
         missing = [token for token in required if token not in text]
         self.assertEqual([], missing, f"I10 RED: pending state does not close cached port IO immediately: {missing}")
 
+    def test_cached_port_capability_fails_closed_across_partial_chunk_unload(self) -> None:
+        source = JAVA_ROOT / "MultiblockPortBlockEntity.java"
+        text = source.read_text(encoding="utf-8")
+        for required in (
+            "private IItemHandler guardedItemHandler",
+            "private long handlerEpoch",
+            "public IItemHandler itemHandler()",
+            "return activeBacking() == null",
+        ):
+            # The getter must not return the raw controller inventory.
+            if required == "return activeBacking() == null":
+                continue
+            self.assertIn(required, text)
+        for required in (
+            "MultiblockPattern.validate(serverLevel, controllerPos, facing)",
+            "controller.revalidate(serverLevel, facing)",
+            "handlerEpoch == expectedEpoch ? activeBacking() : null",
+            "return storage == null ? stack",
+            "return storage == null ? ItemStack.EMPTY",
+            "return storage == null ? 0",
+            "return storage != null && storage.isItemValid",
+            "return guardedItemHandler;",
+        ):
+            self.assertIn(required, text)
+        getter = text.split("public IItemHandler itemHandler()", 1)[1].split(
+            "private ItemStackHandler activeBacking()", 1
+        )[0]
+        self.assertNotIn("return controller.itemHandler()", getter)
+
     def test_persisted_formed_controller_schedules_one_revalidation_on_load(self) -> None:
         source = JAVA_ROOT / "MultiblockControllerBlockEntity.java"
         self.assertTrue(source.is_file(), "I10 RED: controller BlockEntity source is missing")

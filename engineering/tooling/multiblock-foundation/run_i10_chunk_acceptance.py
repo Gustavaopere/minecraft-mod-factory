@@ -25,8 +25,10 @@ STOP_TIMEOUT_SECONDS = 20
 
 ALLOWED_SERVER_COMMANDS = frozenset(
     {
-        "forceload add 159 160 161 160",
-        "forceload remove 159 160 161 160",
+        "forceload add 159 159 161 161",
+        "forceload remove 159 159 161 161",
+        "forceload add 159 159 161 159",
+        "forceload remove 159 159 161 159",
         "i10probe baseline",
         "i10probe setup",
         "i10probe status",
@@ -412,7 +414,7 @@ def run_acceptance(project_root: Path | str, workspace: Path | str | None = None
 
     try:
         def phase1(session: ServerSession):
-            session.send("forceload add 159 160 161 160")
+            session.send("forceload add 159 159 161 161")
             setup = session.send("i10probe setup", "setup")
             assert setup is not None
             if not _formed(setup):
@@ -422,24 +424,51 @@ def run_acceptance(project_root: Path | str, workspace: Path | str | None = None
                 raise AcceptanceError(f"phase1: formation revision must be positive: {setup}")
 
             session.send("save-all flush")
-            session.send("forceload remove 159 160 161 160")
+            # Keep the controller/port row loaded while unloading the two
+            # northern casing chunks. A cached capability must fail closed.
+            session.send("forceload remove 159 159 161 159")
+            partial_unavailable = session.poll_status(
+                lambda marker: (
+                    marker["validation"] == "UNAVAILABLE"
+                    and marker["runtime"] == "PENDING_REVALIDATION"
+                    and marker["revision"] == revision
+                    and marker["sentinel"] == "minecraft:diamond"
+                    and marker["count"] == 1
+                    and marker["capability"] is False
+                    and marker["last_known_formed"] is True
+                ),
+                "partial footprint unavailable with controller and port loaded",
+            )
+            session.send("forceload add 159 159 161 159")
+            partial_recovered = session.poll_status(
+                lambda marker: _formed(marker, revision),
+                "partial footprint restored to FORMED",
+            )
+            session.send("save-all flush")
+            session.send("forceload remove 159 159 161 161")
             unloaded = session.poll_status(
                 _fully_unloaded,
                 "physical unload of the complete multiblock footprint",
             )
-            session.send("forceload add 159 160 161 160")
+            session.send("forceload add 159 159 161 161")
             recovered = session.poll_status(
                 lambda marker: _formed(marker, revision),
                 "FORMED recovery with same revision/sentinel after real footprint reload",
             )
             session.send("save-all flush")
-            return revision, {"setup": setup, "unloaded": unloaded, "recovered": recovered}
+            return revision, {
+                "setup": setup,
+                "partial_unavailable": partial_unavailable,
+                "partial_recovered": partial_recovered,
+                "unloaded": unloaded,
+                "recovered": recovered,
+            }
 
         revision, phase1_data = _run_phase(project, output, "phase1-unload-reload", phase1)
         summary["phases"].append({"phase": "unload_reload", **phase1_data})
 
         def phase2(session: ServerSession):
-            session.send("forceload add 159 160 161 160")
+            session.send("forceload add 159 159 161 161")
             recovered = session.poll_status(
                 lambda marker: _formed(marker, revision),
                 "persisted FORM state after server restart",
@@ -463,7 +492,7 @@ def run_acceptance(project_root: Path | str, workspace: Path | str | None = None
         summary["phases"].append({"phase": "restart_break", **phase2_data})
 
         def phase3(session: ServerSession):
-            session.send("forceload add 159 160 161 160")
+            session.send("forceload add 159 159 161 161")
             resolved = session.poll_status(
                 lambda marker: _unformed_invalid(marker, revision),
                 "UNFORMED/INVALID resolution of stale persisted formed history",
@@ -475,7 +504,7 @@ def run_acceptance(project_root: Path | str, workspace: Path | str | None = None
         summary["phases"].append({"phase": "broken_restart", **phase3_data})
 
         def phase4(session: ServerSession):
-            session.send("forceload add 159 160 161 160")
+            session.send("forceload add 159 159 161 161")
             baseline = session.send("i10probe baseline", "baseline")
             assert baseline is not None
             if not _baseline_unformed(baseline):

@@ -6,7 +6,7 @@ START-I10-MULTIPLAYER.bat or START-I10-MULTIPLAYER.sh that launches everything.
 Windows:
 1. Run START-I10-SERVER.bat and wait for the dedicated server to report Done.
 2. In that dedicated server console run:
-   forceload add 159 160 161 160
+   forceload add 159 159 161 161
 3. In the same server console run:
    i10probe baseline
 4. The baseline line must be exactly equivalent to:

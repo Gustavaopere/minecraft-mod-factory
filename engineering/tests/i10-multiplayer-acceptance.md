@@ -1,10 +1,10 @@
 # I10 Multiplayer Acceptance Protocol
 
-I10_MULTIPLAYER_ACCEPTANCE_STATE=PASS
+I10_MULTIPLAYER_ACCEPTANCE_STATE=PENDING_MANUAL_MULTIPLAYER_ACCEPTANCE
 
-## Accepted physical campaign — 2026-10-13
+## Historical accepted physical campaign — 2026-10-13 (runtime commit bff6f734)
 
-The physical multiplayer gate for the tested I10 runtime is **PASS**. This records the observed Windows 11 dedicated-server campaign, not permission to merge this PR; CI, branch integration and code review remain independent gates.
+The historical physical multiplayer campaign **PASSED for runtime commit `bff6f7348cc56de7e7cd13859be346c15369e363`**. The current branch is being modified to fix chunk-unload safety and complete-footprint force-loading after review P1 findings; its new runtime commit is **not yet physically accepted**. CI, branch integration and code review remain independent gates.
 
 - Validated runtime source commit: `bff6f7348cc56de7e7cd13859be346c15369e363`.
 - Target: Minecraft 1.21.1 / NeoForge 21.1.250 / Java 21.
@@ -18,7 +18,7 @@ The physical multiplayer gate for the tested I10 runtime is **PASS**. This recor
 - Client B disconnected at 19:38, restarted through its independent wrapper and rejoined at 19:39 while Client A remained connected; the seventh screenshot and server status at 19:40 confirm the current `INVALID / UNFORMED / capability=false` state without historical replay.
 - The dedicated server and client processes exited cleanly after `stop`; world data was saved. Logs and screenshot timestamps are from one complete acceptance cycle.
 
-**Scope boundary:** this PASS applies to the physical multiplayer evidence for source commit `bff6f7348cc56de7e7cd13859be346c15369e363`. Any later runtime change requires deciding whether physical retesting is necessary. This does not override merge conflicts, required checks, review rules, or Draft status.
+**Scope boundary:** the prior physical result applies exclusively to source commit `bff6f7348cc56de7e7cd13859be346c15369e363`. Because the runtime code changed, the current acceptance gate is **PENDING** until exact-commit revalidation is performed. Prior evidence is retained as provenance and must not be presented as a PASS for the modified build. This does not override merge conflicts, required checks, review rules, or Draft status.
 
 ## Purpose
 
@@ -85,7 +85,7 @@ Before either client performs an acceptance observation:
 
 1. Start the dedicated server manually from the exact physical artifact.
 2. Keep the tested footprint loaded with:
-   `forceload add 159 160 161 160`
+   `forceload add 159 159 161 161`
 3. Prepare the canonical structure with:
    `i10probe baseline`
 4. The server must report:
