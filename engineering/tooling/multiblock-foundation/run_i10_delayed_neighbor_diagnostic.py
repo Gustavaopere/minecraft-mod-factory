@@ -6,6 +6,8 @@ import argparse
 import json
 from pathlib import Path
 
+from run_i10_chunk_acceptance import ServerSession
+
 PARTIAL_ADD = "forceload add 159 160 161 160"
 CASING_ADD = "forceload add 159 159 161 159"
 FULL_ADD = "forceload add 159 159 161 161"
@@ -15,6 +17,34 @@ OUTPUT_RELATIVE = Path("build/i10-delayed-neighbor-diagnostic")
 
 class DiagnosticBlocked(RuntimeError):
     pass
+
+
+class DiagnosticSession(ServerSession):
+    """Only this disposable diagnostic may send the two extra bounded commands."""
+
+    def send(self, command, expected_action=None, marker_prefix="I10_PROBE "):
+        if command in {PARTIAL_ADD, CASING_ADD}:
+            if expected_action is not None or marker_prefix != "I10_PROBE ":
+                raise DiagnosticBlocked("PENDING: staged chunk commands cannot request a marker")
+            if self.process is None or self.process.poll() is not None or self.process.stdin is None:
+                raise DiagnosticBlocked("PENDING: diagnostic server is not writable")
+            self.process.stdin.write(command + "\n")
+            self.process.stdin.flush()
+            return None
+        return super().send(command, expected_action, marker_prefix)
+
+
+def _run_diagnostic_phase(project, output, phase, body):
+    session = DiagnosticSession(project, phase)
+    try:
+        session.start()
+        return body(session)
+    finally:
+        try:
+            session.stop_gracefully()
+        finally:
+            session.force_cleanup()
+            session.write_log(output)
 
 
 def is_pending_casing_gap(marker: dict[str, object], revision: int) -> bool:
@@ -132,7 +162,7 @@ def run_diagnostic(project_root: Path | str, workspace: Path | str | None = None
 
         revision, prepared = base._run_phase(project, output, "prepare-full-unload", prepare)
         summary["phases"].append({"phase": "prepare", **prepared})
-        observed = base._run_phase(
+        observed = _run_diagnostic_phase(
             project, output, "delayed-neighbor-restart",
             lambda session: verify_staged_neighbor_liveness(session, revision),
         )

@@ -27,8 +27,6 @@ ALLOWED_SERVER_COMMANDS = frozenset(
     {
         "forceload add 159 159 161 161",
         "forceload remove 159 159 161 161",
-        "forceload add 159 160 161 160",
-        "forceload add 159 159 161 159",
         "i10probe baseline",
         "i10probe setup",
         "i10probe status",

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import sys
 import unittest
 from pathlib import Path
 
@@ -10,6 +11,7 @@ SCRIPT = ROOT / "engineering/tooling/multiblock-foundation/run_i10_delayed_neigh
 
 def load_diagnostic():
     assert SCRIPT.is_file(), "I10 RED: delayed-neighbor diagnostic is missing"
+    sys.path.insert(0, str(SCRIPT.parent))
     spec = importlib.util.spec_from_file_location("i10_delayed_neighbor_diagnostic", SCRIPT)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
