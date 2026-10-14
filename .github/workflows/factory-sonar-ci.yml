@@ -130,6 +130,7 @@ jobs:
                 engineering/tests/test_i10_multiblock_foundation_gametest.py \
                 engineering/tests/test_i10_multiblock_foundation_provider.py \
                 engineering/tests/test_i10_chunk_acceptance.py \
+                engineering/tests/test_i10_delayed_neighbor_diagnostic.py \
                 engineering/tests/test_i10_multiplayer_acceptance.py \
                 engineering/tests/test_i10_multiblock_foundation_composition.py \
                 engineering/tests/test_i10_multiblock_foundation_ci.py
@@ -145,6 +146,7 @@ jobs:
                 engineering/tests/test_i10_multiblock_foundation_gametest.py \
                 engineering/tests/test_i10_multiblock_foundation_provider.py \
                 engineering/tests/test_i10_chunk_acceptance.py \
+                engineering/tests/test_i10_delayed_neighbor_diagnostic.py \
                 engineering/tests/test_i10_multiplayer_acceptance.py \
                 engineering/tests/test_i10_multiblock_foundation_composition.py \
                 engineering/tests/test_i10_multiblock_foundation_ci.py
