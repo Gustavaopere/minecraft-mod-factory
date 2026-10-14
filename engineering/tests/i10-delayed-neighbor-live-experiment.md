@@ -39,3 +39,16 @@ The historical partial `forceload` approach previously failed to unload neighbor
 - Verdict: **H1 not reproduced in E1**. H2 was **not tested**, because the required unavailable-neighbor precondition was never observed. The retry-disabled negative control was **not run**. No P2 closure and no physical multiplayer PASS are justified.
 - Interpretation: ordinary chunk-ticket propagation is a plausible mechanism for adjacent casing availability, but E1 does not include internal ticket traces proving this mechanism. The recorded result is narrower: staged `forceload` did not produce the required observable unavailable state in this run.
 - Next validation must use a confirmed version-matched isolation mechanism or an explicitly scoped alternative behavioral seam, followed by the negative control and independent review. **Do not repeat the same staged ticket experiment without a revised hypothesis.**
+
+## Steady-state ticket topology finding — bounded source-model analysis
+
+This section is **not** a recovered-runtime PASS. The I10 fixture controller at block (159,80,160), facing WEST, with local X=-1..1 and depth Z=0..2 spans exactly four chunks: (9,9), (9,10), (10,9), (10,10). The E1 staged command force-loads (9,10) and (10,10). Under Minecraft 1.21.1's **steady-state** FORCED ticket rule (level 31, propagating +1 per Chebyshev neighbor ring), the two casing chunks (9,9) and (10,9) receive level 32, which is inside the level <=33 FULL-accessible boundary. Thus vanilla steady-state ticket propagation predicts no unavailable casing neighbor in the E1 layout.
+
+Executable source/topology contract: `python3 -m unittest engineering/tests/test_i10_ticket_reachability.py`. The test parses the canonical Java pattern bounds and controller placement, rejects geometry/transform drift, and checks exact four-chunk levels and two- and three-ring controls. This is a **model based on source geometry and documented ticket levels**, not a measurement of ticket internals in E1. It does not rule out asynchronous readiness races or additional ticket sources. E1 observed the corresponding `PENDING_UNREPRODUCED` result but did not directly trace tickets.
+
+External references consulted on 2026-10-14:
+- Minecraft 1.21.1 ChunkLevel mappings and FullChunkStatus methods: https://mappings.dev/1.21.1/net/minecraft/server/level/ChunkLevel.html
+- Java /forceload level-31 and neighbor propagation: https://wiki.ronlab.site/content/minecraftwiki_en_all_maxi_2025-11/Commands/forceload
+- Version-matched NeoForge `ChunkTicketLevelUpdatedEvent` (1.21.1 / 21.1.250), including getChunkPos, getOldTicketLevel and getNewTicketLevel: https://aldak.netlify.app/javadoc/1.21.1-21.1.x/net/neoforged/neoforge/event/level/chunkticketlevelupdatedevent
+
+**Next experiment boundary:** Do not repeat E1's identical stable-ticket setup expecting a genuinely unavailable adjacent casing chunk. A fixture-only **synthetic unavailable-chunk seam** could exercise native controller scheduled retries and a retry-disabled negative control; any positive result must be labelled `SYNTHETIC_UNAVAILABLE`, never a physical chunk unload. Actual asynchronous loading/chunk-ticket observation and the separate exact-HEAD two-real-client acceptance remain pending. Do not silently add a synthetic seam to the golden runtime or remove the existing full-four-chunk acceptance.
