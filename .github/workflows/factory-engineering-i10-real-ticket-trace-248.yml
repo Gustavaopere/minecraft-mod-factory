@@ -1,0 +1,90 @@
+name: Factory I10 E3 Real Ticket Trace 21.1.248 (Exploratory)
+
+on:
+  push:
+    branches:
+      - engineering/i10-multiblock-foundation-reference
+    paths:
+      - '.github/workflows/factory-engineering-i10-real-ticket-trace-248.yml'
+      - 'engineering/tests/experiments/i10_real_ticket_trace_248.py'
+      - 'engineering/tests/test_i10_real_ticket_trace_248.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ticket-trace:
+    name: E3 real ticket audit at physical NeoForge 21.1.248
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      GRADLE_USER_HOME: ${{ github.workspace }}/.factory-ci/i10/gradle-home
+    steps:
+      - name: Checkout immutable source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+
+      - name: Set up Java 21
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Verify isolated E3 regression and unchanged physical-loader contract
+        run: |
+          python3 -m unittest -v engineering/tests/test_i10_real_ticket_trace_248.py
+          python3 -m unittest -v engineering/tests/test_i10_ticket_reachability.py
+
+      - name: Materialize disposable I10 golden and reprofile to physical 21.1.248
+        run: |
+          python3 engineering/tooling/multiblock-foundation/materialize_i10.py .factory-ci/i10/generated
+          python3 engineering/tests/experiments/i10_real_ticket_trace_248.py prepare \
+            --project .factory-ci/i10/generated
+          chmod +x .factory-ci/i10/generated/gradlew
+          grep '^neo_version=21.1.248$' .factory-ci/i10/generated/gradle.properties
+          grep '^net.neoforged:neoforge:21.1.248=' .factory-ci/i10/generated/gradle.lockfile
+
+      - name: Compile and unit-test exact physical-loader fixture with observational event hook
+        run: |
+          cd .factory-ci/i10/generated
+          ./gradlew --no-daemon test build
+
+      - name: Execute one bounded staged-reload probe without synthetic availability
+        id: probe
+        shell: bash
+        run: |
+          set -uo pipefail
+          set +e
+          python3 engineering/tooling/multiblock-foundation/run_i10_delayed_neighbor_diagnostic.py \
+            --project .factory-ci/i10/generated > .factory-ci/i10/e3-probe.log 2>&1
+          rc=$?
+          set -e
+          printf 'exit_code=%s\n' "$rc" >> "$GITHUB_OUTPUT"
+          tail -n 12 .factory-ci/i10/e3-probe.log
+          if [[ "$rc" -ne 0 && "$rc" -ne 2 ]]; then
+            echo "::error title=E3 unexpected server failure::See E3 probe and server logs, exit=$rc"
+            exit 1
+          fi
+
+      - name: Independently audit real chunk tickets and physical availability
+        env:
+          E3_PROBE_EXIT: ${{ steps.probe.outputs.exit_code }}
+        run: |
+          python3 engineering/tests/experiments/i10_real_ticket_trace_248.py analyze \
+            --project .factory-ci/i10/generated --exit-code "$E3_PROBE_EXIT"
+
+      - name: Publish evidence with explicit no-PASS boundary
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: i10-e3-real-ticket-trace-21-1-248
+          path: |
+            .factory-ci/i10/e3-probe.log
+            .factory-ci/i10/generated/build/i10-real-ticket-trace/
+            .factory-ci/i10/generated/build/i10-delayed-neighbor-diagnostic/
+          if-no-files-found: error
+          retention-days: 7
