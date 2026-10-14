@@ -60,7 +60,7 @@ class ConstructionC3VanillaGoldenTest(unittest.TestCase):
         self.assertIn("permissions:\n  contents: read", workflow)
         self.assertIn("actions/checkout@11d5960a326750d5838078e36cf38b85af677262", workflow)
         self.assertIn("actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065", workflow)
-        self.assertIn("pip install --require-hashes --no-deps", workflow)
+        self.assertIn("pip install --only-binary :all: --no-binary noise --require-hashes --no-deps", workflow)
         self.assertIn("python3 -m unittest construction/tests/test_c3_vanilla_golden.py -v", workflow)
         self.assertIn("python3 -m unittest construction/tests/test_c2_build_ir.py -v", workflow)
         self.assertIn("python3 -m unittest construction/tests/test_c0_foundation.py -v", workflow)

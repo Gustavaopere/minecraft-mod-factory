@@ -100,7 +100,7 @@ class ConstructionC1SchematicaPreservationTest(unittest.TestCase):
     def test_workflow_uses_lock_without_editable_dependency_resolution(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn(
-            "python3 -m pip install --require-hashes --no-deps -r construction/upstream/harness/schematica-test-lock.txt",
+            "python3 -m pip install --only-binary :all: --no-binary noise --require-hashes --no-deps -r construction/upstream/harness/schematica-test-lock.txt",
             workflow,
         )
         self.assertIn("PYTHONPATH: construction/upstream/snapshots/schematica/scripts", workflow)

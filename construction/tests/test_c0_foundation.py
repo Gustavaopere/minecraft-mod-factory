@@ -143,7 +143,14 @@ class ConstructionC0FoundationTest(unittest.TestCase):
             "construction/upstream/harness/schematica-test-lock.txt",
             workflow,
         )
-        self.assertIn("pip install --require-hashes --no-deps", workflow)
+        self.assertIn(
+            "pip install --only-binary :all: --no-binary noise --require-hashes --no-deps",
+            workflow,
+        )
+        self.assertIn(
+            "pip install --only-binary :all: --require-hashes --no-deps",
+            workflow,
+        )
 
     def test_snapshot_boundary_accepts_current_repository_state(self) -> None:
         module = load_validator()

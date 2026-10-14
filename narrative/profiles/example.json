@@ -4,6 +4,39 @@
   "entity_types": ["HIST", "ARC", "NPC", "QST", "FAC", "SET", "LOC", "EVT", "EVD", "END", "DLG"],
   "editorial_state_prefixes": ["CANON", "DRAFT", "EXPERIMENTAL", "OBSOLETE"],
   "editorial_state_headings": ["Editorial state"],
+  "entity_required_sections": {
+    "EVD": {
+      "provenance": ["Provenance"],
+      "supports": ["What it supports"],
+      "limits": ["What it does NOT prove"],
+      "reliability": ["Reliability/uncertainty"]
+    }
+  },
+  "entity_reference_rules": {
+    "EVD": {
+      "provenance": {
+        "allowed_types": ["NPC", "FAC", "SET", "LOC"],
+        "min_references": 0
+      }
+    }
+  },
+  "auxiliary_document_contracts": {
+    "quest-lifecycle": {
+      "include": ["quests/**/*-lifecycle.md"],
+      "required_sections": {
+        "availability": ["Availability"],
+        "discovery": ["Discovery"],
+        "engagement": ["Engagement"],
+        "resolution": ["Resolution"]
+      },
+      "reference_rules": {
+        "discovery": {
+          "allowed_types": ["NPC", "FAC", "LOC"],
+          "min_references": 0
+        }
+      }
+    }
+  },
   "dialogue_entity_type": "DLG",
   "dialogue_required_sections": {
     "editorial-state": ["editorial state"],
@@ -21,5 +54,15 @@
     "voice-notes": ["voice notes"],
     "qa": ["qa"],
     "internal-spoilers": ["internal spoilers"]
+  },
+  "dialogue_reference_rules": {
+    "participants": {
+      "allowed_types": ["NPC"],
+      "min_references": 1
+    },
+    "related-content": {
+      "allowed_types": ["ARC", "QST"],
+      "min_references": 0
+    }
   }
 }

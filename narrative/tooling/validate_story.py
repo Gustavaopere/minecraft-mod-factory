@@ -16,7 +16,22 @@ class Issue(NamedTuple):
     line: int
 
 
-FATAL_CODES = {'duplicate-id', 'filename-id-mismatch', 'invalid-editorial-state', 'missing-editorial-state-value'}
+FATAL_CODES = {
+    'duplicate-id',
+    'filename-id-mismatch',
+    'invalid-editorial-state',
+    'missing-editorial-state-value',
+    'missing-required-section',
+    'empty-required-section',
+    'missing-entity-section-reference',
+    'invalid-entity-reference-type',
+    'missing-auxiliary-required-section',
+    'empty-auxiliary-required-section',
+    'missing-auxiliary-section-reference',
+    'invalid-auxiliary-reference-type',
+    'missing-auxiliary-filename-identity',
+    'auxiliary-filename-identity-mismatch',
+}
 
 
 def _patterns(profile: NarrativeProfile):
@@ -57,12 +72,253 @@ def _editorial_state_issues(path: pathlib.Path, lines: list[str], headings: tupl
     return issues
 
 
+def _required_section_issues(
+    path: pathlib.Path,
+    lines: list[str],
+    record_id: str,
+    declaration_line: int,
+    required_sections: dict[str, tuple[str, ...]],
+) -> list[Issue]:
+    if not required_sections:
+        return []
+
+    aliases_by_key = {
+        key: {alias.strip().casefold() for alias in aliases}
+        for key, aliases in required_sections.items()
+    }
+    heading_locations: dict[str, list[int]] = {key: [] for key in required_sections}
+
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped.startswith('## '):
+            continue
+        heading = stripped[3:].strip().casefold()
+        for key, aliases in aliases_by_key.items():
+            if heading in aliases:
+                heading_locations[key].append(index)
+
+    issues: list[Issue] = []
+    for key in required_sections:
+        locations = heading_locations[key]
+        if not locations:
+            issues.append(Issue('missing-required-section', f'{record_id}:{key}', path, declaration_line))
+            continue
+
+        populated = False
+        for heading_index in locations:
+            for candidate_index in range(heading_index + 1, len(lines)):
+                stripped = lines[candidate_index].strip()
+                if stripped.startswith('## '):
+                    break
+                if stripped:
+                    populated = True
+                    break
+            if populated:
+                break
+
+        if not populated:
+            issues.append(Issue('empty-required-section', f'{record_id}:{key}', path, locations[0] + 1))
+
+    return issues
+
+
+def _entity_reference_issues(
+    path: pathlib.Path,
+    lines: list[str],
+    record_id: str,
+    required_sections: dict[str, tuple[str, ...]],
+    reference_rules,
+    id_re,
+) -> list[Issue]:
+    if not reference_rules:
+        return []
+
+    aliases_by_key = {
+        key: {alias.strip().casefold() for alias in aliases}
+        for key, aliases in required_sections.items()
+    }
+    heading_locations: dict[str, list[int]] = {key: [] for key in reference_rules}
+
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped.startswith('## '):
+            continue
+        heading = stripped[3:].strip().casefold()
+        for key in reference_rules:
+            if heading in aliases_by_key.get(key, set()):
+                heading_locations[key].append(index)
+
+    issues: list[Issue] = []
+    for key, rule in reference_rules.items():
+        locations = heading_locations[key]
+        if not locations:
+            continue
+
+        populated = False
+        references: set[str] = set()
+        for heading_index in locations:
+            for candidate_index in range(heading_index + 1, len(lines)):
+                stripped = lines[candidate_index].strip()
+                if stripped.startswith('## '):
+                    break
+                if not stripped:
+                    continue
+                populated = True
+                references.update(id_re.findall(lines[candidate_index]))
+
+        if not populated:
+            continue
+        line_no = locations[0] + 1
+        if len(references) < rule.min_references:
+            issues.append(Issue(
+                'missing-entity-section-reference',
+                f'{record_id}:{key}',
+                path,
+                line_no,
+            ))
+        for ref in sorted(references):
+            entity_type = ref.split('-', 1)[0]
+            if entity_type not in rule.allowed_types:
+                issues.append(Issue(
+                    'invalid-entity-reference-type',
+                    f'{record_id}:{key}:{ref}',
+                    path,
+                    line_no,
+                ))
+
+    return issues
+
+
+def _remap_issue_codes(issues: list[Issue], mapping: dict[str, str]) -> list[Issue]:
+    return [
+        Issue(mapping.get(issue.code, issue.code), issue.ref, issue.path, issue.line)
+        for issue in issues
+    ]
+
+
+def _auxiliary_contract_matches(root: pathlib.Path, profile: NarrativeProfile):
+    if not profile.auxiliary_document_contracts:
+        return {}
+
+    trusted_root = root.resolve(strict=True)
+    matches: dict[str, list[tuple[str, object]]] = {}
+    for contract_name, contract in profile.auxiliary_document_contracts.items():
+        seen: set[str] = set()
+        for pattern in contract.include:
+            for candidate in root.glob(pattern):
+                if not candidate.is_file() or candidate.suffix.casefold() != '.md':
+                    continue
+                resolved = candidate.resolve(strict=True)
+                try:
+                    resolved.relative_to(trusted_root)
+                except ValueError as exc:
+                    raise ValueError('auxiliary document resolved outside trusted story_root') from exc
+                relative = candidate.relative_to(root).as_posix()
+                if relative in seen:
+                    continue
+                seen.add(relative)
+                matches.setdefault(relative, []).append((contract_name, contract))
+    return matches
+
+
+def _auxiliary_filename_identity_issues(
+    path,
+    lines,
+    contract_name,
+    contract,
+    id_re,
+    filename_id_re,
+) -> list[Issue]:
+    section_key = contract.filename_identity_section
+    if section_key is None:
+        return []
+
+    filename_match = filename_id_re.match(path.name)
+    if filename_match is None:
+        return [Issue('missing-auxiliary-filename-identity', contract_name, path, 1)]
+
+    aliases = {
+        alias.strip().casefold()
+        for alias in contract.required_sections.get(section_key, ())
+    }
+    heading_locations: list[int] = []
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.startswith('## ') and stripped[3:].strip().casefold() in aliases:
+            heading_locations.append(index)
+
+    if not heading_locations:
+        return []
+
+    references: set[str] = set()
+    populated = False
+    for heading_index in heading_locations:
+        for candidate_index in range(heading_index + 1, len(lines)):
+            stripped = lines[candidate_index].strip()
+            if stripped.startswith('## '):
+                break
+            if not stripped:
+                continue
+            populated = True
+            references.update(id_re.findall(lines[candidate_index]))
+
+    if not populated:
+        return []
+
+    expected = filename_match.group(1)
+    if references != {expected}:
+        return [Issue(
+            'auxiliary-filename-identity-mismatch',
+            f'{contract_name}:{section_key}:{expected}',
+            path,
+            heading_locations[0] + 1,
+        )]
+    return []
+
+
+def _auxiliary_contract_issues(path, lines, contract_name, contract, id_re, filename_id_re) -> list[Issue]:
+    structural = _required_section_issues(
+        path,
+        lines,
+        contract_name,
+        1,
+        contract.required_sections,
+    )
+    structural = _remap_issue_codes(structural, {
+        'missing-required-section': 'missing-auxiliary-required-section',
+        'empty-required-section': 'empty-auxiliary-required-section',
+    })
+
+    references = _entity_reference_issues(
+        path,
+        lines,
+        contract_name,
+        contract.required_sections,
+        contract.reference_rules,
+        id_re,
+    )
+    references = _remap_issue_codes(references, {
+        'missing-entity-section-reference': 'missing-auxiliary-section-reference',
+        'invalid-entity-reference-type': 'invalid-auxiliary-reference-type',
+    })
+    identity = _auxiliary_filename_identity_issues(
+        path,
+        lines,
+        contract_name,
+        contract,
+        id_re,
+        filename_id_re,
+    )
+    return structural + references + identity
+
+
 def validate(root: pathlib.Path, profile: NarrativeProfile) -> list[Issue]:
     root = pathlib.Path(root)
     id_re, decl_re, filename_id_re = _patterns(profile)
     declarations: dict[str, list[tuple[pathlib.Path, int]]] = {}
     references: list[tuple[str, pathlib.Path, int]] = []
     issues: list[Issue] = []
+    auxiliary_matches = _auxiliary_contract_matches(root, profile)
 
     for path in _markdown_files(root):
         text = path.read_text(encoding='utf-8')
@@ -70,6 +326,7 @@ def validate(root: pathlib.Path, profile: NarrativeProfile) -> list[Issue]:
         issues.extend(_editorial_state_issues(path, lines, profile.editorial_state_headings, profile.editorial_state_prefixes))
         filename_match = filename_id_re.match(path.name)
         first_declared_id = None
+        first_declaration_line = None
         for line_no, line in enumerate(lines, start=1):
             decl = decl_re.match(line)
             if decl:
@@ -77,10 +334,41 @@ def validate(root: pathlib.Path, profile: NarrativeProfile) -> list[Issue]:
                 declarations.setdefault(ref, []).append((path, line_no))
                 if first_declared_id is None:
                     first_declared_id = ref
+                    first_declaration_line = line_no
                     if filename_match and filename_match.group(1) != ref:
                         issues.append(Issue('filename-id-mismatch', ref, path, line_no))
             for ref in id_re.findall(line):
                 references.append((ref, path, line_no))
+
+        if first_declared_id is not None and first_declaration_line is not None:
+            entity_type = first_declared_id.split('-', 1)[0]
+            required_sections = profile.entity_required_sections.get(entity_type, {})
+            issues.extend(_required_section_issues(
+                path,
+                lines,
+                first_declared_id,
+                first_declaration_line,
+                required_sections,
+            ))
+            issues.extend(_entity_reference_issues(
+                path,
+                lines,
+                first_declared_id,
+                required_sections,
+                profile.entity_reference_rules.get(entity_type, {}),
+                id_re,
+            ))
+        else:
+            relative = path.relative_to(root).as_posix()
+            for contract_name, contract in auxiliary_matches.get(relative, []):
+                issues.extend(_auxiliary_contract_issues(
+                    path,
+                    lines,
+                    contract_name,
+                    contract,
+                    id_re,
+                    filename_id_re,
+                ))
 
     for ref, locations in sorted(declarations.items()):
         if len(locations) > 1:
@@ -120,10 +408,10 @@ def main(argv=None, workspace_root=None) -> int:
     try:
         profile = load_profile(args.profile, workspace)
         root = resolve_workspace_path(args.root or profile.story_root, workspace)
+        issues = validate(root, profile)
     except (OSError, ValueError):
         print('ERROR workspace-path: profile/root must resolve inside the trusted workspace')
         return 2
-    issues = validate(root, profile)
     if issues:
         if args.reveal:
             for issue in issues:

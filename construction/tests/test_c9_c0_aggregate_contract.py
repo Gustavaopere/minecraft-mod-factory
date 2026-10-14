@@ -12,12 +12,12 @@ class C9C0AggregateContractTests(unittest.TestCase):
     def test_c0_aggregate_installs_c9_hash_pinned_additions(self) -> None:
         workflow = C0_WORKFLOW.read_text(encoding="utf-8")
         self.assertIn(
-            "python3 -m pip install --require-hashes --no-deps -r "
+            "python3 -m pip install --only-binary :all: --no-binary noise --require-hashes --no-deps -r "
             "construction/upstream/harness/schematica-test-lock.txt",
             workflow,
         )
         self.assertIn(
-            "python3 -m pip install --require-hashes --no-deps -r "
+            "python3 -m pip install --only-binary :all: --require-hashes --no-deps -r "
             "construction/upstream/harness/c9-mcp-lock.txt",
             workflow,
         )

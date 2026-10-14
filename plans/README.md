@@ -4,7 +4,7 @@ Este diretório mantém os dois **planos mestres canônicos** na raiz e adiciona
 
 ## Legenda de estado
 
-- ✅ — milestone encerrado com evidência aceita no `STATUS.md` canônico ou no gate correspondente.
+- ✅ — milestone encerrado com evidência aceita no `STATUS.md` canônico, implementação presente na `main` ou gate correspondente.
 - 🔄 — fronteira atual de execução; ainda não concluída.
 - ⬜ — milestone pendente/não iniciado.
 - ⛔ — bloqueado por um gate explícito.
@@ -15,10 +15,13 @@ Este diretório mantém os dois **planos mestres canônicos** na raiz e adiciona
 
 - [Mod Engineering / Integration Control Plane](./mod-engineering/README.md)
 - [Repo Textura / Visual & Asset Pipeline](./visual-assets/README.md)
+- [Narrative Authoring / Story Creation Toolkit](./narrative-authoring/README.md)
 
 ## Planos mestres canônicos
 
 - [Mod Engineering — V1.1](./PLANO-MESTRE-MINECRAFT-MOD-FACTORY-MOD-ENGINEERING-NEOFORGE-1.21.1-V1.1.md)
 - [Repo Textura / Visual & Asset Pipeline — V5.1](./PLANO-MESTRE-UNIFICADO-MINECRAFT-MOD-FACTORY-REPO-TEXTURA-BLOCKBENCH-ASSET-MCP-V5.1.md)
 
-Os arquivos das subpastas são mapas de execução derivados dos planos mestres e do `STATUS.md`; não criam uma segunda authority e não substituem os planos canônicos.
+Os roadmaps de `mod-engineering/` e `visual-assets/` são mapas de execução derivados dos respectivos planos mestres e do `STATUS.md`; não criam uma segunda authority.
+
+O roadmap de `narrative-authoring/` acompanha a capability reutilizável existente em `narrative/` e usa implementação/testes na `main` como evidência para ✅. O plano histórico [`2026-09-13-narrative-authoring-migration.md`](./2026-09-13-narrative-authoring-migration.md) registra a migração inicial da ferramenta narrativa para a Factory.

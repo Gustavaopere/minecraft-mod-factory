@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "profile_contract_revision": 1,
+  "goldens": [
+    {
+      "name": "inventory",
+      "expected": "narrative/golden/v1/expected/inventory.json",
+      "actual": ".factory-ci/narrative-golden/inventory.json"
+    },
+    {
+      "name": "story-valid",
+      "expected": "narrative/golden/v1/expected/story-valid.txt",
+      "actual": ".factory-ci/narrative-golden/story-valid.txt"
+    },
+    {
+      "name": "advanced-valid",
+      "expected": "narrative/golden/v1/expected/advanced-valid.txt",
+      "actual": ".factory-ci/narrative-golden/advanced-valid.txt"
+    },
+    {
+      "name": "story-invalid-spoiler-safe",
+      "expected": "narrative/golden/v1/expected/story-invalid.txt",
+      "actual": ".factory-ci/narrative-golden/story-invalid.txt"
+    },
+    {
+      "name": "advanced-invalid-spoiler-safe",
+      "expected": "narrative/golden/v1/expected/advanced-invalid.txt",
+      "actual": ".factory-ci/narrative-golden/advanced-invalid.txt"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Synthetic narrative handoff fixture</title>
+  <desc id="desc">A neutral placeholder used only to verify narrative-to-visual asset references.</desc>
+  <rect x="1" y="1" width="62" height="62" fill="none" stroke="currentColor" stroke-width="2"/>
+  <circle cx="32" cy="24" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+  <path d="M16 54c2-12 10-18 16-18s14 6 16 18" fill="none" stroke="currentColor" stroke-width="2"/>
+</svg>

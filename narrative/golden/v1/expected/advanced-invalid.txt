@@ -1,0 +1,2 @@
+ERROR missing-knowledge-reference-target: 1
+Details hidden by spoiler-safe mode. Use --reveal for editorial debugging.

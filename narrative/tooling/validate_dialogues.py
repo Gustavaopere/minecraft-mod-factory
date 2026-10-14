@@ -33,11 +33,12 @@ def _patterns(profile: NarrativeProfile):
         re.compile(r'^' + dlg + r'-\d{4}.*\.md$', re.IGNORECASE),
         re.compile(r'^#\s+' + dlg + r'-\d{4}\b', re.IGNORECASE | re.MULTILINE),
         re.compile(r'\b(?:' + types + r')-####'),
+        re.compile(r'\b(?:' + types + r')-\d{4}\b'),
     )
 
 
 def _dialogue_files(root: pathlib.Path, profile: NarrativeProfile):
-    file_re, _, _ = _patterns(profile)
+    file_re, _, _, _ = _patterns(profile)
     return sorted(path for path in pathlib.Path(root).rglob('*.md') if path.is_file() and file_re.match(path.name))
 
 
@@ -65,9 +66,28 @@ def _find_section(sections, aliases):
     return None
 
 
+def _reference_rule_issues(path: pathlib.Path, located, profile: NarrativeProfile, id_re) -> list[Issue]:
+    issues: list[Issue] = []
+    for detail, rule in profile.dialogue_reference_rules.items():
+        result = located.get(detail)
+        if result is None:
+            continue
+        body, line = result
+        if not body:
+            continue
+        references = tuple(sorted(set(id_re.findall(body))))
+        if len(references) < rule.min_references:
+            issues.append(Issue('missing-section-reference', detail, path, line))
+        for ref in references:
+            entity_type = ref.split('-', 1)[0]
+            if entity_type not in rule.allowed_types:
+                issues.append(Issue('invalid-reference-type', f'{detail}:{ref}', path, line))
+    return issues
+
+
 def validate_dialogue(path: pathlib.Path, profile: NarrativeProfile) -> list[Issue]:
     text = path.read_text(encoding='utf-8')
-    _, title_re, placeholder_re = _patterns(profile)
+    _, title_re, placeholder_re, id_re = _patterns(profile)
     issues: list[Issue] = []
     if not title_re.search(text):
         issues.append(Issue('missing-dialogue-title', profile.dialogue_entity_type, path, 1))
@@ -85,6 +105,7 @@ def validate_dialogue(path: pathlib.Path, profile: NarrativeProfile) -> list[Iss
         located[detail] = (body, line)
         if not body:
             issues.append(Issue('empty-section', detail, path, line))
+    issues.extend(_reference_rule_issues(path, located, profile, id_re))
     qa = located.get('qa')
     if qa and qa[0] and not CHECKBOX_RE.search(qa[0]):
         issues.append(Issue('qa-without-checkbox', 'qa', path, qa[1]))
