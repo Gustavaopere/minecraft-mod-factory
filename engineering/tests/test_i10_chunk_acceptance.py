@@ -614,6 +614,8 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
         """Regression: a capability query can natively revalidate a PENDING controller."""
         text = COMMAND.read_text(encoding="utf-8")
         emit = text.split("private static void emit(", 1)[1]
+        self.assertIn("MultiblockRuntimeState runtimeAfterCapability = controller == null", emit)
+        self.assertIn('"I10_STATUS_TRANSITION action={} pre_runtime={} post_runtime={} revision={} game_tick={}"', emit)
         runtime_before = emit.index("MultiblockRuntimeState runtime = controller == null")
         capability_query = emit.index("boolean capability = level.hasChunkAt(portPos)")
         runtime_after = emit.index("MultiblockRuntimeState runtimeAfterCapability = controller == null")
