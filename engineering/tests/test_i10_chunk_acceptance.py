@@ -610,6 +610,29 @@ class I10ChunkAcceptanceContract(unittest.TestCase):
         ):
             self.assertIn(token, text)
 
+    def test_status_records_runtime_before_and_after_capability_without_second_query(self) -> None:
+        """Regression: a capability query can natively revalidate a PENDING controller."""
+        text = COMMAND.read_text(encoding="utf-8")
+        emit = text.split("private static void emit(", 1)[1]
+        runtime_before = emit.index("MultiblockRuntimeState runtime = controller == null")
+        capability_query = emit.index("boolean capability = level.hasChunkAt(portPos)")
+        runtime_after = emit.index("MultiblockRuntimeState runtimeAfterCapability = controller == null")
+        trace = emit.index('"I10_STATUS_TRANSITION action={} pre_runtime={} post_runtime={} revision={} game_tick={}"')
+        original = emit.index('"I10_PROBE action={} validation={} runtime={} revision={}')
+        self.assertLess(runtime_before, capability_query)
+        self.assertLess(capability_query, runtime_after)
+        self.assertLess(runtime_after, trace)
+        self.assertLess(trace, original)
+        self.assertEqual(1, emit.count("level.getCapability("))
+        self.assertIn('if ("status".equals(action))', emit)
+        self.assertIn("runtimeAfterCapability.name()", emit)
+        self.assertIn("runtime.name()", emit)
+        self.assertIn("level.getGameTime()", emit)
+        self.assertIn(
+            '"I10_PROBE action={} validation={} runtime={} revision={} sentinel={} count={} capability={} last_known_formed={}"',
+            emit,
+        )
+
     def test_peek_java_command_never_queries_capability_or_revalidates(self) -> None:
         text = COMMAND.read_text(encoding="utf-8")
         peek = text.split("private static int peek(CommandSourceStack source)", 1)[1].split(
