@@ -151,11 +151,17 @@ jobs:
 
       # An intermittent status transition must never disappear into a red CI log.
       # Diagnostic collection does not change a failed gate into a passing gate.
-      - name: Retain genuine I10 structural failure evidence
-        if: failure()
+      - name: Verify native I10 pre/post state-transition marker after successful acceptance
+        if: success()
+        run: |
+          grep -F 'I10_STATUS_TRANSITION action=status' \
+            .factory-ci/i10/generated/build/i10-acceptance/phase1-unload-reload.log >/dev/null
+
+      - name: Retain passive I10 structural event evidence
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: i10-structural-failure-${{ github.run_id }}
+          name: i10-structural-observation-${{ github.run_id }}
           path: |
             .factory-ci/i10/generated/build/i10-acceptance/
             .factory-ci/i10/generated/run/server/logs/latest.log
