@@ -155,7 +155,10 @@ def derive(source: Path | str, output: Path | str, archive: Path | str, source_s
             for path in sorted(updated):
                 info = zipfile.ZipInfo(path, (2026, 10, 14, 0, 0, 0))
                 info.compress_type = zipfile.ZIP_DEFLATED
-                info.external_attr = 0o100644 << 16
+                info.external_attr = (0o100755 if path in {
+                    "gradlew", "START-I10-SERVER.sh", "START-I10-CLIENT-A.sh",
+                    "START-I10-CLIENT-B.sh", "run-i10-manual-process.py",
+                } else 0o100644) << 16
                 z.writestr(info, updated[path], compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
         with zipfile.ZipFile(zip_path) as z:
             if z.testzip() is not None or len(z.namelist()) != len(updated):
