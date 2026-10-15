@@ -249,6 +249,43 @@ public final class I10MultiblockGameTests {
     }
 
     /**
+     * E5 deterministic causality proof: a capability lookup can revalidate
+     * a pending controller even when the probe sampled its state earlier.
+     * All chunks are already available; this deliberately does NOT prove
+     * delayed-neighbor chunk recovery or physical retry liveness.
+     */
+    @GameTest(template = "multiblock_test", timeoutTicks = 160)
+    public static void pendingCapabilityQueryRestoresFormedState(GameTestHelper helper) {
+        Direction facing = Direction.NORTH;
+        MultiblockControllerBlockEntity controller = buildStructure(helper, facing);
+        require(controller.tryForm(helper.getLevel(), facing) == MultiblockValidationResult.VALID,
+                helper, facing, "Fixture must form before the capability-transition test");
+        MultiblockPortBlockEntity port = requirePort(helper, facing);
+        long revision = controller.formationRevision();
+        require(revision > 0L && port.linkedRevision() == revision,
+                helper, facing, "Fixture must have a live same-revision port binding");
+        require(MultiblockPattern.validate(helper.getLevel(), controller.getBlockPos(), facing)
+                        == MultiblockValidationResult.VALID,
+                helper, facing, "All footprint chunks must be available and valid");
+
+        controller.markPendingRevalidation();
+        MultiblockRuntimeState beforeCapability = controller.runtimeState();
+        require(beforeCapability == MultiblockRuntimeState.PENDING_REVALIDATION
+                        && controller.lastKnownFormed(),
+                helper, facing, "Pre-query snapshot must be pending with formed history");
+
+        IItemHandler capability = itemCapability(helper, facing);
+        MultiblockRuntimeState afterCapability = controller.runtimeState();
+        require(capability != null, helper, facing,
+                "Capability lookup must find the revalidated port");
+        require(afterCapability == MultiblockRuntimeState.FORMED,
+                helper, facing, "Capability lookup must synchronously heal pending to formed");
+        require(controller.formationRevision() == revision && port.linkedRevision() == revision,
+                helper, facing, "Capability-driven revalidation must preserve the formation revision");
+        helper.succeed();
+    }
+
+    /**
      * Verify the persisted-load scheduled tick with no IO probe. Wait until
      * the initial construction/neighbor ticks have drained BEFORE replacing
      * the BlockEntity. All footprint chunks are already loaded; this does
