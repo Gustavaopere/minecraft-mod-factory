@@ -100,6 +100,31 @@ class I10MultiplayerAcceptanceGuard(unittest.TestCase):
         else:
             self.assertNotIn(PASS_STATE, text, "I10 multiplayer gate must remain fail-closed without evidence")
 
+    def test_offline_physical_server_rebinds_to_loopback_only(self) -> None:
+        """An offline test server must not expose an all-interfaces listener."""
+        materializer = load_materializer()
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            with contextlib.chdir(workspace):
+                generated = materializer.materialize_i10("generated")
+            helper = load_manual_helper(generated / "run-i10-manual-process.py")
+            properties = generated / "run/server/server.properties"
+            properties.parent.mkdir(parents=True, exist_ok=True)
+            properties.write_text(
+                "server-ip=0.0.0.0\nonline-mode=true\nserver-port=25565\n",
+                encoding="utf-8",
+            )
+            helper.prepare_server_files()
+            first = properties.read_text(encoding="utf-8")
+            values = dict(line.split("=", 1) for line in first.splitlines() if "=" in line)
+            self.assertEqual("127.0.0.1", values.get("server-ip"))
+            self.assertEqual("false", values.get("online-mode"))
+            self.assertEqual("25565", values.get("server-port"))
+            self.assertEqual(1, first.count("server-ip="))
+            self.assertEqual("eula=true\n", (properties.parent / "eula.txt").read_text())
+            helper.prepare_server_files()
+            self.assertEqual(first, properties.read_text(encoding="utf-8"))
+
     def test_materialized_manual_handoff_runs_one_process_at_a_time_with_complete_logs(self) -> None:
         materializer = load_materializer()
         with tempfile.TemporaryDirectory() as tmp:
