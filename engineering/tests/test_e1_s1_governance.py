@@ -47,12 +47,19 @@ class GovernanceMigrationTests(unittest.TestCase):
         )
         self.assertEqual("art/", art["locator"]["authority_root"])
 
-    def test_version_authority_matches_physical_baseline(self):
+    def test_version_authority_uses_cycle_resolved_neoforge_policy(self):
         text = (ROOT / "skills/VERSION-AUTHORITY.md").read_text(encoding="utf-8")
         self.assertIn("Minecraft: **1.21.1**", text)
-        self.assertIn("NeoForge: **21.1.248**", text)
+        self.assertIn(
+            "NeoForge: **21.1.x estável mais recente compatível com Minecraft 1.21.1**",
+            text,
+        )
         self.assertIn("Java: **21**", text)
+        self.assertIn("resolvida no início de cada ciclo relevante de implementação ou validação", text)
+        self.assertIn("Não atualizar silenciosamente o NeoForge no meio de um gate já iniciado", text)
+        self.assertIn("A resolução exata do ciclo I10 atual é NeoForge **21.1.250**", text)
         self.assertIn("modlist física", text)
+        self.assertNotIn("NeoForge: **21.1.248**", text)
 
     def test_routing_keeps_runtime_outside_factory(self):
         text = (ROOT / "engineering/REPO-ROUTING.md").read_text(encoding="utf-8")

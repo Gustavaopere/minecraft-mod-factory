@@ -95,6 +95,16 @@ class I3SecurityAndReviewContractTest(unittest.TestCase):
             template,
             "I3 RED: canonical build must lock every resolvable project configuration",
         )
+        self.assertIn(
+            "ignoredDependencies.add('io.netty:netty-transport-native-epoll')",
+            template,
+            "I3 RED: Linux-only Netty epoll transport must not make canonical lock validation OS-specific",
+        )
+        self.assertNotIn(
+            "LockMode.LENIENT",
+            template,
+            "I3 RED: cross-platform locking must not broadly weaken dependency lock validation",
+        )
         golden_lock = GOLDEN / "gradle.lockfile"
         self.assertTrue(golden_lock.is_file(), "I3 RED: checked-in Golden gradle.lockfile is missing")
         self.assertGreater(golden_lock.stat().st_size, 0, "I3 RED: Golden gradle.lockfile must not be empty")

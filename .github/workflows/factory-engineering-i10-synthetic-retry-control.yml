@@ -1,0 +1,102 @@
+name: Factory I10 Synthetic Retry Control (Not Physical Acceptance)
+
+on:
+  push:
+    branches:
+      - engineering/i10-multiblock-foundation-reference
+    paths:
+      - '.github/workflows/factory-engineering-i10-synthetic-retry-control.yml'
+      - 'engineering/tests/experiments/i10_synthetic_retry_control.py'
+      - 'engineering/tests/test_i10_synthetic_retry_control.py'
+      - 'engineering/tests/i10-synthetic-controlled-liveness.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-control:
+    name: Synthetic UNAVAILABLE / ${{ matrix.variant }} (not physical proof)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [positive, negative]
+    env:
+      GRADLE_USER_HOME: ${{ github.workspace }}/.factory-ci/i10/gradle-home
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Checkout immutable source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+
+      - name: Set up exact Java 21
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Run experimental source-isolation tests
+        run: |
+          python3 -m unittest -v engineering/tests/test_i10_synthetic_retry_control.py
+          python3 -m unittest -v engineering/tests/test_i10_ticket_reachability.py
+
+      - name: Materialize canonical I10 into disposable workspace
+        run: |
+          python3 engineering/tooling/multiblock-foundation/materialize_i10.py .factory-ci/i10/${{ matrix.variant }}
+          chmod +x .factory-ci/i10/${{ matrix.variant }}/gradlew
+          python3 engineering/tests/experiments/i10_synthetic_retry_control.py instrument \
+            --variant ${{ matrix.variant }} --project .factory-ci/i10/${{ matrix.variant }}
+
+      - name: Build exact fixture with explicitly synthetic instrumentation
+        run: |
+          cd .factory-ci/i10/${{ matrix.variant }}
+          ./gradlew --no-daemon build
+
+      - name: Run server controlled retry observation
+        run: |
+          python3 engineering/tests/experiments/i10_synthetic_retry_control.py run \
+            --variant ${{ matrix.variant }} --project .factory-ci/i10/${{ matrix.variant }}
+
+      - name: Check evidence not mislabeled as physical
+        if: always()
+        env:
+          E2_VARIANT: ${{ matrix.variant }}
+          E2_COMMIT: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          variant=os.environ["E2_VARIANT"]
+          p=Path(".factory-ci/i10")/variant/"build/i10-synthetic-retry-control/summary.json"
+          state="EXECUTION_INCOMPLETE"
+          if p.is_file():
+              data=json.loads(p.read_text(encoding="utf-8"))
+              state=data["state"]
+              assert "SYNTHETIC" in data["scope"]
+              assert "PHYSICAL" not in state and "REAL_CHUNK" not in state
+          result={"schema_version":1,"source_commit":os.environ["E2_COMMIT"],"variant":variant,
+                  "kind":"SYNTHETIC_UNAVAILABLE_NOT_REAL_CHUNK_UNLOAD",
+                  "observed_state":state,"negative_control":variant=="negative",
+                  "real_neighbor_chunk_unavailable":"UNPROVEN",
+                  "physical_modlist_neoforge":"21.1.248",
+                  "fixture_neoforge":"21.1.250",
+                  "physical_multiplayer_gate":"PENDING","p2_review_threads":"OPEN"}
+          dest=Path(".factory-ci/i10")/variant/"synthetic-provenance.json"
+          dest.write_text(json.dumps(result,indent=2,sort_keys=True)+"\n")
+          print(json.dumps(result,sort_keys=True))
+          PY
+
+      - name: Upload isolated synthetic server logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: i10-e2-synthetic-${{ matrix.variant }}
+          path: |
+            .factory-ci/i10/${{ matrix.variant }}/synthetic-provenance.json
+            .factory-ci/i10/${{ matrix.variant }}/build/i10-synthetic-retry-control/
+          if-no-files-found: error
+          retention-days: 7

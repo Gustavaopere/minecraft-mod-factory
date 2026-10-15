@@ -52,7 +52,7 @@ class I9MachineFoundationContractTest(unittest.TestCase):
             {
                 "minecraft": "1.21.1",
                 "loader": "neoforge",
-                "neoforge": "21.1.248",
+                "neoforge": "21.1.250",
                 "java": 21,
             },
             mod_spec["identity"]["target"],

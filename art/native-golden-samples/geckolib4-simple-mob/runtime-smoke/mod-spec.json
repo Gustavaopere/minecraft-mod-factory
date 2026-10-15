@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "identity": {
+    "name": "GeckoLib4 Golden Runtime Smoke",
+    "mod_id": "i3_golden_mod",
+    "repository": "Gustavaopere/minecraft-mod-factory",
+    "target": {
+      "minecraft": "1.21.1",
+      "loader": "neoforge",
+      "neoforge": "21.1.248",
+      "java": 21
+    }
+  },
+  "purpose": {
+    "fantasy": "Historical target-exact runtime fixture for the audited GeckoLib 4 Golden Sample.",
+    "player_problem": "Preserve reproducible runtime evidence for the exact NeoForge target on which the durable GeckoLib proof was established.",
+    "core_loop": [
+      "Materialize the historical NeoForge project",
+      "Inject the audited GeckoLib runtime fixture",
+      "Run target-exact server and client proofs"
+    ],
+    "non_goals": [
+      "Retargeting historical evidence to the current NeoForge campaign",
+      "Production gameplay"
+    ]
+  },
+  "dependencies": {
+    "required": ["neoforge"],
+    "optional": [],
+    "incompatible": [],
+    "profiles": ["geckolib4-runtime-smoke-21.1.248"]
+  },
+  "systems": {
+    "blocks": [],
+    "items": [],
+    "machines": [],
+    "entities": ["golden_sample_mob"],
+    "worldgen": [],
+    "ui": [],
+    "networking": [],
+    "progression": [],
+    "integrations": ["geckolib4"]
+  },
+  "visual": {
+    "repo_textura_package": "art/native-golden-samples/geckolib4-simple-mob",
+    "provider_profiles": ["geckolib4"],
+    "required_assets": [
+      "golden_sample_mob.geo.json",
+      "golden_sample_mob.animation.json",
+      "golden-sample-mob.png"
+    ],
+    "handoff_manifest": "art/native-golden-samples/geckolib4-simple-mob/MANIFEST.json"
+  },
+  "data": {
+    "persistence": [],
+    "recipes": [],
+    "tags": [],
+    "data_maps": [],
+    "configs": []
+  },
+  "testing": {
+    "unit": "PASS",
+    "gametest": "PASS",
+    "client": "PASS",
+    "dedicated_server": "PASS",
+    "multiplayer": "UNRESOLVED",
+    "performance": "UNRESOLVED",
+    "manifest": "art/native-golden-samples/geckolib4-simple-mob/MANIFEST.json"
+  },
+  "release": {
+    "versioning": "0.1.0",
+    "distribution": ["REFERENCE_ONLY"],
+    "license": "MIT",
+    "state": "REFERENCE_ONLY"
+  },
+  "evidence": {
+    "state": "CONFIRMED",
+    "sources": [
+      "art/native-golden-samples/geckolib4-simple-mob/runtime-smoke/contract.json",
+      "art/native-golden-samples/geckolib4-simple-mob/MANIFEST.json"
+    ],
+    "open_questions": [
+      "This fixture preserves historical target-exact evidence and does not claim current-campaign revalidation."
+    ]
+  }
+}

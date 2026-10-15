@@ -1,0 +1,217 @@
+{
+  "schema_version": 2,
+  "mod_id": "i10_multiblock",
+  "source_authority": "Repo Textura",
+  "source_repository": "https://github.com/Gustavaopere/minecraft-mod-factory",
+  "source_revision": "UNRESOLVED",
+  "runtime_authority": "I10 multiblock foundation Golden",
+  "provider_profiles": [],
+  "provider_bindings": [],
+  "visual_inputs": [
+    {
+      "name": "formed",
+      "type": "bool",
+      "runtime_binding": "dev.example.i10multiblock.multiblock.MultiblockControllerBlock.FORMED;dev.example.i10multiblock.multiblock.MultiblockPortBlock.FORMED",
+      "evidence": [
+        "Server-authoritative controller and port blockstate properties are the runtime visual source of truth."
+      ]
+    },
+    {
+      "name": "facing",
+      "type": "string",
+      "runtime_binding": "dev.example.i10multiblock.multiblock.MultiblockControllerBlock.FACING;dev.example.i10multiblock.multiblock.MultiblockPortBlock.FACING",
+      "evidence": [
+        "Horizontal runtime orientation is exposed by the controller and port FACING properties."
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "asset_id": "controller_unformed",
+      "provider_profile": "UNRESOLVED",
+      "source_path": "art/golden-samples/i10-multiblock-visual/models/controller_unformed.json",
+      "source_format": ".json",
+      "source_sha256": "f782ab8294412c4c6327e0f73ab30caad176ebc60fb0e227c046276cd49ba37e",
+      "delivery_path": "src/main/resources/assets/i10_multiblock/models/block/controller_unformed.json",
+      "delivery_format": ".json",
+      "delivery_sha256": "f782ab8294412c4c6327e0f73ab30caad176ebc60fb0e227c046276cd49ba37e",
+      "required_bones": [],
+      "required_anchors": [],
+      "required_clips": [],
+      "textures": [],
+      "conversion": {
+        "performed": false,
+        "from_format": ".json",
+        "to_format": ".json",
+        "state": "CONFIRMED",
+        "evidence": [
+          "Source-native Java model JSON is delivered byte-for-byte; no format conversion is performed."
+        ]
+      },
+      "qa": {
+        "verified_bones": [],
+        "verified_anchors": [],
+        "verified_clips": [],
+        "verified_textures": [],
+        "namespace_verified": true,
+        "output_destination_verified": true,
+        "state": "PENDING",
+        "evidence": [
+          "Namespace and bounded delivery destination are structurally verified; visual/runtime QA is not yet claimed."
+        ]
+      },
+      "state": "IMPLEMENTED"
+    },
+    {
+      "asset_id": "controller_formed",
+      "provider_profile": "UNRESOLVED",
+      "source_path": "art/golden-samples/i10-multiblock-visual/models/controller_formed.json",
+      "source_format": ".json",
+      "source_sha256": "7bd2ca365c502723cda18f439649b27eabe1fdf186a37ea68019bce03dcbdae8",
+      "delivery_path": "src/main/resources/assets/i10_multiblock/models/block/controller_formed.json",
+      "delivery_format": ".json",
+      "delivery_sha256": "7bd2ca365c502723cda18f439649b27eabe1fdf186a37ea68019bce03dcbdae8",
+      "required_bones": [],
+      "required_anchors": [],
+      "required_clips": [],
+      "textures": [],
+      "conversion": {
+        "performed": false,
+        "from_format": ".json",
+        "to_format": ".json",
+        "state": "CONFIRMED",
+        "evidence": [
+          "Source-native Java model JSON is delivered byte-for-byte; no format conversion is performed."
+        ]
+      },
+      "qa": {
+        "verified_bones": [],
+        "verified_anchors": [],
+        "verified_clips": [],
+        "verified_textures": [],
+        "namespace_verified": true,
+        "output_destination_verified": true,
+        "state": "PENDING",
+        "evidence": [
+          "Namespace and bounded delivery destination are structurally verified; visual/runtime QA is not yet claimed."
+        ]
+      },
+      "state": "IMPLEMENTED"
+    },
+    {
+      "asset_id": "casing",
+      "provider_profile": "UNRESOLVED",
+      "source_path": "art/golden-samples/i10-multiblock-visual/models/casing.json",
+      "source_format": ".json",
+      "source_sha256": "21e5a7cecc5afd48073ba637e06b309f291192b6b21333c76b9d16171c754369",
+      "delivery_path": "src/main/resources/assets/i10_multiblock/models/block/casing.json",
+      "delivery_format": ".json",
+      "delivery_sha256": "21e5a7cecc5afd48073ba637e06b309f291192b6b21333c76b9d16171c754369",
+      "required_bones": [],
+      "required_anchors": [],
+      "required_clips": [],
+      "textures": [],
+      "conversion": {
+        "performed": false,
+        "from_format": ".json",
+        "to_format": ".json",
+        "state": "CONFIRMED",
+        "evidence": [
+          "Source-native Java model JSON is delivered byte-for-byte; no format conversion is performed."
+        ]
+      },
+      "qa": {
+        "verified_bones": [],
+        "verified_anchors": [],
+        "verified_clips": [],
+        "verified_textures": [],
+        "namespace_verified": true,
+        "output_destination_verified": true,
+        "state": "PENDING",
+        "evidence": [
+          "Namespace and bounded delivery destination are structurally verified; visual/runtime QA is not yet claimed."
+        ]
+      },
+      "state": "IMPLEMENTED"
+    },
+    {
+      "asset_id": "io_port_unformed",
+      "provider_profile": "UNRESOLVED",
+      "source_path": "art/golden-samples/i10-multiblock-visual/models/io_port_unformed.json",
+      "source_format": ".json",
+      "source_sha256": "34147fdcdec2274ae4b356d201b4541bd92fe8f368a74b1b015c64975fa196a2",
+      "delivery_path": "src/main/resources/assets/i10_multiblock/models/block/io_port_unformed.json",
+      "delivery_format": ".json",
+      "delivery_sha256": "34147fdcdec2274ae4b356d201b4541bd92fe8f368a74b1b015c64975fa196a2",
+      "required_bones": [],
+      "required_anchors": [],
+      "required_clips": [],
+      "textures": [],
+      "conversion": {
+        "performed": false,
+        "from_format": ".json",
+        "to_format": ".json",
+        "state": "CONFIRMED",
+        "evidence": [
+          "Source-native Java model JSON is delivered byte-for-byte; no format conversion is performed."
+        ]
+      },
+      "qa": {
+        "verified_bones": [],
+        "verified_anchors": [],
+        "verified_clips": [],
+        "verified_textures": [],
+        "namespace_verified": true,
+        "output_destination_verified": true,
+        "state": "PENDING",
+        "evidence": [
+          "Namespace and bounded delivery destination are structurally verified; visual/runtime QA is not yet claimed."
+        ]
+      },
+      "state": "IMPLEMENTED"
+    },
+    {
+      "asset_id": "io_port_formed",
+      "provider_profile": "UNRESOLVED",
+      "source_path": "art/golden-samples/i10-multiblock-visual/models/io_port_formed.json",
+      "source_format": ".json",
+      "source_sha256": "5d4151f7d3de0e0771f308534396c2731656eb7717690d73664595fc7534544b",
+      "delivery_path": "src/main/resources/assets/i10_multiblock/models/block/io_port_formed.json",
+      "delivery_format": ".json",
+      "delivery_sha256": "5d4151f7d3de0e0771f308534396c2731656eb7717690d73664595fc7534544b",
+      "required_bones": [],
+      "required_anchors": [],
+      "required_clips": [],
+      "textures": [],
+      "conversion": {
+        "performed": false,
+        "from_format": ".json",
+        "to_format": ".json",
+        "state": "CONFIRMED",
+        "evidence": [
+          "Source-native Java model JSON is delivered byte-for-byte; no format conversion is performed."
+        ]
+      },
+      "qa": {
+        "verified_bones": [],
+        "verified_anchors": [],
+        "verified_clips": [],
+        "verified_textures": [],
+        "namespace_verified": true,
+        "output_destination_verified": true,
+        "state": "PENDING",
+        "evidence": [
+          "Namespace and bounded delivery destination are structurally verified; visual/runtime QA is not yet claimed."
+        ]
+      },
+      "state": "IMPLEMENTED"
+    }
+  ],
+  "state": "PENDING",
+  "evidence": [
+    "Repo Textura owns the source-native Java block-model JSON files under art/golden-samples/i10-multiblock-visual.",
+    "Engineering owns blockstate/runtime binding and byte-exact delivery into the generated I10 runtime namespace.",
+    "No physical provider profile exists for vanilla Java block models; no provider is invented.",
+    "Visual/runtime acceptance remains pending until the later target-exact visual/runtime gates."
+  ]
+}

@@ -13,6 +13,12 @@ const EXPECTED_FILES = new Set([
   'README.md',
   'validate_golden_samples.js',
   'validate_reference_evidence.js',
+  'i10-multiblock-visual/README.md',
+  'i10-multiblock-visual/models/casing.json',
+  'i10-multiblock-visual/models/controller_formed.json',
+  'i10-multiblock-visual/models/controller_unformed.json',
+  'i10-multiblock-visual/models/io_port_formed.json',
+  'i10-multiblock-visual/models/io_port_unformed.json',
   'model-asset/ANIMATION-BRIEF.md',
   'model-asset/ASSET-BRIEF.md',
   'model-asset/MODEL-CONTRACT.md',
@@ -317,7 +323,7 @@ function runNestedListTableRegressionSelfTest() {
   const rows = extractGfmTableRows(['- nested live contract','','    Bone | Purpose | Pivot rule | Runtime dependency','    --- | --- | --- | ---','    root | nested live duplicate | nested pivot | com.example.FabricatedRenderer'].join('\n'));
   if (rows.length !== 2 || rows[0].cells[0] !== 'Bone' || rows[1].cells[0] !== 'root') fail(`internal nested-list table regression self-test expected a four-space-continued live GFM table to remain visible; found ${rows.length} row(s)`);
 
-  const nestedCodeRows = extractGfmTableRows(['- nested code contract','','      Bone | Purpose | Pivot rule | Runtime dependency','      --- | --- | --- | ---','      root | nested code example | nested pivot | com.example.FabricatedRenderer'].join('\n'));
+  const nestedCodeRows = extractGfmTableRows(['- nested code contract','','      Bone | Purpose | Pivot rule | Runtime dependency','      --- | --- | --- | ---','      root | nested code example | example pivot | com.example.FabricatedRenderer'].join('\n'));
   if (nestedCodeRows.length !== 0) fail(`internal nested-list code regression self-test expected four spaces relative to list content to remain indented code; found ${nestedCodeRows.length} row(s)`);
 
   const orderedRows = extractGfmTableRows(['10. ordered live contract','','    Bone | Purpose | Pivot rule | Runtime dependency','    --- | --- | --- | ---','    root | ordered live duplicate | ordered pivot | com.example.FabricatedRenderer'].join('\n'));

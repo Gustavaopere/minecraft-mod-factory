@@ -1,0 +1,91 @@
+name: Factory I10 E4 OnLoad/Chunk Race Trace 21.1.248 (Exploratory)
+
+on:
+  push:
+    branches:
+      - engineering/i10-multiblock-foundation-reference
+    paths:
+      - '.github/workflows/factory-engineering-i10-e4-early-load-248.yml'
+      - 'engineering/tests/experiments/i10_e4_onload_boundary_trace_248.py'
+      - 'engineering/tests/test_i10_e4_onload_boundary_trace_248.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  early-boundary-observation:
+    name: E4 observational early lifecycle 21.1.248
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      GRADLE_USER_HOME: ${{ github.workspace }}/.factory-ci/i10/gradle-home
+    steps:
+      - name: Checkout immutable source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+
+      - name: Set up Java 21
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Verify E3 and E4 isolated-source contract tests
+        run: |
+          python3 -m unittest -v engineering/tests/test_i10_real_ticket_trace_248.py
+          python3 -m unittest -v engineering/tests/test_i10_e4_onload_boundary_trace_248.py
+
+      - name: Create disposable generated I10 source at exact physical 21.1.248
+        run: |
+          python3 engineering/tooling/multiblock-foundation/materialize_i10.py .factory-ci/i10/generated
+          python3 engineering/tests/experiments/i10_e4_onload_boundary_trace_248.py prepare \
+            --project .factory-ci/i10/generated
+          chmod +x .factory-ci/i10/generated/gradlew
+          grep '^neo_version=21.1.248$' .factory-ci/i10/generated/gradle.properties
+          grep '^net.neoforged:neoforge:21.1.248=' .factory-ci/i10/generated/gradle.lockfile
+
+      - name: Compile source-only logging instrumentation and unit tests
+        run: |
+          cd .factory-ci/i10/generated
+          ./gradlew --no-daemon test build
+
+      - name: Run bounded persisted unload and actual staged chunk reload
+        shell: bash
+        id: trial
+        run: |
+          set -uo pipefail
+          set +e
+          python3 engineering/tooling/multiblock-foundation/run_i10_delayed_neighbor_diagnostic.py \
+            --project .factory-ci/i10/generated > .factory-ci/i10/e4-probe.log 2>&1
+          rc=$?
+          set -e
+          printf 'exit_code=%s\n' "$rc" >> "$GITHUB_OUTPUT"
+          tail -n 12 .factory-ci/i10/e4-probe.log
+          if [[ "$rc" -ne 0 && "$rc" -ne 2 ]]; then
+            echo "::error title=E4 unexpected server failure::Probe failed with $rc"
+            exit 1
+          fi
+
+      - name: Classify early event order before full tick and preserve all logs
+        env:
+          E4_PROBE_EXIT: ${{ steps.trial.outputs.exit_code }}
+        run: |
+          python3 engineering/tests/experiments/i10_e4_onload_boundary_trace_248.py analyze \
+            --project .factory-ci/i10/generated --exit-code "$E4_PROBE_EXIT"
+
+      - name: Upload read-only E4 evidence regardless of verdict
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: i10-e4-onload-early-real-248
+          path: |
+            .factory-ci/i10/e4-probe.log
+            .factory-ci/i10/generated/build/i10-e4-onload-trace/
+            .factory-ci/i10/generated/build/i10-real-ticket-trace/
+            .factory-ci/i10/generated/build/i10-delayed-neighbor-diagnostic/
+          if-no-files-found: error
+          retention-days: 7

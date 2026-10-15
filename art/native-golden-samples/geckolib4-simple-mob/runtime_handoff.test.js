@@ -34,6 +34,20 @@ test('runtime smoke contract pins the exact physical target and audited GeckoLib
   });
 });
 
+test('runtime smoke owns a historical target-exact mod spec independent from the current campaign fixture', () => {
+  const modSpecPath = path.join(RUNTIME_SMOKE, 'mod-spec.json');
+  assert.equal(fs.existsSync(modSpecPath), true, 'runtime smoke must own runtime-smoke/mod-spec.json');
+
+  const contract = readJson('runtime-smoke/contract.json');
+  const modSpec = readJson('runtime-smoke/mod-spec.json');
+  assert.deepEqual(modSpec.identity.target, {
+    minecraft: contract.target.minecraft,
+    loader: 'neoforge',
+    neoforge: contract.target.neoforge,
+    java: contract.target.java,
+  });
+});
+
 test('runtime smoke packages the real Blockbench exports under GeckoLib default entity resource paths', () => {
   const contract = readJson('runtime-smoke/contract.json');
 

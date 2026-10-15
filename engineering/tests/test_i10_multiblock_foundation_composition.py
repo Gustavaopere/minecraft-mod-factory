@@ -1,0 +1,236 @@
+import contextlib
+import importlib.util
+import io
+import json
+import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+ROOT = Path(__file__).resolve().parents[2]
+MATERIALIZER = ROOT / "engineering/tooling/multiblock-foundation/materialize_i10.py"
+OVERLAY = ROOT / "engineering/tests/golden/i10-multiblock-foundation/overlay"
+MANIFEST = ROOT / "engineering/tests/golden/i10-multiblock-foundation/manifest.json"
+SPEC = ROOT / "docs/superpowers/specs/2026-09-13-i10-multiblock-foundation-reference-design.md"
+PLAN = ROOT / "docs/superpowers/plans/2026-09-13-i10-multiblock-foundation-reference.md"
+I3_BUILD_TEMPLATE = ROOT / "engineering/templates/neoforge-mod/build.gradle.tmpl"
+I3_GRADLE_PROPERTIES_TEMPLATE = ROOT / "engineering/templates/neoforge-mod/gradle.properties.tmpl"
+I3_GRADLE_LOCK_TEMPLATE = ROOT / "engineering/templates/neoforge-mod/gradle.lockfile.tmpl"
+
+
+def load_materializer():
+    if not MATERIALIZER.is_file():
+        raise AssertionError("I10 RED: materializer is missing")
+    spec = importlib.util.spec_from_file_location("i10_materializer_composition", MATERIALIZER)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+def canonical_manifest():
+    if not MANIFEST.is_file():
+        raise AssertionError("I10 RED: manifest is missing")
+    return json.loads(MANIFEST.read_text(encoding="utf-8"))
+
+
+def write_json(path, value):
+    path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
+
+
+def file_map(root):
+    return {
+        path.relative_to(root).as_posix(): path.read_bytes()
+        for path in root.rglob("*")
+        if path.is_file()
+    }
+
+
+class I10MultiblockFoundationCompositionTest(unittest.TestCase):
+    def test_design_and_plan_exist(self):
+        self.assertTrue(SPEC.is_file())
+        self.assertTrue(PLAN.is_file())
+
+    def test_current_cycle_targets_neoforge_21_1_250(self):
+        properties = I3_GRADLE_PROPERTIES_TEMPLATE.read_text(encoding="utf-8")
+        lockfile = I3_GRADLE_LOCK_TEMPLATE.read_text(encoding="utf-8")
+        self.assertIn("neo_version=21.1.250", properties)
+        self.assertNotIn("neo_version=21.1.248", properties)
+        self.assertIn("net.neoforged:neoforge:21.1.250=sdk,testSdk", lockfile)
+        self.assertIn("ng_dummy_ng.net.neoforged:neoforge:21.1.250=", lockfile)
+        self.assertNotIn("21.1.248", lockfile)
+        self.assertIn("net.neoforged.fancymodloader:earlydisplay:4.0.44=", lockfile)
+        self.assertIn("net.neoforged.fancymodloader:loader:4.0.44=", lockfile)
+        self.assertNotIn("net.neoforged.fancymodloader:earlydisplay:4.0.43=", lockfile)
+        self.assertNotIn("net.neoforged.fancymodloader:loader:4.0.43=", lockfile)
+
+    def test_output_is_contained_and_workspace_root_is_rejected(self):
+        module = load_materializer()
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            outside = workspace.parent / (workspace.name + "-outside")
+            with contextlib.chdir(workspace):
+                with self.assertRaises(module.MaterializationError):
+                    module.materialize_i10(workspace)
+                with self.assertRaises(module.MaterializationError):
+                    module.materialize_i10(outside)
+
+    def test_manifest_root_keys_are_closed(self):
+        module = load_materializer()
+        manifest = canonical_manifest()
+        manifest["unexpected"] = True
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            path = workspace / "manifest.json"
+            write_json(path, manifest)
+            with contextlib.chdir(workspace), mock.patch.object(module, "MANIFEST_PATH", path):
+                with self.assertRaises(module.MaterializationError):
+                    module.materialize_i10("generated")
+            self.assertFalse((workspace / "generated").exists())
+
+    def test_manifest_cannot_delegate_write_mapping_authority(self):
+        module = load_materializer()
+        manifest = canonical_manifest()
+        manifest["files"][0]["destination"] = "ALTERNATE-I10.md"
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            path = workspace / "manifest.json"
+            write_json(path, manifest)
+            with contextlib.chdir(workspace), mock.patch.object(module, "MANIFEST_PATH", path):
+                with self.assertRaises(module.MaterializationError):
+                    module.materialize_i10("generated")
+            self.assertFalse((workspace / "generated").exists())
+
+    def test_overlay_rejects_duplicate_paths(self):
+        module = load_materializer()
+        manifest = canonical_manifest()
+        manifest["files"].append(dict(manifest["files"][0]))
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            path = workspace / "manifest.json"
+            write_json(path, manifest)
+            with contextlib.chdir(workspace), mock.patch.object(module, "MANIFEST_PATH", path):
+                with self.assertRaises(module.MaterializationError):
+                    module.materialize_i10("generated")
+            self.assertFalse((workspace / "generated").exists())
+
+    def test_overlay_rejects_existing_generated_destination(self):
+        module = load_materializer()
+        manifest = canonical_manifest()
+        manifest["files"][0]["destination"] = "build.gradle"
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            path = workspace / "manifest.json"
+            write_json(path, manifest)
+            with contextlib.chdir(workspace), mock.patch.object(module, "MANIFEST_PATH", path):
+                with self.assertRaises(module.MaterializationError):
+                    module.materialize_i10("generated")
+            self.assertFalse((workspace / "generated").exists())
+
+    def test_existing_output_is_preserved(self):
+        module = load_materializer()
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            output = workspace / "generated"
+            output.mkdir()
+            marker = output / "keep.txt"
+            marker.write_text("preserve", encoding="utf-8")
+            with contextlib.chdir(workspace):
+                with self.assertRaises(module.MaterializationError):
+                    module.materialize_i10(output)
+            self.assertEqual("preserve", marker.read_text(encoding="utf-8"))
+
+    def test_zero_and_multiple_constructor_anchor_matches_fail_closed(self):
+        module = load_materializer()
+        cases = (("missing-constructor-anchor", "replacement"), ("\n", "\n"))
+        for anchor, replacement in cases:
+            with self.subTest(anchor=anchor):
+                manifest = canonical_manifest()
+                manifest["main_class_patch"]["anchor"] = anchor
+                manifest["main_class_patch"]["replacement"] = replacement
+                with tempfile.TemporaryDirectory() as tmp:
+                    workspace = Path(tmp)
+                    path = workspace / "manifest.json"
+                    write_json(path, manifest)
+                    with contextlib.chdir(workspace), mock.patch.object(module, "MANIFEST_PATH", path):
+                        with self.assertRaises(module.MaterializationError):
+                            module.materialize_i10("generated")
+                    self.assertFalse((workspace / "generated").exists())
+
+    def test_materialization_is_deterministic_and_overlay_is_byte_exact(self):
+        module = load_materializer()
+        manifest = canonical_manifest()
+        entry = manifest["files"][0]
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            with contextlib.chdir(workspace):
+                first = module.materialize_i10("first")
+                second = module.materialize_i10("second")
+            self.assertEqual(file_map(first), file_map(second))
+            self.assertEqual((OVERLAY / entry["source"]).read_bytes(), (first / entry["destination"]).read_bytes())
+
+    def test_main_patch_preserves_canonical_constructor_signature(self):
+        module = load_materializer()
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            with contextlib.chdir(workspace):
+                generated = module.materialize_i10("generated")
+            main_class = generated / "src/main/java/dev/example/i10multiblock/I10MultiblockMod.java"
+            text = main_class.read_text(encoding="utf-8")
+            self.assertIn("public I10MultiblockMod(IEventBus modBus, ModContainer container)", text)
+            self.assertIn("dev.example.i10multiblock.multiblock.I10MultiblockContent.register(modBus);", text)
+            self.assertIn("modBus.addListener(dev.example.i10multiblock.multiblock.I10MultiblockContent::registerCapabilities);", text)
+
+    def test_i10_server_run_forwards_console_stdin_without_mutating_i3_template(self):
+        module = load_materializer()
+        self.assertNotIn("standardInput", I3_BUILD_TEMPLATE.read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            with contextlib.chdir(workspace):
+                generated = module.materialize_i10("generated")
+            build_gradle = (generated / "build.gradle").read_text(encoding="utf-8")
+            self.assertIn("tasks.configureEach { task ->", build_gradle)
+            self.assertIn("if (task.name == 'runServer')", build_gradle)
+            self.assertIn("task.standardInput = System.in", build_gradle)
+            self.assertNotIn("tasks.named('runServer')", build_gradle)
+
+    def test_i10_composition_has_no_i9_runtime_dependency(self):
+        module = load_materializer()
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            with contextlib.chdir(workspace):
+                generated = module.materialize_i10("generated")
+            text = "\n".join(
+                path.read_text(encoding="utf-8", errors="ignore")
+                for path in generated.rglob("*")
+                if path.is_file() and path.suffix in {".java", ".json", ".md", ".gradle"}
+            )
+            self.assertNotIn("materialize_i9", text)
+            self.assertNotIn("i9-machine-foundation", text)
+            self.assertNotIn("dev.example.i9machine", text)
+
+    def test_materializer_cli_main_contract(self):
+        module = load_materializer()
+
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            self.assertEqual(2, module.main([]))
+        self.assertIn("usage: materialize_i10.py OUTPUT_DIR", stderr.getvalue())
+
+        stderr = io.StringIO()
+        with mock.patch.object(
+            module,
+            "materialize_i10",
+            side_effect=module.MaterializationError("synthetic failure"),
+        ):
+            with contextlib.redirect_stderr(stderr):
+                self.assertEqual(1, module.main(["generated"]))
+        self.assertIn("I10 materialization failed: synthetic failure", stderr.getvalue())
+
+        with mock.patch.object(module, "materialize_i10", return_value=Path("generated")) as materialize:
+            self.assertEqual(0, module.main(["generated"]))
+        materialize.assert_called_once_with("generated")
+
+
+if __name__ == "__main__":
+    unittest.main()

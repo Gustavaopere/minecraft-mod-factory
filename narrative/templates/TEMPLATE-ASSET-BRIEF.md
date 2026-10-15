@@ -85,4 +85,4 @@ Record the provider, version and evidence that justify technical constraints. Pr
 Define the evidence required before the consumer may mark the asset final, such as native master, runtime texture/model, hashes, provider validation and in-game QA.
 
 ## Pending decisions
-- 
+-

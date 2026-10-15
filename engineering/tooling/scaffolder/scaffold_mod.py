@@ -15,12 +15,16 @@ WRAPPER_AUTHORITY = Path(__file__).resolve().parent / "wrapper-authority"
 I1_VALIDATOR = REPO_ROOT / "engineering" / "tooling" / "validate-i1-foundation.py"
 MOD_SPEC_SCHEMA = REPO_ROOT / "engineering" / "schemas" / "mod-spec.schema.json"
 
-EXPECTED_TARGET = {
+EXPECTED_TARGET_BASE = {
     "minecraft": "1.21.1",
     "loader": "neoforge",
-    "neoforge": "21.1.248",
     "java": 21,
 }
+SUPPORTED_NEOFORGE_TARGETS = {
+    "21.1.248": {"fml": "4.0.43"},
+    "21.1.250": {"fml": "4.0.44"},
+}
+TEMPLATE_NEOFORGE_TARGET = "21.1.250"
 REQUIRED_CONFIG_KEYS = (
     "project_name",
     "java_package",
@@ -135,8 +139,15 @@ def _validate_inputs(mod_spec: dict[str, Any], config: dict[str, Any]) -> None:
     if not isinstance(identity, dict):
         raise ValueError("mod spec identity is required")
     target = identity.get("target")
-    if target != EXPECTED_TARGET:
-        raise ValueError(f"unsupported target; expected exact {EXPECTED_TARGET}")
+    if not isinstance(target, dict):
+        raise ValueError("mod spec identity.target is required")
+    for key, expected in EXPECTED_TARGET_BASE.items():
+        if target.get(key) != expected:
+            raise ValueError(f"unsupported target {key}; expected exact {expected!r}")
+    neoforge = target.get("neoforge")
+    if neoforge not in SUPPORTED_NEOFORGE_TARGETS:
+        supported = ", ".join(sorted(SUPPORTED_NEOFORGE_TARGETS))
+        raise ValueError(f"unsupported NeoForge target {neoforge!r}; supported exact targets: {supported}")
 
     mod_id = identity.get("mod_id")
     mod_name = identity.get("name")
@@ -213,6 +224,51 @@ def _render(template: str, values: dict[str, str], template_name: str) -> str:
     return rendered
 
 
+def _replace_exact_once(text: str, old: str, new: str, *, template_name: str) -> str:
+    count = text.count(old)
+    if count != 1:
+        raise ValueError(f"canonical {template_name} target anchor must occur exactly once: {old!r}; found {count}")
+    if old == new:
+        return text
+    return text.replace(old, new, 1)
+
+
+def _render_target_exact(template_name: str, rendered: str, target: dict[str, Any]) -> str:
+    requested_neoforge = target["neoforge"]
+    requested_profile = SUPPORTED_NEOFORGE_TARGETS[requested_neoforge]
+    template_profile = SUPPORTED_NEOFORGE_TARGETS[TEMPLATE_NEOFORGE_TARGET]
+
+    if template_name == "gradle.properties.tmpl":
+        rendered = _replace_exact_once(
+            rendered,
+            f"neo_version={TEMPLATE_NEOFORGE_TARGET}",
+            f"neo_version={requested_neoforge}",
+            template_name=template_name,
+        )
+    elif template_name == "gradle.lockfile.tmpl":
+        replacements = (
+            (
+                f"net.neoforged.fancymodloader:earlydisplay:{template_profile['fml']}=",
+                f"net.neoforged.fancymodloader:earlydisplay:{requested_profile['fml']}=",
+            ),
+            (
+                f"net.neoforged.fancymodloader:loader:{template_profile['fml']}=",
+                f"net.neoforged.fancymodloader:loader:{requested_profile['fml']}=",
+            ),
+            (
+                f"net.neoforged:neoforge:{TEMPLATE_NEOFORGE_TARGET}=sdk,testSdk",
+                f"net.neoforged:neoforge:{requested_neoforge}=sdk,testSdk",
+            ),
+            (
+                f"ng_dummy_ng.net.neoforged:neoforge:{TEMPLATE_NEOFORGE_TARGET}=",
+                f"ng_dummy_ng.net.neoforged:neoforge:{requested_neoforge}=",
+            ),
+        )
+        for old, new in replacements:
+            rendered = _replace_exact_once(rendered, old, new, template_name=template_name)
+    return rendered
+
+
 def _output_for_template(template_name: str, values: dict[str, str]) -> str:
     if template_name == "MainMod.java.tmpl":
         package_path = values["JAVA_PACKAGE"].replace(".", "/")
@@ -270,6 +326,7 @@ def generate_project(
     _validate_mod_spec_schema(mod_spec)
     _validate_inputs(mod_spec, config)
     values = _replacement_values(mod_spec, config)
+    target = mod_spec["identity"]["target"]
 
     if not TEMPLATE_ROOT.is_dir():
         raise ValueError(f"canonical template root missing: {TEMPLATE_ROOT}")
@@ -279,6 +336,7 @@ def generate_project(
         if not template_path.is_file():
             raise ValueError(f"canonical template missing: {template_name}")
         rendered = _render(template_path.read_text(encoding="utf-8"), values, template_name)
+        rendered = _render_target_exact(template_name, rendered, target)
         output_relative = _output_for_template(template_name, values)
         destination = _contained_child(output, output_relative, label=f"template output {template_name}")
         destination.parent.mkdir(parents=True, exist_ok=True)
