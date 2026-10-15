@@ -134,6 +134,7 @@ def prepare_server_files() -> None:
         server_run / "server.properties",
         {
             "online-mode": "false",
+            "server-ip": "127.0.0.1",
             "server-port": "25565",
             "level-name": WORLD_IDENTITY,
             "spawn-protection": "0",
