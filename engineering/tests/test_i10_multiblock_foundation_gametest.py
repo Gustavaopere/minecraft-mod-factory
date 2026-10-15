@@ -27,6 +27,7 @@ REQUIRED_METHODS = (
     "staleBinding",
     "visualState",
     "persistedRecoveryWithoutPortProbe",
+    "pendingCapabilityQueryRestoresFormedState",
 )
 
 
