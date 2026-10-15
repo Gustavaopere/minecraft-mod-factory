@@ -240,6 +240,21 @@ public final class I10AcceptanceCommands {
         boolean capability = level.hasChunkAt(portPos)
                 && level.getCapability(Capabilities.ItemHandler.BLOCK, portPos, null) != null;
 
+        // This capability lookup can natively revalidate a pending controller.
+        // Record both snapshots without changing the original I10_PROBE contract.
+        MultiblockRuntimeState runtimeAfterCapability = controller == null
+                ? MultiblockRuntimeState.UNFORMED
+                : controller.runtimeState();
+        if ("status".equals(action)) {
+            LOGGER.info(
+                    "I10_STATUS_TRANSITION action={} pre_runtime={} post_runtime={} revision={} game_tick={}",
+                    action,
+                    runtime.name(),
+                    runtimeAfterCapability.name(),
+                    Math.max(0L, revision),
+                    Math.max(0L, level.getGameTime()));
+        }
+
         LOGGER.info(
                 "I10_PROBE action={} validation={} runtime={} revision={} sentinel={} count={} capability={} last_known_formed={}",
                 action,
