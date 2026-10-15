@@ -51,7 +51,7 @@ def _read_source(root: Path, expected_sha: str) -> dict[str, bytes]:
         if parts.parts[0] in {"run", "build", ".gradle"}:
             raise ProfileBlocked(f"runtime/build files prohibited: {rel}")
         files[rel] = item.read_bytes()
-    if len(files) != 46 or sum(p.endswith(".java") for p in files) != 15:
+    if len(files) != 47 or sum(p.endswith(".java") for p in files) != 15:
         raise ProfileBlocked(f"source inventory mismatch: {len(files)} files")
     if files.get("I10-SOURCE-COMMIT.txt", b"").decode("ascii").strip() != expected_sha:
         raise ProfileBlocked("source commit does not match the exact requested HEAD")
